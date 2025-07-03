@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
-import { ProviderConfig } from '@/types';
+import { useProviderStore } from '@/store/useProviderStore';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,6 @@ interface AppSettings {
   notifications: boolean;
   autoSave: boolean;
   fontSize: 'small' | 'medium' | 'large';
-  providers: ProviderConfig[];
 }
 
 
@@ -35,18 +34,21 @@ export function SettingsDialog() {
     apiKey: '',
     notifications: true,
     autoSave: true,
-    fontSize: 'medium',
-    providers: [
-      { id: 'default', name: 'OpenAI', apiKey: '' }
-    ]
+    fontSize: 'medium'
   });
+  const { providers, addProvider, updateProvider, deleteProvider, reset } =
+    useProviderStore();
   const [activeTab, setActiveTab] = useState<'general' | 'provider'>('general');
   const [newProviderName, setNewProviderName] = useState('');
   const [newProviderKey, setNewProviderKey] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editKey, setEditKey] = useState('');
 
   const handleSave = () => {
     // In a real app, this would save settings to storage or send to backend
     console.log('Settings saved:', settings);
+    console.log('Providers:', providers);
   };
 
   const handleReset = () => {
@@ -56,11 +58,9 @@ export function SettingsDialog() {
       apiKey: '',
       notifications: true,
       autoSave: true,
-      fontSize: 'medium',
-      providers: [
-        { id: 'default', name: 'OpenAI', apiKey: '' }
-      ]
+      fontSize: 'medium'
     });
+    reset();
   };
 
   return (
@@ -219,14 +219,77 @@ export function SettingsDialog() {
 
           {activeTab === 'provider' && (
             <div className="grid gap-4 py-4 max-h-60 overflow-y-auto">
-              {settings.providers.map(provider => (
-                <div key={provider.id} className="rounded-md border p-3">
+              {providers.map(provider => (
+                <div key={provider.id} className="rounded-md border p-3 space-y-2">
                   <div className="font-medium flex justify-between items-center">
                     <span>{provider.name}</span>
                     <span className="text-xs text-muted-foreground">
                       {provider.apiKey ? 'Key added' : 'No key'}
                     </span>
                   </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingId(provider.id);
+                        setEditName(provider.name);
+                        setEditKey(provider.apiKey);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteProvider(provider.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                  {editingId === provider.id && (
+                    <div className="space-y-2">
+                      <Label>Provider</Label>
+                      <Select value={editName} onValueChange={setEditName}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select provider" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROVIDER_OPTIONS.map(name => (
+                            <SelectItem key={name} value={name}>{name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Label>API Key</Label>
+                      <Input
+                        type="password"
+                        value={editKey}
+                        onChange={e => setEditKey(e.target.value)}
+                        placeholder="Enter API key"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (!editingId) return;
+                            updateProvider({ id: editingId, name: editName, apiKey: editKey });
+                            setEditingId(null);
+                            setEditName('');
+                            setEditKey('');
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               <div className="rounded-md border p-3 space-y-2">
@@ -256,13 +319,7 @@ export function SettingsDialog() {
                   size="sm"
                   onClick={() => {
                     if (!newProviderName) return;
-                    setSettings(prev => ({
-                      ...prev,
-                      providers: [
-                        ...prev.providers,
-                        { id: Date.now().toString(), name: newProviderName, apiKey: newProviderKey }
-                      ]
-                    }));
+                    addProvider({ id: Date.now().toString(), name: newProviderName, apiKey: newProviderKey });
                     setNewProviderName('');
                     setNewProviderKey('');
                   }}
