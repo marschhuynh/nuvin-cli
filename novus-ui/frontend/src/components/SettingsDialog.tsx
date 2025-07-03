@@ -23,12 +23,19 @@ interface AppSettings {
   autoSave: boolean;
   fontSize: 'small' | 'medium' | 'large';
   providers: ProviderConfig[];
+  remoteAgentUrl: string;
 }
 
 
 const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'Cohere', 'Azure'];
 
-export function SettingsDialog() {
+export function SettingsDialog({
+  remoteAgentUrl,
+  onRemoteAgentUrlChange,
+}: {
+  remoteAgentUrl: string;
+  onRemoteAgentUrlChange: (url: string) => void;
+}) {
   const [settings, setSettings] = useState<AppSettings>({
     theme: 'system',
     apiEndpoint: 'https://api.example.com',
@@ -38,9 +45,10 @@ export function SettingsDialog() {
     fontSize: 'medium',
     providers: [
       { id: 'default', name: 'OpenAI', apiKey: '' }
-    ]
+    ],
+    remoteAgentUrl,
   });
-  const [activeTab, setActiveTab] = useState<'general' | 'provider'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'provider' | 'remote'>('general');
   const [newProviderName, setNewProviderName] = useState('');
   const [newProviderKey, setNewProviderKey] = useState('');
 
@@ -59,8 +67,10 @@ export function SettingsDialog() {
       fontSize: 'medium',
       providers: [
         { id: 'default', name: 'OpenAI', apiKey: '' }
-      ]
+      ],
+      remoteAgentUrl: ''
     });
+    onRemoteAgentUrlChange('');
   };
 
   return (
@@ -97,6 +107,14 @@ export function SettingsDialog() {
                 onClick={() => setActiveTab('provider')}
               >
                 Provider
+              </button>
+              <button
+                className={`pb-2 text-sm font-medium ${
+                  activeTab === 'remote' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'
+                }`}
+                onClick={() => setActiveTab('remote')}
+              >
+                Remote Agent
               </button>
             </nav>
           </div>
@@ -269,6 +287,24 @@ export function SettingsDialog() {
                 >
                   Add Provider
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'remote' && (
+            <div className="grid gap-6 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="remoteUrl">Remote Agent URL</Label>
+                <Input
+                  id="remoteUrl"
+                  type="url"
+                  value={settings.remoteAgentUrl}
+                  onChange={e => {
+                    setSettings(prev => ({ ...prev, remoteAgentUrl: e.target.value }));
+                    onRemoteAgentUrlChange(e.target.value);
+                  }}
+                  placeholder="http://localhost:41241/Architect"
+                />
               </div>
             </div>
           )}

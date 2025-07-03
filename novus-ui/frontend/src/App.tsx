@@ -73,7 +73,6 @@ function App() {
 
   // State for loading status
   const [isLoading, setIsLoading] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // State for agent configuration with default general-assistant
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({
@@ -83,6 +82,7 @@ function App() {
 
   // User info
   const [user] = useState({ name: "Marsch Huynh" });
+  const [remoteAgentUrl, setRemoteAgentUrl] = useState('');
 
   // Handlers
   const handleSendMessage = async (content: string) => {
@@ -90,57 +90,47 @@ function App() {
       id: messages.length + 1,
       role: 'user',
       content,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     setMessages(prev => [...prev, newMessage]);
     setIsLoading(true);
 
-    // Get current agent for context
-    const currentAgent = agentConfig.agents.find(agent => agent.id === agentConfig.selectedAgent);
-    const agentName = currentAgent?.name || 'AI Assistant';
+    try {
+      const response = await fetch(remoteAgentUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content }),
+      });
+      const data = await response.json();
 
-    // Simulate API call delay with timeout reference for cancellation
-    timeoutRef.current = setTimeout(() => {
       const assistantMessage: Message = {
         id: messages.length + 2,
         role: 'assistant',
-        content: `Hello! I'm ${agentName}. You asked: "${content}". This is a simulated response. In the actual implementation, this would be connected to your AI agent service using my specialized tools and capabilities.`,
-        timestamp: new Date().toISOString()
+        content: data.message ?? data.reply ?? JSON.stringify(data),
+        timestamp: new Date().toISOString(),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (err) {
+      const errorMessage: Message = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content: 'Error communicating with remote agent.',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-      timeoutRef.current = null;
-    }, 2000); // Increased delay to better demo the stop functionality
+    }
   };
 
   const handleStopGeneration = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-      setIsLoading(false);
-
-      // Add a system message indicating the generation was stopped
-      const stopMessage: Message = {
-        id: messages.length + 1,
-        role: 'assistant',
-        content: '⏹️ Generation stopped by user.',
-        timestamp: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, stopMessage]);
-      console.log('Generation stopped by user');
-    }
+    setIsLoading(false);
   };
 
   const handleNewConversation = () => {
-    // Stop any ongoing generation
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-      setIsLoading(false);
-    }
+    setIsLoading(false);
 
     const newConversation: Conversation = {
       id: conversations.length + 1,
@@ -158,12 +148,7 @@ function App() {
   };
 
   const handleConversationSelect = (conversationId: number) => {
-    // Stop any ongoing generation when switching conversations
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-      setIsLoading(false);
-    }
+    setIsLoading(false);
 
     const updatedConversations = conversations.map(conv => ({
       ...conv,
@@ -193,7 +178,11 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <Navbar userName={user.name} />
+      <Navbar
+        userName={user.name}
+        remoteAgentUrl={remoteAgentUrl}
+        onRemoteAgentUrlChange={setRemoteAgentUrl}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <ConversationHistory

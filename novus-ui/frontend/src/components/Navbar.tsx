@@ -3,9 +3,11 @@ import { SettingsDialog } from './SettingsDialog';
 
 interface NavbarProps {
   userName?: string;
+  remoteAgentUrl: string;
+  onRemoteAgentUrlChange: (url: string) => void;
 }
 
-export function Navbar({ userName = "Marsch Huynh" }: NavbarProps) {
+export function Navbar({ userName = "Marsch Huynh", remoteAgentUrl, onRemoteAgentUrlChange }: NavbarProps) {
   return (
     <nav className="border-b border-border bg-card px-6 py-3">
       <div className="flex items-center justify-between">
@@ -14,7 +16,7 @@ export function Navbar({ userName = "Marsch Huynh" }: NavbarProps) {
           <h1 className="text-xl font-semibold">Nuvin Space</h1>
         </div>
         <div className="flex items-center gap-4">
-          <SettingsDialog />
+          <SettingsDialog remoteAgentUrl={remoteAgentUrl} onRemoteAgentUrlChange={onRemoteAgentUrlChange} />
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
               <User className="h-4 w-4 text-primary-foreground" />
