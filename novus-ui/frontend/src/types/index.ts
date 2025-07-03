@@ -46,3 +46,9 @@ export interface AgentConfig {
   selectedAgent: string;
   agents: Agent[];
 }
+
+export interface ProviderConfig {
+  id: string;
+  name: string;
+  apiKey: string;
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
-import { Agent } from '@/types';
+import { ProviderConfig } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -22,43 +22,11 @@ interface AppSettings {
   notifications: boolean;
   autoSave: boolean;
   fontSize: 'small' | 'medium' | 'large';
+  providers: ProviderConfig[];
 }
 
-const DEFAULT_AGENTS: Agent[] = [
-  {
-    id: 'general-assistant',
-    name: 'General Assistant',
-    description:
-      'A versatile AI assistant capable of helping with various tasks including writing, analysis, and problem-solving.',
-    systemPrompt:
-      'You are a helpful AI assistant. Provide accurate, helpful, and friendly responses to user queries.',
-    tools: [],
-    status: 'active',
-    lastUsed: '2 minutes ago'
-  },
-  {
-    id: 'code-specialist',
-    name: 'Code Specialist',
-    description:
-      'Expert in software development, code review, debugging, and technical documentation.',
-    systemPrompt:
-      'You are an expert software developer. Focus on providing high-quality code solutions, best practices, and technical guidance.',
-    tools: [],
-    status: 'inactive',
-    lastUsed: '1 hour ago'
-  },
-  {
-    id: 'research-analyst',
-    name: 'Research Analyst',
-    description:
-      'Specialized in research, data analysis, and providing detailed insights on various topics.',
-    systemPrompt:
-      'You are a research analyst. Provide thorough, well-researched responses with citations and evidence-based insights.',
-    tools: [],
-    status: 'inactive',
-    lastUsed: 'Yesterday'
-  }
-];
+
+const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'Cohere', 'Azure'];
 
 export function SettingsDialog() {
   const [settings, setSettings] = useState<AppSettings>({
@@ -67,9 +35,14 @@ export function SettingsDialog() {
     apiKey: '',
     notifications: true,
     autoSave: true,
-    fontSize: 'medium'
+    fontSize: 'medium',
+    providers: [
+      { id: 'default', name: 'OpenAI', apiKey: '' }
+    ]
   });
-  const [activeTab, setActiveTab] = useState<'general' | 'agent'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'provider'>('general');
+  const [newProviderName, setNewProviderName] = useState('');
+  const [newProviderKey, setNewProviderKey] = useState('');
 
   const handleSave = () => {
     // In a real app, this would save settings to storage or send to backend
@@ -83,7 +56,10 @@ export function SettingsDialog() {
       apiKey: '',
       notifications: true,
       autoSave: true,
-      fontSize: 'medium'
+      fontSize: 'medium',
+      providers: [
+        { id: 'default', name: 'OpenAI', apiKey: '' }
+      ]
     });
   };
 
@@ -116,11 +92,11 @@ export function SettingsDialog() {
               </button>
               <button
                 className={`pb-2 text-sm font-medium ${
-                  activeTab === 'agent' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'
+                  activeTab === 'provider' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'
                 }`}
-                onClick={() => setActiveTab('agent')}
+                onClick={() => setActiveTab('provider')}
               >
-                Agent
+                Provider
               </button>
             </nav>
           </div>
@@ -241,16 +217,59 @@ export function SettingsDialog() {
             </div>
           )}
 
-          {activeTab === 'agent' && (
+          {activeTab === 'provider' && (
             <div className="grid gap-4 py-4 max-h-60 overflow-y-auto">
-              {DEFAULT_AGENTS.map(agent => (
-                <div key={agent.id} className="rounded-md border p-3">
-                  <div className="font-medium">{agent.name}</div>
-                  <p className="text-sm text-muted-foreground">
-                    {agent.description}
-                  </p>
+              {settings.providers.map(provider => (
+                <div key={provider.id} className="rounded-md border p-3">
+                  <div className="font-medium flex justify-between items-center">
+                    <span>{provider.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {provider.apiKey ? 'Key added' : 'No key'}
+                    </span>
+                  </div>
                 </div>
               ))}
+              <div className="rounded-md border p-3 space-y-2">
+                <Label>Provider</Label>
+                <Select
+                  value={newProviderName}
+                  onValueChange={setNewProviderName}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROVIDER_OPTIONS.map(name => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Label>API Key</Label>
+                <Input
+                  type="password"
+                  value={newProviderKey}
+                  onChange={e => setNewProviderKey(e.target.value)}
+                  placeholder="Enter API key"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    if (!newProviderName) return;
+                    setSettings(prev => ({
+                      ...prev,
+                      providers: [
+                        ...prev.providers,
+                        { id: Date.now().toString(), name: newProviderName, apiKey: newProviderKey }
+                      ]
+                    }));
+                    setNewProviderName('');
+                    setNewProviderKey('');
+                  }}
+                >
+                  Add Provider
+                </Button>
+              </div>
             </div>
           )}
         </div>
