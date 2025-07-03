@@ -11,7 +11,7 @@ export function Navbar({ userName = "Marsch Huynh" }: NavbarProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-semibold">Novus Space</h1>
+          <h1 className="text-xl font-semibold">Nuvin Space</h1>
         </div>
         <div className="flex items-center gap-4">
           <SettingsDialog />

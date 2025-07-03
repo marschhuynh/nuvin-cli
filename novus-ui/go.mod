@@ -1,4 +1,4 @@
-module novus-ui
+module nuvin-ui
 
 go 1.23
 
