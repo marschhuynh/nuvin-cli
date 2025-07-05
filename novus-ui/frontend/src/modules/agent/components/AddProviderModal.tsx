@@ -12,8 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProviderStore } from '@/store/useProviderStore';
+import { fetchGithubCopilotKey } from '@/lib/github';
 
-const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'Cohere', 'Azure'];
+const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'Cohere', 'Azure', 'GitHub'];
 
 interface AddProviderModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
   const { addProvider } = useProviderStore();
   const [newProviderName, setNewProviderName] = useState('');
   const [newProviderKey, setNewProviderKey] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const handleSubmit = () => {
     if (!newProviderName) return;
@@ -31,6 +33,35 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
     setNewProviderName('');
     setNewProviderKey('');
     onOpenChange(false);
+  };
+
+  const handleGithubAuth = async () => {
+    setIsAuthenticating(true);
+    try {
+      const token = await fetchGithubCopilotKey();
+      if (!token) {
+        console.error('Failed to get GitHub token');
+        return;
+      }
+
+      setNewProviderKey(token);
+
+      // If GitHub is selected, auto-add the provider
+      if (newProviderName === 'GitHub') {
+        addProvider({
+          id: Date.now().toString(),
+          name: 'GitHub',
+          apiKey: token
+        });
+        setNewProviderName('');
+        setNewProviderKey('');
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error('GitHub authentication failed:', error);
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const handleCancel = () => {
@@ -67,13 +98,32 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
           </div>
           <div className="grid gap-2">
             <Label htmlFor="apiKey">API Key</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              value={newProviderKey}
-              onChange={e => setNewProviderKey(e.target.value)}
-              placeholder="Enter API key"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="apiKey"
+                type="password"
+                className="flex-1"
+                value={newProviderKey}
+                onChange={e => setNewProviderKey(e.target.value)}
+                placeholder="Enter API key"
+              />
+              {newProviderName === 'GitHub' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGithubAuth}
+                  disabled={isAuthenticating}
+                >
+                  {isAuthenticating ? 'Authenticating...' : 'Get Token'}
+                </Button>
+              )}
+            </div>
+            {newProviderName === 'GitHub' && (
+              <p className="text-sm text-muted-foreground">
+                Click "Get Token" to authenticate with GitHub and get an access token.
+                This will be a GitHub API token, not a Copilot token, as the Copilot API is not publicly available.
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>

@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProviderStore } from '@/store/useProviderStore';
+import { fetchGithubCopilotKey } from '@/lib/github';
 
-const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'Cohere', 'Azure'];
+const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'Cohere', 'Azure', 'GitHub'];
 
 interface ProviderSettingsProps {
   onAddProvider: () => void;
@@ -87,12 +88,25 @@ export function ProviderSettings({ onAddProvider }: ProviderSettingsProps) {
                         </SelectContent>
                       </Select>
                       <Label>API Key</Label>
-                      <Input
-                        type="password"
-                        value={editKey}
-                        onChange={e => setEditKey(e.target.value)}
-                        placeholder="Enter API key"
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          className="flex-1"
+                          value={editKey}
+                          onChange={e => setEditKey(e.target.value)}
+                          placeholder="Enter API key"
+                        />
+                        {editName === 'GitHub' && (
+                          <Button type="button" variant="outline" size="sm" onClick={async () => {
+                            const key = await fetchGithubCopilotKey();
+                            if (!key || !editingId) return;
+                            setEditKey(key);
+                            updateProvider({ id: editingId, name: editName, apiKey: key });
+                          }}>
+                            Get Key
+                          </Button>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
