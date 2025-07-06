@@ -19,62 +19,18 @@ interface AgentConfigurationProps {
   onReset?: () => void;
 }
 
-const DEFAULT_AGENTS: Agent[] = [
-  {
-    id: 'general-assistant',
-    name: 'General Assistant',
-    description: 'A versatile AI assistant capable of helping with various tasks including writing, analysis, and problem-solving.',
-    systemPrompt: 'You are a helpful AI assistant. Provide accurate, helpful, and friendly responses to user queries.',
-    tools: [
-      { name: 'text-analysis', description: 'Analyze and process text content', enabled: true },
-      { name: 'web-search', description: 'Search the web for information', enabled: true },
-      { name: 'code-generation', description: 'Generate and review code', enabled: true }
-    ],
-    status: 'active',
-    lastUsed: '2 minutes ago'
-  },
-  {
-    id: 'code-specialist',
-    name: 'Code Specialist',
-    description: 'Expert in software development, code review, debugging, and technical documentation.',
-    systemPrompt: 'You are an expert software developer. Focus on providing high-quality code solutions, best practices, and technical guidance.',
-    tools: [
-      { name: 'code-generation', description: 'Generate and review code', enabled: true },
-      { name: 'code-execution', description: 'Execute and test code snippets', enabled: true },
-      { name: 'documentation', description: 'Generate technical documentation', enabled: true },
-      { name: 'debugging', description: 'Debug and troubleshoot code', enabled: true }
-    ],
-    status: 'inactive',
-    lastUsed: '1 hour ago'
-  },
-  {
-    id: 'research-analyst',
-    name: 'Research Analyst',
-    description: 'Specialized in research, data analysis, and providing detailed insights on various topics.',
-    systemPrompt: 'You are a research analyst. Provide thorough, well-researched responses with citations and evidence-based insights.',
-    tools: [
-      { name: 'web-search', description: 'Search the web for information', enabled: true },
-      { name: 'data-analysis', description: 'Analyze datasets and trends', enabled: true },
-      { name: 'fact-checking', description: 'Verify information accuracy', enabled: true },
-      { name: 'citation-generation', description: 'Generate proper citations', enabled: true }
-    ],
-    status: 'inactive',
-    lastUsed: 'Yesterday'
-  }
-];
-
-const DEFAULT_CONFIG: AgentConfig = {
-  selectedAgent: 'general-assistant',
-  agents: DEFAULT_AGENTS
-};
 
 export function AgentConfiguration({
-  config = DEFAULT_CONFIG,
+  config,
   onConfigChange,
   onReset
 }: AgentConfigurationProps) {
-  const [localConfig, setLocalConfig] = useState<AgentConfig>(config);
-  const { setActiveAgent } = useAgentStore();
+  const { agents, activeAgentId, setActiveAgent, reset } = useAgentStore();
+  const initialConfig: AgentConfig = config ?? {
+    selectedAgent: activeAgentId,
+    agents
+  };
+  const [localConfig, setLocalConfig] = useState<AgentConfig>(initialConfig);
 
   const updateConfig = (updates: Partial<AgentConfig>) => {
     const newConfig = { ...localConfig, ...updates };
@@ -86,9 +42,15 @@ export function AgentConfiguration({
   };
 
   const handleReset = () => {
-    setLocalConfig(DEFAULT_CONFIG);
-    onConfigChange?.(DEFAULT_CONFIG);
-    setActiveAgent(DEFAULT_CONFIG.selectedAgent);
+    reset();
+    const { agents: defaultAgents, activeAgentId: defaultId } = useAgentStore.getState();
+    const defaultConfig: AgentConfig = {
+      selectedAgent: defaultId,
+      agents: defaultAgents
+    };
+    setLocalConfig(defaultConfig);
+    onConfigChange?.(defaultConfig);
+    setActiveAgent(defaultId);
     onReset?.();
   };
 

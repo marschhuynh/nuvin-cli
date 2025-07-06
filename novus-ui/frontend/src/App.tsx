@@ -5,57 +5,15 @@ import {
   MessageList,
   ChatInput,
 } from '@/components';
-import { Message, Conversation, AgentConfig, Agent } from '@/types';
+import { Message, Conversation, AgentConfig } from '@/types';
+import { useAgentStore } from '@/store/useAgentStore';
 
 import './App.css';
 import { AgentConfiguration } from './modules/agent/AgentConfiguration';
 
-// Default agents data
-const DEFAULT_AGENTS: Agent[] = [
-  {
-    id: 'general-assistant',
-    name: 'General Assistant',
-    description: 'A versatile AI assistant capable of helping with various tasks including writing, analysis, and problem-solving.',
-    systemPrompt: 'You are a helpful AI assistant. Provide accurate, helpful, and friendly responses to user queries.',
-    tools: [
-      { name: 'text-analysis', description: 'Analyze and process text content', enabled: true },
-      { name: 'web-search', description: 'Search the web for information', enabled: true },
-      { name: 'code-generation', description: 'Generate and review code', enabled: true }
-    ],
-    status: 'active',
-    lastUsed: '2 minutes ago'
-  },
-  {
-    id: 'code-specialist',
-    name: 'Code Specialist',
-    description: 'Expert in software development, code review, debugging, and technical documentation.',
-    systemPrompt: 'You are an expert software developer. Focus on providing high-quality code solutions, best practices, and technical guidance.',
-    tools: [
-      { name: 'code-generation', description: 'Generate and review code', enabled: true },
-      { name: 'code-execution', description: 'Execute and test code snippets', enabled: true },
-      { name: 'documentation', description: 'Generate technical documentation', enabled: true },
-      { name: 'debugging', description: 'Debug and troubleshoot code', enabled: true }
-    ],
-    status: 'inactive',
-    lastUsed: '1 hour ago'
-  },
-  {
-    id: 'research-analyst',
-    name: 'Research Analyst',
-    description: 'Specialized in research, data analysis, and providing detailed insights on various topics.',
-    systemPrompt: 'You are a research analyst. Provide thorough, well-researched responses with citations and evidence-based insights.',
-    tools: [
-      { name: 'web-search', description: 'Search the web for information', enabled: true },
-      { name: 'data-analysis', description: 'Analyze datasets and trends', enabled: true },
-      { name: 'fact-checking', description: 'Verify information accuracy', enabled: true },
-      { name: 'citation-generation', description: 'Generate proper citations', enabled: true }
-    ],
-    status: 'inactive',
-    lastUsed: 'Yesterday'
-  }
-];
 
 function App() {
+  const { agents, activeAgentId, reset } = useAgentStore();
   // State for conversations
   const [conversations, setConversations] = useState<Conversation[]>([
     { id: 1, title: "Getting started with AI", timestamp: "2 hours ago", active: true },
@@ -77,8 +35,8 @@ function App() {
 
   // State for agent configuration with default general-assistant
   const [agentConfig, setAgentConfig] = useState<AgentConfig>({
-    selectedAgent: 'general-assistant',
-    agents: DEFAULT_AGENTS
+    selectedAgent: activeAgentId,
+    agents
   });
 
   // User info
@@ -183,12 +141,14 @@ function App() {
   };
 
   const handleAgentConfigReset = () => {
+    reset();
+    const { agents: defaultAgents, activeAgentId: defaultId } = useAgentStore.getState();
     const defaultConfig: AgentConfig = {
-      selectedAgent: 'general-assistant',
-      agents: DEFAULT_AGENTS
+      selectedAgent: defaultId,
+      agents: defaultAgents
     };
     setAgentConfig(defaultConfig);
-    console.log('Agent config reset to defaults - General Assistant selected');
+    console.log('Agent config reset to defaults');
   };
 
   return (
