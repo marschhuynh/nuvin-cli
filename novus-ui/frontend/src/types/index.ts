@@ -61,4 +61,6 @@ export interface AgentSettings {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+  agentType: 'local' | 'remote';
+  modelConfig: ModelConfig;
 }

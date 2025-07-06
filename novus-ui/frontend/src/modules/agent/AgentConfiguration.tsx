@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Bot, CheckCircle, Circle, Clock } from 'lucide-react';
 import { Agent, AgentConfig } from '@/types';
+import { useAgentStore } from '@/store/useAgentStore';
 
 interface AgentConfigurationProps {
   config?: AgentConfig;
@@ -73,16 +74,21 @@ export function AgentConfiguration({
   onReset
 }: AgentConfigurationProps) {
   const [localConfig, setLocalConfig] = useState<AgentConfig>(config);
+  const { setActiveAgent } = useAgentStore();
 
   const updateConfig = (updates: Partial<AgentConfig>) => {
     const newConfig = { ...localConfig, ...updates };
     setLocalConfig(newConfig);
     onConfigChange?.(newConfig);
+    if (updates.selectedAgent) {
+      setActiveAgent(updates.selectedAgent);
+    }
   };
 
   const handleReset = () => {
     setLocalConfig(DEFAULT_CONFIG);
     onConfigChange?.(DEFAULT_CONFIG);
+    setActiveAgent(DEFAULT_CONFIG.selectedAgent);
     onReset?.();
   };
 
