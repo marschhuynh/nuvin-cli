@@ -112,11 +112,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               Reset to Defaults
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
               <Button onClick={() => onOpenChange(false)}>
-                Save Changes
+                Cancel
               </Button>
             </div>
           </div>

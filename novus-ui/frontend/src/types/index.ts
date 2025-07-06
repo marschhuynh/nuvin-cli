@@ -44,7 +44,7 @@ export interface Agent {
 
 export interface AgentConfig {
   selectedAgent: string;
-  agents: Agent[];
+  agents: AgentSettings[];
 }
 
 export interface ProviderConfig {
@@ -63,4 +63,9 @@ export interface AgentSettings {
   systemPrompt: string;
   agentType: 'local' | 'remote';
   modelConfig: ModelConfig;
+  // Optional properties to make it compatible with Agent interface where needed
+  description?: string;
+  tools?: AgentTool[];
+  status?: 'active' | 'inactive' | 'busy';
+  lastUsed?: string;
 }

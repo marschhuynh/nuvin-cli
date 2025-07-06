@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -10,91 +10,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Bot, CheckCircle, Circle, Clock } from 'lucide-react';
-import { Agent, AgentConfig } from '@/types';
+import { AgentConfig, AgentSettings } from '@/types';
 import { useAgentStore } from '@/store/useAgentStore';
 
 interface AgentConfigurationProps {
-  config?: AgentConfig;
   onConfigChange?: (config: AgentConfig) => void;
   onReset?: () => void;
 }
 
-const DEFAULT_AGENTS: Agent[] = [
-  {
-    id: 'general-assistant',
-    name: 'General Assistant',
-    description: 'A versatile AI assistant capable of helping with various tasks including writing, analysis, and problem-solving.',
-    systemPrompt: 'You are a helpful AI assistant. Provide accurate, helpful, and friendly responses to user queries.',
-    tools: [
-      { name: 'text-analysis', description: 'Analyze and process text content', enabled: true },
-      { name: 'web-search', description: 'Search the web for information', enabled: true },
-      { name: 'code-generation', description: 'Generate and review code', enabled: true }
-    ],
-    status: 'active',
-    lastUsed: '2 minutes ago'
-  },
-  {
-    id: 'code-specialist',
-    name: 'Code Specialist',
-    description: 'Expert in software development, code review, debugging, and technical documentation.',
-    systemPrompt: 'You are an expert software developer. Focus on providing high-quality code solutions, best practices, and technical guidance.',
-    tools: [
-      { name: 'code-generation', description: 'Generate and review code', enabled: true },
-      { name: 'code-execution', description: 'Execute and test code snippets', enabled: true },
-      { name: 'documentation', description: 'Generate technical documentation', enabled: true },
-      { name: 'debugging', description: 'Debug and troubleshoot code', enabled: true }
-    ],
-    status: 'inactive',
-    lastUsed: '1 hour ago'
-  },
-  {
-    id: 'research-analyst',
-    name: 'Research Analyst',
-    description: 'Specialized in research, data analysis, and providing detailed insights on various topics.',
-    systemPrompt: 'You are a research analyst. Provide thorough, well-researched responses with citations and evidence-based insights.',
-    tools: [
-      { name: 'web-search', description: 'Search the web for information', enabled: true },
-      { name: 'data-analysis', description: 'Analyze datasets and trends', enabled: true },
-      { name: 'fact-checking', description: 'Verify information accuracy', enabled: true },
-      { name: 'citation-generation', description: 'Generate proper citations', enabled: true }
-    ],
-    status: 'inactive',
-    lastUsed: 'Yesterday'
-  }
-];
-
-const DEFAULT_CONFIG: AgentConfig = {
-  selectedAgent: 'general-assistant',
-  agents: DEFAULT_AGENTS
-};
-
 export function AgentConfiguration({
-  config = DEFAULT_CONFIG,
   onConfigChange,
   onReset
 }: AgentConfigurationProps) {
-  const [localConfig, setLocalConfig] = useState<AgentConfig>(config);
-  const { setActiveAgent } = useAgentStore();
+  const { agents, activeAgentId, setActiveAgent, reset } = useAgentStore();
 
-  const updateConfig = (updates: Partial<AgentConfig>) => {
-    const newConfig = { ...localConfig, ...updates };
-    setLocalConfig(newConfig);
-    onConfigChange?.(newConfig);
-    if (updates.selectedAgent) {
-      setActiveAgent(updates.selectedAgent);
+  // Notify parent when store changes
+  useEffect(() => {
+    if (onConfigChange) {
+      const config: AgentConfig = {
+        selectedAgent: activeAgentId,
+        agents
+      };
+      onConfigChange(config);
     }
+  }, [agents, activeAgentId, onConfigChange]);
+
+  const handleAgentChange = (agentId: string) => {
+    setActiveAgent(agentId);
   };
 
   const handleReset = () => {
-    setLocalConfig(DEFAULT_CONFIG);
-    onConfigChange?.(DEFAULT_CONFIG);
-    setActiveAgent(DEFAULT_CONFIG.selectedAgent);
+    reset();
     onReset?.();
   };
 
-  const selectedAgent = localConfig.agents.find(agent => agent.id === localConfig.selectedAgent);
+  const selectedAgent = agents.find(agent => agent.id === activeAgentId);
 
-  const getStatusIcon = (status: Agent['status']) => {
+  const getStatusIcon = (status?: AgentSettings['status']) => {
     switch (status) {
       case 'active':
         return <CheckCircle className="h-3 w-3 text-green-500" />;
@@ -105,15 +57,67 @@ export function AgentConfiguration({
     }
   };
 
-  const getStatusText = (status: Agent['status']) => {
+  const getStatusText = (status?: AgentSettings['status']) => {
     switch (status) {
       case 'active':
         return 'Active';
       case 'busy':
         return 'Busy';
       default:
-        return 'Inactive';
+        return 'Available';
     }
+  };
+
+  // Helper function to get agent description based on persona
+  const getAgentDescription = (agent: AgentSettings): string => {
+    if (agent.description) return agent.description;
+
+    // Generate description based on persona and agent type
+    const personaDescriptions = {
+      helpful: 'A friendly and supportive assistant ready to help with various tasks.',
+      professional: 'A business-focused assistant providing professional guidance and analysis.',
+      creative: 'An imaginative assistant specializing in creative thinking and content generation.',
+      analytical: 'A detail-oriented assistant focused on data analysis and logical reasoning.',
+      casual: 'A relaxed and conversational assistant for everyday interactions.'
+    };
+
+    return personaDescriptions[agent.persona] || 'A versatile AI assistant.';
+  };
+
+  // Helper function to get default tools based on persona
+  const getAgentTools = (agent: AgentSettings) => {
+    if (agent.tools) return agent.tools;
+
+    // Generate default tools based on persona
+    const personaTools = {
+      helpful: [
+        { name: 'General Q&A', description: 'Answer questions on various topics', enabled: true },
+        { name: 'Task Planning', description: 'Help organize and plan tasks', enabled: true },
+        { name: 'Research Assistant', description: 'Provide research and information', enabled: true }
+      ],
+      professional: [
+        { name: 'Business Analysis', description: 'Analyze business scenarios and data', enabled: true },
+        { name: 'Report Generation', description: 'Create professional reports', enabled: true },
+        { name: 'Strategic Planning', description: 'Assist with strategic decisions', enabled: true }
+      ],
+      creative: [
+        { name: 'Content Creation', description: 'Generate creative content', enabled: true },
+        { name: 'Brainstorming', description: 'Generate ideas and concepts', enabled: true },
+        { name: 'Storytelling', description: 'Craft narratives and stories', enabled: true }
+      ],
+      analytical: [
+        { name: 'Data Analysis', description: 'Analyze and interpret data', enabled: true },
+        { name: 'Code Review', description: 'Review and optimize code', enabled: true },
+        { name: 'Problem Solving', description: 'Break down complex problems', enabled: true }
+      ],
+      casual: [
+        { name: 'Conversation', description: 'Friendly conversation partner', enabled: true },
+        { name: 'Quick Help', description: 'Fast answers to simple questions', enabled: true },
+        { name: 'Entertainment', description: 'Fun activities and games', enabled: true }
+      ]
+    };
+
+    return personaTools[agent.persona] || [];
   };
 
   return (
@@ -130,17 +134,17 @@ export function AgentConfiguration({
           <div className="space-y-2">
             <Label htmlFor="agent" className="text-xs sm:text-sm">Select Agent</Label>
             <Select
-              value={localConfig.selectedAgent}
-              onValueChange={(value) => updateConfig({ selectedAgent: value })}
+              value={activeAgentId}
+              onValueChange={handleAgentChange}
             >
               <SelectTrigger className="text-xs sm:text-sm">
                 <SelectValue placeholder="Select an agent" />
               </SelectTrigger>
               <SelectContent>
-                {localConfig.agents.map((agent) => (
+                {agents.map((agent) => (
                   <SelectItem key={agent.id} value={agent.id} className="text-xs sm:text-sm">
                     <div className="flex items-center gap-2">
-                      {getStatusIcon(agent.status)}
+                      {getStatusIcon(agent.status || 'active')}
                       <span className="truncate">{agent.name}</span>
                     </div>
                   </SelectItem>
@@ -157,8 +161,8 @@ export function AgentConfiguration({
                 <Label className="text-xs sm:text-sm">Status</Label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
-                    {getStatusIcon(selectedAgent.status)}
-                    <span className="capitalize font-medium">{getStatusText(selectedAgent.status)}</span>
+                    {getStatusIcon(selectedAgent.status || 'active')}
+                    <span className="capitalize font-medium">{getStatusText(selectedAgent.status || 'active')}</span>
                   </div>
                   {selectedAgent.lastUsed && (
                     <span className="text-muted-foreground text-xs hidden sm:inline">
@@ -177,15 +181,15 @@ export function AgentConfiguration({
               <div className="space-y-2">
                 <Label className="text-xs sm:text-sm">Description</Label>
                 <p className="text-xs sm:text-sm text-muted-foreground p-2 sm:p-3 bg-muted rounded-md">
-                  {selectedAgent.description}
+                  {getAgentDescription(selectedAgent)}
                 </p>
               </div>
 
               {/* Tools Used */}
               <div className="space-y-2">
-                <Label className="text-xs sm:text-sm">Available Tools ({selectedAgent.tools.filter(t => t.enabled).length})</Label>
-                <div className="space-y-1 sm:space-y-2 max-h-28 sm:max-h-32 overflow-y-auto">
-                  {selectedAgent.tools.map((tool, index) => (
+                <Label className="text-xs sm:text-sm">Available Tools ({getAgentTools(selectedAgent).filter(t => t.enabled).length})</Label>
+                <div className="space-y-1 sm:space-y-2 max-h-28 sm:max-h-100 overflow-y-auto">
+                  {getAgentTools(selectedAgent).map((tool, index) => (
                     <div
                       key={index}
                       className={`flex items-start gap-2 p-1.5 sm:p-2 rounded-md text-xs ${
@@ -205,7 +209,7 @@ export function AgentConfiguration({
               </div>
 
               {/* System Prompt */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="systemPrompt" className="text-xs sm:text-sm">System Prompt</Label>
                 <Textarea
                   id="systemPrompt"
@@ -214,7 +218,7 @@ export function AgentConfiguration({
                   rows={3}
                   className="text-xs sm:text-sm"
                 />
-              </div>
+              </div> */}
             </>
           )}
 
