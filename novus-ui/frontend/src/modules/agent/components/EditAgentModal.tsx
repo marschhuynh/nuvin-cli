@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentStore } from '@/store/useAgentStore';
+import { ModelConfig } from '@/types';
 
 interface EditAgentModalProps {
   open: boolean;
@@ -15,17 +16,36 @@ interface EditAgentModalProps {
 
 type AgentPersona = 'helpful' | 'professional' | 'creative' | 'analytical' | 'casual';
 type ResponseLength = 'short' | 'medium' | 'long' | 'detailed';
+type AgentType = 'local' | 'remote';
 
 export function EditAgentModal({ open, onOpenChange, agentId }: EditAgentModalProps) {
   const { agents, updateAgent } = useAgentStore();
-  const [editData, setEditData] = useState({
+  const [editData, setEditData] = useState<{
+    id: string;
+    name: string;
+    persona: AgentPersona;
+    responseLength: ResponseLength;
+    temperature: number;
+    maxTokens: number;
+    systemPrompt: string;
+    agentType: AgentType;
+    modelConfig: ModelConfig;
+  }>({
     id: '',
     name: '',
     persona: 'helpful' as AgentPersona,
     responseLength: 'medium' as ResponseLength,
     temperature: 0.7,
     maxTokens: 2048,
-    systemPrompt: ''
+    systemPrompt: '',
+    agentType: 'local' as AgentType,
+    modelConfig: {
+      model: 'gpt-3.5-turbo',
+      temperature: 0.7,
+      maxTokens: 2048,
+      topP: 1,
+      systemPrompt: ''
+    }
   });
 
   useEffect(() => {
@@ -39,7 +59,9 @@ export function EditAgentModal({ open, onOpenChange, agentId }: EditAgentModalPr
           responseLength: agent.responseLength,
           temperature: agent.temperature,
           maxTokens: agent.maxTokens,
-          systemPrompt: agent.systemPrompt
+          systemPrompt: agent.systemPrompt,
+          agentType: agent.agentType,
+          modelConfig: agent.modelConfig
         });
       }
     }
@@ -89,6 +111,23 @@ export function EditAgentModal({ open, onOpenChange, agentId }: EditAgentModalPr
                 <SelectItem value="creative">Creative</SelectItem>
                 <SelectItem value="analytical">Analytical</SelectItem>
                 <SelectItem value="casual">Casual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="editAgentType">Agent Type</Label>
+            <Select
+              value={editData.agentType}
+              onValueChange={(value: AgentType) =>
+                setEditData(prev => ({ ...prev, agentType: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select agent type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="local">Local</SelectItem>
+                <SelectItem value="remote">Remote</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentStore } from '@/store/useAgentStore';
+import { ModelConfig } from '@/types';
 
 interface AddAgentModalProps {
   open: boolean;
@@ -14,16 +15,34 @@ interface AddAgentModalProps {
 
 type AgentPersona = 'helpful' | 'professional' | 'creative' | 'analytical' | 'casual';
 type ResponseLength = 'short' | 'medium' | 'long' | 'detailed';
+type AgentType = 'local' | 'remote';
 
 export function AddAgentModal({ open, onOpenChange }: AddAgentModalProps) {
   const { addAgent } = useAgentStore();
-  const [newAgentData, setNewAgentData] = useState({
+  const [newAgentData, setNewAgentData] = useState<{
+    name: string;
+    persona: AgentPersona;
+    responseLength: ResponseLength;
+    temperature: number;
+    maxTokens: number;
+    systemPrompt: string;
+    agentType: AgentType;
+    modelConfig: ModelConfig;
+  }>({
     name: '',
     persona: 'helpful' as AgentPersona,
     responseLength: 'medium' as ResponseLength,
     temperature: 0.7,
     maxTokens: 2048,
-    systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
+    systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
+    agentType: 'local' as AgentType,
+    modelConfig: {
+      model: 'gpt-3.5-turbo',
+      temperature: 0.7,
+      maxTokens: 2048,
+      topP: 1,
+      systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
+    }
   });
 
   const handleSubmit = () => {
@@ -40,7 +59,15 @@ export function AddAgentModal({ open, onOpenChange }: AddAgentModalProps) {
       responseLength: 'medium',
       temperature: 0.7,
       maxTokens: 2048,
-      systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
+      systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
+      agentType: 'local',
+      modelConfig: {
+        model: 'gpt-3.5-turbo',
+        temperature: 0.7,
+        maxTokens: 2048,
+        topP: 1,
+        systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
+      }
     });
   };
 
@@ -84,14 +111,31 @@ export function AddAgentModal({ open, onOpenChange }: AddAgentModalProps) {
                 <SelectItem value="analytical">Analytical</SelectItem>
                 <SelectItem value="casual">Casual</SelectItem>
               </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="newResponseLength">Response Length</Label>
-            <Select
-              value={newAgentData.responseLength}
-              onValueChange={(value: ResponseLength) =>
-                setNewAgentData(prev => ({ ...prev, responseLength: value }))
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="newAgentType">Agent Type</Label>
+          <Select
+            value={newAgentData.agentType}
+            onValueChange={(value: AgentType) =>
+              setNewAgentData(prev => ({ ...prev, agentType: value }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select agent type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="local">Local</SelectItem>
+              <SelectItem value="remote">Remote</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="newResponseLength">Response Length</Label>
+          <Select
+            value={newAgentData.responseLength}
+            onValueChange={(value: ResponseLength) =>
+              setNewAgentData(prev => ({ ...prev, responseLength: value }))
               }
             >
               <SelectTrigger>
