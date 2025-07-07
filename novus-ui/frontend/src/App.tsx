@@ -1,19 +1,26 @@
 import { useState, useRef } from 'react';
-import {
-  Navbar,
-  ConversationHistory,
-  MessageList,
-  ChatInput,
-} from '@/components';
-import { Message, Conversation, AgentConfig } from '@/types';
+import { Navbar, ConversationHistory } from '@/components';
 import { useAgentStore } from '@/store/useAgentStore';
+import { useAgentManager } from '@/hooks';
+import { Message, Conversation, AgentConfig } from '@/types';
 
 import './App.css';
+import { MessageList, ChatInput } from './modules/messenger';
 import { AgentConfiguration } from './modules/agent/AgentConfiguration';
-
 
 function App() {
   const { agents, activeAgentId, reset } = useAgentStore();
+  const {
+    activeAgent,
+    activeProvider,
+    isReady,
+    agentType,
+    sendMessage,
+  } = useAgentManager();
+
+  // Message ID counter for unique IDs
+  const messageIdCounter = useRef(1);
+  const generateMessageId = () => messageIdCounter.current++;
 
   // State for conversations
   const [conversations, setConversations] = useState<Conversation[]>([
@@ -30,6 +37,9 @@ function App() {
     { id: 3, role: 'user', content: 'I need help with React component architecture.' },
   ]);
 
+  // Initialize message counter to start after existing messages
+  messageIdCounter.current = Math.max(...messages.map(m => m.id)) + 1;
+
   // State for loading status
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -39,8 +49,13 @@ function App() {
 
   // Handlers
   const handleSendMessage = async (content: string) => {
+    if (!isReady) {
+      console.warn('Agent not ready. Please select an agent and provider.');
+      return;
+    }
+
     const newMessage: Message = {
-      id: messages.length + 1,
+      id: generateMessageId(),
       role: 'user',
       content,
       timestamp: new Date().toISOString()
@@ -49,34 +64,83 @@ function App() {
     setMessages(prev => [...prev, newMessage]);
     setIsLoading(true);
 
-    // Get current agent for context
-    const currentAgent = agents.find(agent => agent.id === activeAgentId);
-    const agentName = currentAgent?.name || 'AI Assistant';
+    try {
+      // Get current active conversation ID (for this demo, we'll use the active conversation)
+      const activeConversationId = conversations.find(c => c.active)?.id.toString() || 'default';
 
-    // Simulate API call delay with timeout reference for cancellation
-    timeoutRef.current = setTimeout(() => {
+      // Send message using AgentManager
+      const response = await sendMessage(content, {
+        conversationId: activeConversationId,
+        onError: (error) => {
+          console.error('Message sending failed:', error);
+          // Add error message to chat
+          const errorMessage: Message = {
+            id: generateMessageId(),
+            role: 'assistant',
+            content: `❌ Error: ${error.message}. Please check your agent configuration and try again.`,
+            timestamp: new Date().toISOString()
+          };
+          setMessages(prev => [...prev, errorMessage]);
+          setIsLoading(false);
+        }
+      });
+
+      // Add assistant response to messages
       const assistantMessage: Message = {
-        id: messages.length + 2,
+        id: generateMessageId(),
         role: 'assistant',
-        content: `Hello! I'm ${agentName}. You asked: "${content}". This is a simulated response. In the actual implementation, this would be connected to your AI agent service using my specialized tools and capabilities.`,
-        timestamp: new Date().toISOString()
+        content: response.content,
+        timestamp: response.timestamp
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Log metadata for debugging
+      if (response.metadata) {
+        console.log('Response metadata:', {
+          model: response.metadata.model,
+          provider: response.metadata.provider,
+          agentType: response.metadata.agentType,
+          responseTime: response.metadata.responseTime
+        });
+      }
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}. ${
+          !activeAgent ? 'No agent selected.' :
+          !activeProvider && agentType === 'local' ? 'No provider configured for local agent.' :
+          activeAgent.agentType === 'remote' && !activeAgent.url ? 'No URL configured for remote agent.' :
+          'Please check your configuration and try again.'
+        }`,
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
       timeoutRef.current = null;
-    }, 2000); // Increased delay to better demo the stop functionality
+    }
   };
 
   const handleStopGeneration = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (isLoading) {
+      // Clear any timeout references
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
       setIsLoading(false);
 
       // Add a system message indicating the generation was stopped
       const stopMessage: Message = {
-        id: messages.length + 1,
+        id: generateMessageId(),
         role: 'assistant',
         content: '⏹️ Generation stopped by user.',
         timestamp: new Date().toISOString()
@@ -84,6 +148,10 @@ function App() {
 
       setMessages(prev => [...prev, stopMessage]);
       console.log('Generation stopped by user');
+
+      // TODO: Implement request cancellation in AgentManager
+      // For now, we can only stop the UI state, but the underlying request may continue
+      console.warn('Note: Underlying agent request may still be processing. Request cancellation will be implemented in a future update.');
     }
   };
 
@@ -96,7 +164,7 @@ function App() {
     }
 
     const newConversation: Conversation = {
-      id: conversations.length + 1,
+      id: Math.max(...conversations.map(c => c.id)) + 1,
       title: "New Conversation",
       timestamp: "Just now",
       active: true
@@ -117,6 +185,8 @@ function App() {
       timeoutRef.current = null;
       setIsLoading(false);
     }
+
+
 
     const updatedConversations = conversations.map(conv => ({
       ...conv,
@@ -156,10 +226,42 @@ function App() {
             isLoading={isLoading}
           />
 
+          {/* Agent Status Bar */}
+          <div className="border-t border-border bg-white px-6 py-2">
+            <div className="max-w-4xl mx-auto flex items-center justify-between text-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className="text-muted-foreground">
+                    Agent: {activeAgent?.name || 'None'} ({agentType || 'N/A'})
+                  </span>
+                </div>
+                {agentType === 'local' && (
+                  <div className="text-muted-foreground">
+                    Provider: {activeProvider?.name || 'None'}
+                  </div>
+                )}
+                {agentType === 'remote' && activeAgent?.url && (
+                  <div className="text-muted-foreground">
+                    URL: {new URL(activeAgent.url).hostname}
+                  </div>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {isReady ? 'Ready' : 'Not Ready - Configure agent and provider'}
+              </div>
+            </div>
+          </div>
+
           <ChatInput
             onSendMessage={handleSendMessage}
             onStop={handleStopGeneration}
-            disabled={isLoading}
+            disabled={isLoading || !isReady}
+            placeholder={
+              !isReady
+                ? "Configure an agent and provider to start chatting..."
+                : "Type your message here..."
+            }
           />
         </div>
 

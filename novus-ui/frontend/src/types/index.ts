@@ -64,6 +64,14 @@ export interface AgentSettings {
   systemPrompt: string;
   agentType: 'local' | 'remote';
   url?: string; // URL for remote A2A agents
+  // Authentication for remote A2A agents
+  auth?: {
+    type: 'bearer' | 'apikey' | 'basic' | 'none';
+    token?: string;        // For bearer tokens or API keys
+    username?: string;     // For basic auth
+    password?: string;     // For basic auth
+    headerName?: string;   // Custom header name for API keys (default: 'Authorization')
+  };
   modelConfig: ModelConfig;
   // Optional properties to make it compatible with Agent interface where needed
   description?: string;

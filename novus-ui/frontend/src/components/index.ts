@@ -2,11 +2,6 @@
 export { Navbar } from './Navbar';
 export { ConversationHistory } from './ConversationHistory';
 export { ConversationItem } from './ConversationItem';
-export { MessageList } from './MessageList';
-export { Message } from './Message';
-export { ChatInput } from './ChatInput';
-// export { AgentConfiguration } from '../modules/agent/AgentConfiguration';
-// export { SettingsDialog } from '../modules/agent/SettingsDialog';
 
 // UI components from shadcn/ui
 export { Button } from './ui/button';
