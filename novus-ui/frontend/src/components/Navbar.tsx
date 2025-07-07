@@ -7,7 +7,7 @@ interface NavbarProps {
   userName?: string;
 }
 
-export function Navbar({ userName = "Marsch Huynh" }: NavbarProps) {
+export function Navbar({ userName = "Guest" }: NavbarProps) {
   const [showSettings, setShowSettings] = useState(false);
 
   return (
@@ -28,12 +28,12 @@ export function Navbar({ userName = "Marsch Huynh" }: NavbarProps) {
               <Settings className="h-4 w-4" />
               <span className="sr-only">Settings</span>
             </Button>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="text-sm font-medium">{userName}</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </nav>
