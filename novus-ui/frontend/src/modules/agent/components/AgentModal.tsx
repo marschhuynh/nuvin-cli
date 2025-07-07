@@ -510,6 +510,29 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
             </>
           )}
 
+          {/* Shared Configuration - Available for all agent types */}
+          <div className="grid gap-2">
+            <Label htmlFor="systemPrompt">
+              {agentData.agentType === 'remote' ? 'Instructions (sent to remote agent)' : 'System Prompt'}
+            </Label>
+            <Textarea
+              id="systemPrompt"
+              value={agentData.systemPrompt}
+              onChange={(e) => setAgentData(prev => ({ ...prev, systemPrompt: e.target.value }))}
+              placeholder={agentData.agentType === 'remote'
+                ? "Enter instructions for the remote agent..."
+                : "Enter system prompt..."
+              }
+              className="min-h-[100px] resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              {agentData.agentType === 'remote'
+                ? 'Instructions that will be sent to the remote agent along with your messages'
+                : 'Define the agent\'s behavior and role'
+              }
+            </p>
+          </div>
+
           {/* Local Agent Configuration */}
           {agentData.agentType === 'local' && (
             <>
@@ -582,20 +605,6 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
                 />
                 <p className="text-xs text-muted-foreground">
                   Maximum number of tokens in the response (100-8192)
-                </p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="systemPrompt">System Prompt</Label>
-                <Textarea
-                  id="systemPrompt"
-                  value={agentData.systemPrompt}
-                  onChange={(e) => setAgentData(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                  placeholder="Enter system prompt..."
-                  className="min-h-[100px] resize-none"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Define the agent's behavior and role
                 </p>
               </div>
             </>
