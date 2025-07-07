@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { useAgentStore } from '@/store/useAgentStore';
 import { ModelConfig } from '@/types';
@@ -151,15 +152,13 @@ export function AddAgentModal({ open, onOpenChange }: AddAgentModalProps) {
           </div>
           <div className="grid gap-2">
             <Label htmlFor="newTemperature">Temperature: {newAgentData.temperature}</Label>
-            <input
-              type="range"
-              id="newTemperature"
-              min="0"
-              max="2"
-              step="0.1"
-              value={newAgentData.temperature}
-              onChange={(e) => setNewAgentData(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            <Slider
+              value={[newAgentData.temperature]}
+              onValueChange={(value) => setNewAgentData(prev => ({ ...prev, temperature: value[0] }))}
+              max={2}
+              min={0}
+              step={0.1}
+              className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Focused (0)</span>

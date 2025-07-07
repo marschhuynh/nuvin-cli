@@ -6,15 +6,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { GeneralSettings } from './components/GeneralSettings';
-import { ProviderSettings } from './components/ProviderSettings';
-import { AgentSettings } from './components/AgentSettings';
-import { AddProviderModal } from './components/AddProviderModal';
-import { AddAgentModal } from './components/AddAgentModal';
-import { EditAgentModal } from './components/EditAgentModal';
 import { useAgentStore } from '@/store/useAgentStore';
 import { useProviderStore } from '@/store/useProviderStore';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
+
+import { GeneralSettings } from './GeneralSettings';
+import {
+  AgentSettings,
+  AddAgentModal,
+  EditAgentModal
+} from '../agent/components';
+import { AddProviderModal, ProviderSettings } from '../provider';
+
 
 interface SettingsDialogProps {
   open: boolean;

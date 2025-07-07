@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MessageCircle, User, Settings } from 'lucide-react';
 import { Button } from './ui/button';
-import { SettingsDialog } from '@/modules/agent/SettingsDialog';
+import { SettingsDialog } from '@/modules/setting/SettingsDialog';
 
 interface NavbarProps {
   userName?: string;

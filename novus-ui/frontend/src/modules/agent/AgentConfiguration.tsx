@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -9,9 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bot, CheckCircle, Circle, Clock } from 'lucide-react';
+import { Bot, CheckCircle, Circle, Clock, Settings } from 'lucide-react';
 import { AgentConfig, AgentSettings } from '@/types';
 import { useAgentStore } from '@/store/useAgentStore';
+import { useProviderStore } from '@/store/useProviderStore';
 
 interface AgentConfigurationProps {
   onConfigChange?: (config: AgentConfig) => void;
@@ -21,8 +21,9 @@ interface AgentConfigurationProps {
 export function AgentConfiguration({
   onConfigChange,
   onReset
-}: AgentConfigurationProps) {
-  const { agents, activeAgentId, setActiveAgent, reset } = useAgentStore();
+  }: AgentConfigurationProps) {
+    const { agents, activeAgentId, setActiveAgent, reset } = useAgentStore();
+    const { providers, activeProviderId, setActiveProvider } = useProviderStore();
 
   // Notify parent when store changes
   useEffect(() => {
@@ -33,7 +34,7 @@ export function AgentConfiguration({
       };
       onConfigChange(config);
     }
-  }, [agents, activeAgentId, onConfigChange]);
+  }, [agents, activeAgentId, providers, activeProviderId, onConfigChange]);
 
   const handleAgentChange = (agentId: string) => {
     setActiveAgent(agentId);
@@ -44,7 +45,12 @@ export function AgentConfiguration({
     onReset?.();
   };
 
+  const handleProviderChange = (providerId: string) => {
+    setActiveProvider(providerId);
+  };
+
   const selectedAgent = agents.find(agent => agent.id === activeAgentId);
+  const selectedProvider = providers.find(provider => provider.id === activeProviderId);
 
   const getStatusIcon = (status?: AgentSettings['status']) => {
     switch (status) {
@@ -156,27 +162,6 @@ export function AgentConfiguration({
           {/* Active Agent Info */}
           {selectedAgent && (
             <>
-              {/* Agent Status */}
-              <div className="space-y-2">
-                <Label className="text-xs sm:text-sm">Status</Label>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(selectedAgent.status || 'active')}
-                    <span className="capitalize font-medium">{getStatusText(selectedAgent.status || 'active')}</span>
-                  </div>
-                  {selectedAgent.lastUsed && (
-                    <span className="text-muted-foreground text-xs hidden sm:inline">
-                      • Last used {selectedAgent.lastUsed}
-                    </span>
-                  )}
-                  {selectedAgent.lastUsed && (
-                    <span className="text-muted-foreground text-xs sm:hidden">
-                      {selectedAgent.lastUsed}
-                    </span>
-                  )}
-                </div>
-              </div>
-
               {/* Agent Description */}
               <div className="space-y-2">
                 <Label className="text-xs sm:text-sm">Description</Label>
@@ -222,9 +207,38 @@ export function AgentConfiguration({
             </>
           )}
 
-          <Button variant="outline" className="w-full text-xs sm:text-sm" onClick={handleReset}>
-            Reset to Defaults
-          </Button>
+          <div className="flex items-center gap-2 text-sm font-medium mb-3 sm:mb-4">
+            <Bot className="h-4 w-4" />
+            <span className="hidden sm:inline">Model Configuration</span>
+            <span className="sm:hidden">Model</span>
+          </div>
+
+          {/* Provider Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="provider" className="text-xs sm:text-sm">Select Provider</Label>
+            <Select
+              value={activeProviderId}
+              onValueChange={handleProviderChange}
+            >
+              <SelectTrigger className="text-xs sm:text-sm">
+                <SelectValue placeholder="Select a provider" />
+              </SelectTrigger>
+              <SelectContent>
+                {providers.map((provider) => (
+                  <SelectItem key={provider.id} value={provider.id} className="text-xs sm:text-sm">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-3 w-3 text-blue-500" />
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate font-medium">{provider.name}</span>
+                        <span className="text-xs text-muted-foreground">{provider.type}</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
         </div>
       </div>
     </div>

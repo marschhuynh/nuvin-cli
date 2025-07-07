@@ -49,7 +49,8 @@ export interface AgentConfig {
 
 export interface ProviderConfig {
   id: string;
-  name: string;
+  name: string; // Custom name for the provider instance
+  type: string; // Provider type (OpenAI, Anthropic, GitHub, etc.)
   apiKey: string;
 }
 
