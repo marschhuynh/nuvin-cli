@@ -1,15 +1,16 @@
 import { useState, useRef } from 'react';
 import { Navbar, ConversationHistory } from '@/components';
-import { useAgentStore } from '@/store/useAgentStore';
 import { useAgentManager } from '@/hooks';
 import { Message, Conversation, AgentConfig } from '@/types';
 
 import './App.css';
 import { MessageList, ChatInput } from './modules/messenger';
 import { AgentConfiguration } from './modules/agent/AgentConfiguration';
+import { smartFetch } from './lib/fetch-proxy';
+
+window.fetch = smartFetch;
 
 function App() {
-  const { agents, activeAgentId, reset } = useAgentStore();
   const {
     activeAgent,
     activeProvider,
@@ -186,8 +187,6 @@ function App() {
       setIsLoading(false);
     }
 
-
-
     const updatedConversations = conversations.map(conv => ({
       ...conv,
       active: conv.id === conversationId
@@ -202,11 +201,6 @@ function App() {
     console.log('Agent config updated:', config);
     const selectedAgent = config.agents.find(agent => agent.id === config.selectedAgent);
     console.log('Selected agent:', selectedAgent?.name);
-  };
-
-  const handleAgentConfigReset = () => {
-    reset();
-    console.log('Agent config reset to defaults');
   };
 
   return (
@@ -267,7 +261,6 @@ function App() {
 
         <AgentConfiguration
           onConfigChange={handleAgentConfigChange}
-          onReset={handleAgentConfigReset}
         />
       </div>
     </div>

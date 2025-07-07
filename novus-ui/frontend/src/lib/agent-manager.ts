@@ -1,4 +1,6 @@
 import { AgentSettings, ProviderConfig, Message } from '@/types';
+import { LogError } from '@wails/runtime';
+
 import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError, A2AErrorType } from './a2a';
 import type { Task, Message as A2AMessage, Part } from './a2a';
 
@@ -73,39 +75,24 @@ export class AgentManager {
     return AgentManager.instance;
   }
 
-  /**
-   * Set the active agent
-   */
   setActiveAgent(agent: AgentSettings): void {
     this.activeAgent = agent;
     console.log(`Active agent set to: ${agent.name} (${agent.agentType})`);
   }
 
-  /**
-   * Set the active provider for local agents
-   */
   setActiveProvider(provider: ProviderConfig): void {
     this.activeProvider = provider;
     console.log(`Active provider set to: ${provider.name} (${provider.type})`);
   }
 
-  /**
-   * Get the current active agent
-   */
   getActiveAgent(): AgentSettings | null {
     return this.activeAgent;
   }
 
-  /**
-   * Get the current active provider
-   */
   getActiveProvider(): ProviderConfig | null {
     return this.activeProvider;
   }
 
-  /**
-   * Convert agent auth config to A2A auth config
-   */
   private createA2AAuthConfig(agent: AgentSettings): A2AAuthConfig | undefined {
     if (!agent.auth || agent.agentType !== 'remote') {
       return undefined;
@@ -120,9 +107,6 @@ export class AgentManager {
     };
   }
 
-  /**
-   * Send a message to the active agent
-   */
   async sendMessage(
     content: string,
     options: SendMessageOptions = {}
@@ -141,7 +125,7 @@ export class AgentManager {
       if (this.activeAgent.agentType === 'remote' && this.activeAgent.url) {
         response = await this.sendA2AMessage(content, options, messageId, timestamp, startTime);
       } else {
-        response = await this.sendLocalMessage(content, options, messageId, timestamp, startTime);
+        throw new Error('Not supported');
       }
 
       // Store in conversation history
@@ -174,9 +158,6 @@ export class AgentManager {
     }
   }
 
-  /**
-   * Send message to A2A remote agent
-   */
   private async sendA2AMessage(
     content: string,
     options: SendMessageOptions,
@@ -254,6 +235,7 @@ export class AgentManager {
         };
       }
     } catch (error) {
+      LogError(`Error sending A2A message: ${error}`);
       // Enhanced error handling with user-friendly messages
       if (error instanceof A2AError) {
         throw new Error(error.getUserMessage());
@@ -263,7 +245,7 @@ export class AgentManager {
     }
   }
 
-    /**
+  /**
    * Poll for task completion with exponential backoff
    */
   private async pollForTaskCompletion(
@@ -451,132 +433,7 @@ export class AgentManager {
     }
   }
 
-  /**
-   * Send message to local LLM provider
-   */
-  private async sendLocalMessage(
-    content: string,
-    options: SendMessageOptions,
-    messageId: string,
-    timestamp: string,
-    startTime: number
-  ): Promise<MessageResponse> {
-    if (!this.activeProvider) {
-      throw new Error('No active provider configured for local agent');
-    }
-
-    if (!this.activeAgent) {
-      throw new Error('No active agent configured');
-    }
-
-    // For now, we'll create a placeholder implementation
-    // In a real implementation, you would integrate with your LLM provider here
-    // This could be OpenAI, Anthropic, local models, etc.
-
-    try {
-      const responseContent = await this.callLLMProvider(content, options);
-      const responseTime = Date.now() - startTime;
-
-      if (options.onComplete) {
-        options.onComplete(responseContent);
-      }
-
-      return {
-        id: messageId,
-        content: responseContent,
-        role: 'assistant',
-        timestamp: new Date().toISOString(),
-        metadata: {
-          agentType: 'local',
-          agentId: this.activeAgent.id,
-          model: this.activeAgent.modelConfig.model,
-          provider: this.activeProvider.type,
-          responseTime
-        }
-      };
-    } catch (error) {
-      throw new Error(`Local LLM communication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Call the LLM provider (placeholder implementation)
-   */
-  private async callLLMProvider(content: string, options: SendMessageOptions): Promise<string> {
-    if (!this.activeAgent || !this.activeProvider) {
-      throw new Error('Agent or provider not configured');
-    }
-
-    // Build the conversation context
-    const messages = [];
-
-    // Add system prompt
-    if (this.activeAgent.systemPrompt) {
-      messages.push({
-        role: 'system',
-        content: this.activeAgent.systemPrompt
-      });
-    }
-
-    // Add conversation history if available
-    if (options.conversationId) {
-      const history = this.conversationHistory.get(options.conversationId) || [];
-      messages.push(...history.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      })));
-    }
-
-    // Add current user message
-    messages.push({
-      role: 'user',
-      content
-    });
-
-    // TODO: Implement actual LLM provider calls based on provider type
-    // This is a placeholder that would be replaced with real API calls
-    switch (this.activeProvider.type) {
-      case 'OpenAI':
-        return await this.callOpenAI(messages);
-      case 'Anthropic':
-        return await this.callAnthropic(messages);
-      case 'GitHub':
-        return await this.callGitHubCopilot(messages);
-      default:
-        throw new Error(`Unsupported provider type: ${this.activeProvider.type}`);
-    }
-  }
-
-  /**
-   * Placeholder for OpenAI API call
-   */
-  private async callOpenAI(messages: any[]): Promise<string> {
-    // TODO: Implement OpenAI API integration
-    return `OpenAI response for: ${messages[messages.length - 1].content} (This is a placeholder response)`;
-  }
-
-  /**
-   * Placeholder for Anthropic API call
-   */
-  private async callAnthropic(messages: any[]): Promise<string> {
-    // TODO: Implement Anthropic API integration
-    return `Anthropic response for: ${messages[messages.length - 1].content} (This is a placeholder response)`;
-  }
-
-  /**
-   * Placeholder for GitHub Copilot API call
-   */
-  private async callGitHubCopilot(messages: any[]): Promise<string> {
-    // TODO: Implement GitHub Copilot API integration
-    return `GitHub Copilot response for: ${messages[messages.length - 1].content} (This is a placeholder response)`;
-  }
-
-  /**
-   * Extract content from A2A response (Task or Message)
-   */
   private extractA2AResponseContent(response: Task | A2AMessage): string {
-    console.log('Extracting A2A response content:', response);
-
     if (response.kind === 'message') {
       // Extract text from message parts
       const textParts = response.parts
@@ -586,8 +443,6 @@ export class AgentManager {
 
       return textParts || 'No response content';
     } else if (response.kind === 'task') {
-      console.log(`Processing task response - State: ${response.status.state}, Artifacts: ${response.artifacts?.length || 0}`);
-
       // For tasks, check the status message first
       if (response.status.message?.parts) {
         const statusText = response.status.message.parts
@@ -673,16 +528,10 @@ export class AgentManager {
     }
   }
 
-  /**
-   * Generate unique message ID
-   */
   private generateMessageId(): string {
     return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  /**
-   * Get a task by ID from an A2A agent
-   */
   async getTask(agentUrl: string, taskId: string, options?: {
     timeout?: number;
     enableRetry?: boolean;
@@ -706,9 +555,6 @@ export class AgentManager {
     }
   }
 
-  /**
-   * Cancel a task on an A2A agent
-   */
   async cancelTask(agentUrl: string, taskId: string, options?: {
     timeout?: number;
     enableRetry?: boolean;
@@ -733,16 +579,10 @@ export class AgentManager {
     }
   }
 
-  /**
-   * Get all tracked tasks from A2A service
-   */
   getTasks() {
     return a2aService.getTasks();
   }
 
-  /**
-   * Get tasks for the active agent
-   */
   getActiveAgentTasks() {
     if (this.activeAgent?.agentType === 'remote' && this.activeAgent.url) {
       return a2aService.getTasksForAgent(this.activeAgent.url);
@@ -750,9 +590,6 @@ export class AgentManager {
     return [];
   }
 
-  /**
-   * Get available models for the current provider
-   */
   getAvailableModels(): string[] {
     if (!this.activeProvider) {
       return [];
@@ -848,37 +685,6 @@ export class AgentManager {
     }
 
     return this.testAgentConnectivity(this.activeAgent);
-  }
-
-  /**
-   * Bulk test multiple agents connectivity
-   */
-  async testMultipleAgentsConnectivity(agents: AgentSettings[]): Promise<Array<{
-    agent: AgentSettings;
-    connected: boolean;
-    error?: A2AError;
-  }>> {
-    const remoteAgents = agents
-      .filter(agent => agent.agentType === 'remote' && agent.url)
-      .map(agent => ({
-        url: agent.url!,
-        authConfig: this.createA2AAuthConfig(agent),
-        settings: agent
-      }));
-
-    if (remoteAgents.length === 0) {
-      return [];
-    }
-
-    const results = await a2aService.testMultipleConnections(
-      remoteAgents.map(({ url, authConfig }) => ({ url, authConfig }))
-    );
-
-    return results.map((result, index) => ({
-      agent: remoteAgents[index].settings,
-      connected: result.connected,
-      error: result.error
-    }));
   }
 
   /**

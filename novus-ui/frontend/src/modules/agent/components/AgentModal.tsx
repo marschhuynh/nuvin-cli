@@ -10,6 +10,7 @@ import { useAgentStore } from '@/store/useAgentStore';
 import { ModelConfig, AgentSettings } from '@/types';
 import { Check, X, Loader2, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 import { a2aService, A2AError, A2AErrorType } from '@/lib';
+import { LogInfo } from '@wails/runtime';
 
 interface AgentModalProps {
   open: boolean;
@@ -118,6 +119,7 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
 
       // Test the connection using the enhanced A2A service
       const isConnected = await a2aService.testConnection(agentData.url, authConfig);
+      LogInfo(`isConnected: ${isConnected}`);
 
       if (isConnected) {
         console.log('A2A Agent connected successfully');

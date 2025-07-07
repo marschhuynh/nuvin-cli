@@ -6,6 +6,10 @@ export function FetchGithubCopilotKey() {
   return window['go']['main']['App']['FetchGithubCopilotKey']();
 }
 
+export function FetchProxy(arg1) {
+  return window['go']['main']['App']['FetchProxy'](arg1);
+}
+
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }

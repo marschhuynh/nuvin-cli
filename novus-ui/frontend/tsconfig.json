@@ -23,6 +23,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@wails/runtime": [
+        "./wailsjs/runtime/runtime.d.ts"
       ]
     }
   },

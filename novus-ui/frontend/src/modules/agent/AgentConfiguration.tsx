@@ -151,37 +151,7 @@ export function AgentConfiguration({
   // Helper function to get default tools based on persona
   const getAgentTools = (agent: AgentSettings) => {
     if (agent.tools) return agent.tools;
-
-    // Generate default tools based on persona for local agents
-    const personaTools = {
-      helpful: [
-        { name: 'General Q&A', description: 'Answer questions on various topics', enabled: true },
-        { name: 'Task Planning', description: 'Help organize and plan tasks', enabled: true },
-        { name: 'Research Assistant', description: 'Provide research and information', enabled: true }
-      ],
-      professional: [
-        { name: 'Business Analysis', description: 'Analyze business scenarios and data', enabled: true },
-        { name: 'Report Generation', description: 'Create professional reports', enabled: true },
-        { name: 'Strategic Planning', description: 'Assist with strategic decisions', enabled: true }
-      ],
-      creative: [
-        { name: 'Content Creation', description: 'Generate creative content', enabled: true },
-        { name: 'Brainstorming', description: 'Generate ideas and concepts', enabled: true },
-        { name: 'Storytelling', description: 'Craft narratives and stories', enabled: true }
-      ],
-      analytical: [
-        { name: 'Data Analysis', description: 'Analyze and interpret data', enabled: true },
-        { name: 'Code Review', description: 'Review and optimize code', enabled: true },
-        { name: 'Problem Solving', description: 'Break down complex problems', enabled: true }
-      ],
-      casual: [
-        { name: 'Conversation', description: 'Friendly conversation partner', enabled: true },
-        { name: 'Quick Help', description: 'Fast answers to simple questions', enabled: true },
-        { name: 'Entertainment', description: 'Fun activities and games', enabled: true }
-      ]
-    };
-
-    return personaTools[agent.persona] || [];
+    return [];
   };
 
   return (
@@ -229,7 +199,7 @@ export function AgentConfiguration({
           {selectedAgent && (
             <>
               {/* Agent Description - Only show if no agent card info for remote agents */}
-              {!(selectedAgent.agentType === 'remote' && agentCardInfo) && (
+              {selectedAgent.agentType === 'local' && (
                 <div className="space-y-2">
                   <Label className="text-xs sm:text-sm">Description</Label>
                   <p className="text-xs sm:text-sm text-muted-foreground p-2 sm:p-3 bg-muted rounded-md">
@@ -239,7 +209,7 @@ export function AgentConfiguration({
               )}
 
               {/* Tools/Skills - Only show for local agents or remote agents without agent card info */}
-              {!(selectedAgent.agentType === 'remote' && agentCardInfo) && (
+              {selectedAgent.agentType === 'local' && (
                 <div className="space-y-2">
                   <Label className="text-xs sm:text-sm">Available Tools ({getAgentTools(selectedAgent).filter(t => t.enabled).length})</Label>
                   <div className="space-y-1 sm:space-y-2 max-h-28 sm:max-h-100 overflow-y-auto">

@@ -22,6 +22,8 @@ import type {
   GetTaskResponse,
   CancelTaskResponse,
 } from '@a2a-js/sdk/build/src/types.js';
+import { LogError, LogInfo } from '@wails/runtime';
+import { fetchProxy, smartFetch } from './fetch-proxy';
 
 // Re-export types that may be needed by other modules
 export type {
@@ -190,7 +192,9 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
  * Service for managing A2A (Agent-to-Agent) communication
  * Follows the official A2A specification v0.2.5
  */
+
 export class A2AService {
+
   private static instance: A2AService;
   private clients: Map<string, A2AClient> = new Map();
   private authConfigs: Map<string, A2AAuthConfig> = new Map();
@@ -251,6 +255,7 @@ export class A2AService {
 
         return result;
       } catch (error) {
+        LogError(`Error: ${error}`);
         lastError = error as Error;
 
         // Update failure count
@@ -356,6 +361,7 @@ export class A2AService {
    */
   private getClient(agentBaseUrl: string, authConfig?: A2AAuthConfig): A2AClient {
     if (!this.clients.has(agentBaseUrl)) {
+      LogInfo(`Creating A2A client for ${agentBaseUrl}`);
       const client = new A2AClient(agentBaseUrl);
       this.clients.set(agentBaseUrl, client);
     }
@@ -385,13 +391,10 @@ export class A2AService {
   }
 
   /**
-   * Apply authentication to client by patching fetch
+   * Create authenticated fetch function
    */
-  private patchClientAuth(client: A2AClient, authConfig: A2AAuthConfig): void {
-    const globalObj = this.getGlobalObject();
-    const originalFetch = globalObj.fetch;
-
-    globalObj.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  private createAuthenticatedFetch(authConfig: A2AAuthConfig): typeof fetch {
+    return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const requestInit = { ...init };
       const headers = { ...requestInit.headers } as Record<string, string>;
 
@@ -419,16 +422,24 @@ export class A2AService {
       }
 
       requestInit.headers = headers;
-      return originalFetch(input, requestInit);
+      return fetchProxy(input, requestInit);
     };
   }
 
   /**
-   * Restore original fetch implementation
+   * Apply authentication by patching the global object temporarily
    */
-  private restoreOriginalFetch(originalFetch: typeof fetch): void {
+  private patchClientAuth(authConfig: A2AAuthConfig): () => void {
     const globalObj = this.getGlobalObject();
-    globalObj.fetch = originalFetch;
+    const originalFetch = globalObj.fetch;
+
+    // Replace with authenticated fetch
+    globalObj.fetch = this.createAuthenticatedFetch(authConfig);
+
+    // Return cleanup function
+    return () => {
+      globalObj.fetch = originalFetch;
+    };
   }
 
   /**
@@ -458,6 +469,7 @@ export class A2AService {
     try {
       new URL(agentBaseUrl);
     } catch (urlError) {
+      LogInfo(`Invalid agent URL format: ${agentBaseUrl}. Please provide a valid HTTP/HTTPS URL.`);
       throw new A2AError(
         `Invalid agent URL format: ${agentBaseUrl}. Please provide a valid HTTP/HTTPS URL.`,
         A2AErrorType.PROTOCOL_ERROR,
@@ -469,19 +481,46 @@ export class A2AService {
     return this.withRetry(async () => {
       const client = this.getClient(agentBaseUrl, authConfig);
 
-      // Temporarily patch auth if needed
-      const globalObj = this.getGlobalObject();
-      const originalFetch = globalObj.fetch;
+      // Apply authentication if needed
+      let cleanup: (() => void) | undefined;
       if (authConfig && authConfig.type !== 'none') {
-        this.patchClientAuth(client, authConfig);
+        cleanup = this.patchClientAuth(authConfig);
       }
 
       try {
-        const agentCard = await client.getAgentCard();
-        return agentCard;
+        LogInfo(`Fetching agent card from: ${agentBaseUrl}`);
+
+        // Try using the SDK client first
+        try {
+          const agentCard = await client.getAgentCard();
+          LogInfo(`Agent card retrieved successfully: ${agentCard.name}`);
+          return agentCard;
+        } catch (sdkError) {
+          LogError(`SDK client failed: ${sdkError}, trying direct fetch...`);
+
+          // Fallback to direct fetch using smart fetch
+          const authFetch = authConfig && authConfig.type !== 'none'
+            ? this.createAuthenticatedFetch(authConfig)
+            : smartFetch;
+
+          const response = await authFetch(`${agentBaseUrl}/.well-known/agent.json`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const agentCard = await response.json() as AgentCard;
+          LogInfo(`Agent card retrieved via direct fetch: ${agentCard.name}`);
+          return agentCard;
+        }
+      } catch (error) {
+        LogError(`Failed to load agent card: ${error instanceof Error ? error.message : String(error)}`);
+        throw error;
       } finally {
-        // Restore original fetch
-        this.restoreOriginalFetch(originalFetch);
+        // Restore original fetch if it was patched
+        if (cleanup) {
+          cleanup();
+        }
       }
     }, agentBaseUrl, { timeout: 10000 });
   }
@@ -490,6 +529,7 @@ export class A2AService {
    * Test connectivity to an A2A agent
    */
   async testConnection(agentBaseUrl: string, authConfig?: A2AAuthConfig): Promise<boolean> {
+    LogInfo(`Testing connection to: ${agentBaseUrl}`);
     try {
       await this.discoverAgent(agentBaseUrl, authConfig);
       return true;
@@ -531,6 +571,7 @@ export class A2AService {
     authConfig?: A2AAuthConfig,
     options?: A2AMessageOptions
   ): Promise<Task | Message> {
+
     const enableRetry = options?.enableRetry ?? true;
     const timeout = options?.timeout || 30000;
     const maxRetries = options?.maxRetries || 3;
@@ -538,11 +579,12 @@ export class A2AService {
     return this.withRetry(async () => {
       const client = this.getClient(agentBaseUrl, authConfig);
 
-      // Temporarily patch auth if needed
-      const globalObj = this.getGlobalObject();
-      const originalFetch = globalObj.fetch;
+      LogInfo(`Sending message to ${agentBaseUrl}: ${JSON.stringify(content, null, 2)}`);
+
+      // Apply authentication if needed
+      let cleanup: (() => void) | undefined;
       if (authConfig && authConfig.type !== 'none') {
-        this.patchClientAuth(client, authConfig);
+        cleanup = this.patchClientAuth(authConfig);
       }
 
       try {
@@ -606,8 +648,10 @@ export class A2AService {
 
         return result;
       } finally {
-        // Restore original fetch
-        this.restoreOriginalFetch(originalFetch);
+        // Restore original fetch if it was patched
+        if (cleanup) {
+          cleanup();
+        }
       }
     }, agentBaseUrl, { timeout, enableRetry, maxRetries });
   }
@@ -626,11 +670,10 @@ export class A2AService {
     try {
       const client = this.getClient(agentBaseUrl, authConfig);
 
-      // Temporarily patch auth if needed
-      const globalObj = this.getGlobalObject();
-      const originalFetch = globalObj.fetch;
+      // Apply authentication if needed
+      let cleanup: (() => void) | undefined;
       if (authConfig && authConfig.type !== 'none') {
-        this.patchClientAuth(client, authConfig);
+        cleanup = this.patchClientAuth(authConfig);
       }
 
       try {
@@ -700,8 +743,10 @@ export class A2AService {
         });
 
       } finally {
-        // Restore original fetch
-        this.restoreOriginalFetch(originalFetch);
+        // Restore original fetch if it was patched
+        if (cleanup) {
+          cleanup();
+        }
       }
     } catch (error) {
       console.error('A2A sendMessageStream failed:', error);
@@ -733,11 +778,10 @@ export class A2AService {
     return this.withRetry(async () => {
       const client = this.getClient(agentBaseUrl, authConfig);
 
-      // Temporarily patch auth if needed
-      const globalObj = this.getGlobalObject();
-      const originalFetch = globalObj.fetch;
+      // Apply authentication if needed
+      let cleanup: (() => void) | undefined;
       if (authConfig && authConfig.type !== 'none') {
-        this.patchClientAuth(client, authConfig);
+        cleanup = this.patchClientAuth(authConfig);
       }
 
       try {
@@ -772,8 +816,10 @@ export class A2AService {
 
         return task;
       } finally {
-        // Restore original fetch
-        this.restoreOriginalFetch(originalFetch);
+        // Restore original fetch if it was patched
+        if (cleanup) {
+          cleanup();
+        }
       }
     }, agentBaseUrl, { timeout, enableRetry, maxRetries });
   }
@@ -794,11 +840,10 @@ export class A2AService {
     return this.withRetry(async () => {
       const client = this.getClient(agentBaseUrl, authConfig);
 
-      // Temporarily patch auth if needed
-      const globalObj = this.getGlobalObject();
-      const originalFetch = globalObj.fetch;
+      // Apply authentication if needed
+      let cleanup: (() => void) | undefined;
       if (authConfig && authConfig.type !== 'none') {
-        this.patchClientAuth(client, authConfig);
+        cleanup = this.patchClientAuth(authConfig);
       }
 
       try {
@@ -827,8 +872,10 @@ export class A2AService {
 
         return task;
       } finally {
-        // Restore original fetch
-        this.restoreOriginalFetch(originalFetch);
+        // Restore original fetch if it was patched
+        if (cleanup) {
+          cleanup();
+        }
       }
     }, agentBaseUrl, { timeout, enableRetry, maxRetries });
   }

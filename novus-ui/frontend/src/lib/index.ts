@@ -29,3 +29,14 @@ export type {
 
 // Utils
 export * from './utils';
+
+export { fetchGithubCopilotKey } from './github';
+
+// Export fetch proxy utilities
+export {
+  fetchProxy,
+  enableGlobalFetchProxy,
+  disableGlobalFetchProxy,
+  smartFetch,
+  isWailsEnvironment
+} from './fetch-proxy';

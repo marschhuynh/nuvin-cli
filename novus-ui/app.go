@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,6 +19,24 @@ type App struct {
 	ctx context.Context
 }
 
+// FetchRequest represents a fetch request from JavaScript
+type FetchRequest struct {
+	URL     string            `json:"url"`
+	Method  string            `json:"method"`
+	Headers map[string]string `json:"headers"`
+	Body    string            `json:"body,omitempty"`
+}
+
+// FetchResponse represents the response to send back to JavaScript
+type FetchResponse struct {
+	Status     int               `json:"status"`
+	StatusText string            `json:"statusText"`
+	Headers    map[string]string `json:"headers"`
+	Body       string            `json:"body"`
+	OK         bool              `json:"ok"`
+	Error      string            `json:"error,omitempty"`
+}
+
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
@@ -27,6 +46,95 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+}
+
+// FetchProxy handles HTTP requests from JavaScript, bypassing CORS and browser restrictions
+func (a *App) FetchProxy(fetchReq FetchRequest) FetchResponse {
+	runtime.LogInfo(a.ctx, fmt.Sprintf("FetchProxy: %s %s", fetchReq.Method, fetchReq.URL))
+
+	// Default method to GET if not specified
+	if fetchReq.Method == "" {
+		fetchReq.Method = "GET"
+	}
+
+	// Create HTTP client with reasonable timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// Prepare request body
+	var bodyReader io.Reader
+	if fetchReq.Body != "" {
+		bodyReader = strings.NewReader(fetchReq.Body)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequest(fetchReq.Method, fetchReq.URL, bodyReader)
+	if err != nil {
+		runtime.LogError(a.ctx, fmt.Sprintf("Failed to create request: %v", err))
+		return FetchResponse{
+			Status:     0,
+			StatusText: "Request Creation Failed",
+			OK:         false,
+			Error:      err.Error(),
+			Headers:    make(map[string]string),
+		}
+	}
+
+	// Set headers
+	for key, value := range fetchReq.Headers {
+		req.Header.Set(key, value)
+	}
+
+	// Set default User-Agent if not provided
+	if req.Header.Get("User-Agent") == "" {
+		req.Header.Set("User-Agent", "Teaky-Agent/1.0")
+	}
+
+	// Execute request
+	resp, err := client.Do(req)
+	if err != nil {
+		runtime.LogError(a.ctx, fmt.Sprintf("Request failed: %v", err))
+		return FetchResponse{
+			Status:     0,
+			StatusText: "Network Error",
+			OK:         false,
+			Error:      err.Error(),
+			Headers:    make(map[string]string),
+		}
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		runtime.LogError(a.ctx, fmt.Sprintf("Failed to read response body: %v", err))
+		return FetchResponse{
+			Status:     resp.StatusCode,
+			StatusText: resp.Status,
+			OK:         resp.StatusCode >= 200 && resp.StatusCode < 300,
+			Error:      err.Error(),
+			Headers:    make(map[string]string),
+		}
+	}
+
+	// Convert response headers to map
+	headers := make(map[string]string)
+	for key, values := range resp.Header {
+		if len(values) > 0 {
+			headers[key] = values[0] // Take first value for simplicity
+		}
+	}
+
+	runtime.LogInfo(a.ctx, fmt.Sprintf("Response: %d %s", resp.StatusCode, resp.Status))
+
+	return FetchResponse{
+		Status:     resp.StatusCode,
+		StatusText: resp.Status,
+		Headers:    headers,
+		Body:       string(bodyBytes),
+		OK:         resp.StatusCode >= 200 && resp.StatusCode < 300,
+	}
 }
 
 // Greet returns a greeting for the given name
