@@ -318,14 +318,15 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditing ? 'Edit Agent' : 'Add New Agent'}</DialogTitle>
           <DialogDescription>
             {isEditing ? 'Modify the agent configuration.' : 'Configure a new AI agent for your conversations.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="agentName">Agent Name</Label>
             <Input
@@ -611,9 +612,10 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
               </div>
             </>
           )}
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>

@@ -155,7 +155,7 @@ export function AgentConfiguration({
   };
 
   return (
-    <div className="w-full sm:w-80 border-l border-border bg-card">
+    <div className="w-full sm:w-80 border-l border-border bg-card overflow-auto">
       <div className="p-3 sm:p-4">
         <div className="flex items-center gap-2 text-sm font-medium mb-3 sm:mb-4">
           <Bot className="h-4 w-4" />
@@ -359,7 +359,7 @@ export function AgentConfiguration({
                       <Label className="text-xs sm:text-sm">
                         Available Skills ({agentCardInfo.skills.length})
                       </Label>
-                      <div className="space-y-1 sm:space-y-2 max-h-32 overflow-y-auto">
+                      <div className="space-y-1 sm:space-y-2 overflow-y-auto">
                         {agentCardInfo.skills.map((skill) => (
                           <div
                             key={skill.id}

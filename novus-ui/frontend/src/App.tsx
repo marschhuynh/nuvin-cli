@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { Navbar, ConversationHistory } from '@/components';
 import { useAgentManager } from '@/hooks';
 import { Message, Conversation, AgentConfig } from '@/types';
+import { useConversationStore } from '@/store';
+import { generateUUID } from '@/lib/utils';
 
 import './App.css';
 import { MessageList, ChatInput } from './modules/messenger';
@@ -19,27 +21,19 @@ function App() {
     sendMessage,
   } = useAgentManager();
 
-  // Message ID counter for unique IDs
-  const messageIdCounter = useRef(1);
-  const generateMessageId = () => messageIdCounter.current++;
+  // Use conversation store
+  const {
+    conversations,
+    activeConversationId,
+    addConversation,
+    setActiveConversation,
+    addMessage,
+    getActiveMessages,
+    deleteConversation
+  } = useConversationStore();
 
-  // State for conversations
-  const [conversations, setConversations] = useState<Conversation[]>([
-    { id: 1, title: "Getting started with AI", timestamp: "2 hours ago", active: true },
-    { id: 2, title: "Code review assistance", timestamp: "Yesterday" },
-    { id: 3, title: "Project planning", timestamp: "2 days ago" },
-    { id: 4, title: "API documentation help", timestamp: "1 week ago" },
-  ]);
-
-  // State for current conversation messages
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, role: 'user', content: 'Hello! Can you help me with my project?' },
-    { id: 2, role: 'assistant', content: 'Of course! I\'d be happy to help you with your project. What specific area would you like assistance with?' },
-    { id: 3, role: 'user', content: 'I need help with React component architecture.' },
-  ]);
-
-  // Initialize message counter to start after existing messages
-  messageIdCounter.current = Math.max(...messages.map(m => m.id)) + 1;
+  // Get current conversation messages
+  const messages = getActiveMessages();
 
   // State for loading status
   const [isLoading, setIsLoading] = useState(false);
@@ -56,45 +50,52 @@ function App() {
     }
 
     const newMessage: Message = {
-      id: generateMessageId(),
+      id: generateUUID(),
       role: 'user',
       content,
       timestamp: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    // Add message to the active conversation
+    if (activeConversationId) {
+      addMessage(activeConversationId, newMessage);
+    }
     setIsLoading(true);
 
     try {
-      // Get current active conversation ID (for this demo, we'll use the active conversation)
-      const activeConversationId = conversations.find(c => c.active)?.id.toString() || 'default';
+      // Get current active conversation ID
+      const conversationId = activeConversationId?.toString() || 'default';
 
       // Send message using AgentManager
       const response = await sendMessage(content, {
-        conversationId: activeConversationId,
+        conversationId: conversationId,
         onError: (error) => {
           console.error('Message sending failed:', error);
           // Add error message to chat
           const errorMessage: Message = {
-            id: generateMessageId(),
+            id: generateUUID(),
             role: 'assistant',
             content: `❌ Error: ${error.message}. Please check your agent configuration and try again.`,
             timestamp: new Date().toISOString()
           };
-          setMessages(prev => [...prev, errorMessage]);
+          if (activeConversationId) {
+            addMessage(activeConversationId, errorMessage);
+          }
           setIsLoading(false);
         }
       });
 
       // Add assistant response to messages
       const assistantMessage: Message = {
-        id: generateMessageId(),
+        id: generateUUID(),
         role: 'assistant',
         content: response.content,
         timestamp: response.timestamp
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      if (activeConversationId) {
+        addMessage(activeConversationId, assistantMessage);
+      }
 
       // Log metadata for debugging
       if (response.metadata) {
@@ -111,7 +112,7 @@ function App() {
 
       // Add error message to chat
       const errorMessage: Message = {
-        id: generateMessageId(),
+        id: generateUUID(),
         role: 'assistant',
         content: `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}. ${
           !activeAgent ? 'No agent selected.' :
@@ -122,7 +123,9 @@ function App() {
         timestamp: new Date().toISOString()
       };
 
-      setMessages(prev => [...prev, errorMessage]);
+      if (activeConversationId) {
+        addMessage(activeConversationId, errorMessage);
+      }
     } finally {
       setIsLoading(false);
       timeoutRef.current = null;
@@ -141,13 +144,15 @@ function App() {
 
       // Add a system message indicating the generation was stopped
       const stopMessage: Message = {
-        id: generateMessageId(),
+        id: generateUUID(),
         role: 'assistant',
         content: '⏹️ Generation stopped by user.',
         timestamp: new Date().toISOString()
       };
 
-      setMessages(prev => [...prev, stopMessage]);
+      if (activeConversationId) {
+        addMessage(activeConversationId, stopMessage);
+      }
       console.log('Generation stopped by user');
 
       // TODO: Implement request cancellation in AgentManager
@@ -165,21 +170,17 @@ function App() {
     }
 
     const newConversation: Conversation = {
-      id: Math.max(...conversations.map(c => c.id)) + 1,
+      id: generateUUID(),
       title: "New Conversation",
       timestamp: "Just now",
       active: true
     };
 
-    // Mark all conversations as inactive
-    const updatedConversations = conversations.map(conv => ({ ...conv, active: false }));
-    setConversations([newConversation, ...updatedConversations]);
-
-    // Clear messages for new conversation
-    setMessages([]);
+    // Add new conversation (automatically becomes active)
+    addConversation(newConversation);
   };
 
-  const handleConversationSelect = (conversationId: number) => {
+  const handleConversationSelect = (conversationId: string) => {
     // Stop any ongoing generation when switching conversations
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -187,14 +188,20 @@ function App() {
       setIsLoading(false);
     }
 
-    const updatedConversations = conversations.map(conv => ({
-      ...conv,
-      active: conv.id === conversationId
-    }));
-    setConversations(updatedConversations);
+    // Set the selected conversation as active
+    setActiveConversation(conversationId);
+  };
 
-    // In a real app, you would load messages for the selected conversation
-    // For demo purposes, we'll keep the current messages
+  const handleConversationDelete = (conversationId: string) => {
+    // If deleting the active conversation, clear loading state
+    if (conversationId === activeConversationId) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setIsLoading(false);
+    }
+    deleteConversation(conversationId);
   };
 
   const handleAgentConfigChange = (config: AgentConfig) => {
@@ -208,11 +215,12 @@ function App() {
       <Navbar userName={user.name} />
 
       <div className="flex flex-1 overflow-hidden">
-        <ConversationHistory
-          conversations={conversations}
-          onNewConversation={handleNewConversation}
-          onConversationSelect={handleConversationSelect}
-        />
+                  <ConversationHistory
+            conversations={conversations}
+            onNewConversation={handleNewConversation}
+            onConversationSelect={handleConversationSelect}
+            onConversationDelete={handleConversationDelete}
+          />
 
         <div className="flex-1 flex flex-col bg-gray-100">
           <MessageList
@@ -233,11 +241,6 @@ function App() {
                 {agentType === 'local' && (
                   <div className="text-muted-foreground">
                     Provider: {activeProvider?.name || 'None'}
-                  </div>
-                )}
-                {agentType === 'remote' && activeAgent?.url && (
-                  <div className="text-muted-foreground">
-                    URL: {new URL(activeAgent.url).hostname}
                   </div>
                 )}
               </div>

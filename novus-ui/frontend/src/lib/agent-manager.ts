@@ -1,5 +1,6 @@
 import { AgentSettings, ProviderConfig, Message } from '@/types';
 import { LogError } from '@wails/runtime';
+import { generateUUID } from './utils';
 
 import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError, A2AErrorType } from './a2a';
 import type { Task, Message as A2AMessage, Part } from './a2a';
@@ -64,7 +65,8 @@ export class AgentManager {
   private activeAgent: AgentSettings | null = null;
   private activeProvider: ProviderConfig | null = null;
   private conversationHistory: Map<string, Message[]> = new Map();
-  private messageIdCounter = 1;
+  // Use centralized UUID generator for message IDs
+  private generateMessageId = generateUUID;
 
   private constructor() {}
 
@@ -128,23 +130,23 @@ export class AgentManager {
         throw new Error('Not supported');
       }
 
-      // Store in conversation history
-      if (options.conversationId) {
-        this.addToConversationHistory(options.conversationId, [
-          {
-            id: this.messageIdCounter++,
-            role: 'user',
-            content,
-            timestamp
-          },
-          {
-            id: this.messageIdCounter++,
-            role: 'assistant',
-            content: response.content,
-            timestamp: response.timestamp
-          }
-        ]);
-      }
+              // Store in conversation history
+        if (options.conversationId) {
+          this.addToConversationHistory(options.conversationId, [
+            {
+              id: this.generateMessageId(),
+              role: 'user',
+              content,
+              timestamp
+            },
+            {
+              id: this.generateMessageId(),
+              role: 'assistant',
+              content: response.content,
+              timestamp: response.timestamp
+            }
+          ]);
+        }
 
       return response;
     } catch (error) {
@@ -528,10 +530,6 @@ export class AgentManager {
     }
   }
 
-  private generateMessageId(): string {
-    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
   async getTask(agentUrl: string, taskId: string, options?: {
     timeout?: number;
     enableRetry?: boolean;
@@ -615,7 +613,6 @@ export class AgentManager {
     this.activeAgent = null;
     this.activeProvider = null;
     this.conversationHistory.clear();
-    this.messageIdCounter = 1;
     // Clear A2A service state
     a2aService.clear();
   }

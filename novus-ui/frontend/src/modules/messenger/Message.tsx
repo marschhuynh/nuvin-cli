@@ -1,7 +1,7 @@
 import { User, Cpu } from 'lucide-react';
 
 interface MessageProps {
-  id: number;
+  id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
@@ -26,7 +26,7 @@ export function Message({ role, content }: MessageProps) {
             : 'bg-card/90 backdrop-blur-sm border-border/60'
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{content}</p>
+        <p className="text-sm whitespace-pre-wrap">{content.trim()}</p>
       </div>
       {role === 'user' && (
         <div className="h-8 w-8 bg-secondary rounded-full flex items-center justify-center">
