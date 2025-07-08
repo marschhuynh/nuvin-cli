@@ -8,7 +8,6 @@ interface ChatInputProps {
   onStop?: () => void;
   disabled?: boolean;
   placeholder?: string;
-  maxLength?: number;
 }
 
 export function ChatInput({
@@ -16,7 +15,6 @@ export function ChatInput({
   onStop,
   disabled = false,
   placeholder = "Type your message here...",
-  maxLength = 2000
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [isMultiLine, setIsMultiLine] = useState(false);
@@ -94,7 +92,6 @@ export function ChatInput({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
-            maxLength={maxLength}
             className="resize-none focus-visible:ring-2 focus-visible:ring-ring pr-16 py-4 px-4 bg-white border border-border shadow-sm transition-all duration-200 chat-input-textarea overflow-hidden text-base placeholder:text-gray-400/60 focus:placeholder:text-gray-300/50"
             rows={1}
             style={{
@@ -111,7 +108,6 @@ export function ChatInput({
               : 'top-1/2 transform -translate-y-1/2' // Centered for single line
           }`}>
             {isLoading ? (
-              // Stop button when loading/processing
               <Button
                 size="sm"
                 variant="ghost"
@@ -124,7 +120,6 @@ export function ChatInput({
                 />
               </Button>
             ) : (
-              // Send button when ready to send
               <Button
                 size="sm"
                 disabled={!message.trim()}
@@ -159,9 +154,6 @@ export function ChatInput({
             ) : (
               "Press Shift + Enter for new line"
             )}
-          </span>
-          <span className={message.length > maxLength * 0.9 ? 'text-orange-500' : ''}>
-            {message.length}/{maxLength}
           </span>
         </div>
       </div>
