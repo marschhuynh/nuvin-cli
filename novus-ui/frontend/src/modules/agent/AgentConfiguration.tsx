@@ -155,7 +155,7 @@ export function AgentConfiguration({
   };
 
   return (
-    <div className="w-full sm:w-80 border-l border-border bg-card overflow-auto">
+    <div className="min-w-[200px] border-l border-border bg-card overflow-auto">
       <div className="p-3 sm:p-4">
         <div className="flex items-center gap-2 text-sm font-medium mb-3 sm:mb-4">
           <Bot className="h-4 w-4" />

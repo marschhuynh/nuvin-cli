@@ -215,14 +215,16 @@ function App() {
       <Navbar userName={user.name} />
 
       <div className="flex flex-1 overflow-hidden">
-                  <ConversationHistory
+        <div className="w-80 border-r border-border bg-card">
+          <ConversationHistory
             conversations={conversations}
             onNewConversation={handleNewConversation}
             onConversationSelect={handleConversationSelect}
             onConversationDelete={handleConversationDelete}
           />
+        </div>
 
-        <div className="flex-1 flex flex-col bg-gray-100">
+        <div className="flex-1 flex flex-col bg-gray-100 min-w-[300px]">
           <MessageList
             messages={messages}
             isLoading={isLoading}
@@ -262,9 +264,11 @@ function App() {
           />
         </div>
 
-        <AgentConfiguration
-          onConfigChange={handleAgentConfigChange}
-        />
+        <div className="flex flex-0 min-w-[280px] border-l border-border bg-card">
+          <AgentConfiguration
+            onConfigChange={handleAgentConfigChange}
+          />
+        </div>
       </div>
     </div>
   );
