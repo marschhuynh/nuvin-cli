@@ -4,6 +4,7 @@ import { generateUUID } from './utils';
 
 import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError, A2AErrorType } from './a2a';
 import type { Task, Message as A2AMessage, Part } from './a2a';
+import { BaseAgent, LocalAgent, A2AAgent } from './agents';
 
 /**
  * Message sending options
@@ -68,6 +69,7 @@ export class AgentManager {
   // Use centralized UUID generator for message IDs
   private generateMessageId = generateUUID;
 
+  private agentInstance: BaseAgent | null = null;
   private constructor() {}
 
   static getInstance(): AgentManager {
@@ -80,11 +82,13 @@ export class AgentManager {
   setActiveAgent(agent: AgentSettings): void {
     this.activeAgent = agent;
     console.log(`Active agent set to: ${agent.name} (${agent.agentType})`);
+    this.updateAgentInstance();
   }
 
   setActiveProvider(provider: ProviderConfig): void {
     this.activeProvider = provider;
     console.log(`Active provider set to: ${provider.name} (${provider.type})`);
+    this.updateAgentInstance();
   }
 
   getActiveAgent(): AgentSettings | null {
@@ -94,6 +98,24 @@ export class AgentManager {
   getActiveProvider(): ProviderConfig | null {
     return this.activeProvider;
   }
+  private updateAgentInstance(): void {
+    if (!this.activeAgent) {
+      this.agentInstance = null;
+      return;
+    }
+    if (this.activeAgent.agentType === "local") {
+      if (!this.activeProvider) {
+        this.agentInstance = null;
+        return;
+      }
+      this.agentInstance = new LocalAgent(this.activeAgent, this.activeProvider, this.conversationHistory);
+    } else if (this.activeAgent.agentType === "remote") {
+      this.agentInstance = new A2AAgent(this.activeAgent, this.conversationHistory);
+    } else {
+      this.agentInstance = null;
+    }
+  }
+
 
   private createA2AAuthConfig(agent: AgentSettings): A2AAuthConfig | undefined {
     if (!agent.auth || agent.agentType !== 'remote') {
@@ -122,32 +144,15 @@ export class AgentManager {
     const timestamp = new Date().toISOString();
 
     try {
-      let response: MessageResponse;
-
-      if (this.activeAgent.agentType === 'remote' && this.activeAgent.url) {
-        response = await this.sendA2AMessage(content, options, messageId, timestamp, startTime);
-      } else {
-        throw new Error('Not supported');
+      if (!this.agentInstance) {
+        this.updateAgentInstance();
       }
 
-              // Store in conversation history
-        if (options.conversationId) {
-          this.addToConversationHistory(options.conversationId, [
-            {
-              id: this.generateMessageId(),
-              role: 'user',
-              content,
-              timestamp
-            },
-            {
-              id: this.generateMessageId(),
-              role: 'assistant',
-              content: response.content,
-              timestamp: response.timestamp
-            }
-          ]);
-        }
+      if (!this.agentInstance) {
+        throw new Error('Agent instance not configured');
+      }
 
+      const response = await this.agentInstance.sendMessage(content, options);
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -158,350 +163,6 @@ export class AgentManager {
 
       throw error;
     }
-  }
-
-  private async sendA2AMessage(
-    content: string,
-    options: SendMessageOptions,
-    messageId: string,
-    timestamp: string,
-    startTime: number
-  ): Promise<MessageResponse> {
-    if (!this.activeAgent?.url) {
-      throw new Error('No URL configured for remote agent');
-    }
-
-    try {
-      const authConfig = this.createA2AAuthConfig(this.activeAgent);
-
-      // Prepare A2A message options
-      const a2aOptions: A2AMessageOptions = {
-        contextId: options.contextId,
-        taskId: options.taskId,
-        blocking: !options.stream,
-        acceptedOutputModes: ['text'],
-        timeout: options.timeout,
-        enableRetry: options.enableRetry,
-        maxRetries: options.maxRetries
-      };
-
-      // Handle streaming vs non-streaming
-      if (options.stream && options.onChunk) {
-        return await this.sendA2AStreamingMessage(
-          content,
-          options,
-          messageId,
-          timestamp,
-          startTime,
-          authConfig,
-          a2aOptions
-        );
-      } else {
-        const response = await a2aService.sendMessage(
-          this.activeAgent.url,
-          content,
-          authConfig,
-          a2aOptions
-        );
-
-        // If task is still working, poll for completion
-        let finalResponse = response;
-        if (response.kind === 'task' && response.status.state === 'working') {
-          finalResponse = await this.pollForTaskCompletion(
-            this.activeAgent.url,
-            response.id,
-            authConfig,
-            options.timeout || 60000
-          );
-        }
-
-        const responseTime = Date.now() - startTime;
-        const responseContent = this.extractA2AResponseContent(finalResponse);
-
-        if (options.onComplete) {
-          options.onComplete(responseContent);
-        }
-
-        return {
-          id: messageId,
-          content: responseContent,
-          role: 'assistant',
-          timestamp: new Date().toISOString(),
-          metadata: {
-            agentType: 'remote',
-            agentId: this.activeAgent.id,
-            responseTime,
-            model: 'A2A Agent',
-            taskId: finalResponse.kind === 'task' ? finalResponse.id : undefined
-          }
-        };
-      }
-    } catch (error) {
-      LogError(`Error sending A2A message: ${error}`);
-      // Enhanced error handling with user-friendly messages
-      if (error instanceof A2AError) {
-        throw new Error(error.getUserMessage());
-      }
-
-      throw new Error(`A2A communication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Poll for task completion with exponential backoff
-   */
-  private async pollForTaskCompletion(
-    agentUrl: string,
-    taskId: string,
-    authConfig?: A2AAuthConfig,
-    totalTimeout: number = 60000
-  ): Promise<Task> {
-    const startTime = Date.now();
-    let pollInterval = 1000; // Start with 1 second
-    const maxPollInterval = 5000; // Max 5 seconds between polls
-
-    console.log(`Polling for task completion: ${taskId}`);
-
-    while (Date.now() - startTime < totalTimeout) {
-      try {
-        const task = await a2aService.getTask(agentUrl, taskId, authConfig);
-
-        if (!task) {
-          throw new Error(`Task ${taskId} not found`);
-        }
-
-        // Check if task is completed
-        if (task.status.state === 'completed') {
-          console.log(`Task completed: ${taskId}`);
-          return task;
-        }
-
-        // Check for terminal states
-        if (['failed', 'canceled'].includes(task.status.state)) {
-          console.warn(`Task ended with state: ${task.status.state}`);
-          return task;
-        }
-
-        // Check for input required
-        if (task.status.state === 'input-required') {
-          console.log(`Task requires input: ${taskId}`);
-          return task;
-        }
-
-        console.log(`Task still ${task.status.state}, polling again in ${pollInterval}ms`);
-
-        // Wait before next poll
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-
-        // Exponential backoff
-        pollInterval = Math.min(pollInterval * 1.5, maxPollInterval);
-
-      } catch (error) {
-        console.error('Error polling for task completion:', error);
-        // Continue polling unless it's a critical error
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-      }
-    }
-
-    // Timeout reached, get final state
-    try {
-      const finalTask = await a2aService.getTask(agentUrl, taskId, authConfig);
-      console.warn(`Task polling timeout reached for ${taskId}, final state: ${finalTask?.status.state}`);
-      return finalTask || ({
-        id: taskId,
-        kind: 'task',
-        contextId: undefined,
-        status: { state: 'failed', message: { parts: [{ kind: 'text', text: 'Polling timeout' }] } },
-        artifacts: []
-      } as unknown as Task);
-    } catch (error) {
-      throw new Error(`Task polling timeout and failed to get final state: ${error}`);
-    }
-  }
-
-  /**
-   * Send A2A streaming message
-   */
-  private async sendA2AStreamingMessage(
-    content: string,
-    options: SendMessageOptions,
-    messageId: string,
-    timestamp: string,
-    startTime: number,
-    authConfig: A2AAuthConfig | undefined,
-    a2aOptions: A2AMessageOptions
-  ): Promise<MessageResponse> {
-    if (!this.activeAgent?.url) {
-      throw new Error('No URL configured for remote agent');
-    }
-
-    let accumulatedContent = '';
-    let taskId: string | undefined;
-    let finalTimestamp = new Date().toISOString();
-
-    try {
-      const stream = a2aService.sendMessageStream(
-        this.activeAgent.url,
-        content,
-        authConfig,
-        a2aOptions
-      );
-
-      for await (const event of stream) {
-        if (event.kind === 'task') {
-          taskId = event.id;
-
-          // Extract content from task artifacts
-          if (event.artifacts) {
-            for (const artifact of event.artifacts) {
-              for (const part of artifact.parts) {
-                if (part.kind === 'text') {
-                  const newContent = part.text;
-                  if (newContent !== accumulatedContent) {
-                    const chunk = newContent.substring(accumulatedContent.length);
-                    accumulatedContent = newContent;
-
-                    if (options.onChunk && chunk) {
-                      options.onChunk(chunk);
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          // Check if task is completed
-          if (event.status.state === 'completed') {
-            finalTimestamp = event.status.timestamp || finalTimestamp;
-            break;
-          }
-        } else if (event.kind === 'message') {
-          // Handle direct message responses
-          for (const part of event.parts) {
-            if (part.kind === 'text') {
-              accumulatedContent += part.text;
-              if (options.onChunk) {
-                options.onChunk(part.text);
-              }
-            }
-          }
-        } else if (event.kind === 'artifact-update') {
-          // Handle streaming artifact updates
-          const artifact = event.artifact;
-          for (const part of artifact.parts) {
-            if (part.kind === 'text') {
-              if (event.append) {
-                accumulatedContent += part.text;
-                if (options.onChunk) {
-                  options.onChunk(part.text);
-                }
-              } else {
-                accumulatedContent = part.text;
-                if (options.onChunk) {
-                  options.onChunk(part.text);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      const responseTime = Date.now() - startTime;
-
-      if (options.onComplete) {
-        options.onComplete(accumulatedContent);
-      }
-
-      return {
-        id: messageId,
-        content: accumulatedContent || 'No response content received',
-        role: 'assistant',
-        timestamp: finalTimestamp,
-        metadata: {
-          agentType: 'remote',
-          agentId: this.activeAgent.id,
-          responseTime,
-          model: 'A2A Agent (Streaming)',
-          taskId
-        }
-      };
-    } catch (error) {
-      // Enhanced error handling for streaming
-      if (error instanceof A2AError) {
-        throw new Error(error.getUserMessage());
-      }
-
-      throw new Error(`A2A streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private extractA2AResponseContent(response: Task | A2AMessage): string {
-    if (response.kind === 'message') {
-      // Extract text from message parts
-      const textParts = response.parts
-        .filter((part: Part) => part.kind === 'text')
-        .map((part: any) => part.text)
-        .join('\n');
-
-      return textParts || 'No response content';
-    } else if (response.kind === 'task') {
-      // For tasks, check the status message first
-      if (response.status.message?.parts) {
-        const statusText = response.status.message.parts
-          .filter((part: Part) => part.kind === 'text')
-          .map((part: any) => part.text)
-          .join('\n');
-
-        if (statusText) {
-          console.log('Found status message text:', statusText);
-          return statusText;
-        }
-      }
-
-      // If no status message, check artifacts (main response content)
-      if (response.artifacts && response.artifacts.length > 0) {
-        const artifactTexts = [];
-
-        for (const artifact of response.artifacts) {
-          console.log(`Processing artifact: ${artifact.name || artifact.artifactId}, parts: ${artifact.parts.length}`);
-          const textParts = artifact.parts
-            .filter((part: Part) => part.kind === 'text')
-            .map((part: any) => part.text);
-
-          if (textParts.length > 0) {
-            artifactTexts.push(textParts.join('\n'));
-          }
-        }
-
-        if (artifactTexts.length > 0) {
-          const finalContent = artifactTexts.join('\n\n');
-          console.log('Extracted artifact content:', finalContent.substring(0, 200) + '...');
-          return finalContent;
-        }
-      }
-
-      // If task is still in progress, return status info
-      if (response.status.state === 'working') {
-        return `Task is working... (ID: ${response.id})`;
-      } else if (response.status.state === 'input-required') {
-        return `Agent requires additional input to continue. (ID: ${response.id})`;
-      } else if (response.status.state === 'submitted') {
-        return `Task submitted and pending processing. (ID: ${response.id})`;
-      } else if (response.status.state === 'failed') {
-        const firstPart = response.status.message?.parts?.[0];
-        const errorMessage = (firstPart?.kind === 'text' ? (firstPart as any).text : 'Unknown error') || 'Unknown error';
-        return `Task failed: ${errorMessage} (ID: ${response.id})`;
-      } else if (response.status.state === 'canceled') {
-        return `Task was canceled. (ID: ${response.id})`;
-      } else if (response.status.state === 'completed') {
-        // Task completed but no artifacts - this might indicate an issue
-        return `Task completed but no content available. (ID: ${response.id})`;
-      }
-
-      return `Task ${response.status.state} (ID: ${response.id})`;
-    }
-
-    return 'Unknown response format from A2A agent';
   }
 
   /**
