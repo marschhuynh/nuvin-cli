@@ -32,6 +32,11 @@ export * from './utils';
 
 export { fetchGithubCopilotKey } from './github';
 
+// Providers
+export type { LLMProvider, CompletionParams, CompletionResult, ChatMessage } from './providers';
+export { createProvider, OpenAIProvider, GithubCopilotProvider } from './providers';
+export { BaseAgent, LocalAgent, A2AAgent } from './agents';
+
 // Export fetch proxy utilities
 export {
   fetchProxy,
