@@ -1,20 +1,24 @@
 import { LLMProvider, CompletionParams, CompletionResult } from './llm-provider';
 
-export class OpenAIProvider implements LLMProvider {
-  readonly type = 'OpenAI';
+export class OpenRouterProvider implements LLMProvider {
+  readonly type = 'OpenRouter';
   private apiKey: string;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
+  private buildHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`
+    } as Record<string, string>;
+  }
+
   async generateCompletion(params: CompletionParams): Promise<CompletionResult> {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
+      headers: this.buildHeaders(),
       body: JSON.stringify({
         model: params.model,
         messages: params.messages,
@@ -26,7 +30,7 @@ export class OpenAIProvider implements LLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${text}`);
+      throw new Error(`OpenRouter API error: ${response.status} - ${text}`);
     }
 
     const data = await response.json();
@@ -35,12 +39,9 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   async *generateCompletionStream(params: CompletionParams): AsyncGenerator<string> {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
+      headers: this.buildHeaders(),
       body: JSON.stringify({
         model: params.model,
         messages: params.messages,
@@ -53,7 +54,7 @@ export class OpenAIProvider implements LLMProvider {
 
     if (!response.ok || !response.body) {
       const text = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${text}`);
+      throw new Error(`OpenRouter API error: ${response.status} - ${text}`);
     }
 
     const reader = response.body.getReader();

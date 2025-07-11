@@ -15,7 +15,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useProviderStore } from '@/store/useProviderStore';
 import { fetchGithubCopilotKey } from '@/lib/github';
 
-const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'GitHub'];
+const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'OpenRouter', 'GitHub'];
 
 interface AddProviderModalProps {
   open: boolean;

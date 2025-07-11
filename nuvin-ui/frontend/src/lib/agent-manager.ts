@@ -262,6 +262,8 @@ export class AgentManager {
         return ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', 'claude-2'];
       case 'GitHub':
         return ['gpt-4', 'gpt-3.5-turbo'];
+      case 'OpenRouter':
+        return ['gpt-4', 'gpt-3.5-turbo'];
       default:
         return [];
     }

@@ -18,4 +18,5 @@ export interface CompletionResult {
 export interface LLMProvider {
   readonly type: string;
   generateCompletion(params: CompletionParams): Promise<CompletionResult>;
+  generateCompletionStream?(params: CompletionParams): AsyncGenerator<string>;
 }
