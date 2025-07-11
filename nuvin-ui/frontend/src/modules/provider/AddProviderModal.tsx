@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Eye, EyeOff } from 'lucide-react';
 import { useProviderStore } from '@/store/useProviderStore';
 import { fetchGithubCopilotKey } from '@/lib/github';
+import { ModelSelector } from '@/components/ModelSelector';
+import { getDefaultModel } from '@/lib/providers/provider-utils';
 
 const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'OpenRouter', 'GitHub'];
 
@@ -27,6 +29,7 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
   const [newProviderName, setNewProviderName] = useState('');
   const [newProviderType, setNewProviderType] = useState('');
   const [newProviderKey, setNewProviderKey] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [nameError, setNameError] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -53,6 +56,12 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
     }
   };
 
+  // Reset model selection when provider type changes
+  const handleProviderTypeChange = (value: string) => {
+    setNewProviderType(value);
+    setSelectedModel(getDefaultModel(value as any));
+  };
+
     const handleSubmit = () => {
     if (!validateName(newProviderName) || !newProviderType) return;
 
@@ -60,12 +69,20 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
       id: Date.now().toString(),
       name: newProviderName.trim(),
       type: newProviderType,
-      apiKey: newProviderKey
+      apiKey: newProviderKey,
+      modelConfig: {
+        model: selectedModel || getDefaultModel(newProviderType as any),
+        temperature: 0.7,
+        maxTokens: 2048,
+        topP: 1,
+        systemPrompt: ''
+      }
     });
 
     setNewProviderName('');
     setNewProviderType('');
     setNewProviderKey('');
+    setSelectedModel('');
     setNameError('');
     setShowApiKey(false);
     onOpenChange(false);
@@ -88,11 +105,19 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
           id: Date.now().toString(),
           name: newProviderName.trim(),
           type: 'GitHub',
-          apiKey: token
+          apiKey: token,
+          modelConfig: {
+            model: selectedModel || getDefaultModel('GitHub'),
+            temperature: 0.7,
+            maxTokens: 2048,
+            topP: 1,
+            systemPrompt: ''
+          }
         });
         setNewProviderName('');
         setNewProviderType('');
         setNewProviderKey('');
+        setSelectedModel('');
         setNameError('');
         setShowApiKey(false);
         onOpenChange(false);
@@ -108,6 +133,7 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
     setNewProviderName('');
     setNewProviderType('');
     setNewProviderKey('');
+    setSelectedModel('');
     setNameError('');
     setShowApiKey(false);
     onOpenChange(false);
@@ -143,7 +169,7 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
             <Label htmlFor="providerType">Provider Type</Label>
             <Select
               value={newProviderType}
-              onValueChange={setNewProviderType}
+              onValueChange={handleProviderTypeChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select provider type" />
@@ -199,6 +225,26 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
               </p>
             )}
           </div>
+          
+          {/* Model Selection */}
+          {newProviderType && newProviderKey && (
+            <div className="grid gap-2">
+              <Label htmlFor="model">Select Model</Label>
+              <ModelSelector
+                providerConfig={{
+                  type: newProviderType as any,
+                  apiKey: newProviderKey,
+                  name: newProviderName || 'New Provider'
+                }}
+                selectedModel={selectedModel}
+                onModelSelect={setSelectedModel}
+                showDetails={false}
+              />
+              <p className="text-sm text-muted-foreground">
+                Available models will be fetched from the provider when you enter a valid API key.
+              </p>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>

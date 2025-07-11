@@ -129,7 +129,9 @@ export function useAgentManager() {
     if (!activeAgent) return false;
 
     if (activeAgent.agentType === 'local') {
-      return activeProvider !== null && activeProvider.apiKey !== '';
+      return activeProvider !== null && 
+             activeProvider.apiKey !== '' && 
+             activeProvider.modelConfig !== undefined;
     }
 
     if (activeAgent.agentType === 'remote') {

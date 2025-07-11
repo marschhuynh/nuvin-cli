@@ -1,5 +1,6 @@
 // Main components
 export { Navbar } from './Navbar';
+export { ModelSelector, ModelSelectorExample } from './ModelSelector';
 export { ConversationHistory } from '../modules/conversation/ConversationHistory';
 export { ConversationItem } from '../modules/conversation/ConversationItem';
 

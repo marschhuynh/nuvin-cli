@@ -46,7 +46,6 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
       password?: string;
       headerName?: string;
     };
-    modelConfig: ModelConfig;
   }>({
     name: '',
     persona: 'helpful' as AgentPersona,
@@ -58,13 +57,6 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
     url: '',
     auth: {
       type: 'none'
-    },
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.7,
-      maxTokens: 2048,
-      topP: 1,
-      systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
     }
   });
 
@@ -82,8 +74,7 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
           systemPrompt: agent.systemPrompt,
           agentType: agent.agentType,
           url: agent.url || '',
-          auth: agent.auth || { type: 'none' },
-          modelConfig: agent.modelConfig
+          auth: agent.auth || { type: 'none' }
         });
       } else {
         // Creating new agent - reset to defaults
@@ -173,8 +164,8 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       default:
         return testingConnection ? <Loader2 className="h-4 w-4 animate-spin" /> :
-               agentData.url.trim() ? <Wifi className="h-4 w-4 text-gray-400" /> :
-               <WifiOff className="h-4 w-4 text-gray-300" />;
+          agentData.url.trim() ? <Wifi className="h-4 w-4 text-gray-400" /> :
+            <WifiOff className="h-4 w-4 text-gray-300" />;
     }
   };
 
@@ -247,14 +238,8 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
         id: agent.id,
         // Include authentication for remote agents
         auth: agentData.agentType === 'remote' ? agentData.auth : undefined,
-        // Update model config for remote agents
-        modelConfig: agentData.agentType === 'remote' ? {
-          model: 'remote-a2a',
-          temperature: agentData.temperature,
-          maxTokens: agentData.maxTokens,
-          topP: 1,
-          systemPrompt: agentData.systemPrompt
-        } : agentData.modelConfig
+        // Include authentication for remote agents
+        // Model settings are handled by the provider
       };
       updateAgent(finalAgentData);
     } else {
@@ -264,14 +249,7 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
         id: Date.now().toString(),
         // Include authentication for remote agents
         auth: agentData.agentType === 'remote' ? agentData.auth : undefined,
-        // Update model config for remote agents
-        modelConfig: agentData.agentType === 'remote' ? {
-          model: 'remote-a2a',
-          temperature: agentData.temperature,
-          maxTokens: agentData.maxTokens,
-          topP: 1,
-          systemPrompt: agentData.systemPrompt
-        } : agentData.modelConfig
+        // Model settings are handled by the provider
       };
       addAgent(finalAgentData);
     }
@@ -295,13 +273,6 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
       url: '',
       auth: {
         type: 'none'
-      },
-      modelConfig: {
-        model: 'gpt-3.5-turbo',
-        temperature: 0.7,
-        maxTokens: 2048,
-        topP: 1,
-        systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
       }
     });
   };
@@ -312,7 +283,7 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
 
   const isFormValid = agentData.name.trim() &&
     (agentData.agentType === 'local' ||
-    (agentData.agentType === 'remote' && agentData.url.trim()));
+      (agentData.agentType === 'remote' && agentData.url.trim()));
 
   const isEditing = !!agent;
 
@@ -327,291 +298,289 @@ export function AgentModal({ open, onOpenChange, agent = null }: AgentModalProps
         </DialogHeader>
         <div className="flex-1 overflow-y-auto">
           <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="agentName">Agent Name</Label>
-            <Input
-              id="agentName"
-              value={agentData.name}
-              onChange={(e) => setAgentData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter agent name"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Agent Type</Label>
-            <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={() => setAgentData(prev => ({ ...prev, agentType: 'local' }))}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  agentData.agentType === 'local'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Local Agent
-              </button>
-              <button
-                type="button"
-                onClick={() => setAgentData(prev => ({ ...prev, agentType: 'remote' }))}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  agentData.agentType === 'remote'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Remote (A2A)
-              </button>
+            <div className="grid gap-2">
+              <Label htmlFor="agentName">Agent Name</Label>
+              <Input
+                id="agentName"
+                value={agentData.name}
+                onChange={(e) => setAgentData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter agent name"
+              />
             </div>
-          </div>
 
-          {/* Remote Agent Configuration */}
-          {agentData.agentType === 'remote' && (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="agentUrl">Agent URL</Label>
-                <Input
-                  id="agentUrl"
-                  value={agentData.url}
-                  onChange={(e) => {
-                    setAgentData(prev => ({ ...prev, url: e.target.value }));
-                    setConnectionStatus('idle');
-                    setConnectionError('');
-                    setConnectionErrorType(undefined);
-                    setDetailedError('');
-                  }}
-                  placeholder="https://example.com/agent"
-                />
-                <p className="text-xs text-muted-foreground">
-                  The base URL of the A2A agent
-                </p>
+            <div className="grid gap-2">
+              <Label>Agent Type</Label>
+              <div className="flex items-center space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setAgentData(prev => ({ ...prev, agentType: 'local' }))}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${agentData.agentType === 'local'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                >
+                  Local Agent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAgentData(prev => ({ ...prev, agentType: 'remote' }))}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${agentData.agentType === 'remote'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                >
+                  Remote (A2A)
+                </button>
               </div>
+            </div>
 
-              {/* Enhanced Connection Test UI */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={testConnection}
-                    disabled={!agentData.url.trim() || testingConnection}
-                    className="flex items-center gap-2"
-                  >
-                    {getConnectionIcon()}
-                    Test A2A Connection
-                  </Button>
-
-                  {agentData.url.trim() && connectionStatus === 'idle' && (
-                    <span className="text-xs text-muted-foreground">
-                      Click to test connection
-                    </span>
-                  )}
+            {/* Remote Agent Configuration */}
+            {agentData.agentType === 'remote' && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="agentUrl">Agent URL</Label>
+                  <Input
+                    id="agentUrl"
+                    value={agentData.url}
+                    onChange={(e) => {
+                      setAgentData(prev => ({ ...prev, url: e.target.value }));
+                      setConnectionStatus('idle');
+                      setConnectionError('');
+                      setConnectionErrorType(undefined);
+                      setDetailedError('');
+                    }}
+                    placeholder="https://example.com/agent"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The base URL of the A2A agent
+                  </p>
                 </div>
 
-                {/* Connection Status Display */}
-                {connectionStatus !== 'idle' && (
-                  <div className="p-3 rounded-lg border bg-card">
-                    {getConnectionMessage()}
-                  </div>
-                )}
-              </div>
+                {/* Enhanced Connection Test UI */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={testConnection}
+                      disabled={!agentData.url.trim() || testingConnection}
+                      className="flex items-center gap-2"
+                    >
+                      {getConnectionIcon()}
+                      Test A2A Connection
+                    </Button>
 
-              {/* Authentication Configuration */}
-              <div className="grid gap-2">
-                <Label htmlFor="authType">Authentication Type</Label>
-                <Select
-                  value={agentData.auth.type}
-                  onValueChange={(value: 'bearer' | 'apikey' | 'basic' | 'none') =>
-                    setAgentData(prev => ({
-                      ...prev,
-                      auth: { ...prev.auth, type: value }
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select authentication type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Authentication</SelectItem>
-                    <SelectItem value="bearer">Bearer Token</SelectItem>
-                    <SelectItem value="apikey">API Key</SelectItem>
-                    <SelectItem value="basic">Basic Auth (Username/Password)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Bearer Token / API Key Fields */}
-              {(agentData.auth.type === 'bearer' || agentData.auth.type === 'apikey') && (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="authToken">
-                      {agentData.auth.type === 'bearer' ? 'Bearer Token' : 'API Key'}
-                    </Label>
-                    <Input
-                      id="authToken"
-                      type="password"
-                      value={agentData.auth.token || ''}
-                      onChange={(e) => setAgentData(prev => ({
-                        ...prev,
-                        auth: { ...prev.auth, token: e.target.value }
-                      }))}
-                      placeholder={agentData.auth.type === 'bearer' ? 'Enter bearer token' : 'Enter API key'}
-                    />
+                    {agentData.url.trim() && connectionStatus === 'idle' && (
+                      <span className="text-xs text-muted-foreground">
+                        Click to test connection
+                      </span>
+                    )}
                   </div>
 
-                  {agentData.auth.type === 'apikey' && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="headerName">Header Name (Optional)</Label>
-                      <Input
-                        id="headerName"
-                        value={agentData.auth.headerName || ''}
-                        onChange={(e) => setAgentData(prev => ({
-                          ...prev,
-                          auth: { ...prev.auth, headerName: e.target.value }
-                        }))}
-                        placeholder="Authorization (default)"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Custom header name for API key (defaults to 'Authorization')
-                      </p>
+                  {/* Connection Status Display */}
+                  {connectionStatus !== 'idle' && (
+                    <div className="p-3 rounded-lg border bg-card">
+                      {getConnectionMessage()}
                     </div>
                   )}
-                </>
-              )}
-
-              {/* Basic Auth Fields */}
-              {agentData.auth.type === 'basic' && (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={agentData.auth.username || ''}
-                      onChange={(e) => setAgentData(prev => ({
-                        ...prev,
-                        auth: { ...prev.auth, username: e.target.value }
-                      }))}
-                      placeholder="Enter username"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={agentData.auth.password || ''}
-                      onChange={(e) => setAgentData(prev => ({
-                        ...prev,
-                        auth: { ...prev.auth, password: e.target.value }
-                      }))}
-                      placeholder="Enter password"
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {/* Shared Configuration - Available for all agent types */}
-          <div className="grid gap-2">
-            <Label htmlFor="systemPrompt">
-              {agentData.agentType === 'remote' ? 'Instructions (sent to remote agent)' : 'System Prompt'}
-            </Label>
-            <Textarea
-              id="systemPrompt"
-              value={agentData.systemPrompt}
-              onChange={(e) => setAgentData(prev => ({ ...prev, systemPrompt: e.target.value }))}
-              placeholder={agentData.agentType === 'remote'
-                ? "Enter instructions for the remote agent..."
-                : "Enter system prompt..."
-              }
-              className="min-h-[100px] resize-none"
-            />
-            <p className="text-xs text-muted-foreground">
-              {agentData.agentType === 'remote'
-                ? 'Instructions that will be sent to the remote agent along with your messages'
-                : 'Define the agent\'s behavior and role'
-              }
-            </p>
-          </div>
-
-          {/* Local Agent Configuration */}
-          {agentData.agentType === 'local' && (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="persona">Persona</Label>
-                <Select
-                  value={agentData.persona}
-                  onValueChange={(value: AgentPersona) =>
-                    setAgentData(prev => ({ ...prev, persona: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select persona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="helpful">Helpful Assistant</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="creative">Creative</SelectItem>
-                    <SelectItem value="analytical">Analytical</SelectItem>
-                    <SelectItem value="casual">Casual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="responseLength">Response Length</Label>
-                <Select
-                  value={agentData.responseLength}
-                  onValueChange={(value: ResponseLength) =>
-                    setAgentData(prev => ({ ...prev, responseLength: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select response length" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="short">Short</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="long">Long</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="temperature">Temperature: {agentData.temperature}</Label>
-                <Slider
-                  value={[agentData.temperature]}
-                  onValueChange={(value) => setAgentData(prev => ({ ...prev, temperature: value[0] }))}
-                  max={2}
-                  min={0}
-                  step={0.1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Focused (0)</span>
-                  <span>Balanced (1)</span>
-                  <span>Creative (2)</span>
                 </div>
-              </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="maxTokens">Max Tokens</Label>
-                <Input
-                  id="maxTokens"
-                  type="number"
-                  min="100"
-                  max="8192"
-                  value={agentData.maxTokens}
-                  onChange={(e) => setAgentData(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Maximum number of tokens in the response (100-8192)
-                </p>
-              </div>
-            </>
-          )}
+                {/* Authentication Configuration */}
+                <div className="grid gap-2">
+                  <Label htmlFor="authType">Authentication Type</Label>
+                  <Select
+                    value={agentData.auth.type}
+                    onValueChange={(value: 'bearer' | 'apikey' | 'basic' | 'none') =>
+                      setAgentData(prev => ({
+                        ...prev,
+                        auth: { ...prev.auth, type: value }
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select authentication type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Authentication</SelectItem>
+                      <SelectItem value="bearer">Bearer Token</SelectItem>
+                      <SelectItem value="apikey">API Key</SelectItem>
+                      <SelectItem value="basic">Basic Auth (Username/Password)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Bearer Token / API Key Fields */}
+                {(agentData.auth.type === 'bearer' || agentData.auth.type === 'apikey') && (
+                  <>
+                    <div className="grid gap-2">
+                      <Label htmlFor="authToken">
+                        {agentData.auth.type === 'bearer' ? 'Bearer Token' : 'API Key'}
+                      </Label>
+                      <Input
+                        id="authToken"
+                        type="password"
+                        value={agentData.auth.token || ''}
+                        onChange={(e) => setAgentData(prev => ({
+                          ...prev,
+                          auth: { ...prev.auth, token: e.target.value }
+                        }))}
+                        placeholder={agentData.auth.type === 'bearer' ? 'Enter bearer token' : 'Enter API key'}
+                      />
+                    </div>
+
+                    {agentData.auth.type === 'apikey' && (
+                      <div className="grid gap-2">
+                        <Label htmlFor="headerName">Header Name (Optional)</Label>
+                        <Input
+                          id="headerName"
+                          value={agentData.auth.headerName || ''}
+                          onChange={(e) => setAgentData(prev => ({
+                            ...prev,
+                            auth: { ...prev.auth, headerName: e.target.value }
+                          }))}
+                          placeholder="Authorization (default)"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Custom header name for API key (defaults to 'Authorization')
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Basic Auth Fields */}
+                {agentData.auth.type === 'basic' && (
+                  <>
+                    <div className="grid gap-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        value={agentData.auth.username || ''}
+                        onChange={(e) => setAgentData(prev => ({
+                          ...prev,
+                          auth: { ...prev.auth, username: e.target.value }
+                        }))}
+                        placeholder="Enter username"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={agentData.auth.password || ''}
+                        onChange={(e) => setAgentData(prev => ({
+                          ...prev,
+                          auth: { ...prev.auth, password: e.target.value }
+                        }))}
+                        placeholder="Enter password"
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* Shared Configuration - Available for all agent types */}
+            <div className="grid gap-2">
+              <Label htmlFor="systemPrompt">
+                {agentData.agentType === 'remote' ? 'Instructions (sent to remote agent)' : 'System Prompt'}
+              </Label>
+              <Textarea
+                id="systemPrompt"
+                value={agentData.systemPrompt}
+                onChange={(e) => setAgentData(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                placeholder={agentData.agentType === 'remote'
+                  ? "Enter instructions for the remote agent..."
+                  : "Enter system prompt..."
+                }
+                className="min-h-[100px] resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                {agentData.agentType === 'remote'
+                  ? 'Instructions that will be sent to the remote agent along with your messages'
+                  : 'Define the agent\'s behavior and role'
+                }
+              </p>
+            </div>
+
+            {/* Local Agent Configuration */}
+            {agentData.agentType === 'local' && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="persona">Persona</Label>
+                  <Select
+                    value={agentData.persona}
+                    onValueChange={(value: AgentPersona) =>
+                      setAgentData(prev => ({ ...prev, persona: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select persona" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="helpful">Helpful Assistant</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="creative">Creative</SelectItem>
+                      <SelectItem value="analytical">Analytical</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="responseLength">Response Length</Label>
+                  <Select
+                    value={agentData.responseLength}
+                    onValueChange={(value: ResponseLength) =>
+                      setAgentData(prev => ({ ...prev, responseLength: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select response length" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="short">Short</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="long">Long</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="temperature">Temperature: {agentData.temperature}</Label>
+                  <Slider
+                    value={[agentData.temperature]}
+                    onValueChange={(value) => setAgentData(prev => ({ ...prev, temperature: value[0] }))}
+                    max={2}
+                    min={0}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Focused (0)</span>
+                    <span>Balanced (1)</span>
+                    <span>Creative (2)</span>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="maxTokens">Max Tokens</Label>
+                  <Input
+                    id="maxTokens"
+                    type="number"
+                    min="100"
+                    max="8192"
+                    value={agentData.maxTokens}
+                    onChange={(e) => setAgentData(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Maximum number of tokens in the response (100-8192)
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

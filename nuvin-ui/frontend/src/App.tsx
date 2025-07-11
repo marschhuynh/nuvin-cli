@@ -1,13 +1,12 @@
-import { useState, useRef } from 'react';
-import { Navbar, ConversationHistory } from '@/components';
+import { ConversationHistory, Navbar } from '@/components';
 import { useAgentManager } from '@/hooks';
-import { Message, Conversation, AgentConfig } from '@/types';
-import { useConversationStore } from '@/store';
 import { generateUUID } from '@/lib/utils';
+import { useConversationStore } from '@/store';
+import { AgentConfig, Conversation, Message } from '@/types';
+import { useRef, useState } from 'react';
 
-import { MessageList, ChatInput } from './modules/messenger';
 import { AgentConfiguration } from './modules/agent/AgentConfiguration';
-import { smartFetch } from './lib/fetch-proxy';
+import { ChatInput, MessageList } from './modules/messenger';
 
 // window.fetch = smartFetch;
 

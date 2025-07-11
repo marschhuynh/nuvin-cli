@@ -1,8 +1,17 @@
 import { ProviderConfig, AgentSettings, Message } from '@/types';
-import { createProvider, ChatMessage } from '../providers';
+import { createProvider, ChatMessage, LLMProviderConfig, ProviderType } from '../providers';
 import { generateUUID } from '../utils';
 import { BaseAgent } from './base-agent';
 import type { SendMessageOptions, MessageResponse } from '../agent-manager';
+
+// Convert from existing ProviderConfig to our LLMProviderConfig
+function convertToLLMProviderConfig(config: ProviderConfig): LLMProviderConfig {
+  return {
+    type: config.type as ProviderType,
+    apiKey: config.apiKey,
+    name: config.name
+  };
+}
 
 export class LocalAgent extends BaseAgent {
   constructor(settings: AgentSettings, private providerConfig: ProviderConfig, history: Map<string, Message[]>) {
@@ -12,7 +21,7 @@ export class LocalAgent extends BaseAgent {
   async sendMessage(content: string, options: SendMessageOptions = {}): Promise<MessageResponse> {
     const startTime = Date.now();
     const messageId = generateUUID();
-    const provider = createProvider(this.providerConfig);
+    const provider = createProvider(convertToLLMProviderConfig(this.providerConfig));
     const convoId = options.conversationId || 'default';
     const messages: ChatMessage[] = this.buildContext(convoId, content);
 
@@ -20,10 +29,10 @@ export class LocalAgent extends BaseAgent {
       let accumulated = '';
       const stream = provider.generateCompletionStream({
         messages,
-        model: this.settings.modelConfig.model,
-        temperature: this.settings.modelConfig.temperature,
-        maxTokens: this.settings.modelConfig.maxTokens,
-        topP: this.settings.modelConfig.topP
+        model: this.providerConfig.modelConfig.model,
+        temperature: this.providerConfig.modelConfig.temperature,
+        maxTokens: this.providerConfig.modelConfig.maxTokens,
+        topP: this.providerConfig.modelConfig.topP
       });
 
       for await (const chunk of stream) {
@@ -41,7 +50,7 @@ export class LocalAgent extends BaseAgent {
           agentType: 'local',
           agentId: this.settings.id,
           provider: this.providerConfig.type,
-          model: this.settings.modelConfig.model,
+          model: this.providerConfig.modelConfig.model,
           responseTime: Date.now() - startTime
         }
       };
@@ -57,10 +66,10 @@ export class LocalAgent extends BaseAgent {
 
     const result = await provider.generateCompletion({
       messages,
-      model: this.settings.modelConfig.model,
-      temperature: this.settings.modelConfig.temperature,
-      maxTokens: this.settings.modelConfig.maxTokens,
-      topP: this.settings.modelConfig.topP
+      model: this.providerConfig.modelConfig.model,
+      temperature: this.providerConfig.modelConfig.temperature,
+      maxTokens: this.providerConfig.modelConfig.maxTokens,
+      topP: this.providerConfig.modelConfig.topP
     });
 
     const timestamp = new Date().toISOString();
@@ -73,7 +82,7 @@ export class LocalAgent extends BaseAgent {
         agentType: 'local',
         agentId: this.settings.id,
         provider: this.providerConfig.type,
-        model: this.settings.modelConfig.model,
+        model: this.providerConfig.modelConfig.model,
         responseTime: Date.now() - startTime
       }
     };

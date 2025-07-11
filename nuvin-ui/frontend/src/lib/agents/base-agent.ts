@@ -30,7 +30,7 @@ export abstract class BaseAgent {
   buildContext(conversationId: string, content: string): ChatMessage[] {
     const history = this.retrieveMemory(conversationId);
     return [
-      { role: 'system', content: this.settings.modelConfig.systemPrompt },
+      { role: 'system', content: this.settings.systemPrompt },
       ...history.map(m => ({ role: m.role, content: m.content })),
       { role: 'user', content }
     ];

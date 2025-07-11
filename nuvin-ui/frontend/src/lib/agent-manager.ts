@@ -104,7 +104,7 @@ export class AgentManager {
       return;
     }
     if (this.activeAgent.agentType === "local") {
-      if (!this.activeProvider) {
+      if (!this.activeProvider || !this.activeProvider.modelConfig) {
         this.agentInstance = null;
         return;
       }
@@ -263,7 +263,16 @@ export class AgentManager {
       case 'GitHub':
         return ['gpt-4', 'gpt-3.5-turbo'];
       case 'OpenRouter':
-        return ['gpt-4', 'gpt-3.5-turbo'];
+        return [
+          'openai/gpt-4',
+          'openai/gpt-4-turbo',
+          'openai/gpt-3.5-turbo',
+          'anthropic/claude-3-opus',
+          'anthropic/claude-3-sonnet',
+          'anthropic/claude-3-haiku',
+          'meta-llama/llama-2-70b-chat',
+          'mistralai/mistral-7b-instruct'
+        ];
       default:
         return [];
     }

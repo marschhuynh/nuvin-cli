@@ -1,8 +1,9 @@
-import { LLMProvider, CompletionParams, CompletionResult } from './llm-provider';
+import { LLMProvider, CompletionParams, CompletionResult, ModelInfo } from './llm-provider';
 
 export class OpenRouterProvider implements LLMProvider {
   readonly type = 'OpenRouter';
   private apiKey: string;
+  private apiUrl: string = "https://openrouter.ai";
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -16,7 +17,7 @@ export class OpenRouterProvider implements LLMProvider {
   }
 
   async generateCompletion(params: CompletionParams): Promise<CompletionResult> {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`${this.apiUrl}/api/v1/chat/completions`, {
       method: 'POST',
       headers: this.buildHeaders(),
       body: JSON.stringify({
@@ -39,7 +40,7 @@ export class OpenRouterProvider implements LLMProvider {
   }
 
   async *generateCompletionStream(params: CompletionParams): AsyncGenerator<string> {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`${this.apiUrl}/api/v1/chat/completions`, {
       method: 'POST',
       headers: this.buildHeaders(),
       body: JSON.stringify({
@@ -82,5 +83,38 @@ export class OpenRouterProvider implements LLMProvider {
         }
       }
     }
+  }
+
+  async getModels(): Promise<ModelInfo[]> {
+    const response = await fetch(`${this.apiUrl}/api/v1/models`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`
+      }
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${text}`);
+    }
+
+    const data = await response.json();
+    const models = data.data || [];
+
+    // Transform OpenRouter models to our ModelInfo format
+    const transformedModels = models
+      .map((model: any): ModelInfo => {
+        return {
+          id: model.id,
+          name: model.name || model.id,
+          description: model.description || `${model.id} via OpenRouter`,
+          contextLength: model.context_length || model.max_tokens || 4096,
+          inputCost: model.pricing?.prompt ? parseFloat(model.pricing.prompt) * 1000000 : undefined,
+          outputCost: model.pricing?.completion ? parseFloat(model.pricing.completion) * 1000000 : undefined,
+        };
+      })
+      .sort((a: ModelInfo, b: ModelInfo) => a.name.localeCompare(b.name));
+
+    return transformedModels;
   }
 }
