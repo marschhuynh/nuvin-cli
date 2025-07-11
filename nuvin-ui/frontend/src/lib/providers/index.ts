@@ -1,19 +1,19 @@
+// Export all provider interfaces and types
+export type { LLMProvider, CompletionParams, CompletionResult, ModelInfo, ChatMessage } from './llm-provider';
+
+// Export provider implementations
 export { OpenAIProvider } from './openai-provider';
+export { AnthropicProvider } from './anthropic-provider';
+export { OpenRouterProvider } from './openrouter-provider';
 export { GithubCopilotProvider } from './github-provider';
-export type { LLMProvider, CompletionParams, CompletionResult, ChatMessage } from './llm-provider';
 
-import { OpenAIProvider } from './openai-provider';
-import { GithubCopilotProvider } from './github-provider';
-import { LLMProvider } from './llm-provider';
-import type { ProviderConfig } from '@/types';
-
-export function createProvider(config: ProviderConfig): LLMProvider {
-  switch (config.type) {
-    case 'OpenAI':
-      return new OpenAIProvider(config.apiKey);
-    case 'GitHub':
-      return new GithubCopilotProvider(config.apiKey);
-    default:
-      throw new Error(`Unsupported provider type: ${config.type}`);
-  }
-}
+// Export utility functions and types
+export type { ProviderType, LLMProviderConfig } from './provider-utils';
+export {
+  createProvider,
+  fetchProviderModels,
+  fetchAllProviderModels,
+  getDefaultModel,
+  formatModelCost,
+  formatContextLength
+} from './provider-utils';

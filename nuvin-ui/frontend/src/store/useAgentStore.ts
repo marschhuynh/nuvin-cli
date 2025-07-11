@@ -21,14 +21,7 @@ const defaultAgents: AgentSettings[] = [
     temperature: 0.7,
     maxTokens: 2048,
     systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
-    agentType: 'local',
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.7,
-      maxTokens: 2048,
-      topP: 1,
-      systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.'
-    }
+    agentType: 'local'
   },
   {
     id: '2',
@@ -38,14 +31,7 @@ const defaultAgents: AgentSettings[] = [
     temperature: 0.3,
     maxTokens: 3000,
     systemPrompt: 'You are a senior software engineer specializing in code reviews. Analyze code for best practices, potential bugs, security issues, and suggest improvements. Be thorough and constructive in your feedback.',
-    agentType: 'local',
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.3,
-      maxTokens: 3000,
-      topP: 1,
-      systemPrompt: 'You are a senior software engineer specializing in code reviews. Analyze code for best practices, potential bugs, security issues, and suggest improvements. Be thorough and constructive in your feedback.'
-    }
+    agentType: 'local'
   },
   {
     id: '3',
@@ -55,14 +41,7 @@ const defaultAgents: AgentSettings[] = [
     temperature: 1.2,
     maxTokens: 4000,
     systemPrompt: 'You are a creative writing assistant. Help users with storytelling, character development, plot ideas, and creative expression. Be imaginative and inspiring while maintaining narrative coherence.',
-    agentType: 'local',
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 1.2,
-      maxTokens: 4000,
-      topP: 1,
-      systemPrompt: 'You are a creative writing assistant. Help users with storytelling, character development, plot ideas, and creative expression. Be imaginative and inspiring while maintaining narrative coherence.'
-    }
+    agentType: 'local'
   },
   {
     id: '4',
@@ -72,14 +51,7 @@ const defaultAgents: AgentSettings[] = [
     temperature: 0.4,
     maxTokens: 2500,
     systemPrompt: 'You are a professional business analyst. Provide strategic insights, market analysis, and business recommendations. Focus on data-driven decisions and practical solutions.',
-    agentType: 'local',
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.4,
-      maxTokens: 2500,
-      topP: 1,
-      systemPrompt: 'You are a professional business analyst. Provide strategic insights, market analysis, and business recommendations. Focus on data-driven decisions and practical solutions.'
-    }
+    agentType: 'local'
   },
   {
     id: '5',
@@ -89,14 +61,7 @@ const defaultAgents: AgentSettings[] = [
     temperature: 0.8,
     maxTokens: 1500,
     systemPrompt: 'You are a friendly, casual conversation partner. Keep responses relaxed and conversational. Use a warm, approachable tone and feel free to use everyday language.',
-    agentType: 'local',
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.8,
-      maxTokens: 1500,
-      topP: 1,
-      systemPrompt: 'You are a friendly, casual conversation partner. Keep responses relaxed and conversational. Use a warm, approachable tone and feel free to use everyday language.'
-    }
+    agentType: 'local'
   },
   {
     id: '6',
@@ -106,14 +71,7 @@ const defaultAgents: AgentSettings[] = [
     temperature: 0.5,
     maxTokens: 3500,
     systemPrompt: 'You are a patient technical tutor. Explain complex concepts in simple terms, provide step-by-step guidance, and encourage learning. Break down difficult topics into manageable parts.',
-    agentType: 'local',
-    modelConfig: {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.5,
-      maxTokens: 3500,
-      topP: 1,
-      systemPrompt: 'You are a patient technical tutor. Explain complex concepts in simple terms, provide step-by-step guidance, and encourage learning. Break down difficult topics into manageable parts.'
-    }
+    agentType: 'local'
   }
 ]
 

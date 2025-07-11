@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useProviderStore } from '@/store/useProviderStore';
 import { fetchGithubCopilotKey } from '@/lib/github';
 
-const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'GitHub'];
+const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'OpenRouter', 'GitHub'];
 
 interface ProviderSettingsProps {
   onAddProvider: () => void;
@@ -67,11 +67,19 @@ export function ProviderSettings({ onAddProvider }: ProviderSettingsProps) {
   const saveChanges = () => {
     if (!editingId || !validateEditName(editName, editingId) || !editType) return;
 
+    const existing = providers.find(p => p.id === editingId);
     updateProvider({
       id: editingId,
       name: editName.trim(),
       type: editType,
-      apiKey: editKey
+      apiKey: editKey,
+      modelConfig: existing?.modelConfig || {
+        model: 'gpt-3.5-turbo',
+        temperature: 0.7,
+        maxTokens: 2048,
+        topP: 1,
+        systemPrompt: ''
+      }
     });
     cancelEditing();
   };

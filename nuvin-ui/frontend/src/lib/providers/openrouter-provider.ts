@@ -1,20 +1,25 @@
 import { LLMProvider, CompletionParams, CompletionResult, ModelInfo } from './llm-provider';
 
-export class OpenAIProvider implements LLMProvider {
-  readonly type = 'OpenAI';
+export class OpenRouterProvider implements LLMProvider {
+  readonly type = 'OpenRouter';
   private apiKey: string;
-  private apiUrl: string = "https://api.openai.com";
+  private apiUrl: string = "https://openrouter.ai";
+
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
+  private buildHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`
+    } as Record<string, string>;
+  }
+
   async generateCompletion(params: CompletionParams): Promise<CompletionResult> {
-    const response = await fetch(`${this.apiUrl}/v1/chat/completions`, {
+    const response = await fetch(`${this.apiUrl}/api/v1/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
+      headers: this.buildHeaders(),
       body: JSON.stringify({
         model: params.model,
         messages: params.messages,
@@ -26,7 +31,7 @@ export class OpenAIProvider implements LLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${text}`);
+      throw new Error(`OpenRouter API error: ${response.status} - ${text}`);
     }
 
     const data = await response.json();
@@ -35,12 +40,9 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   async *generateCompletionStream(params: CompletionParams): AsyncGenerator<string> {
-    const response = await fetch(`${this.apiUrl}/v1/chat/completions`, {
+    const response = await fetch(`${this.apiUrl}/api/v1/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
+      headers: this.buildHeaders(),
       body: JSON.stringify({
         model: params.model,
         messages: params.messages,
@@ -53,7 +55,7 @@ export class OpenAIProvider implements LLMProvider {
 
     if (!response.ok || !response.body) {
       const text = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${text}`);
+      throw new Error(`OpenRouter API error: ${response.status} - ${text}`);
     }
 
     const reader = response.body.getReader();
@@ -84,7 +86,7 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   async getModels(): Promise<ModelInfo[]> {
-    const response = await fetch(`${this.apiUrl}/v1/models`, {
+    const response = await fetch(`${this.apiUrl}/api/v1/models`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`
@@ -93,53 +95,26 @@ export class OpenAIProvider implements LLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${text}`);
+      throw new Error(`OpenRouter API error: ${response.status} - ${text}`);
     }
 
     const data = await response.json();
     const models = data.data || [];
 
-    // Filter for chat models and add known pricing/context info
-    const chatModels = models
-      .filter((model: any) => model.id.includes('gpt') || model.id.includes('chat'))
+    // Transform OpenRouter models to our ModelInfo format
+    const transformedModels = models
       .map((model: any): ModelInfo => {
-        const modelInfo: ModelInfo = {
+        return {
           id: model.id,
-          name: model.id,
-          description: `OpenAI ${model.id}`
+          name: model.name || model.id,
+          description: model.description || `${model.id} via OpenRouter`,
+          contextLength: model.context_length || model.max_tokens || 4096,
+          inputCost: model.pricing?.prompt ? parseFloat(model.pricing.prompt) * 1000000 : undefined,
+          outputCost: model.pricing?.completion ? parseFloat(model.pricing.completion) * 1000000 : undefined,
         };
-
-        // Add known context lengths and pricing
-        switch (true) {
-          case model.id.includes('gpt-4o'):
-            modelInfo.contextLength = 128000;
-            modelInfo.inputCost = 2.5;
-            modelInfo.outputCost = 10;
-            break;
-          case model.id.includes('gpt-4-turbo'):
-            modelInfo.contextLength = 128000;
-            modelInfo.inputCost = 10;
-            modelInfo.outputCost = 30;
-            break;
-          case model.id.includes('gpt-4'):
-            modelInfo.contextLength = 8192;
-            modelInfo.inputCost = 30;
-            modelInfo.outputCost = 60;
-            break;
-          case model.id.includes('gpt-3.5-turbo'):
-            modelInfo.contextLength = 16385;
-            modelInfo.inputCost = 0.5;
-            modelInfo.outputCost = 1.5;
-            break;
-          default:
-            modelInfo.contextLength = 4096;
-            break;
-        }
-
-        return modelInfo;
       })
       .sort((a: ModelInfo, b: ModelInfo) => a.name.localeCompare(b.name));
 
-    return chatModels;
+    return transformedModels;
   }
 }

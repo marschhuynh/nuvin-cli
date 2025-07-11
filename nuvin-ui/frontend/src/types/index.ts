@@ -52,6 +52,7 @@ export interface ProviderConfig {
   name: string; // Custom name for the provider instance
   type: string; // Provider type (OpenAI, Anthropic, GitHub, etc.)
   apiKey: string;
+  modelConfig: ModelConfig;
 }
 
 export interface AgentSettings {
@@ -72,7 +73,6 @@ export interface AgentSettings {
     password?: string;     // For basic auth
     headerName?: string;   // Custom header name for API keys (default: 'Authorization')
   };
-  modelConfig: ModelConfig;
   // Optional properties to make it compatible with Agent interface where needed
   description?: string;
   tools?: AgentTool[];

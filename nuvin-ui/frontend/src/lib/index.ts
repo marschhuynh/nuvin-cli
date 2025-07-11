@@ -33,8 +33,8 @@ export * from './utils';
 export { fetchGithubCopilotKey } from './github';
 
 // Providers
-export type { LLMProvider, CompletionParams, CompletionResult, ChatMessage } from './providers';
-export { createProvider, OpenAIProvider, GithubCopilotProvider } from './providers';
+export type { LLMProvider, CompletionParams, CompletionResult, ChatMessage, ModelInfo, ProviderType, LLMProviderConfig } from './providers';
+export { createProvider, OpenAIProvider, GithubCopilotProvider, AnthropicProvider, OpenRouterProvider, fetchProviderModels, formatModelCost, formatContextLength } from './providers';
 export { BaseAgent, LocalAgent, A2AAgent } from './agents';
 
 // Export fetch proxy utilities

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -7,12 +7,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bot, CheckCircle, Circle, Clock, Settings, Globe, Home, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { AgentConfig, AgentSettings } from '@/types';
+import { A2AError, a2aService, agentManager } from '@/lib';
 import { useAgentStore } from '@/store/useAgentStore';
 import { useProviderStore } from '@/store/useProviderStore';
-import { a2aService, A2AError } from '@/lib';
-import { Button } from '@/components/ui/button';
+import { AgentConfig, AgentSettings } from '@/types';
+import { AlertCircle, Bot, CheckCircle, Circle, Clock, Globe, Home, Loader2, RefreshCw, Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ModelSelector } from '@/components/ModelSelector';
 
 interface AgentConfigurationProps {
   onConfigChange?: (config: AgentConfig) => void;
@@ -32,7 +33,7 @@ export function AgentConfiguration({
   onConfigChange,
   }: AgentConfigurationProps) {
     const { agents, activeAgentId, setActiveAgent } = useAgentStore();
-    const { providers, activeProviderId, setActiveProvider } = useProviderStore();
+    const { providers, activeProviderId, setActiveProvider, updateProvider } = useProviderStore();
 
     // State for remote agent card information
     const [agentCardInfo, setAgentCardInfo] = useState<AgentCardInfo | null>(null);
@@ -107,6 +108,20 @@ export function AgentConfiguration({
     setActiveProvider(providerId);
   };
 
+  const handleModelChange = (modelName: string) => {
+    const activeProvider = providers.find(p => p.id === activeProviderId);
+    if (activeProvider) {
+      const updatedProvider = {
+        ...activeProvider,
+        modelConfig: {
+          ...activeProvider.modelConfig,
+          model: modelName
+        }
+      };
+      updateProvider(updatedProvider);
+    }
+  };
+
   const handleRefreshAgentCard = () => {
     const selectedAgent = agents.find(agent => agent.id === activeAgentId);
     if (selectedAgent?.agentType === 'remote') {
@@ -115,6 +130,7 @@ export function AgentConfiguration({
   };
 
   const selectedAgent = agents.find(agent => agent.id === activeAgentId);
+  const activeProvider = providers.find(p => p.id === activeProviderId);
 
   const getStatusIcon = (status?: AgentSettings['status']) => {
     switch (status) {
@@ -153,6 +169,8 @@ export function AgentConfiguration({
     if (agent.tools) return agent.tools;
     return [];
   };
+
+  const currentTools = selectedAgent ? getAgentTools(selectedAgent).filter(t=>t.enabled) : [];
 
   return (
     <div className="min-w-[200px] border-l border-border bg-card overflow-auto">
@@ -209,9 +227,9 @@ export function AgentConfiguration({
               )}
 
               {/* Tools/Skills - Only show for local agents or remote agents without agent card info */}
-              {selectedAgent.agentType === 'local' && (
+              {(selectedAgent.agentType === 'local' && currentTools.length > 0) &&(
                 <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm">Available Tools ({getAgentTools(selectedAgent).filter(t => t.enabled).length})</Label>
+                  <Label className="text-xs sm:text-sm">Available Tools ({currentTools.length})</Label>
                   <div className="space-y-1 sm:space-y-2 max-h-28 sm:max-h-100 overflow-y-auto">
                     {getAgentTools(selectedAgent).map((tool, index) => (
                       <div
@@ -268,6 +286,24 @@ export function AgentConfiguration({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Model Selection */}
+              {activeProvider && (
+                <div className="space-y-2">
+                  <Label htmlFor="model" className="text-xs sm:text-sm">Select Model</Label>
+                  <ModelSelector
+                    providerConfig={{
+                      type: activeProvider.type,
+                      apiKey: activeProvider.apiKey,
+                      name: activeProvider.name
+                    }}
+                    selectedModel={activeProvider.modelConfig?.model || ''}
+                    onModelSelect={handleModelChange}
+                    showDetails={false}
+                    className="text-xs sm:text-sm"
+                  />
+                </div>
+              )}
             </>
           )}
 
