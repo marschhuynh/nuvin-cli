@@ -8,7 +8,7 @@ import {
 export class GithubCopilotProvider implements LLMProvider {
   readonly type = 'GitHub';
   private apiKey: string;
-  private apiUrl: string = 'https://api.github.com';
+  private apiUrl: string = 'https://api.githubcopilot.com';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -17,7 +17,7 @@ export class GithubCopilotProvider implements LLMProvider {
   async generateCompletion(
     params: CompletionParams,
   ): Promise<CompletionResult> {
-    const response = await fetch(`${this.apiUrl}/chat/completions`, {
+    const response = await fetch(`${this.apiUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export class GithubCopilotProvider implements LLMProvider {
   async *generateCompletionStream(
     params: CompletionParams,
   ): AsyncGenerator<string> {
-    const response = await fetch(`${this.apiUrl}/chat/completions`, {
+    const response = await fetch(`${this.apiUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export class GithubCopilotProvider implements LLMProvider {
 
   async getModels(): Promise<ModelInfo[]> {
     try {
-      const response = await fetch(`${this.apiUrl}/catalog/models`, {
+      const response = await fetch(`${this.apiUrl}/v1/models`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
