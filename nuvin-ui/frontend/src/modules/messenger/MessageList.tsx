@@ -14,9 +14,15 @@ export function MessageList({ messages, isLoading = false }: MessageListProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Scroll to bottom when component mounts (opening conversation)
+  useEffect(() => {
+    scrollToBottom();
+  }, []);
 
   return (
     <div className="flex-1 overflow-auto p-6 bg-message-list-background">
