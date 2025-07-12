@@ -23,7 +23,7 @@ import {
   RefreshCw,
   Settings,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ModelSelector } from '@/modules/agent/components/ModelSelector';
 
 interface AgentConfigurationProps {
@@ -96,12 +96,12 @@ export function AgentConfiguration({
       const authConfig =
         agent.auth && agent.auth.type !== 'none'
           ? {
-              type: agent.auth.type,
-              token: agent.auth.token,
-              username: agent.auth.username,
-              password: agent.auth.password,
-              headerName: agent.auth.headerName,
-            }
+            type: agent.auth.type,
+            token: agent.auth.token,
+            username: agent.auth.username,
+            password: agent.auth.password,
+            headerName: agent.auth.headerName,
+          }
           : undefined;
 
       // Fetch agent card information
@@ -132,19 +132,19 @@ export function AgentConfiguration({
     setActiveProvider(providerId);
   };
 
-  const handleModelChange = (modelName: string) => {
+  const handleModelChange = useCallback((modelName: string) => {
     const activeProvider = providers.find((p) => p.id === activeProviderId);
     if (activeProvider) {
       const updatedProvider = {
         ...activeProvider,
-        modelConfig: {
-          ...activeProvider.modelConfig,
+        activeModel: {
+          ...activeProvider.activeModel,
           model: modelName,
         },
       };
       updateProvider(updatedProvider);
     }
-  };
+  }, [activeProviderId]);
 
   const handleRefreshAgentCard = () => {
     const selectedAgent = agents.find((agent) => agent.id === activeAgentId);
@@ -271,16 +271,14 @@ export function AgentConfiguration({
                       {getAgentTools(selectedAgent).map((tool, index) => (
                         <div
                           key={index}
-                          className={`flex items-start gap-2 p-1.5 sm:p-2 rounded-md text-xs ${
-                            tool.enabled
-                              ? 'bg-green-50 border border-green-200'
-                              : 'bg-gray-50 border border-gray-200'
-                          }`}
+                          className={`flex items-start gap-2 p-1.5 sm:p-2 rounded-md text-xs ${tool.enabled
+                            ? 'bg-green-50 border border-green-200'
+                            : 'bg-gray-50 border border-gray-200'
+                            }`}
                         >
                           <div
-                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mt-1 sm:mt-1.5 ${
-                              tool.enabled ? 'bg-green-500' : 'bg-gray-400'
-                            }`}
+                            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mt-1 sm:mt-1.5 ${tool.enabled ? 'bg-green-500' : 'bg-gray-400'
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">
@@ -354,9 +352,8 @@ export function AgentConfiguration({
                       apiKey: activeProvider.apiKey,
                       name: activeProvider.name,
                     }}
-                    selectedModel={activeProvider.modelConfig?.model || ''}
+                    selectedModel={activeProvider.activeModel?.model || ''}
                     onModelSelect={handleModelChange}
-                    showDetails={false}
                     className="text-xs sm:text-sm"
                   />
                 </div>

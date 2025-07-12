@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import { AgentSettings } from '@/types';
 
 interface AgentState {
@@ -19,6 +19,7 @@ const defaultAgents: AgentSettings[] = [
     persona: 'helpful',
     responseLength: 'medium',
     temperature: 0.7,
+    topP: 1.0,
     maxTokens: 2048,
     systemPrompt:
       'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
@@ -30,6 +31,7 @@ const defaultAgents: AgentSettings[] = [
     persona: 'analytical',
     responseLength: 'detailed',
     temperature: 0.3,
+    topP: 0.9,
     maxTokens: 3000,
     systemPrompt:
       'You are a senior software engineer specializing in code reviews. Analyze code for best practices, potential bugs, security issues, and suggest improvements. Be thorough and constructive in your feedback.',
@@ -41,6 +43,7 @@ const defaultAgents: AgentSettings[] = [
     persona: 'creative',
     responseLength: 'long',
     temperature: 1.2,
+    topP: 1.0,
     maxTokens: 4000,
     systemPrompt:
       'You are a creative writing assistant. Help users with storytelling, character development, plot ideas, and creative expression. Be imaginative and inspiring while maintaining narrative coherence.',
@@ -52,6 +55,7 @@ const defaultAgents: AgentSettings[] = [
     persona: 'professional',
     responseLength: 'detailed',
     temperature: 0.4,
+    topP: 0.8,
     maxTokens: 2500,
     systemPrompt:
       'You are a professional business analyst. Provide strategic insights, market analysis, and business recommendations. Focus on data-driven decisions and practical solutions.',
@@ -63,6 +67,7 @@ const defaultAgents: AgentSettings[] = [
     persona: 'casual',
     responseLength: 'short',
     temperature: 0.8,
+    topP: 1.0,
     maxTokens: 1500,
     systemPrompt:
       'You are a friendly, casual conversation partner. Keep responses relaxed and conversational. Use a warm, approachable tone and feel free to use everyday language.',
@@ -74,6 +79,7 @@ const defaultAgents: AgentSettings[] = [
     persona: 'helpful',
     responseLength: 'detailed',
     temperature: 0.5,
+    topP: 0.9,
     maxTokens: 3500,
     systemPrompt:
       'You are a patient technical tutor. Explain complex concepts in simple terms, provide step-by-step guidance, and encourage learning. Break down difficult topics into manageable parts.',
@@ -83,7 +89,7 @@ const defaultAgents: AgentSettings[] = [
 
 export const useAgentStore = create<AgentState>()(
   persist(
-    (set) => ({
+    devtools((set) => ({
       agents: defaultAgents,
       activeAgentId: defaultAgents[0].id,
       addAgent: (agent) =>
@@ -99,7 +105,7 @@ export const useAgentStore = create<AgentState>()(
       setActiveAgent: (id) => set(() => ({ activeAgentId: id })),
       reset: () =>
         set({ agents: defaultAgents, activeAgentId: defaultAgents[0].id }),
-    }),
+    })),
     {
       name: 'agent-storage',
     },

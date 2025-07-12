@@ -43,10 +43,10 @@ export class LocalAgent extends BaseAgent {
       let accumulated = '';
       const stream = provider.generateCompletionStream({
         messages,
-        model: this.providerConfig.modelConfig.model,
-        temperature: this.providerConfig.modelConfig.temperature,
-        maxTokens: this.providerConfig.modelConfig.maxTokens,
-        topP: this.providerConfig.modelConfig.topP,
+        model: this.providerConfig.activeModel.model,
+        temperature: this.settings.temperature,
+        maxTokens: this.providerConfig.activeModel.maxTokens,
+        topP: this.settings.topP,
       });
 
       for await (const chunk of stream) {
@@ -64,7 +64,7 @@ export class LocalAgent extends BaseAgent {
           agentType: 'local',
           agentId: this.settings.id,
           provider: this.providerConfig.type,
-          model: this.providerConfig.modelConfig.model,
+          model: this.providerConfig.activeModel.model,
           responseTime: Date.now() - startTime,
         },
       };
@@ -85,10 +85,10 @@ export class LocalAgent extends BaseAgent {
 
     const result = await provider.generateCompletion({
       messages,
-      model: this.providerConfig.modelConfig.model,
-      temperature: this.providerConfig.modelConfig.temperature,
-      maxTokens: this.providerConfig.modelConfig.maxTokens,
-      topP: this.providerConfig.modelConfig.topP,
+      model: this.providerConfig.activeModel.model,
+      temperature: this.settings.temperature,
+      maxTokens: this.providerConfig.activeModel.maxTokens,
+      topP: this.settings.topP,
     });
 
     const timestamp = new Date().toISOString();
@@ -101,7 +101,7 @@ export class LocalAgent extends BaseAgent {
         agentType: 'local',
         agentId: this.settings.id,
         provider: this.providerConfig.type,
-        model: this.providerConfig.modelConfig.model,
+        model: this.providerConfig.activeModel.model,
         responseTime: Date.now() - startTime,
       },
     };

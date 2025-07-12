@@ -61,6 +61,7 @@ export function AgentModal({
     persona: AgentPersona;
     responseLength: ResponseLength;
     temperature: number;
+    topP: number;
     maxTokens: number;
     systemPrompt: string;
     agentType: AgentType;
@@ -77,6 +78,7 @@ export function AgentModal({
     persona: 'helpful' as AgentPersona,
     responseLength: 'medium' as ResponseLength,
     temperature: 0.7,
+    topP: 1.0,
     maxTokens: 2048,
     systemPrompt:
       'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
@@ -98,6 +100,7 @@ export function AgentModal({
           responseLength:
             agent.responseLength === 'detailed' ? 'long' : agent.responseLength,
           temperature: agent.temperature,
+          topP: agent.topP,
           maxTokens: agent.maxTokens,
           systemPrompt: agent.systemPrompt,
           agentType: agent.agentType,
@@ -327,6 +330,7 @@ export function AgentModal({
       persona: 'helpful',
       responseLength: 'medium',
       temperature: 0.7,
+      topP: 1.0,
       maxTokens: 2048,
       systemPrompt:
         'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',

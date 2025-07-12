@@ -3,7 +3,7 @@ import { useAgentManager } from '@/hooks';
 import { generateUUID } from '@/lib/utils';
 import { useConversationStore } from '@/store';
 import { AgentConfig, Conversation, Message } from '@/types';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { AgentConfiguration } from './modules/agent/AgentConfiguration';
 import { ChatInput, MessageList } from './modules/messenger';
@@ -106,15 +106,14 @@ function App() {
       const errorMessage: Message = {
         id: generateUUID(),
         role: 'assistant',
-        content: `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}. ${
-          !activeAgent
-            ? 'No agent selected.'
-            : !activeProvider && agentType === 'local'
-              ? 'No provider configured for local agent.'
-              : activeAgent.agentType === 'remote' && !activeAgent.url
-                ? 'No URL configured for remote agent.'
-                : 'Please check your configuration and try again.'
-        }`,
+        content: `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}. ${!activeAgent
+          ? 'No agent selected.'
+          : !activeProvider && agentType === 'local'
+            ? 'No provider configured for local agent.'
+            : activeAgent.agentType === 'remote' && !activeAgent.url
+              ? 'No URL configured for remote agent.'
+              : 'Please check your configuration and try again.'
+          }`,
         timestamp: new Date().toISOString(),
       };
 
@@ -201,13 +200,13 @@ function App() {
     deleteConversation(conversationId);
   };
 
-  const handleAgentConfigChange = (config: AgentConfig) => {
+  const handleAgentConfigChange = useCallback((config: AgentConfig) => {
     console.log('Agent config updated:', config);
     const selectedAgent = config.agents.find(
       (agent) => agent.id === config.selectedAgent,
     );
     console.log('Selected agent:', selectedAgent?.name);
-  };
+  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-background">

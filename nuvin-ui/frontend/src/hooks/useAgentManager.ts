@@ -165,7 +165,7 @@ export function useAgentManager() {
       return (
         activeProvider !== null &&
         activeProvider.apiKey !== '' &&
-        activeProvider.modelConfig !== undefined
+        activeProvider.activeModel !== undefined
       );
     }
 

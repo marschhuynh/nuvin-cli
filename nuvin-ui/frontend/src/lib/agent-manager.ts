@@ -110,7 +110,7 @@ export class AgentManager {
       return;
     }
     if (this.activeAgent.agentType === 'local') {
-      if (!this.activeProvider || !this.activeProvider.modelConfig) {
+      if (!this.activeProvider || !this.activeProvider.activeModel) {
         this.agentInstance = null;
         return;
       }

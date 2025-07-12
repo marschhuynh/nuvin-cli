@@ -79,12 +79,9 @@ export function AddProviderModal({
       name: newProviderName.trim(),
       type: newProviderType,
       apiKey: newProviderKey,
-      modelConfig: {
+      activeModel: {
         model: selectedModel || getDefaultModel(newProviderType as any),
-        temperature: 0.7,
         maxTokens: 2048,
-        topP: 1,
-        systemPrompt: '',
       },
     });
 
@@ -115,12 +112,9 @@ export function AddProviderModal({
           name: newProviderName.trim(),
           type: 'GitHub',
           apiKey: token,
-          modelConfig: {
+          activeModel: {
             model: selectedModel || getDefaultModel('GitHub'),
-            temperature: 0.7,
             maxTokens: 2048,
-            topP: 1,
-            systemPrompt: '',
           },
         });
         setNewProviderName('');
@@ -250,7 +244,6 @@ export function AddProviderModal({
                 }}
                 selectedModel={selectedModel}
                 onModelSelect={setSelectedModel}
-                showDetails={false}
               />
               <p className="text-sm text-muted-foreground">
                 Available models will be fetched from the provider when you

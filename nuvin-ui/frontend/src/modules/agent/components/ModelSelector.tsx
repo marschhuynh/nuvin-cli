@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Loader2, AlertCircle, Info } from 'lucide-react';
-import { ModelInfo } from '@/lib/providers/llm-provider';
 import {
   LLMProviderConfig,
+  ProviderType,
   fetchProviderModels,
 } from '@/lib/providers/provider-utils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ModelSelectView } from './ModelSelectView';
+import { useActiveProvider } from '../hooks/useActiveProvider';
+import { useActiveModel, useActiveModelActions } from '../hooks/useActiveModel';
 
 interface ModelSelectorProps {
   providerConfig: LLMProviderConfig;
@@ -24,61 +26,62 @@ export function ModelSelector({
   disabled = false,
   className,
 }: ModelSelectorProps) {
-  const [models, setModels] = useState<ModelInfo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const activeProviderConfig = useActiveProvider();
+  const { enabledModels, isLoading, error } = useActiveModel();
+  const { setProviderModels, setProviderLoading, setProviderError } = useActiveModelActions();
 
   useEffect(() => {
+    console.log('Rendering ModelSelector with providerConfig:', activeProviderConfig);
     async function loadModels() {
-      if (!providerConfig?.apiKey) {
-        setModels([]);
+      if (!activeProviderConfig?.apiKey) {
+        setProviderModels([]);
         return;
       }
 
-      setLoading(true);
-      setError(null);
+      setProviderLoading(true);
+      setProviderError(null);
 
       try {
-        const fetchedModels = await fetchProviderModels(providerConfig);
-        setModels(fetchedModels);
+        const fetchedModels = await fetchProviderModels({
+          type: activeProviderConfig.type as ProviderType,
+          apiKey: activeProviderConfig.apiKey,
+          name: activeProviderConfig.name,
+        });
+        setProviderModels(fetchedModels);
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to load models';
-        setError(errorMessage);
-        setModels([]);
+        setProviderError(errorMessage);
+        setProviderModels([]);
         console.error('Failed to fetch models:', err);
-      } finally {
-        setLoading(false);
       }
     }
 
     loadModels();
-  }, [providerConfig]);
+  }, [activeProviderConfig, setProviderModels, setProviderLoading, setProviderError]);
 
   const handleRefresh = () => {
-    if (!loading && providerConfig?.apiKey) {
-      setError(null);
-      setModels([]);
+    if (!isLoading && providerConfig?.apiKey) {
+      setProviderError(null);
+      setProviderModels([]);
       // Trigger useEffect by updating a dependency
       const loadModels = async () => {
-        setLoading(true);
+        setProviderLoading(true);
         try {
           const fetchedModels = await fetchProviderModels(providerConfig);
-          setModels(fetchedModels);
+          setProviderModels(fetchedModels);
         } catch (err) {
           const errorMessage =
             err instanceof Error ? err.message : 'Failed to load models';
-          setError(errorMessage);
-          setModels([]);
-        } finally {
-          setLoading(false);
+          setProviderError(errorMessage);
+          setProviderModels([]);
         }
       };
       loadModels();
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div
         className={cn(
@@ -120,7 +123,7 @@ export function ModelSelector({
     );
   }
 
-  if (models.length === 0) {
+  if (enabledModels.length === 0) {
     return (
       <div className={cn('p-4 border rounded-lg bg-muted/50', className)}>
         <div className="flex items-center gap-2">
@@ -138,7 +141,7 @@ export function ModelSelector({
   return (
     <div className={cn('space-y-4', className)}>
       <ModelSelectView
-        models={models}
+        models={enabledModels}
         selectedModel={selectedModel}
         onModelSelect={onModelSelect}
         disabled={disabled}

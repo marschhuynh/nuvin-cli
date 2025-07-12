@@ -14,10 +14,7 @@ export interface Conversation {
 
 export interface ModelConfig {
   model: string;
-  temperature: number;
   maxTokens: number;
-  topP: number;
-  systemPrompt: string;
 }
 
 export interface User {
@@ -52,7 +49,7 @@ export interface ProviderConfig {
   name: string; // Custom name for the provider instance
   type: string; // Provider type (OpenAI, Anthropic, GitHub, etc.)
   apiKey: string;
-  modelConfig: ModelConfig;
+  activeModel: ModelConfig;
 }
 
 export interface AgentSettings {
@@ -61,6 +58,7 @@ export interface AgentSettings {
   persona: 'helpful' | 'professional' | 'creative' | 'analytical' | 'casual';
   responseLength: 'short' | 'medium' | 'long' | 'detailed';
   temperature: number;
+  topP: number;
   maxTokens: number;
   systemPrompt: string;
   agentType: 'local' | 'remote';
