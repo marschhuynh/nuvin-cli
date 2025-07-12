@@ -62,3 +62,6 @@ export {
   smartFetch,
   isWailsEnvironment,
 } from './fetch-proxy';
+
+// Theme
+export { ThemeProvider, useTheme } from './theme';

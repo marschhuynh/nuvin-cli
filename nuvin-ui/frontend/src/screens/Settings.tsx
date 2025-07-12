@@ -60,9 +60,9 @@ export default function Settings() {
   ];
 
   return (
-    <div className="flex flex-1 overflow-hidden bg-gray-100">
+    <div className="flex flex-1 overflow-hidden bg-background">
       {/* Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r bg-white">
+      <div className="w-64 flex-shrink-0 border-r bg-card border-border">
         <div className="p-6">
           <h1 className="text-2xl font-bold mb-6">Settings</h1>
           <div className="space-y-2">
@@ -81,7 +81,7 @@ export default function Settings() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-background">
         <div className="flex-1">
           {activeTab === 'general' && (
             <GeneralSettings

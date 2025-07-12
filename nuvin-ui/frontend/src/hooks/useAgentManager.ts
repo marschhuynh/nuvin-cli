@@ -3,12 +3,12 @@ import { useAgentStore } from '@/store/useAgentStore';
 import { useProviderStore } from '@/store/useProviderStore';
 import {
   agentManager,
-  SendMessageOptions,
-  MessageResponse,
-  AgentStatus,
-  A2AErrorType,
+  type SendMessageOptions,
+  type MessageResponse,
+  type AgentStatus,
+  type A2AErrorType,
 } from '@/lib';
-import { AgentSettings } from '@/types';
+import type { AgentSettings } from '@/types';
 
 /**
  * Custom hook for managing agent communication and state

@@ -6,8 +6,8 @@
     "useIgnoreFile": false
   },
   "files": {
-    "ignoreUnknown": false,
-    "includes": ["nuvin-ui/frontend/**"]
+    "ignoreUnknown": true,
+    "includes": ["nuvin-ui/frontend/**/*.ts"]
   },
   "formatter": {
     "enabled": true,

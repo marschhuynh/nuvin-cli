@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { ConversationHistory } from '@/components';
 import { useAgentManager } from '@/hooks';
 import { generateUUID } from '@/lib/utils';
+import { createTimestamp } from '@/lib/timestamp';
 import { useConversationStore } from '@/store';
 import type { AgentConfig, Conversation, Message } from '@/types';
 
@@ -166,7 +167,7 @@ export default function Dashboard() {
     const newConversation: Conversation = {
       id: generateUUID(),
       title: 'New Conversation',
-      timestamp: 'Just now',
+      timestamp: createTimestamp(),
       active: true,
     };
 
@@ -221,27 +222,26 @@ export default function Dashboard() {
         <MessageList messages={messages} isLoading={isLoading} />
 
         {/* Agent Status Bar */}
-        <div className="border-t border-border bg-white px-6 py-2">
+        <div className="border-t border-border bg-card px-6 py-2">
           <div className="max-w-4xl mx-auto flex items-center justify-between text-sm">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/10 transition-all duration-200 hover:bg-muted/20">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    isReady ? 'bg-green-500' : 'bg-red-500'
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    isReady 
+                      ? 'bg-green-500 shadow-sm shadow-green-500/30' 
+                      : 'bg-red-500 shadow-sm shadow-red-500/30'
                   }`}
                 />
-                <span className="text-muted-foreground">
-                  Agent: {activeAgent?.name || 'None'} ({agentType || 'N/A'})
+                <span className="text-xs font-medium text-muted-foreground transition-colors duration-200">
+                  Agent: {activeAgent?.name || 'None'}
                 </span>
+                {isReady && (
+                  <span className="text-xs px-1.5 py-0.5 bg-green-500/10 text-green-600 rounded-md transition-all duration-200">
+                    Ready
+                  </span>
+                )}
               </div>
-              {agentType === 'local' && (
-                <div className="text-muted-foreground">
-                  Provider: {activeProvider?.name || 'None'}
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {isReady ? 'Ready' : 'Not Ready - Configure agent and provider'}
             </div>
           </div>
         </div>

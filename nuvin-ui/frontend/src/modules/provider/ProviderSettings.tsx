@@ -60,8 +60,8 @@ export function ProviderSettings({ onAddProvider }: ProviderSettingsProps) {
                       type="button"
                       className={`rounded-md border p-3 cursor-pointer transition-colors hover:bg-muted/40 text-left w-full ${
                         activeProviderId === provider.id
-                          ? 'bg-primary/10 border-primary'
-                          : 'bg-white'
+                          ? 'bg-accent border-primary'
+                          : 'bg-card'
                       }`}
                       onClick={() => handleProviderSelect(provider)}
                       onKeyDown={(e) => {

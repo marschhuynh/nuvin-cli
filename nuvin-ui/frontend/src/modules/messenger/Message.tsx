@@ -43,7 +43,7 @@ export function Message({ role, content }: MessageProps) {
         className={`max-w-[70%] p-4 rounded-lg shadow-sm border relative group overflow-hidden ${
           role === 'user'
             ? 'bg-primary text-primary-foreground border-primary/20'
-            : 'bg-card/90 backdrop-blur-sm border-border/60'
+            : 'bg-card border-border'
         }`}
       >
         {role === 'user' || showRaw ? (

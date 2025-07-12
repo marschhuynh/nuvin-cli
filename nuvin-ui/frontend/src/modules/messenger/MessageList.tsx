@@ -19,7 +19,7 @@ export function MessageList({ messages, isLoading = false }: MessageListProps) {
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-auto p-6 bg-muted/20">
+    <div className="flex-1 overflow-auto p-6 bg-message-list-background">
       <div className="max-w-4xl mx-auto space-y-6">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -46,7 +46,7 @@ export function MessageList({ messages, isLoading = false }: MessageListProps) {
                 <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
                   <div className="h-4 w-4 bg-primary-foreground rounded-full animate-pulse" />
                 </div>
-                <div className="max-w-[70%] p-4 rounded-lg bg-card/80 backdrop-blur-sm ml-4 shadow-sm border border-border/50">
+                <div className="max-w-[70%] p-4 rounded-lg bg-card ml-4 shadow-sm border border-border">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
                     <div
