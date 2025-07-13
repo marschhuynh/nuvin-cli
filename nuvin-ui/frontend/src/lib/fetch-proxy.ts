@@ -251,7 +251,10 @@ export async function smartFetch(
   init?: RequestInit,
 ): Promise<Response> {
   console.log('smartFetch', input, init);
+<<<<<<< Updated upstream
   // return fetch(input, init);
+=======
+>>>>>>> Stashed changes
   if (isWailsEnvironment()) {
     return fetchProxy(input, init);
   } else {
