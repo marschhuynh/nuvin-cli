@@ -437,7 +437,7 @@ export function AgentConfiguration({
                           {agentCardInfo.skills.length} skills
                         </span>
                       </div>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                      <div className="space-y-2">
                         {agentCardInfo.skills.map((skill) => (
                           <div
                             key={skill.id}

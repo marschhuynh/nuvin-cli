@@ -230,7 +230,7 @@ export default function Dashboard() {
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     isReady
                       ? 'bg-green-500 shadow-sm shadow-green-500/30'
-                      : 'bg-red-500 shadow-sm shadow-red-500/30'
+                       : 'bg-red-500 shadow-sm shadow-red-500/30'
                   }`}
                 />
                 <span className="text-xs font-medium text-muted-foreground transition-colors duration-200">

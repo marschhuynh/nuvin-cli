@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
+  theme: 'light' | 'dark' | 'ocean' | 'system';
   notifications: boolean;
   autoSave: boolean;
   fontSize: 'small' | 'medium' | 'large';

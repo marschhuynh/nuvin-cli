@@ -65,3 +65,4 @@ export {
 
 // Theme
 export { ThemeProvider, useTheme } from './theme';
+export { themeNames } from '../themes';

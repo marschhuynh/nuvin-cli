@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, Droplet } from 'lucide-react';
 import type { UserPreferences } from '@/store/useUserPreferenceStore';
 import { useTheme } from '@/lib/theme';
 
@@ -32,7 +32,7 @@ export function GeneralSettings({
           <Label htmlFor="theme">Theme</Label>
           <Select
             value={settings.theme}
-            onValueChange={(value: 'light' | 'dark' | 'system') =>
+            onValueChange={(value: 'light' | 'dark' | 'ocean' | 'system') =>
               onSettingsChange({ theme: value })
             }
           >
@@ -41,6 +41,7 @@ export function GeneralSettings({
                 <div className="flex items-center gap-2">
                   {settings.theme === 'light' && <Sun className="h-4 w-4" />}
                   {settings.theme === 'dark' && <Moon className="h-4 w-4" />}
+                  {settings.theme === 'ocean' && <Droplet className="h-4 w-4" />}
                   {settings.theme === 'system' && <Monitor className="h-4 w-4" />}
                   <span className="capitalize">{settings.theme}</span>
                   {settings.theme === 'system' && (
@@ -62,6 +63,12 @@ export function GeneralSettings({
                 <div className="flex items-center gap-2">
                   <Moon className="h-4 w-4" />
                   <span>Dark</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="ocean">
+                <div className="flex items-center gap-2">
+                  <Droplet className="h-4 w-4" />
+                  <span>Ocean</span>
                 </div>
               </SelectItem>
               <SelectItem value="system">

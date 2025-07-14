@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect } from 'react';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
+import { themes, themeNames, ThemeName } from '@/themes';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = ThemeName | 'system';
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  resolvedTheme: 'light' | 'dark';
+  resolvedTheme: ThemeName;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -38,27 +39,33 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return 'light';
   };
 
-  const resolvedTheme = theme === 'system' ? getSystemTheme() : theme;
+  const resolvedTheme: ThemeName =
+    theme === 'system' ? getSystemTheme() : (theme as ThemeName);
 
   // Apply initial theme on mount
   useEffect(() => {
     const root = window.document.documentElement;
-    const initialTheme = theme === 'system' ? getSystemTheme() : theme;
-    
-    // Remove any existing theme classes
-    root.classList.remove('light', 'dark');
-    // Add the initial theme
+    const initialTheme = theme === 'system' ? getSystemTheme() : (theme as ThemeName);
+
+    root.classList.remove(...themeNames);
     root.classList.add(initialTheme);
+
+    const vars = themes[initialTheme];
+    Object.entries(vars).forEach(([key, value]) => {
+      root.style.setProperty(`--${key}`, value);
+    });
   }, []); // Run only on mount
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
-    // Remove existing theme classes
-    root.classList.remove('light', 'dark');
-    
-    // Add the resolved theme class
+
+    root.classList.remove(...themeNames);
     root.classList.add(resolvedTheme);
+
+    const vars = themes[resolvedTheme];
+    Object.entries(vars).forEach(([key, value]) => {
+      root.style.setProperty(`--${key}`, value);
+    });
   }, [resolvedTheme]);
 
   // Listen for system theme changes when using 'system' theme
@@ -69,9 +76,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const handleChange = () => {
       const root = window.document.documentElement;
       const systemTheme = mediaQuery.matches ? 'dark' : 'light';
-      
-      root.classList.remove('light', 'dark');
+
+      root.classList.remove(...themeNames);
       root.classList.add(systemTheme);
+
+      const vars = themes[systemTheme];
+      Object.entries(vars).forEach(([key, value]) => {
+        root.style.setProperty(`--${key}`, value);
+      });
     };
 
     mediaQuery.addEventListener('change', handleChange);
