@@ -7,3 +7,5 @@ export function FetchGithubCopilotKey():Promise<string>;
 export function FetchProxy(arg1:main.FetchRequest):Promise<main.FetchResponse>;
 
 export function Greet(arg1:string):Promise<string>;
+
+export function SetGlobalShortcut(arg1:string):Promise<void>;

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,14 +11,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getlantern/systray"
 	"github.com/pkg/browser"
+	hook "github.com/robotn/gohook"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx      context.Context
+	shortcut string
+	stopChan chan struct{}
 }
+
+//go:embed icons/logo.png
+var trayIcon []byte
 
 // FetchRequest represents a fetch request from JavaScript
 type FetchRequest struct {
@@ -39,13 +47,17 @@ type FetchResponse struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	return &App{
+		shortcut: "ctrl+shift+space",
+	}
 }
 
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	go a.setupTray()
+	go a.listenHotkey()
 }
 
 // FetchProxy handles HTTP requests from JavaScript, bypassing CORS and browser restrictions
@@ -343,4 +355,62 @@ func (a *App) handleCopilotFallback(accessToken string) string {
 	}
 
 	return accessToken
+}
+
+// SetGlobalShortcut updates the configured global shortcut key
+func (a *App) SetGlobalShortcut(shortcut string) {
+	a.shortcut = strings.ToLower(shortcut)
+	if a.stopChan != nil {
+		close(a.stopChan)
+	}
+	a.stopChan = make(chan struct{})
+	go a.listenHotkey()
+}
+
+func (a *App) listenHotkey() {
+	if a.shortcut == "" {
+		return
+	}
+	parts := strings.Split(a.shortcut, "+")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	for {
+		select {
+		case <-a.stopChan:
+			return
+		default:
+			if hook.AddEvents(parts...) {
+				runtime.Show(a.ctx)
+				runtime.WindowUnminimise(a.ctx)
+				runtime.WindowFocus(a.ctx)
+			}
+		}
+	}
+}
+
+func (a *App) setupTray() {
+	systray.Run(a.onTrayReady, func() {})
+}
+
+func (a *App) onTrayReady() {
+	systray.SetIcon(trayIcon)
+	systray.SetTitle("Nuvin Space")
+	mOpen := systray.AddMenuItem("Open", "Show window")
+	mQuit := systray.AddMenuItem("Quit", "Quit application")
+
+	go func() {
+		for {
+			select {
+			case <-mOpen.ClickedCh:
+				runtime.Show(a.ctx)
+				runtime.WindowUnminimise(a.ctx)
+				runtime.WindowFocus(a.ctx)
+			case <-mQuit.ClickedCh:
+				systray.Quit()
+				runtime.Quit(a.ctx)
+				return
+			}
+		}
+	}()
 }

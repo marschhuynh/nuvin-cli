@@ -13,3 +13,7 @@ export function FetchProxy(arg1) {
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
+
+export function SetGlobalShortcut(arg1) {
+  return window['go']['main']['App']['SetGlobalShortcut'](arg1);
+}

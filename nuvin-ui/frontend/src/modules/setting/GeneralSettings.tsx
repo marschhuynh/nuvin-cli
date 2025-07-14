@@ -7,8 +7,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Sun, Moon, Monitor, Droplet } from 'lucide-react';
+import { useEffect } from 'react';
 import type { UserPreferences } from '@/store/useUserPreferenceStore';
 import { useTheme } from '@/lib/theme';
+import { Input } from '@/components/ui/input';
+import { SetGlobalShortcut } from '../../wailsjs/go/main/App';
 
 interface GeneralSettingsProps {
   settings: UserPreferences;
@@ -20,6 +23,12 @@ export function GeneralSettings({
   onSettingsChange,
 }: GeneralSettingsProps) {
   const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    if (settings.globalShortcut) {
+      SetGlobalShortcut(settings.globalShortcut);
+    }
+  }, [settings.globalShortcut]);
 
   return (
     <div>
@@ -99,6 +108,18 @@ export function GeneralSettings({
               <SelectItem value="large">Large</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Global Shortcut */}
+        <div className="grid gap-2">
+          <Label htmlFor="shortcut">Global Shortcut</Label>
+          <Input
+            id="shortcut"
+            value={settings.globalShortcut}
+            onChange={(e) =>
+              onSettingsChange({ globalShortcut: e.currentTarget.value })
+            }
+          />
         </div>
 
         {/* Notifications Toggle */}

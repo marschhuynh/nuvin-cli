@@ -6,6 +6,7 @@ export interface UserPreferences {
   notifications: boolean;
   autoSave: boolean;
   fontSize: 'small' | 'medium' | 'large';
+  globalShortcut: string;
 }
 
 interface UserPreferenceState {
@@ -19,6 +20,7 @@ const defaultPreferences: UserPreferences = {
   notifications: true,
   autoSave: true,
   fontSize: 'medium',
+  globalShortcut: 'Ctrl+Shift+Space',
 };
 
 export const useUserPreferenceStore = create<UserPreferenceState>()(
