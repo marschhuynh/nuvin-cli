@@ -37,17 +37,17 @@ function CodeBlock({ children, className, language, content }: CodeBlockProps) {
 
   if (language === 'markdown') {
     return (
-      <div className="nested-markdown border border-border bg-muted/20 p-4 rounded-lg">
+      <div className="nested-markdown border border-border bg-muted/20 p-4 rounded-lg overflow-hidden">
         <div className="text-foreground text-sm font-medium mb-2 flex items-center justify-between">
           <span>Markdown Content:</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleCopy}
             className="h-6 w-6 p-0 hover:bg-muted"
-          >
-            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          </Button>
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        </Button>
         </div>
         <MarkdownRenderer content={content} />
       </div>
@@ -81,7 +81,7 @@ function CodeBlock({ children, className, language, content }: CodeBlockProps) {
         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       </Button>
       {language && (
-        <div className="absolute top-2 left-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+        <div className="absolute top-0 left-1 text-xs text-muted-foreground bg-muted/50 px-0 py-1 rounded">
           {language}
         </div>
       )}
@@ -96,45 +96,6 @@ export function MarkdownRenderer({
   // Memoize content processing for performance
   const processedContent = useMemo(() => {
     let processedContent = content.trim();
-
-
-    // Case 1: Handle content that starts with a code block fence
-    // Check if the entire content is wrapped in a single code block
-    const codeBlockMatch = /^```(\w+)?\s*\n([\s\S]*?)\n```$/m.exec(processedContent);
-    if (codeBlockMatch) {
-      const language = codeBlockMatch[1];
-      const blockContent = codeBlockMatch[2];
-
-      // If it's a markdown code block, extract the content
-      if (language === 'markdown' || (!language && blockContent.includes('##'))) {
-        processedContent = blockContent;
-      }
-    }
-
-    // Case 2: Extract content from ```markdown...``` wrappers
-    const fullMarkdownMatch = /^```markdown\s*\n([\s\S]*)\n```$/m.exec(
-      processedContent.trim(),
-    );
-    if (fullMarkdownMatch) {
-      processedContent = fullMarkdownMatch[1];
-    }
-
-    // Case 3: Extract content from inline ```markdown blocks
-    const markdownBlockRegex = /```markdown\s*\n([\s\S]*?)\n```/g;
-    processedContent = processedContent.replace(
-      markdownBlockRegex,
-      (match, innerContent) => innerContent,
-    );
-
-    // Case 4: Convert plain mermaid syntax to code blocks
-    processedContent = processedContent.replace(
-      /^mermaid\s*\n((?:(?!```).)+?)(?=\n\n|\n\*\*|$)/gms,
-      (match, diagramContent) => `\`\`\`mermaid\n${diagramContent.trim()}\n\`\`\``,
-    );
-
-    // Case 5: Unescape backticks
-    processedContent = processedContent.replace(/\\`\\`\\`/g, '```');
-
     return processedContent;
   }, [content]);
 
@@ -146,7 +107,6 @@ export function MarkdownRenderer({
         const match = /language-(\w+)/.exec(className || '');
         const language = match ? match[1] : '';
         const content = String(children).replace(/\n$/, '');
-
 
         return (
           <CodeBlock
@@ -162,26 +122,26 @@ export function MarkdownRenderer({
 
       // Theme-aware headings with better hierarchy
       h1: ({ children }: any) => (
-        <h1 className="text-2xl font-bold mb-4 pb-2 border-b border-border text-foreground">
+        <h1 className="text-2xl font-bold mb-4 pb-2 border-b border-border text-foreground whitespace-break-spaces">
           {children}
         </h1>
       ),
       h2: ({ children }: any) => (
-        <h2 className="text-xl font-semibold mb-3 pb-1 border-b border-border/50 text-foreground">
+        <h2 className="text-xl font-semibold mb-3 pb-1 border-b border-border/50 text-foreground whitespace-break-spaces">
           {children}
         </h2>
       ),
       h3: ({ children }: any) => (
-        <h3 className="text-lg font-semibold mb-2 text-foreground">{children}</h3>
+        <h3 className="text-lg font-semibold mb-2 text-foreground whitespace-break-spaces">{children}</h3>
       ),
       h4: ({ children }: any) => (
-        <h4 className="text-base font-semibold mb-2 text-foreground">{children}</h4>
+        <h4 className="text-base font-semibold mb-2 text-foreground whitespace-break-spaces">{children}</h4>
       ),
       h5: ({ children }: any) => (
-        <h5 className="text-sm font-semibold mb-2 text-foreground">{children}</h5>
+        <h5 className="text-sm font-semibold mb-2 text-foreground whitespace-break-spaces">{children}</h5>
       ),
       h6: ({ children }: any) => (
-        <h6 className="text-xs font-semibold mb-2 text-muted-foreground">{children}</h6>
+        <h6 className="text-xs font-semibold mb-2 text-muted-foreground whitespace-break-spaces">{children}</h6>
       ),
 
       // Enhanced paragraphs

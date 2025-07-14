@@ -40,7 +40,7 @@ export function Message({ role, content }: MessageProps) {
         </div>
       )}
       <div
-        className={`max-w-[70%] p-4 rounded-lg shadow-sm border relative group overflow-hidden ${
+        className={`max-w-[70%] p-4 rounded-lg shadow-sm border relative group overflow-auto ${
           role === 'user'
             ? 'bg-primary text-primary-foreground border-primary/20'
             : 'bg-card border-border'
