@@ -14,9 +14,11 @@ export function Message({ role, content }: MessageProps) {
   const [copied, setCopied] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
 
+  const trimmedContent = content.trim()
+
   const handleCopy = useCallback(async () => {
     try {
-      await ClipboardSetText(content.trim());
+      await ClipboardSetText(trimmedContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
     } catch (error) {
@@ -27,6 +29,7 @@ export function Message({ role, content }: MessageProps) {
   const toggleRawView = useCallback(() => {
     setShowRaw((prev) => !prev);
   }, []);
+
 
   return (
     <div
@@ -39,7 +42,7 @@ export function Message({ role, content }: MessageProps) {
           <Cpu className="h-4 w-4 text-primary-foreground" />
         </div>
       )}
-      <div
+      {trimmedContent.length > 0 && <div
         className={`max-w-[70%] p-4 rounded-lg shadow-sm border relative group overflow-auto ${
           role === 'user'
             ? 'bg-primary text-primary-foreground border-primary/20'
@@ -49,13 +52,13 @@ export function Message({ role, content }: MessageProps) {
         {role === 'user' || showRaw ? (
           // For user messages or raw view, show plain text
           <pre className="text-sm whitespace-pre-wrap font-sans">
-            {content.trim()}
+            {trimmedContent}
           </pre>
         ) : (
           // For assistant messages in rendered view, show markdown
           <div className="text-sm">
             <MarkdownRenderer
-              content={content.trim()}
+              content={trimmedContent}
               className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
             />
           </div>
@@ -89,7 +92,7 @@ export function Message({ role, content }: MessageProps) {
             )}
           </button>
         </div>
-      </div>
+      </div>}
       {role === 'user' && (
         <div className="h-8 w-8 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
           <User className="h-4 w-4 text-secondary-foreground" />

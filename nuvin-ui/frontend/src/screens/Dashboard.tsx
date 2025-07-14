@@ -20,6 +20,7 @@ export default function Dashboard() {
     addConversation,
     setActiveConversation,
     addMessage,
+    updateMessage,
     getActiveMessages,
     deleteConversation,
   } = useConversationStore();
@@ -30,6 +31,10 @@ export default function Dashboard() {
   // State for loading status
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // State for streaming message
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [streamingContent, setStreamingContent] = useState<string>('');
 
   // Handlers
   const handleSendMessage = async (content: string) => {
@@ -51,40 +56,79 @@ export default function Dashboard() {
     }
     setIsLoading(true);
 
+    // Create streaming assistant message
+    const streamingId = generateUUID();
+    setStreamingMessageId(streamingId);
+    setStreamingContent('');
+    
+    const initialAssistantMessage: Message = {
+      id: streamingId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+    };
+
+    if (activeConversationId) {
+      addMessage(activeConversationId, initialAssistantMessage);
+    }
+
     try {
       // Get current active conversation ID
       const conversationId = activeConversationId?.toString() || 'default';
 
-      // Send message using AgentManager
+      // Send message using AgentManager with streaming
       const response = await sendMessage(content, {
         conversationId: conversationId,
+        stream: true,
+        onChunk: (chunk: string) => {
+          // Update streaming content as chunks arrive
+          setStreamingContent(prev => {
+            const newContent = prev + chunk;
+            // Update the message in the store with accumulated content
+            if (activeConversationId) {
+              const updatedMessage: Message = {
+                id: streamingId,
+                role: 'assistant',
+                content: newContent,
+                timestamp: new Date().toISOString(),
+              };
+              // Update existing message instead of adding new one
+              updateMessage(activeConversationId, updatedMessage);
+            }
+            return newContent;
+          });
+        },
+        onComplete: (finalContent: string) => {
+          // Final update when streaming is complete
+          if (activeConversationId) {
+            const finalMessage: Message = {
+              id: streamingId,
+              role: 'assistant',
+              content: finalContent,
+              timestamp: new Date().toISOString(),
+            };
+            updateMessage(activeConversationId, finalMessage);
+          }
+          setStreamingMessageId(null);
+          setStreamingContent('');
+        },
         onError: (error) => {
           console.error('Message sending failed:', error);
-          // Add error message to chat
-          const errorMessage: Message = {
-            id: generateUUID(),
-            role: 'assistant',
-            content: `❌ Error: ${error.message}. Please check your agent configuration and try again.`,
-            timestamp: new Date().toISOString(),
-          };
+          // Replace streaming message with error message
           if (activeConversationId) {
-            addMessage(activeConversationId, errorMessage);
+            const errorMessage: Message = {
+              id: streamingId,
+              role: 'assistant',
+              content: `❌ Error: ${error.message}. Please check your agent configuration and try again.`,
+              timestamp: new Date().toISOString(),
+            };
+            updateMessage(activeConversationId, errorMessage);
           }
+          setStreamingMessageId(null);
+          setStreamingContent('');
           setIsLoading(false);
         },
       });
-
-      // Add assistant response to messages
-      const assistantMessage: Message = {
-        id: generateUUID(),
-        role: 'assistant',
-        content: response.content,
-        timestamp: response.timestamp,
-      };
-
-      if (activeConversationId) {
-        addMessage(activeConversationId, assistantMessage);
-      }
 
       // Log metadata for debugging
       if (response.metadata) {
@@ -98,27 +142,28 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Failed to send message:', error);
 
-      // Add error message to chat
-      const errorMessage: Message = {
-        id: generateUUID(),
-        role: 'assistant',
-        content: `❌ Failed to send message: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }. ${
-          !activeAgent
-            ? 'No agent selected.'
-            : !activeProvider && agentType === 'local'
-              ? 'No provider configured for local agent.'
-              : activeAgent.agentType === 'remote' && !activeAgent.url
-                ? 'No URL configured for remote agent.'
-                : 'Please check your configuration and try again.'
-        }`,
-        timestamp: new Date().toISOString(),
-      };
-
-      if (activeConversationId) {
-        addMessage(activeConversationId, errorMessage);
+      // Replace streaming message with error message
+      if (activeConversationId && streamingId) {
+        const errorMessage: Message = {
+          id: streamingId,
+          role: 'assistant',
+          content: `❌ Failed to send message: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }. ${
+            !activeAgent
+              ? 'No agent selected.'
+              : !activeProvider && agentType === 'local'
+                ? 'No provider configured for local agent.'
+                : activeAgent.agentType === 'remote' && !activeAgent.url
+                  ? 'No URL configured for remote agent.'
+                  : 'Please check your configuration and try again.'
+          }`,
+          timestamp: new Date().toISOString(),
+        };
+        updateMessage(activeConversationId, errorMessage);
       }
+      setStreamingMessageId(null);
+      setStreamingContent('');
     } finally {
       setIsLoading(false);
       timeoutRef.current = null;
@@ -135,17 +180,30 @@ export default function Dashboard() {
 
       setIsLoading(false);
 
-      // Add a system message indicating the generation was stopped
-      const stopMessage: Message = {
-        id: generateUUID(),
-        role: 'assistant',
-        content: '⏹️ Generation stopped by user.',
-        timestamp: new Date().toISOString(),
-      };
-
-      if (activeConversationId) {
+      // If there's a streaming message, replace it with stop message
+      if (streamingMessageId && activeConversationId) {
+        const stopMessage: Message = {
+          id: streamingMessageId,
+          role: 'assistant',
+          content: '⏹️ Generation stopped by user.',
+          timestamp: new Date().toISOString(),
+        };
+        updateMessage(activeConversationId, stopMessage);
+      } else if (activeConversationId) {
+        // Otherwise add a new stop message
+        const stopMessage: Message = {
+          id: generateUUID(),
+          role: 'assistant',
+          content: '⏹️ Generation stopped by user.',
+          timestamp: new Date().toISOString(),
+        };
         addMessage(activeConversationId, stopMessage);
       }
+
+      // Clear streaming state
+      setStreamingMessageId(null);
+      setStreamingContent('');
+      
       console.log('Generation stopped by user');
 
       // TODO: Implement request cancellation in AgentManager
@@ -157,12 +215,14 @@ export default function Dashboard() {
   };
 
   const handleNewConversation = () => {
-    // Stop any ongoing generation
+    // Stop any ongoing generation and clear streaming state
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
       setIsLoading(false);
     }
+    setStreamingMessageId(null);
+    setStreamingContent('');
 
     const newConversation: Conversation = {
       id: generateUUID(),
@@ -176,12 +236,14 @@ export default function Dashboard() {
   };
 
   const handleConversationSelect = (conversationId: string) => {
-    // Stop any ongoing generation when switching conversations
+    // Stop any ongoing generation when switching conversations and clear streaming state
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
       setIsLoading(false);
     }
+    setStreamingMessageId(null);
+    setStreamingContent('');
 
     // Set the selected conversation as active
     setActiveConversation(conversationId);
@@ -189,13 +251,15 @@ export default function Dashboard() {
 
   const handleConversationDelete = (conversationId: string) => {
     startTransition(() => {
-      // If deleting the active conversation, clear loading state
+      // If deleting the active conversation, clear loading and streaming state
       if (conversationId === activeConversationId) {
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = null;
         }
         setIsLoading(false);
+        setStreamingMessageId(null);
+        setStreamingContent('');
       }
       deleteConversation(conversationId);
     })
