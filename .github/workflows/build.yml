@@ -5,25 +5,28 @@ on:
     branches: [main]
   pull_request:
 
+defaults:
+  run:
+    working-directory: ./nuvin-ui
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [
+          {name: wailsTest, platform: linux/amd64, os: ubuntu-latest},
+          {name: wailsTest, platform: windows/amd64, os: windows-latest},
+          {name: wailsTest, platform: darwin/universal, os: macos-latest}
+        ]
+    runs-on: ${{ matrix.build.os }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v2
         with:
-          go-version: '1.24.4'
-      - name: Set up Node
-        uses: actions/setup-node@v4
+          submodules: recursive
+      - uses: dAppServer/wails-build-action@main
         with:
-          node-version: '18'
-      - name: Install pnpm
-        run: npm install -g pnpm
-      - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-      - name: Build Application
-        run: |
-          cd nuvin-ui
-          wails build
-
+          app-working-directory: ./nuvin-ui
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
+          build-obfuscate: true
