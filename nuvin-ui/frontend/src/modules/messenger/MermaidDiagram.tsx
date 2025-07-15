@@ -350,7 +350,6 @@ export function MermaidDiagram({ chart }: MermaidProps) {
         try {
           // Render the diagram with cleaned chart
           const isValid = await mermaid.parse(cleanChart, { suppressErrors: true });
-          console.log('Mermaid parse result:', isValid);
           if (!isValid) {
             setError('Invalid Mermaid chart syntax');
             return;

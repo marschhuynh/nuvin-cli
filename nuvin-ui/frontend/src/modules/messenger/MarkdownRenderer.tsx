@@ -2,14 +2,13 @@ import { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check } from 'lucide-react';
-import { MermaidDiagram } from './MermaidDiagram';
 import { Button } from '@/components/ui/button';
-import { unwrapMarkdownBlocks } from './utils';
+import { MermaidDiagram } from './MermaidDiagram';
+import { unwrapMarkdownBlocks } from '@/utils/markdown-utils';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
-  depth?: number;
 }
 
 interface CodeBlockProps {
@@ -39,17 +38,6 @@ function CodeBlock({ children, className, language, content, depth = 0 }: CodeBl
   }
 
   if (language === 'markdown') {
-    // Prevent infinite recursion by limiting depth
-    if (depth >= 2) {
-      return (
-        <div className="nested-markdown border border-border bg-muted/20 p-4 rounded-lg overflow-hidden">
-          <pre className="text-sm font-mono text-foreground whitespace-pre-wrap">
-            <code>{content}</code>
-          </pre>
-        </div>
-      );
-    }
-
     return (
       <div className="nested-markdown border border-border bg-muted/20 p-4 rounded-lg overflow-hidden">
         <div className="text-foreground text-sm font-medium mb-2 flex items-center justify-between">
@@ -63,7 +51,7 @@ function CodeBlock({ children, className, language, content, depth = 0 }: CodeBl
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </Button>
         </div>
-        <MarkdownRenderer content={content} className="nested-markdown-content" depth={depth + 1} />
+        <MarkdownRenderer content={content} className="nested-markdown-content" />
       </div>
     );
   }
@@ -101,18 +89,10 @@ function CodeBlock({ children, className, language, content, depth = 0 }: CodeBl
 export function MarkdownRenderer({
   content,
   className = '',
-  depth = 0,
 }: MarkdownRendererProps) {
   // Memoize content processing for performance
   const processedContent = useMemo(() => {
-    let processedContent = content.trim();
-
-    // Remove markdown code block wrappers if they exist
-    // Handle nested code blocks properly by using line-by-line parsing
-
-    processedContent = unwrapMarkdownBlocks(processedContent);
-
-    return processedContent;
+    return unwrapMarkdownBlocks(content.trim());
   }, [content]);
 
   // Memoize components for better performance
@@ -129,7 +109,6 @@ export function MarkdownRenderer({
             className={className}
             language={language}
             content={content}
-            depth={depth}
             {...props}
           >
             {children}
@@ -235,7 +214,7 @@ export function MarkdownRenderer({
         <em className="italic text-foreground/90">{children}</em>
       ),
     }),
-    [depth],
+    [],
   );
 
   return (
