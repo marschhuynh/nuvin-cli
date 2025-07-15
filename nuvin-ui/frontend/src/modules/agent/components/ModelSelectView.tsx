@@ -40,12 +40,12 @@ export function ModelSelectView({
           <SelectContent>
             {models.map((model) => (
               <SelectItem key={model.id} value={model.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{model.name}</span>
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex flex-col items-start">
+                  <div className="font-medium">{model.name}</div>
+                  <div className="text-xs text-muted-foreground">
                     {formatContextLength(model.contextLength)} •{' '}
                     {formatModelCost(model.inputCost, model.outputCost)}
-                  </span>
+                  </div>
                 </div>
               </SelectItem>
             ))}
@@ -53,7 +53,7 @@ export function ModelSelectView({
         </Select>
       </div>
 
-      {selectedModelInfo && (
+      {/* {selectedModelInfo && (
         <div className="p-3 bg-muted/50 rounded-lg border">
           <h4 className="font-medium text-sm mb-2">{selectedModelInfo.name}</h4>
           {selectedModelInfo.description && (
@@ -83,7 +83,7 @@ export function ModelSelectView({
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

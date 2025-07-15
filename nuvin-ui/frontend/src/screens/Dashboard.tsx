@@ -31,10 +31,10 @@ export default function Dashboard() {
   // State for loading status
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // State for streaming message
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
-  const [streamingContent, setStreamingContent] = useState<string>('');
+  const [, setStreamingContent] = useState<string>('');
 
   // Handlers
   const handleSendMessage = async (content: string) => {
@@ -60,7 +60,7 @@ export default function Dashboard() {
     const streamingId = generateUUID();
     setStreamingMessageId(streamingId);
     setStreamingContent('');
-    
+
     const initialAssistantMessage: Message = {
       id: streamingId,
       role: 'assistant',
@@ -147,17 +147,15 @@ export default function Dashboard() {
         const errorMessage: Message = {
           id: streamingId,
           role: 'assistant',
-          content: `❌ Failed to send message: ${
-            error instanceof Error ? error.message : 'Unknown error'
-          }. ${
-            !activeAgent
+          content: `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'
+            }. ${!activeAgent
               ? 'No agent selected.'
               : !activeProvider && agentType === 'local'
                 ? 'No provider configured for local agent.'
                 : activeAgent.agentType === 'remote' && !activeAgent.url
                   ? 'No URL configured for remote agent.'
                   : 'Please check your configuration and try again.'
-          }`,
+            }`,
           timestamp: new Date().toISOString(),
         };
         updateMessage(activeConversationId, errorMessage);
@@ -203,7 +201,7 @@ export default function Dashboard() {
       // Clear streaming state
       setStreamingMessageId(null);
       setStreamingContent('');
-      
+
       console.log('Generation stopped by user');
 
       // TODO: Implement request cancellation in AgentManager
@@ -285,7 +283,11 @@ export default function Dashboard() {
       </div>
 
       <div className="flex-1 flex flex-col bg-gray-100 min-w-[300px]">
-        <MessageList messages={messages} isLoading={isLoading} />
+        <MessageList
+          messages={messages}
+          isLoading={isLoading}
+          streamingMessageId={streamingMessageId}
+        />
 
         {/* Agent Status Bar */}
         <div className="border-t border-border bg-card px-6 py-2">
@@ -293,11 +295,10 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/10 transition-all duration-200 hover:bg-muted/20">
                 <div
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    isReady
-                      ? 'bg-green-500 shadow-sm shadow-green-500/30'
-                       : 'bg-red-500 shadow-sm shadow-red-500/30'
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${isReady
+                    ? 'bg-green-500 shadow-sm shadow-green-500/30'
+                    : 'bg-red-500 shadow-sm shadow-red-500/30'
+                    }`}
                 />
                 <span className="text-xs font-medium text-muted-foreground transition-colors duration-200">
                   Agent: {activeAgent?.name || 'None'}

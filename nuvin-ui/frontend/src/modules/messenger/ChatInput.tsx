@@ -107,11 +107,10 @@ export function ChatInput({
 
           {/* Dynamic Button Position - centered for single line, bottom-aligned for multi-line */}
           <div
-            className={`absolute right-4 transition-all duration-200 ${message.trim() || isLoading ? 'opacity-100' : 'opacity-0'} ${
-              isMultiLine
-                ? 'bottom-4' // Bottom alignment for multi-line
-                : 'top-1/2 transform -translate-y-1/2' // Centered for single line
-            }`}
+            className={`absolute right-4 transition-all duration-200 ${message.trim() || isLoading ? 'opacity-100' : 'opacity-0'} ${isMultiLine
+              ? 'bottom-4' // Bottom alignment for multi-line
+              : 'top-1/2 transform -translate-y-1/2' // Centered for single line
+              }`}
           >
             {isLoading ? (
               <Button
@@ -130,18 +129,16 @@ export function ChatInput({
                 size="sm"
                 disabled={!message.trim()}
                 onClick={handleSend}
-                className={`h-8 w-8 p-0 rounded-full transition-all duration-200 ${
-                  message.trim()
-                    ? 'bg-primary hover:bg-primary/90 send-button-ready'
-                    : 'bg-muted send-button-disabled opacity-0'
-                }`}
+                className={`h-8 w-8 p-0 rounded-full transition-all duration-200 ${message.trim()
+                  ? 'bg-primary hover:bg-primary/90 send-button-ready'
+                  : 'bg-muted send-button-disabled opacity-0'
+                  }`}
               >
                 <Send
-                  className={`h-3 w-3 transition-transform duration-200 ${
-                    message.trim()
-                      ? 'scale-100 opacity-100'
-                      : 'scale-75 opacity-30'
-                  }`}
+                  className={`h-3 w-3 transition-transform duration-200 ${message.trim()
+                    ? 'scale-100 opacity-100'
+                    : 'scale-75 opacity-30'
+                    }`}
                 />
               </Button>
             )}
@@ -150,18 +147,20 @@ export function ChatInput({
 
         <div className="flex justify-between text-xs text-muted-foreground mt-2">
           <span>
-            {isLoading ? (
-              <span className="flex items-center gap-1">
-                <div className="flex gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary processing-dot"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary processing-dot"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary processing-dot"></div>
-                </div>
-                <span className="ml-2">Processing...</span>
-              </span>
-            ) : (
-              'Press Shift + Enter for new line'
-            )}
+            {
+              // isLoading ? (
+              //   <span className="flex items-center gap-1">
+              //     <div className="flex gap-1">
+              //       <div className="w-1.5 h-1.5 rounded-full bg-primary processing-dot"></div>
+              //       <div className="w-1.5 h-1.5 rounded-full bg-primary processing-dot"></div>
+              //       <div className="w-1.5 h-1.5 rounded-full bg-primary processing-dot"></div>
+              //     </div>
+              //     <span className="ml-2">Processing...</span>
+              //   </span>
+              // ) :
+              (
+                'Press Shift + Enter for new line'
+              )}
           </span>
         </div>
       </div>

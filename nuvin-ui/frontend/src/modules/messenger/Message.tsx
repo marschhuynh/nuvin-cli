@@ -67,7 +67,7 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
         className={`max-w-[70%] p-4 rounded-lg shadow-lg border overflow-auto transition-all duration-300 ${role === 'user'
           ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-primary/20 shadow-primary/20'
           : isStreaming
-            ? 'bg-gradient-to-br from-card to-card/80 border-border/50 shadow-md animate-pulse'
+            ? 'bg-gradient-to-br from-card to-card/80 border-border/50 shadow-md'
             : 'bg-card border-border hover:shadow-xl hover:border-border/80'
           }`}
       >
@@ -84,8 +84,11 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
               className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
             />
             {isStreaming && (
-              <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse ml-1 rounded-sm"
-                style={{ animationDuration: '1s' }} />
+              <div className="inline-flex items-center animate-in fade-in duration-300">
+                <span className="text-xs text-muted-foreground/80 animate-pulse">
+                  Generating...
+                </span>
+              </div>
             )}
           </div>
         )}

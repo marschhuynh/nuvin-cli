@@ -86,11 +86,6 @@ func (a *App) FetchProxy(fetchReq FetchRequest) FetchResponse {
 		req.Header.Set(key, value)
 	}
 
-	// Set default User-Agent if not provided
-	// if req.Header.Get("User-Agent") == "" {
-	// 	req.Header.Set("User-Agent", "Teaky-Agent/1.0")
-	// }
-
 	// Execute request
 	resp, err := client.Do(req)
 	if err != nil {
