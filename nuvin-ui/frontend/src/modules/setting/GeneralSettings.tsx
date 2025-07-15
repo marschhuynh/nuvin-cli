@@ -1,4 +1,5 @@
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -9,6 +10,7 @@ import {
 import { Sun, Moon, Monitor, Droplet } from 'lucide-react';
 import type { UserPreferences } from '@/store/useUserPreferenceStore';
 import { useTheme } from '@/lib/theme';
+import { CheckForUpdates } from '../../../wailsjs/go/main/App';
 
 interface GeneralSettingsProps {
   settings: UserPreferences;
@@ -79,6 +81,13 @@ export function GeneralSettings({
               </SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        {/* Check for Updates */}
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Application Update</Label>
+          <Button type="button" onClick={() => CheckForUpdates()}>
+            Check for Updates
+          </Button>
         </div>
       </div>
     </div>
