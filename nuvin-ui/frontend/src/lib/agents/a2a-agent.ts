@@ -64,7 +64,7 @@ export class A2AAgent extends BaseAgent {
       );
 
       let finalResponse = response;
-      if (response.kind === 'task' && response.status.state === 'working') {
+      if (response.kind === 'task' && response.status.state === 'running') {
         finalResponse = await this.pollForTaskCompletion(
           this.settings.url,
           response.id,
@@ -124,7 +124,7 @@ export class A2AAgent extends BaseAgent {
         if (!task) throw new Error(`Task ${taskId} not found`);
         if (
           task.status.state === 'completed' ||
-          ['failed', 'canceled', 'input-required'].includes(task.status.state)
+          ['failed', 'cancelled'].includes(task.status.state)
         ) {
           return task;
         }
@@ -155,7 +155,7 @@ export class A2AAgent extends BaseAgent {
     }
     for (const artifact of response.artifacts || []) {
       for (const part of artifact.parts) {
-        if (part.kind === 'text') return part.text;
+        if (part.kind === 'text') return (part as any).text;
       }
     }
     return 'No response content';
@@ -192,7 +192,7 @@ export class A2AAgent extends BaseAgent {
           for (const artifact of event.artifacts) {
             for (const part of artifact.parts) {
               if (part.kind === 'text') {
-                const newContent = part.text;
+                const newContent = (part as any).text;
                 if (newContent !== accumulated) {
                   const chunk = newContent.substring(accumulated.length);
                   accumulated = newContent;
@@ -209,19 +209,26 @@ export class A2AAgent extends BaseAgent {
       } else if (event.kind === 'message') {
         for (const part of event.parts) {
           if (part.kind === 'text') {
-            accumulated += part.text;
-            options.onChunk?.(part.text);
+            accumulated += (part as any).text;
+            options.onChunk?.((part as any).text);
           }
         }
       } else if (event.kind === 'artifact-update') {
         for (const part of event.artifact.parts) {
           if (part.kind === 'text') {
-            if (event.append) {
-              accumulated += part.text;
-            } else {
-              accumulated = part.text;
+            const textContent = (part as any).text;
+            // Always accumulate the text content
+            accumulated += textContent;
+            options.onChunk?.(textContent);
+          }
+        }
+      } else if (event.kind === 'task-artifact-update') {
+        for (const artifact of event.artifacts || []) {
+          for (const part of artifact.parts) {
+            if (part.kind === 'text') {
+              accumulated += (part as any).text;
+              options.onChunk?.((part as any).text);
             }
-            options.onChunk?.(part.text);
           }
         }
       }

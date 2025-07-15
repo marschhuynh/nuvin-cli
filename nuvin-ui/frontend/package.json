@@ -11,7 +11,6 @@
     "test:markdown-utils": "node ../../testing/test-markdown-utils.js"
   },
   "dependencies": {
-    "@a2a-js/sdk": "^0.2.2",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.5",

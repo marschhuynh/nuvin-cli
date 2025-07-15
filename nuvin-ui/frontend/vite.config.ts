@@ -29,14 +29,8 @@ export default defineConfig({
         'zlib',
         'crypto',
         'net',
-        'async_hooks'
-      ]
-    }
+        'async_hooks',
+      ],
+    },
   },
-  optimizeDeps: {
-    exclude: [
-      // Exclude server components from the A2A SDK
-      '@a2a-js/sdk/build/src/server'
-    ]
-  }
 });

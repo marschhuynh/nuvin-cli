@@ -1,6 +1,6 @@
-export type ThemeName = 'light' | 'dark' | 'ocean'
+export type ThemeName = 'light' | 'dark' | 'ocean';
 
-export type ThemeVariables = Record<string, string>
+export type ThemeVariables = Record<string, string>;
 
 export const themes: Record<ThemeName, ThemeVariables> = {
   light: {

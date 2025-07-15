@@ -7,7 +7,10 @@ interface ProviderState {
   activeProviderId: string;
   addProvider: (provider: ProviderConfig) => void;
   updateProvider: (provider: ProviderConfig) => void;
-  updateActiveModel: (providerId: string, modelConfig: Partial<ModelConfig>) => void;
+  updateActiveModel: (
+    providerId: string,
+    modelConfig: Partial<ModelConfig>,
+  ) => void;
   deleteProvider: (id: string) => void;
   setActiveProvider: (id: string) => void;
   isNameUnique: (name: string, excludeId?: string) => boolean;

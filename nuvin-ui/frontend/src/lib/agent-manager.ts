@@ -264,7 +264,7 @@ export class AgentManager {
         authConfig,
         options,
       );
-      return task.status.state === 'canceled';
+      return task.status.state === 'cancelled';
     } catch (error) {
       if (error instanceof A2AError) {
         console.error('Failed to cancel task:', error.getUserMessage());

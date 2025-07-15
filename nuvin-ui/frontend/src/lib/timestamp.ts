@@ -41,7 +41,7 @@ export function formatMessageTime(timestamp: string | Date): string {
   const time = new Date(timestamp);
   const now = new Date();
   const isToday = time.toDateString() === now.toDateString();
-  
+
   if (isToday) {
     return time.toLocaleTimeString(undefined, {
       hour: 'numeric',

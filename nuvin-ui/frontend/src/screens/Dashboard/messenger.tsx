@@ -89,16 +89,33 @@ export default function Messenger() {
         onComplete: (finalContent: string) => {
           // Final update when streaming is complete
           if (activeConversationId) {
-            const finalMessage: Message = {
-              id: streamingId,
-              role: 'assistant',
-              content: finalContent,
-              timestamp: new Date().toISOString(),
-            };
-            updateMessage(activeConversationId, finalMessage);
+            // Use finalContent if it's not empty, otherwise use accumulated streamingContent
+            const contentToUse = finalContent || streamingContent;
+            
+            // Only update if we have content to show
+            if (contentToUse) {
+              const finalMessage: Message = {
+                id: streamingId,
+                role: 'assistant',
+                content: contentToUse,
+                timestamp: new Date().toISOString(),
+              };
+              updateMessage(activeConversationId, finalMessage);
+              
+              // Clear streaming state after updating the message
+              setTimeout(() => {
+                setStreamingMessageId(null);
+                setStreamingContent('');
+              }, 50);
+            } else {
+              // If no content, keep the streaming state to preserve what was shown
+              console.warn('No content to finalize, keeping streaming state');
+            }
+          } else {
+            // No active conversation, clear streaming state
+            setStreamingMessageId(null);
+            setStreamingContent('');
           }
-          setStreamingMessageId(null);
-          setStreamingContent('');
         },
         onError: (error) => {
           console.error('Message sending failed:', error);
