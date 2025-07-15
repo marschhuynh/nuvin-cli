@@ -1,6 +1,6 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "Nuvin Space",
+  "name": "Nuvin",
   "outputfilename": "nuvin-space",
   "frontend:install": "pnpm install",
   "frontend:build": "pnpm run build",

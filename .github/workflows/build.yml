@@ -1,32 +1,146 @@
 name: Build
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-
-defaults:
-  run:
-    working-directory: ./nuvin-ui
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+      build_platform:
+        description: 'Build platform'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - linux/amd64
+          - windows/amd64
+          - darwin/universal
 
 jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - id: generate
+        run: |
+          case "${{ github.event.inputs.build_platform || 'all' }}" in
+            "all")
+              echo 'matrix=[
+                {"name": "Nuvin", "platform": "linux/amd64", "os": "ubuntu-latest"},
+                {"name": "Nuvin", "platform": "windows/amd64", "os": "windows-latest"},
+                {"name": "Nuvin", "platform": "darwin/universal", "os": "macos-latest"}
+              ]' >> $GITHUB_OUTPUT
+              ;;
+            "linux/amd64")
+              echo 'matrix=[{"name": "Nuvin", "platform": "linux/amd64", "os": "ubuntu-latest"}]' >> $GITHUB_OUTPUT
+              ;;
+            "windows/amd64")
+              echo 'matrix=[{"name": "Nuvin", "platform": "windows/amd64", "os": "windows-latest"}]' >> $GITHUB_OUTPUT
+              ;;
+            "darwin/universal")
+              echo 'matrix=[{"name": "Nuvin", "platform": "darwin/universal", "os": "macos-latest"}]' >> $GITHUB_OUTPUT
+              ;;
+          esac
+
   build:
+    needs: generate-matrix
     strategy:
       fail-fast: false
       matrix:
-        build: [
-          {name: wailsTest, platform: linux/amd64, os: ubuntu-latest},
-          {name: wailsTest, platform: windows/amd64, os: windows-latest},
-          {name: wailsTest, platform: darwin/universal, os: macos-latest}
-        ]
+        build: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+
     runs-on: ${{ matrix.build.os }}
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: dAppServer/wails-build-action@main
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: |
+            go.sum
+            nuvin-ui/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        working-directory: ./nuvin-ui/frontend
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Setup Go cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: ./nuvin-ui/frontend
+
+      - name: Download Go modules
+        working-directory: ./nuvin-ui
+        run: go mod download
+
+      - name: Build application
+        uses: ./.github/actions/dAppServer.yml
         with:
           app-working-directory: ./nuvin-ui
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
-          build-obfuscate: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.name }}-${{ matrix.build.platform }}-${{ github.run_number }}
+          path: |
+            nuvin-ui/build/bin/
+          retention-days: 30
+
+      - name: Upload build logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.build.platform }}-${{ github.run_number }}
+          path: |
+            nuvin-ui/build/logs/
+            ~/.wails/
+          retention-days: 7

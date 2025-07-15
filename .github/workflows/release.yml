@@ -1,30 +1,190 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+      build_platform:
+        description: 'Build platform'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - linux/amd64
+          - windows/amd64
+          - darwin/universal
 
 jobs:
-  release:
+  generate-matrix:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - id: generate
+        run: |
+          case "${{ github.event.inputs.build_platform || 'all' }}" in
+            "all")
+              echo 'matrix=[
+                {"name": "nuvin-space", "platform": "linux/amd64", "os": "ubuntu-latest"},
+                {"name": "nuvin-space", "platform": "windows/amd64", "os": "windows-latest"},
+                {"name": "nuvin-space", "platform": "darwin/universal", "os": "macos-latest"}
+              ]' >> $GITHUB_OUTPUT
+              ;;
+            "linux/amd64")
+              echo 'matrix=[{"name": "nuvin-space", "platform": "linux/amd64", "os": "ubuntu-latest"}]' >> $GITHUB_OUTPUT
+              ;;
+            "windows/amd64")
+              echo 'matrix=[{"name": "nuvin-space", "platform": "windows/amd64", "os": "windows-latest"}]' >> $GITHUB_OUTPUT
+              ;;
+            "darwin/universal")
+              echo 'matrix=[{"name": "nuvin-space", "platform": "darwin/universal", "os": "macos-latest"}]' >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+  build:
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        build: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+
+    runs-on: ${{ matrix.build.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
+          fetch-depth: 0  # Needed for semantic-release
+          submodules: recursive
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.4'
-      - name: Install pnpm
-        run: npm install -g pnpm
+          go-version: '1.23'
+          cache-dependency-path: |
+            go.sum
+            nuvin-ui/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        working-directory: ./nuvin-ui/frontend
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Setup Go cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-      - name: Install dependencies
-        run: npm install
+
+      - name: Install frontend dependencies
+        working-directory: ./nuvin-ui/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Build application
+        uses: dAppServer/wails-build-action@main
+        with:
+          app-working-directory: ./nuvin-ui
+          build-name: ${{ matrix.build.name }}
+          build-platform: ${{ matrix.build.platform }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build.name }}-${{ matrix.build.platform }}-${{ github.run_number }}
+          path: |
+            nuvin-ui/build/bin/
+          retention-days: 90
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for semantic-release
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install root dependencies (for semantic-release)
+        run: |
+          if [ -f "package.json" ]; then
+            npm install
+          fi
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Organize artifacts for release
+        run: |
+          mkdir -p ./release-artifacts
+          find ./artifacts -name "*" -type f -exec cp {} ./release-artifacts/ \;
+          ls -la ./release-artifacts/
+
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        run: |
+          echo "Release type: $RELEASE_TYPE"
+          if [ "$RELEASE_TYPE" != "auto" ]; then
+            echo "Manual release type specified: $RELEASE_TYPE"
+            # For manual release types, you may need to configure semantic-release accordingly
+            # or use a different release strategy
+          fi
+          npx semantic-release
+
+      - name: Upload release artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-debug-${{ github.run_number }}
+          path: |
+            ./artifacts/
+            ./release-artifacts/
+          retention-days: 7

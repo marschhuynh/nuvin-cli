@@ -1,17 +1,26 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main"
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
-    ["@semantic-release/exec", {
-      "prepareCmd": "cd nuvin-ui && wails build"
-    }],
-    ["@semantic-release/github", {
-      "assets": ["nuvin-ui/build/bin/**"]
-    }],
-    ["@semantic-release/git", {
-      "assets": ["CHANGELOG.md"]
-    }]
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          "./release-artifacts/**"
+        ]
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "CHANGELOG.md"
+        ]
+      }
+    ]
   ]
 }
