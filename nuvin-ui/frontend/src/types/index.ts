@@ -10,6 +10,7 @@ export interface Conversation {
   title: string;
   timestamp: string;
   active?: boolean;
+  summary?: string;
 }
 
 export interface ModelConfig {

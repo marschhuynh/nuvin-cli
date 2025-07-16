@@ -16,6 +16,9 @@ export default function Messenger() {
     addMessage,
     updateMessage,
     getActiveMessages,
+    updateConversation,
+    getConversationMessages,
+    getActiveConversation,
   } = useConversationStore();
 
   // State for loading status
@@ -28,6 +31,37 @@ export default function Messenger() {
 
   // Get current conversation messages
   const storeMessages = getActiveMessages();
+
+  // Helper to summarize conversation using the active agent
+  const summarizeConversation = useCallback(
+    async (conversationId: string) => {
+      const messages = getConversationMessages(conversationId);
+      if (messages.length < 5 || messages.length % 5 !== 0) return;
+
+      const conversation = getActiveConversation();
+      if (!conversation) return;
+
+      const convoText = messages
+        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+
+      try {
+        const resp = await sendMessage(
+          `Summarize the following conversation in one sentence:\n${convoText}`,
+          { conversationId: `summary-${conversationId}` },
+        );
+        updateConversation({ ...conversation, summary: resp.content.trim() });
+      } catch (err) {
+        console.error('Failed to summarize conversation:', err);
+      }
+    },
+    [
+      getConversationMessages,
+      getActiveConversation,
+      sendMessage,
+      updateConversation,
+    ],
+  );
 
   // Create combined messages with streaming content
   const messages = streamingMessageId
@@ -101,12 +135,15 @@ export default function Messenger() {
                 timestamp: new Date().toISOString(),
               };
               updateMessage(activeConversationId, finalMessage);
-              
+
               // Clear streaming state after updating the message
               setTimeout(() => {
                 setStreamingMessageId(null);
                 setStreamingContent('');
               }, 50);
+
+              // Trigger background summarization
+              summarizeConversation(activeConversationId);
             } else {
               // If no content, keep the streaming state to preserve what was shown
               console.warn('No content to finalize, keeping streaming state');
