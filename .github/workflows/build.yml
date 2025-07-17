@@ -35,19 +35,19 @@ jobs:
           case "${{ github.event.inputs.build_platform || 'all' }}" in
             "all")
               echo 'matrix=[
-                {"name": "Nuvin", "platform": "linux/amd64", "os": "ubuntu-latest"},
-                {"name": "Nuvin", "platform": "windows/amd64", "os": "windows-latest"},
-                {"name": "Nuvin", "platform": "darwin/universal", "os": "macos-latest"}
+                {"name": "Nuvin Space", "platform": "linux/amd64", "os": "ubuntu-latest"},
+                {"name": "Nuvin Space", "platform": "windows/amd64", "os": "windows-latest"},
+                {"name": "Nuvin Space", "platform": "darwin/universal", "os": "macos-latest"}
               ]' >> $GITHUB_OUTPUT
               ;;
             "linux/amd64")
-              echo 'matrix=[{"name": "Nuvin", "platform": "linux/amd64", "os": "ubuntu-latest"}]' >> $GITHUB_OUTPUT
+              echo 'matrix=[{"name": "Nuvin Space", "platform": "linux/amd64", "os": "ubuntu-latest"}]' >> $GITHUB_OUTPUT
               ;;
             "windows/amd64")
-              echo 'matrix=[{"name": "Nuvin", "platform": "windows/amd64", "os": "windows-latest"}]' >> $GITHUB_OUTPUT
+              echo 'matrix=[{"name": "Nuvin Space", "platform": "windows/amd64", "os": "windows-latest"}]' >> $GITHUB_OUTPUT
               ;;
             "darwin/universal")
-              echo 'matrix=[{"name": "Nuvin", "platform": "darwin/universal", "os": "macos-latest"}]' >> $GITHUB_OUTPUT
+              echo 'matrix=[{"name": "Nuvin Space", "platform": "darwin/universal", "os": "macos-latest"}]' >> $GITHUB_OUTPUT
               ;;
           esac
 
@@ -121,16 +121,24 @@ jobs:
         run: go mod download
 
       - name: Build application
-        uses: ./.github/actions/dAppServer.yml
+        uses: ./.github/actions/dAppServer
         with:
           app-working-directory: ./nuvin-ui
           build-name: ${{ matrix.build.name }}
           build-platform: ${{ matrix.build.platform }}
 
+      - name: Sanitize artifact name
+        id: sanitize
+        shell: bash
+        run: |
+          SANITIZED_NAME="${{ matrix.build.name }}-${{ matrix.build.platform }}-${{ github.run_number }}"
+          SANITIZED_NAME="${SANITIZED_NAME//\//-}"
+          echo "artifact_name=$SANITIZED_NAME" >> $GITHUB_OUTPUT
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.name }}-${{ matrix.build.platform }}-${{ github.run_number }}
+          name: ${{ steps.sanitize.outputs.artifact_name }}
           path: |
             nuvin-ui/build/bin/
           retention-days: 30
@@ -139,7 +147,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-${{ matrix.build.platform }}-${{ github.run_number }}
+          name: build-logs-${{ steps.sanitize.outputs.artifact_name }}
           path: |
             nuvin-ui/build/logs/
             ~/.wails/
