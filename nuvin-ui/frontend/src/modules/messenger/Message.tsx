@@ -34,7 +34,7 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
 
   return (
     <div
-      className={`flex gap-4 chat-message animate-in fade-in slide-in-from-bottom-2 duration-300 ${role === 'user' ? 'justify-end' : 'justify-start'
+      className={`flex gap-4 chat-message animate-in fade-in slide-in-from-bottom-2 duration-300 group ${role === 'user' ? 'justify-end' : 'justify-start'
         }`}
     >
       {role === 'assistant' && (
@@ -96,7 +96,7 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
 
       {/* Controls for assistant messages - positioned on the right of message */}
       {role === 'assistant' && trimmedContent.length > 0 && (
-        <div className="flex flex-col gap-1 self-end sticky top-200 z-10  transition-all duration-200">
+        <div className="flex flex-col self-end gap-1 z-10 opacity-1 group-hover:opacity-100 transition-all duration-200">
           <button
             onClick={toggleRawView}
             className={`p-1.5 rounded-md transition-all duration-200 hover:bg-muted text-muted-foreground backdrop-blur-sm border border-border/50 shadow-sm ${showRaw ? 'bg-muted/80' : 'bg-background/80'
