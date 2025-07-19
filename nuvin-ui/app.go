@@ -421,8 +421,8 @@ func (a *App) streamResponse(streamID string, body io.ReadCloser) {
 				Data:     chunkData,
 				Done:     false,
 			}
-			runtime.LogInfo(a.ctx, fmt.Sprintf("Streaming chunk [%s] (%d bytes): %s", streamID[:8], n, chunkData))
-			runtime.EventsEmit(a.ctx, "fetch-stream-chunk", chunk)
+                        runtime.LogInfo(a.ctx, fmt.Sprintf("Streaming chunk [%s] (%d bytes): %s", streamID[:8], n, chunkData))
+                        runtime.EventsEmit(a.ctx, fmt.Sprintf("fetch-stream-chunk:%s", streamID), chunk)
 		}
 
 		if err != nil {
@@ -433,7 +433,7 @@ func (a *App) streamResponse(streamID string, body io.ReadCloser) {
 					Data:     "",
 					Done:     true,
 				}
-				runtime.EventsEmit(a.ctx, "fetch-stream-chunk", chunk)
+                                runtime.EventsEmit(a.ctx, fmt.Sprintf("fetch-stream-chunk:%s", streamID), chunk)
 			} else {
 				// Send error
 				chunk := StreamChunk{
@@ -442,7 +442,7 @@ func (a *App) streamResponse(streamID string, body io.ReadCloser) {
 					Done:     true,
 					Error:    err.Error(),
 				}
-				runtime.EventsEmit(a.ctx, "fetch-stream-chunk", chunk)
+                                runtime.EventsEmit(a.ctx, fmt.Sprintf("fetch-stream-chunk:%s", streamID), chunk)
 			}
 			break
 		}
