@@ -113,7 +113,8 @@ export default function Messenger() {
     }
 
     try {
-      // Get current active conversation ID
+      // Capture current conversation ID so callbacks continue updating
+      // the correct conversation even if the user switches views
       const conversationId = activeConversationId?.toString() || 'default';
 
       // Send message using AgentManager with streaming
@@ -126,7 +127,7 @@ export default function Messenger() {
         },
         onComplete: (finalContent: string) => {
           // Final update when streaming is complete
-          if (activeConversationId) {
+          if (conversationId) {
             // Use finalContent if it's not empty, otherwise use accumulated streamingContent
             const contentToUse = finalContent || streamingContent;
 
@@ -138,7 +139,7 @@ export default function Messenger() {
                 content: contentToUse,
                 timestamp: new Date().toISOString(),
               };
-              updateMessage(activeConversationId, finalMessage);
+              updateMessage(conversationId, finalMessage);
 
               // Clear streaming state after updating the message
               setTimeout(() => {
@@ -147,7 +148,7 @@ export default function Messenger() {
               }, 50);
 
               // Trigger background summarization
-              summarizeConversation(activeConversationId);
+              summarizeConversation(conversationId);
             } else {
               // If no content, keep the streaming state to preserve what was shown
               console.warn('No content to finalize, keeping streaming state');
@@ -161,14 +162,14 @@ export default function Messenger() {
         onError: (error) => {
           console.error('Message sending failed:', error);
           // Replace streaming message with error message
-          if (activeConversationId) {
+          if (conversationId) {
             const errorMessage: Message = {
               id: streamingId,
               role: 'assistant',
               content: `❌ Error: ${error.message}. Please check your agent configuration and try again.`,
               timestamp: new Date().toISOString(),
             };
-            updateMessage(activeConversationId, errorMessage);
+            updateMessage(conversationId, errorMessage);
           }
           setStreamingMessageId(null);
           setStreamingContent('');
@@ -189,7 +190,7 @@ export default function Messenger() {
       console.error('Failed to send message:', error);
 
       // Replace streaming message with error message
-      if (activeConversationId && streamingId) {
+      if (conversationId && streamingId) {
         const errorMessage: Message = {
           id: streamingId,
           role: 'assistant',
@@ -204,7 +205,7 @@ export default function Messenger() {
             }`,
           timestamp: new Date().toISOString(),
         };
-        updateMessage(activeConversationId, errorMessage);
+        updateMessage(conversationId, errorMessage);
       }
       setStreamingMessageId(null);
       setStreamingContent('');
