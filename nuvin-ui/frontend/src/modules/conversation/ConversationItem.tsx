@@ -32,8 +32,8 @@ export function ConversationItem({
           : 'hover:bg-muted/50 border border-transparent'
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+      <div className="flex items-start gap-2 relative">
+        <div className="flex-1 min-w-0 pr-8">
           <div
             className={`font-medium text-sm truncate transition-colors duration-200 ${
               conversation.active ? 'text-foreground' : 'text-foreground'
@@ -49,7 +49,7 @@ export function ConversationItem({
             {formatRelativeTime(conversation.timestamp)}
           </div>
         </div>
-        <div className="flex items-center gap-1 ml-2">
+        <div className="absolute top-0 right-0 flex items-center">
           <Button
             variant="ghost"
             size="icon"
@@ -62,9 +62,6 @@ export function ConversationItem({
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
-          {conversation.active && (
-            <div className="w-1 h-10 bg-primary rounded-full ml-1"></div>
-          )}
         </div>
       </div>
     </div>

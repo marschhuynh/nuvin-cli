@@ -17,8 +17,8 @@ export function ConversationHistory({
   const { conversations } = useConversationStore();
 
   return (
-    <div className="w-70 border-r border-border bg-card">
-      <div className="mx-2 mt-4">
+    <div className="w-70 border-r border-border bg-card flex flex-col h-full">
+      <div className="mx-2 mt-4 flex-shrink-0">
         <Button
           className="w-full p-2 h-auto flex items-center justify-center gap-2"
           size="sm"
@@ -28,7 +28,7 @@ export function ConversationHistory({
           New Conversation
         </Button>
       </div>
-      <div className="overflow-y-auto mt-4">
+      <div className="flex-1 overflow-y-auto mt-4 min-h-0">
         {conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-muted-foreground px-4">
             <History className="h-8 w-8 mb-2 opacity-50" />
@@ -38,14 +38,16 @@ export function ConversationHistory({
             </p>
           </div>
         ) : (
-          conversations.map((conversation) => (
-            <ConversationItem
-              key={conversation.id}
-              conversation={conversation}
-              onClick={onConversationSelect}
-              onDelete={onConversationDelete}
-            />
-          ))
+          <div className="pb-4">
+            {conversations.map((conversation) => (
+              <ConversationItem
+                key={conversation.id}
+                conversation={conversation}
+                onClick={onConversationSelect}
+                onDelete={onConversationDelete}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
