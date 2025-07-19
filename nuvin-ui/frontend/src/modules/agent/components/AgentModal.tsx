@@ -366,8 +366,8 @@ export function AgentModal({
               : 'Configure a new AI agent for your conversations.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1">
-          <div className="grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid gap-4 py-4 px-1">
             <div className="grid gap-2">
               <Label htmlFor="agentName">Agent Name</Label>
               <Input

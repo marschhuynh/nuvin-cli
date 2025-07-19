@@ -20,7 +20,8 @@ import {
 import { Eye, EyeOff } from 'lucide-react';
 import { useProviderStore } from '@/store/useProviderStore';
 import { fetchGithubCopilotKey } from '@/lib/github';
-import { getDefaultModel } from '@/lib/providers/provider-utils';
+import { getDefaultModel, fetchProviderModels, type ProviderType } from '@/lib/providers/provider-utils';
+import { useModelsStore } from '@/store/useModelsStore';
 
 const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'OpenRouter', 'GitHub'];
 
@@ -33,7 +34,8 @@ export function AddProviderModal({
   open,
   onOpenChange,
 }: AddProviderModalProps) {
-  const { addProvider, isNameUnique } = useProviderStore();
+  const { addProvider, isNameUnique, setActiveProvider } = useProviderStore();
+  const { setModels } = useModelsStore();
   const [newProviderName, setNewProviderName] = useState('');
   const [newProviderType, setNewProviderType] = useState('');
   const [newProviderKey, setNewProviderKey] = useState('');
@@ -70,11 +72,12 @@ export function AddProviderModal({
     setSelectedModel(getDefaultModel(value as any));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateName(newProviderName) || !newProviderType) return;
 
-    addProvider({
-      id: Date.now().toString(),
+    const newProviderId = Date.now().toString();
+    const newProvider = {
+      id: newProviderId,
       name: newProviderName.trim(),
       type: newProviderType,
       apiKey: newProviderKey,
@@ -82,7 +85,27 @@ export function AddProviderModal({
         model: selectedModel || getDefaultModel(newProviderType as any),
         maxTokens: 2048,
       },
-    });
+    };
+
+    // Add the provider
+    addProvider(newProvider);
+    
+    // Set it as the active provider
+    setActiveProvider(newProviderId);
+    
+    // Auto-fetch models for the new provider
+    if (newProviderKey) {
+      try {
+        const fetchedModels = await fetchProviderModels({
+          type: newProviderType as ProviderType,
+          apiKey: newProviderKey,
+          name: newProviderName.trim(),
+        });
+        setModels(newProviderId, fetchedModels);
+      } catch (error) {
+        console.error('Failed to fetch models for new provider:', error);
+      }
+    }
 
     setNewProviderName('');
     setNewProviderType('');
@@ -106,8 +129,9 @@ export function AddProviderModal({
 
       // If GitHub is selected, auto-add the provider
       if (newProviderType === 'GitHub' && validateName(newProviderName)) {
-        addProvider({
-          id: Date.now().toString(),
+        const newProviderId = Date.now().toString();
+        const newProvider = {
+          id: newProviderId,
           name: newProviderName.trim(),
           type: 'GitHub',
           apiKey: token,
@@ -115,7 +139,26 @@ export function AddProviderModal({
             model: selectedModel || getDefaultModel('GitHub'),
             maxTokens: 2048,
           },
-        });
+        };
+        
+        // Add the provider
+        addProvider(newProvider);
+        
+        // Set it as the active provider
+        setActiveProvider(newProviderId);
+        
+        // Auto-fetch models for the new provider
+        try {
+          const fetchedModels = await fetchProviderModels({
+            type: 'GitHub' as ProviderType,
+            apiKey: token,
+            name: newProviderName.trim(),
+          });
+          setModels(newProviderId, fetchedModels);
+        } catch (error) {
+          console.error('Failed to fetch models for new GitHub provider:', error);
+        }
+        
         setNewProviderName('');
         setNewProviderType('');
         setNewProviderKey('');
@@ -143,14 +186,15 @@ export function AddProviderModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Add New Provider</DialogTitle>
           <DialogDescription>
             Add a new AI provider to your configuration.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid gap-4 py-4 px-1">
           <div className="grid gap-2">
             <Label htmlFor="providerName">Provider Name</Label>
             <Input
@@ -230,8 +274,9 @@ export function AddProviderModal({
               </p>
             )}
           </div>
+          </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4">
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>

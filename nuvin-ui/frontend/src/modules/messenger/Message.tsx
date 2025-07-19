@@ -19,13 +19,18 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
 
   const handleCopy = useCallback(async () => {
     try {
-      await ClipboardSetText(trimmedContent);
+      // Try Wails clipboard first, fallback to browser clipboard
+      if (typeof ClipboardSetText === 'function') {
+        await ClipboardSetText(trimmedContent);
+      } else {
+        await navigator.clipboard.writeText(trimmedContent);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
     } catch (error) {
       console.error('Failed to copy message:', error);
     }
-  }, [content]);
+  }, [trimmedContent]);
 
   const toggleRawView = useCallback(() => {
     setShowRaw((prev) => !prev);

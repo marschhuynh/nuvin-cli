@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button';
 import { useAgentStore } from '@/store/useAgentStore';
 import { useProviderStore } from '@/store/useProviderStore';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
-import { GeneralSettings } from '@/modules/setting';
+import { GeneralSettings, MCPSettings } from '@/modules/setting';
 import { AddProviderModal, ProviderSettings } from '@/modules/provider';
 import { AgentModal, AgentSettings } from '@/modules/agent/components';
 
-type TabType = 'general' | 'providers' | 'agent';
+type TabType = 'general' | 'providers' | 'agent' | 'mcp';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<TabType>('general');
@@ -34,6 +34,9 @@ export default function Settings() {
       case 'agent':
         resetAgents();
         break;
+      case 'mcp':
+        resetPreferences();
+        break;
     }
   };
 
@@ -57,6 +60,7 @@ export default function Settings() {
     { id: 'general' as const, label: 'General' },
     { id: 'providers' as const, label: 'Providers' },
     { id: 'agent' as const, label: 'Agent' },
+    { id: 'mcp' as const, label: 'MCP' },
   ];
 
   return (
@@ -100,6 +104,13 @@ export default function Settings() {
             <AgentSettings
               onAddAgent={handleAddAgent}
               onEditAgent={handleEditAgent}
+            />
+          )}
+
+          {activeTab === 'mcp' && (
+            <MCPSettings
+              settings={preferences}
+              onSettingsChange={updatePreferences}
             />
           )}
         </div>

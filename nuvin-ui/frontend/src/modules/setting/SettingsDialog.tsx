@@ -10,17 +10,16 @@ import { useAgentStore } from '@/store/useAgentStore';
 import { useProviderStore } from '@/store/useProviderStore';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
 
-import { GeneralSettings } from './GeneralSettings';
-import { MCPSettings } from './MCPSettings';
-import { AgentSettings, AgentModal } from '../agent/components';
+import { AgentModal, AgentSettings } from '../agent/components';
 import { AddProviderModal, ProviderSettings } from '../provider';
+import { GeneralSettings } from '.';
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-type TabType = 'general' | 'providers' | 'agent' | 'mcp';
+type TabType = 'general' | 'providers' | 'agent';
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabType>('general');
@@ -47,9 +46,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
       case 'agent':
         resetAgents();
         break;
-      case 'mcp':
-        resetPreferences();
-        break;
     }
   };
 
@@ -72,8 +68,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const tabs = [
     { id: 'general' as const, label: 'General' },
     { id: 'providers' as const, label: 'Providers' },
-    { id: 'agent' as const, label: 'Agent2' },
-    { id: 'mcp' as const, label: 'MCP' },
+    { id: 'agent' as const, label: 'Agent' },
   ];
 
   return (
@@ -121,12 +116,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 />
               )}
 
-              {activeTab === 'mcp' && (
-                <MCPSettings
-                  settings={preferences}
-                  onSettingsChange={updatePreferences}
-                />
-              )}
             </div>
           </div>
 

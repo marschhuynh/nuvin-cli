@@ -133,19 +133,20 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold">MCP Servers</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage Model Context Protocol servers for enhanced AI capabilities
-          </p>
+    <div>
+      <div className="p-6 border-b">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-semibold">MCP Servers</h2>
+          </div>
+          <Button onClick={handleAddMCP}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add MCP Server
+          </Button>
         </div>
-        <Button onClick={handleAddMCP}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add MCP Server
-        </Button>
       </div>
+      <div className="p-6 overflow-y-auto">
+        <div className="space-y-6">
 
       {preferences.mcpServers.length === 0 ? (
         <Card>
@@ -230,8 +231,8 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
       )}
 
       <Dialog open={showAddMCPModal} onOpenChange={setShowAddMCPModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               {editingMCP ? 'Edit MCP Server' : 'Add MCP Server'}
             </DialogTitle>
@@ -240,7 +241,8 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-4 px-1">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
               <Input
@@ -346,17 +348,21 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
               <Label htmlFor="enabled">Enable this MCP server</Label>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowAddMCPModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveMCP}>
-                {editingMCP ? 'Update' : 'Add'} MCP Server
-              </Button>
             </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 flex-shrink-0 border-t">
+            <Button variant="outline" onClick={() => setShowAddMCPModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveMCP}>
+              {editingMCP ? 'Update' : 'Add'} MCP Server
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
     </div>
   );
 }
