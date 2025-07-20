@@ -1,9 +1,9 @@
-import { AgentSettings, Message } from '@/types';
-import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError } from '../a2a';
-import { BaseAgent } from './base-agent';
-import { generateUUID } from '../utils';
-import type { SendMessageOptions, MessageResponse } from '../agent-manager';
-import type { Task, Message as A2AMessage, Part } from '../a2a';
+import { AgentSettings, Message } from "@/types";
+import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError } from "../a2a";
+import { BaseAgent } from "./base-agent";
+import { generateUUID } from "../utils";
+import type { SendMessageOptions, MessageResponse } from "../agent-manager";
+import type { Task, Message as A2AMessage, Part } from "../a2a";
 
 export class A2AAgent extends BaseAgent {
   constructor(settings: AgentSettings, history: Map<string, Message[]>) {
@@ -11,22 +11,22 @@ export class A2AAgent extends BaseAgent {
   }
 
   private createAuthConfig(): A2AAuthConfig | undefined {
-    if (!this.settings.auth) return undefined;
+    if (!this.agentSettings.auth) return undefined;
     return {
-      type: this.settings.auth.type,
-      token: this.settings.auth.token,
-      username: this.settings.auth.username,
-      password: this.settings.auth.password,
-      headerName: this.settings.auth.headerName,
+      type: this.agentSettings.auth.type,
+      token: this.agentSettings.auth.token,
+      username: this.agentSettings.auth.username,
+      password: this.agentSettings.auth.password,
+      headerName: this.agentSettings.auth.headerName,
     };
   }
 
   async sendMessage(
     content: string,
-    options: SendMessageOptions = {},
+    options: SendMessageOptions = {}
   ): Promise<MessageResponse> {
-    if (!this.settings.url) {
-      throw new Error('No URL configured for remote agent');
+    if (!this.agentSettings.url) {
+      throw new Error("No URL configured for remote agent");
     }
 
     const startTime = Date.now();
@@ -37,7 +37,7 @@ export class A2AAgent extends BaseAgent {
       contextId: options.contextId,
       taskId: options.taskId,
       blocking: !options.stream,
-      acceptedOutputModes: ['text'],
+      acceptedOutputModes: ["text"],
       timeout: options.timeout,
       enableRetry: options.enableRetry,
       maxRetries: options.maxRetries,
@@ -52,24 +52,24 @@ export class A2AAgent extends BaseAgent {
           timestamp,
           startTime,
           authConfig,
-          a2aOptions,
+          a2aOptions
         );
       }
 
       const response = await a2aService.sendMessage(
-        this.settings.url,
+        this.agentSettings.url,
         content,
         authConfig,
-        a2aOptions,
+        a2aOptions
       );
 
       let finalResponse = response;
-      if (response.kind === 'task' && response.status.state === 'running') {
+      if (response.kind === "task" && response.status.state === "running") {
         finalResponse = await this.pollForTaskCompletion(
-          this.settings.url,
+          this.agentSettings.url,
           response.id,
           authConfig,
-          options.timeout || 60000,
+          options.timeout || 60000
         );
       }
 
@@ -77,11 +77,11 @@ export class A2AAgent extends BaseAgent {
 
       options.onComplete?.(responseContent);
 
-      this.addToHistory(options.conversationId || 'default', [
-        { id: generateUUID(), role: 'user', content, timestamp },
+      this.addToHistory(options.conversationId || "default", [
+        { id: generateUUID(), role: "user", content, timestamp },
         {
           id: generateUUID(),
-          role: 'assistant',
+          role: "assistant",
           content: responseContent,
           timestamp: new Date().toISOString(),
         },
@@ -90,14 +90,14 @@ export class A2AAgent extends BaseAgent {
       return {
         id: messageId,
         content: responseContent,
-        role: 'assistant',
+        role: "assistant",
         timestamp: new Date().toISOString(),
         metadata: {
-          agentType: 'remote',
-          agentId: this.settings.id,
+          agentType: "remote",
+          agentId: this.agentSettings.id,
           responseTime: Date.now() - startTime,
-          model: 'A2A Agent',
-          taskId: finalResponse.kind === 'task' ? finalResponse.id : undefined,
+          model: "A2A Agent",
+          taskId: finalResponse.kind === "task" ? finalResponse.id : undefined,
         },
       };
     } catch (error) {
@@ -112,7 +112,7 @@ export class A2AAgent extends BaseAgent {
     agentUrl: string,
     taskId: string,
     authConfig: A2AAuthConfig | undefined,
-    totalTimeout: number,
+    totalTimeout: number
   ): Promise<Task> {
     const startTime = Date.now();
     let pollInterval = 1000;
@@ -123,8 +123,8 @@ export class A2AAgent extends BaseAgent {
         const task = await a2aService.getTask(agentUrl, taskId, authConfig);
         if (!task) throw new Error(`Task ${taskId} not found`);
         if (
-          task.status.state === 'completed' ||
-          ['failed', 'cancelled'].includes(task.status.state)
+          task.status.state === "completed" ||
+          ["failed", "cancelled"].includes(task.status.state)
         ) {
           return task;
         }
@@ -138,27 +138,27 @@ export class A2AAgent extends BaseAgent {
   }
 
   private extractResponseContent(response: Task | A2AMessage): string {
-    if (response.kind === 'message') {
+    if (response.kind === "message") {
       return (
         response.parts
-          .filter((p: Part) => p.kind === 'text')
+          .filter((p: Part) => p.kind === "text")
           .map((p: any) => p.text)
-          .join('\n') || 'No response content'
+          .join("\n") || "No response content"
       );
     }
     if (response.status.message?.parts) {
       const statusText = response.status.message.parts
-        .filter((p: Part) => p.kind === 'text')
+        .filter((p: Part) => p.kind === "text")
         .map((p: any) => p.text)
-        .join('\n');
+        .join("\n");
       if (statusText) return statusText;
     }
     for (const artifact of response.artifacts || []) {
       for (const part of artifact.parts) {
-        if (part.kind === 'text') return (part as any).text;
+        if (part.kind === "text") return (part as any).text;
       }
     }
-    return 'No response content';
+    return "No response content";
   }
 
   private async sendStreamingMessage(
@@ -168,30 +168,30 @@ export class A2AAgent extends BaseAgent {
     timestamp: string,
     startTime: number,
     authConfig: A2AAuthConfig | undefined,
-    a2aOptions: A2AMessageOptions,
+    a2aOptions: A2AMessageOptions
   ): Promise<MessageResponse> {
-    if (!this.settings.url) {
-      throw new Error('No URL configured for remote agent');
+    if (!this.agentSettings.url) {
+      throw new Error("No URL configured for remote agent");
     }
 
-    let accumulated = '';
+    let accumulated = "";
     let finalTimestamp = new Date().toISOString();
     let taskId: string | undefined;
 
     const stream = a2aService.sendMessageStream(
-      this.settings.url,
+      this.agentSettings.url,
       content,
       authConfig,
-      a2aOptions,
+      a2aOptions
     );
 
     for await (const event of stream) {
-      if (event.kind === 'task') {
+      if (event.kind === "task") {
         taskId = event.id;
         if (event.artifacts) {
           for (const artifact of event.artifacts) {
             for (const part of artifact.parts) {
-              if (part.kind === 'text') {
+              if (part.kind === "text") {
                 const newContent = (part as any).text;
                 if (newContent !== accumulated) {
                   const chunk = newContent.substring(accumulated.length);
@@ -202,30 +202,30 @@ export class A2AAgent extends BaseAgent {
             }
           }
         }
-        if (event.status.state === 'completed') {
+        if (event.status.state === "completed") {
           finalTimestamp = event.status.timestamp || finalTimestamp;
           break;
         }
-      } else if (event.kind === 'message') {
+      } else if (event.kind === "message") {
         for (const part of event.parts) {
-          if (part.kind === 'text') {
+          if (part.kind === "text") {
             accumulated += (part as any).text;
             options.onChunk?.((part as any).text);
           }
         }
-      } else if (event.kind === 'artifact-update') {
+      } else if (event.kind === "artifact-update") {
         for (const part of event.artifact.parts) {
-          if (part.kind === 'text') {
+          if (part.kind === "text") {
             const textContent = (part as any).text;
             // Always accumulate the text content
             accumulated += textContent;
             options.onChunk?.(textContent);
           }
         }
-      } else if (event.kind === 'task-artifact-update') {
+      } else if (event.kind === "task-artifact-update") {
         for (const artifact of event.artifacts || []) {
           for (const part of artifact.parts) {
-            if (part.kind === 'text') {
+            if (part.kind === "text") {
               accumulated += (part as any).text;
               options.onChunk?.((part as any).text);
             }
@@ -236,11 +236,11 @@ export class A2AAgent extends BaseAgent {
 
     options.onComplete?.(accumulated);
 
-    this.addToHistory(options.conversationId || 'default', [
-      { id: generateUUID(), role: 'user', content, timestamp },
+    this.addToHistory(options.conversationId || "default", [
+      { id: generateUUID(), role: "user", content, timestamp },
       {
         id: generateUUID(),
-        role: 'assistant',
+        role: "assistant",
         content: accumulated,
         timestamp: finalTimestamp,
       },
@@ -248,14 +248,14 @@ export class A2AAgent extends BaseAgent {
 
     return {
       id: messageId,
-      content: accumulated || 'No response content received',
-      role: 'assistant',
+      content: accumulated || "No response content received",
+      role: "assistant",
       timestamp: finalTimestamp,
       metadata: {
-        agentType: 'remote',
-        agentId: this.settings.id,
+        agentType: "remote",
+        agentId: this.agentSettings.id,
         responseTime: Date.now() - startTime,
-        model: 'A2A Agent (Streaming)',
+        model: "A2A Agent (Streaming)",
         taskId,
       },
     };

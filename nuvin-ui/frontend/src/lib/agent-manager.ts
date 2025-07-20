@@ -87,6 +87,7 @@ export class AgentManager {
   getActiveProvider(): ProviderConfig | null {
     return this.activeProvider;
   }
+
   private updateAgentInstance(): void {
     if (!this.activeAgent) {
       this.agentInstance = null;

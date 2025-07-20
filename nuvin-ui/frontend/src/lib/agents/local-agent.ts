@@ -1,15 +1,15 @@
-import { ProviderConfig, AgentSettings, Message } from '@/types';
+import { ProviderConfig, AgentSettings, Message } from "@/types";
 import {
   createProvider,
   ChatMessage,
   LLMProviderConfig,
   ProviderType,
-} from '../providers';
-import { generateUUID } from '../utils';
-import { BaseAgent } from './base-agent';
-import type { SendMessageOptions, MessageResponse } from '../agent-manager';
-import { toolIntegrationService } from '../tools';
-import type { ToolContext } from '@/types/tools';
+} from "../providers";
+import { generateUUID } from "../utils";
+import { BaseAgent } from "./base-agent";
+import type { SendMessageOptions, MessageResponse } from "../agent-manager";
+import { toolIntegrationService } from "../tools";
+import type { ToolContext } from "@/types/tools";
 
 // Convert from existing ProviderConfig to our LLMProviderConfig
 function convertToLLMProviderConfig(config: ProviderConfig): LLMProviderConfig {
@@ -22,23 +22,23 @@ function convertToLLMProviderConfig(config: ProviderConfig): LLMProviderConfig {
 
 export class LocalAgent extends BaseAgent {
   constructor(
-    settings: AgentSettings,
+    agentSettings: AgentSettings,
     private providerConfig: ProviderConfig,
-    history: Map<string, Message[]>,
+    history: Map<string, Message[]>
   ) {
-    super(settings, history);
+    super(agentSettings, history);
   }
 
   async sendMessage(
     content: string,
-    options: SendMessageOptions = {},
+    options: SendMessageOptions = {}
   ): Promise<MessageResponse> {
     const startTime = Date.now();
     const messageId = generateUUID();
     const provider = createProvider(
-      convertToLLMProviderConfig(this.providerConfig),
+      convertToLLMProviderConfig(this.providerConfig)
     );
-    const convoId = options.conversationId || 'default';
+    const convoId = options.conversationId || "default";
     const messages: ChatMessage[] = this.buildContext(convoId, content);
 
     // Create tool context for tool execution
@@ -46,7 +46,7 @@ export class LocalAgent extends BaseAgent {
       userId: options.userId,
       sessionId: convoId,
       metadata: {
-        agentId: this.settings.id,
+        agentId: this.agentSettings.id,
         provider: this.providerConfig.type,
         model: this.providerConfig.activeModel.model,
       },
@@ -56,27 +56,29 @@ export class LocalAgent extends BaseAgent {
     const baseParams = {
       messages,
       model: this.providerConfig.activeModel.model,
-      temperature: this.settings.temperature,
+      temperature: this.agentSettings.temperature,
       maxTokens: this.providerConfig.activeModel.maxTokens,
-      topP: this.settings.topP,
+      topP: this.agentSettings.topP,
     };
 
     // Enhance with tools if configured
     const enhancedParams = toolIntegrationService.enhanceCompletionParams(
       baseParams,
-      this.settings.toolConfig
+      this.agentSettings.toolConfig
     );
 
     if (options.stream && provider.generateCompletionStream) {
       // Note: Tool calling with streaming is complex and typically not supported
       // Fall back to non-streaming if tools are enabled
-      if (this.settings.toolConfig?.enabledTools?.length) {
-        console.warn('Tool calling detected - falling back to non-streaming mode');
+      if (this.agentSettings.toolConfig?.enabledTools?.length) {
+        console.warn(
+          "Tool calling detected - falling back to non-streaming mode"
+        );
         return this.sendMessage(content, { ...options, stream: false });
       }
 
-      let accumulated = '';
-      console.log('Streaming message', content, messages);
+      let accumulated = "";
+      console.log("Streaming message", content, messages);
       const stream = provider.generateCompletionStream(enhancedParams);
 
       for await (const chunk of stream) {
@@ -88,11 +90,11 @@ export class LocalAgent extends BaseAgent {
       const response: MessageResponse = {
         id: messageId,
         content: accumulated,
-        role: 'assistant',
+        role: "assistant",
         timestamp,
         metadata: {
-          agentType: 'local',
-          agentId: this.settings.id,
+          agentType: "local",
+          agentId: this.agentSettings.id,
           provider: this.providerConfig.type,
           model: this.providerConfig.activeModel.model,
           responseTime: Date.now() - startTime,
@@ -100,10 +102,10 @@ export class LocalAgent extends BaseAgent {
       };
 
       this.addToHistory(convoId, [
-        { id: generateUUID(), role: 'user', content, timestamp },
+        { id: generateUUID(), role: "user", content, timestamp },
         {
           id: generateUUID(),
-          role: 'assistant',
+          role: "assistant",
           content: accumulated,
           timestamp,
         },
@@ -120,7 +122,7 @@ export class LocalAgent extends BaseAgent {
     const processed = await toolIntegrationService.processCompletionResult(
       result,
       toolContext,
-      this.settings.toolConfig
+      this.agentSettings.toolConfig
     );
 
     let finalResult = result;
@@ -133,7 +135,7 @@ export class LocalAgent extends BaseAgent {
         processed.toolCalls,
         provider,
         toolContext,
-        this.settings.toolConfig
+        this.agentSettings.toolConfig
       );
     }
 
@@ -141,11 +143,11 @@ export class LocalAgent extends BaseAgent {
     const response: MessageResponse = {
       id: messageId,
       content: finalResult.content,
-      role: 'assistant',
+      role: "assistant",
       timestamp,
       metadata: {
-        agentType: 'local',
-        agentId: this.settings.id,
+        agentType: "local",
+        agentId: this.agentSettings.id,
         provider: this.providerConfig.type,
         model: this.providerConfig.activeModel.model,
         responseTime: Date.now() - startTime,
@@ -154,10 +156,10 @@ export class LocalAgent extends BaseAgent {
     };
 
     this.addToHistory(convoId, [
-      { id: generateUUID(), role: 'user', content, timestamp },
+      { id: generateUUID(), role: "user", content, timestamp },
       {
         id: generateUUID(),
-        role: 'assistant',
+        role: "assistant",
         content: finalResult.content,
         timestamp,
       },
