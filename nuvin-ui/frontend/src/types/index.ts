@@ -1,9 +1,9 @@
 // Import tool configuration from tools module
-import type { AgentToolConfig } from "./tools";
+import type { AgentToolConfig } from './tools';
 
 export interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
 }
@@ -39,7 +39,7 @@ export interface Agent {
   description: string;
   systemPrompt: string;
   tools: AgentTool[];
-  status: "active" | "inactive" | "busy";
+  status: 'active' | 'inactive' | 'busy';
   lastUsed?: string;
 }
 
@@ -59,17 +59,17 @@ export interface ProviderConfig {
 export interface AgentSettings {
   id: string;
   name: string;
-  persona: "helpful" | "professional" | "creative" | "analytical" | "casual";
-  responseLength: "short" | "medium" | "long" | "detailed";
+  persona: 'helpful' | 'professional' | 'creative' | 'analytical' | 'casual';
+  responseLength: 'short' | 'medium' | 'long' | 'detailed';
   temperature: number;
   topP: number;
   maxTokens: number;
   systemPrompt: string;
-  agentType: "local" | "remote";
+  agentType: 'local' | 'remote';
   url?: string; // URL for remote A2A agents
   // Authentication for remote A2A agents
   auth?: {
-    type: "bearer" | "apikey" | "basic" | "none";
+    type: 'bearer' | 'apikey' | 'basic' | 'none';
     token?: string; // For bearer tokens or API keys
     username?: string; // For basic auth
     password?: string; // For basic auth
@@ -80,6 +80,6 @@ export interface AgentSettings {
   // Optional properties to make it compatible with Agent interface where needed
   description?: string;
   tools?: AgentTool[];
-  status?: "active" | "inactive" | "busy";
+  status?: 'active' | 'inactive' | 'busy';
   lastUsed?: string;
 }

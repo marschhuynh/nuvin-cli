@@ -1,10 +1,9 @@
-import { 
-  Tool, 
-  ToolDefinition, 
-  ToolCall, 
-  ToolCallResult, 
-  ToolExecutionResult, 
-  ToolContext 
+import {
+  Tool,
+  ToolDefinition,
+  ToolCall,
+  ToolCallResult,
+  ToolContext,
 } from '@/types/tools';
 
 export class ToolRegistry {
@@ -16,7 +15,9 @@ export class ToolRegistry {
    */
   registerTool(tool: Tool): void {
     if (this.tools.has(tool.definition.name)) {
-      throw new Error(`Tool with name '${tool.definition.name}' is already registered`);
+      throw new Error(
+        `Tool with name '${tool.definition.name}' is already registered`,
+      );
     }
 
     // Validate tool definition
@@ -79,11 +80,11 @@ export class ToolRegistry {
   getToolDefinitions(enabledTools?: string[]): ToolDefinition[] {
     if (enabledTools) {
       return enabledTools
-        .map(name => this.tools.get(name))
-        .filter(tool => tool !== undefined)
-        .map(tool => tool!.definition);
+        .map((name) => this.tools.get(name))
+        .filter((tool) => tool !== undefined)
+        .map((tool) => tool!.definition);
     }
-    return Array.from(this.tools.values()).map(tool => tool.definition);
+    return Array.from(this.tools.values()).map((tool) => tool.definition);
   }
 
   /**
@@ -92,8 +93,8 @@ export class ToolRegistry {
   getToolsByCategory(category: string): Tool[] {
     const toolNames = this.categories.get(category) || [];
     return toolNames
-      .map(name => this.tools.get(name))
-      .filter(tool => tool !== undefined) as Tool[];
+      .map((name) => this.tools.get(name))
+      .filter((tool) => tool !== undefined) as Tool[];
   }
 
   /**
@@ -107,19 +108,19 @@ export class ToolRegistry {
    * Execute a tool call
    */
   async executeTool(
-    toolCall: ToolCall, 
-    context?: ToolContext
+    toolCall: ToolCall,
+    context?: ToolContext,
   ): Promise<ToolCallResult> {
     const tool = this.tools.get(toolCall.name);
-    
+
     if (!tool) {
       return {
         id: toolCall.id,
         name: toolCall.name,
         result: {
           success: false,
-          error: `Tool '${toolCall.name}' not found`
-        }
+          error: `Tool '${toolCall.name}' not found`,
+        },
       };
     }
 
@@ -131,18 +132,18 @@ export class ToolRegistry {
           name: toolCall.name,
           result: {
             success: false,
-            error: 'Invalid parameters'
-          }
+            error: 'Invalid parameters',
+          },
         };
       }
 
       // Execute the tool
       const result = await tool.execute(toolCall.parameters, context);
-      
+
       return {
         id: toolCall.id,
         name: toolCall.name,
-        result
+        result,
       };
     } catch (error) {
       return {
@@ -150,8 +151,9 @@ export class ToolRegistry {
         name: toolCall.name,
         result: {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred'
-        }
+          error:
+            error instanceof Error ? error.message : 'Unknown error occurred',
+        },
       };
     }
   }
@@ -160,20 +162,22 @@ export class ToolRegistry {
    * Execute multiple tool calls concurrently
    */
   async executeToolCalls(
-    toolCalls: ToolCall[], 
+    toolCalls: ToolCall[],
     context?: ToolContext,
-    maxConcurrent: number = 5
+    maxConcurrent: number = 5,
   ): Promise<ToolCallResult[]> {
     const results: ToolCallResult[] = [];
-    
+
     // Process in batches to limit concurrency
     for (let i = 0; i < toolCalls.length; i += maxConcurrent) {
       const batch = toolCalls.slice(i, i + maxConcurrent);
-      const batchPromises = batch.map(toolCall => this.executeTool(toolCall, context));
+      const batchPromises = batch.map((toolCall) =>
+        this.executeTool(toolCall, context),
+      );
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
     }
-    
+
     return results;
   }
 
@@ -218,17 +222,19 @@ export class ToolRegistry {
     // Validate parameter names
     const nameRegex = /^[a-zA-Z][a-zA-Z0-9_]*$/;
     if (!nameRegex.test(definition.name)) {
-      throw new Error('Tool name must start with a letter and contain only letters, numbers, and underscores');
+      throw new Error(
+        'Tool name must start with a letter and contain only letters, numbers, and underscores',
+      );
     }
   }
 
   /**
    * Export registry state for persistence
    */
-  export(): { tools: string[], categories: Record<string, string[]> } {
+  export(): { tools: string[]; categories: Record<string, string[]> } {
     return {
       tools: Array.from(this.tools.keys()),
-      categories: Object.fromEntries(this.categories.entries())
+      categories: Object.fromEntries(this.categories.entries()),
     };
   }
 }

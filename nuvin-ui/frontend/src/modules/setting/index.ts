@@ -1,2 +1,2 @@
-export { GeneralSettings } from "./GeneralSettings";
-export { MCPSettings } from "./MCPSettings";
+export { GeneralSettings } from './GeneralSettings';
+export { MCPSettings } from './MCPSettings';

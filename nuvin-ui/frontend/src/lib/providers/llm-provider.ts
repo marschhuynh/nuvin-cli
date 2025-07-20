@@ -1,6 +1,6 @@
 export interface ToolCall {
   id: string;
-  type: "function";
+  type: 'function';
   function: {
     name: string;
     arguments: string; // JSON string
@@ -8,7 +8,7 @@ export interface ToolCall {
 }
 
 export interface ChatMessage {
-  role: "system" | "user" | "assistant" | "tool";
+  role: 'system' | 'user' | 'assistant' | 'tool';
   content: string | null;
   tool_calls?: ToolCall[];
   tool_call_id?: string;
@@ -22,7 +22,7 @@ export interface FunctionDefinition {
 }
 
 export interface ToolDefinition {
-  type: "function";
+  type: 'function';
   function: FunctionDefinition;
 }
 
@@ -34,9 +34,9 @@ export interface CompletionParams {
   topP: number;
   tools?: ToolDefinition[];
   tool_choice?:
-    | "auto"
-    | "none"
-    | { type: "function"; function: { name: string } };
+    | 'auto'
+    | 'none'
+    | { type: 'function'; function: { name: string } };
 }
 
 export interface CompletionResult {

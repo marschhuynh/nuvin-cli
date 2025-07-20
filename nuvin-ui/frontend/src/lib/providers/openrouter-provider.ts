@@ -3,27 +3,27 @@ import type {
   CompletionParams,
   CompletionResult,
   ModelInfo,
-} from "./llm-provider";
+} from './llm-provider';
 
 export class OpenRouterProvider implements LLMProvider {
-  readonly type = "OpenRouter";
+  readonly type = 'OpenRouter';
   private apiKey: string;
-  private apiUrl: string = "https://openrouter.ai";
+  private apiUrl: string = 'https://openrouter.ai';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
   async generateCompletion(
-    params: CompletionParams
+    params: CompletionParams,
   ): Promise<CompletionResult> {
     const response = await fetch(`${this.apiUrl}/api/v1/chat/completions`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
-        "HTTP-Referer": "https://nuvin.dev",
-        "X-Title": "Nuvin",
+        'HTTP-Referer': 'https://nuvin.dev',
+        'X-Title': 'Nuvin',
       },
       body: JSON.stringify({
         model: params.model,
@@ -42,22 +42,22 @@ export class OpenRouterProvider implements LLMProvider {
     }
 
     const data = await response.json();
-    const content: string = data.choices?.[0]?.message?.content ?? "";
+    const content: string = data.choices?.[0]?.message?.content ?? '';
     const tool_calls = data.choices?.[0]?.message?.tool_calls;
 
     return { content, tool_calls };
   }
 
   async *generateCompletionStream(
-    params: CompletionParams
+    params: CompletionParams,
   ): AsyncGenerator<string> {
     const response = await fetch(`${this.apiUrl}/api/v1/chat/completions`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
-        "HTTP-Referer": "https://nuvin.dev",
-        "X-Title": "Nuvin",
+        'HTTP-Referer': 'https://nuvin.dev',
+        'X-Title': 'Nuvin',
       },
       body: JSON.stringify({
         model: params.model,
@@ -78,24 +78,24 @@ export class OpenRouterProvider implements LLMProvider {
 
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new Error("No response body");
+      throw new Error('No response body');
     }
 
     const decoder = new TextDecoder();
-    let buffer = "";
+    let buffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
 
       for (const line of lines) {
-        if (line.startsWith("data: ")) {
+        if (line.startsWith('data: ')) {
           const data = line.slice(6);
-          if (data === "[DONE]") return;
+          if (data === '[DONE]') return;
 
           try {
             const parsed = JSON.parse(data);
@@ -114,7 +114,7 @@ export class OpenRouterProvider implements LLMProvider {
   async getModels(): Promise<ModelInfo[]> {
     try {
       const response = await fetch(`${this.apiUrl}/api/v1/models`, {
-        method: "GET",
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
         },
@@ -122,7 +122,7 @@ export class OpenRouterProvider implements LLMProvider {
 
       if (!response.ok) {
         console.warn(
-          `OpenRouter models API error: ${response.status}. Returning empty models list.`
+          `OpenRouter models API error: ${response.status}. Returning empty models list.`,
         );
         return [];
       }
@@ -160,7 +160,7 @@ export class OpenRouterProvider implements LLMProvider {
 
       return transformedModels;
     } catch (error) {
-      console.error("Failed to fetch OpenRouter models:", error);
+      console.error('Failed to fetch OpenRouter models:', error);
       return [];
     }
   }
@@ -168,34 +168,34 @@ export class OpenRouterProvider implements LLMProvider {
   private getModality(model: any): string {
     // Check model capabilities or ID patterns for modality
     if (
-      model.capabilities?.includes("vision") ||
-      model.id.includes("vision") ||
-      model.id.includes("gpt-4o")
+      model.capabilities?.includes('vision') ||
+      model.id.includes('vision') ||
+      model.id.includes('gpt-4o')
     ) {
-      return "multimodal";
+      return 'multimodal';
     }
-    return "text";
+    return 'text';
   }
 
   private getInputModalities(model: any): string[] {
-    const modalities = ["text"];
+    const modalities = ['text'];
     if (
-      model.capabilities?.includes("vision") ||
-      model.id.includes("vision") ||
-      model.id.includes("gpt-4o")
+      model.capabilities?.includes('vision') ||
+      model.id.includes('vision') ||
+      model.id.includes('gpt-4o')
     ) {
-      modalities.push("image");
+      modalities.push('image');
     }
-    if (model.capabilities?.includes("audio") || model.id.includes("audio")) {
-      modalities.push("audio");
+    if (model.capabilities?.includes('audio') || model.id.includes('audio')) {
+      modalities.push('audio');
     }
     return modalities;
   }
 
   private getOutputModalities(model: any): string[] {
-    const modalities = ["text"];
-    if (model.capabilities?.includes("audio") || model.id.includes("audio")) {
-      modalities.push("audio");
+    const modalities = ['text'];
+    if (model.capabilities?.includes('audio') || model.id.includes('audio')) {
+      modalities.push('audio');
     }
     return modalities;
   }

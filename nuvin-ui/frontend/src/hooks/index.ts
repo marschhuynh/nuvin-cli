@@ -3,4 +3,4 @@ export {
   useAgentManager,
   useAgentStatuses,
   useAgentConnectivity,
-} from "./useAgentManager";
+} from './useAgentManager';

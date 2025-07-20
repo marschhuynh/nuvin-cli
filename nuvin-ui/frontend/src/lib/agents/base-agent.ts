@@ -1,11 +1,11 @@
-import { AgentSettings, Message } from "@/types";
-import type { ChatMessage } from "../providers";
-import type { SendMessageOptions, MessageResponse } from "../agent-manager";
+import { AgentSettings, Message } from '@/types';
+import type { ChatMessage } from '../providers';
+import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 
 export abstract class BaseAgent {
   constructor(
     protected agentSettings: AgentSettings,
-    protected conversationHistory: Map<string, Message[]>
+    protected conversationHistory: Map<string, Message[]>,
   ) {}
 
   setSettings(agentSettings: AgentSettings) {
@@ -14,12 +14,12 @@ export abstract class BaseAgent {
 
   abstract sendMessage(
     content: string,
-    options?: SendMessageOptions
+    options?: SendMessageOptions,
   ): Promise<MessageResponse>;
 
   async streamMessage(
     content: string,
-    options?: SendMessageOptions
+    options?: SendMessageOptions,
   ): Promise<MessageResponse> {
     return this.sendMessage(content, options);
   }
@@ -36,9 +36,9 @@ export abstract class BaseAgent {
   buildContext(conversationId: string, content: string): ChatMessage[] {
     const history = this.retrieveMemory(conversationId);
     return [
-      { role: "system", content: this.agentSettings.systemPrompt },
+      { role: 'system', content: this.agentSettings.systemPrompt },
       ...history.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user", content },
+      { role: 'user', content },
     ];
   }
 }

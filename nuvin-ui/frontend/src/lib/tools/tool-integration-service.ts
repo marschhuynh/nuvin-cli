@@ -4,14 +4,14 @@ import {
   ChatMessage,
   ToolDefinition,
   ToolCall as LLMToolCall,
-} from "@/lib/providers/llm-provider";
+} from '@/lib/providers/llm-provider';
 import {
   ToolCall,
   ToolCallResult,
   AgentToolConfig,
   ToolContext,
-} from "@/types/tools";
-import { toolRegistry } from "./tool-registry";
+} from '@/types/tools';
+import { toolRegistry } from './tool-registry';
 
 export class ToolIntegrationService {
   /**
@@ -19,7 +19,7 @@ export class ToolIntegrationService {
    */
   enhanceCompletionParams(
     params: CompletionParams,
-    agentToolConfig?: AgentToolConfig
+    agentToolConfig?: AgentToolConfig,
   ): CompletionParams {
     if (!agentToolConfig || !agentToolConfig.enabledTools.length) {
       return params;
@@ -27,12 +27,12 @@ export class ToolIntegrationService {
 
     // Get tool definitions for enabled tools
     const toolDefinitions = toolRegistry.getToolDefinitions(
-      agentToolConfig.enabledTools
+      agentToolConfig.enabledTools,
     );
 
     // Convert to LLM provider format
     const tools: ToolDefinition[] = toolDefinitions.map((tool) => ({
-      type: "function",
+      type: 'function',
       function: {
         name: tool.name,
         description: tool.description,
@@ -43,7 +43,7 @@ export class ToolIntegrationService {
     return {
       ...params,
       tools,
-      tool_choice: "auto", // Let the LLM decide when to use tools
+      tool_choice: 'auto', // Let the LLM decide when to use tools
     };
   }
 
@@ -53,7 +53,7 @@ export class ToolIntegrationService {
   async processCompletionResult(
     result: CompletionResult,
     context: ToolContext,
-    agentToolConfig?: AgentToolConfig
+    agentToolConfig?: AgentToolConfig,
   ): Promise<{
     result: CompletionResult;
     toolCalls?: ToolCallResult[];
@@ -73,7 +73,7 @@ export class ToolIntegrationService {
         result: {
           content:
             result.content ||
-            "The assistant attempted to use tools, but tools are not enabled for this agent.",
+            'The assistant attempted to use tools, but tools are not enabled for this agent.',
         },
         requiresFollowUp: false,
       };
@@ -91,7 +91,7 @@ export class ToolIntegrationService {
     const toolResults = await toolRegistry.executeToolCalls(
       toolCalls,
       context,
-      maxConcurrent
+      maxConcurrent,
     );
 
     return {
@@ -106,13 +106,13 @@ export class ToolIntegrationService {
    */
   createToolResultMessages(
     originalToolCalls: LLMToolCall[],
-    toolResults: ToolCallResult[]
+    toolResults: ToolCallResult[],
   ): ChatMessage[] {
     const messages: ChatMessage[] = [];
 
     // Add the assistant message with tool calls
     messages.push({
-      role: "assistant",
+      role: 'assistant',
       content: null,
       tool_calls: originalToolCalls,
     });
@@ -122,7 +122,7 @@ export class ToolIntegrationService {
       const toolCall = originalToolCalls.find((call) => call.id === result.id);
       if (toolCall) {
         messages.push({
-          role: "tool",
+          role: 'tool',
           content: JSON.stringify({
             success: result.result.success,
             data: result.result.data,
@@ -146,7 +146,7 @@ export class ToolIntegrationService {
     toolResults: ToolCallResult[],
     llmProvider: any, // LLMProvider instance
     context: ToolContext,
-    agentToolConfig?: AgentToolConfig
+    agentToolConfig?: AgentToolConfig,
   ): Promise<CompletionResult> {
     if (!firstResult.tool_calls) {
       return firstResult;
@@ -155,7 +155,7 @@ export class ToolIntegrationService {
     // Create messages with tool results
     const toolMessages = this.createToolResultMessages(
       firstResult.tool_calls,
-      toolResults
+      toolResults,
     );
 
     // Create follow-up completion with tool results
@@ -177,7 +177,7 @@ export class ToolIntegrationService {
    * Get available tools for an agent
    */
   getAvailableToolsForAgent(
-    agentToolConfig?: AgentToolConfig
+    agentToolConfig?: AgentToolConfig,
   ): ToolDefinition[] {
     if (!agentToolConfig || !agentToolConfig.enabledTools.length) {
       return [];
@@ -186,7 +186,7 @@ export class ToolIntegrationService {
     return toolRegistry
       .getToolDefinitions(agentToolConfig.enabledTools)
       .map((tool) => ({
-        type: "function" as const,
+        type: 'function' as const,
         function: {
           name: tool.name,
           description: tool.description,
@@ -206,11 +206,11 @@ export class ToolIntegrationService {
 
     // Check if enabled tools exist
     const missingTools = agentToolConfig.enabledTools.filter(
-      (toolName) => !toolRegistry.hasTool(toolName)
+      (toolName) => !toolRegistry.hasTool(toolName),
     );
 
     if (missingTools.length > 0) {
-      errors.push(`Missing tools: ${missingTools.join(", ")}`);
+      errors.push(`Missing tools: ${missingTools.join(', ')}`);
     }
 
     // Validate concurrent calls limit
@@ -219,7 +219,7 @@ export class ToolIntegrationService {
         agentToolConfig.maxConcurrentCalls < 1 ||
         agentToolConfig.maxConcurrentCalls > 10
       ) {
-        errors.push("maxConcurrentCalls must be between 1 and 10");
+        errors.push('maxConcurrentCalls must be between 1 and 10');
       }
     }
 
@@ -229,7 +229,7 @@ export class ToolIntegrationService {
         agentToolConfig.timeoutMs < 1000 ||
         agentToolConfig.timeoutMs > 300000
       ) {
-        errors.push("timeoutMs must be between 1000 and 300000 (5 minutes)");
+        errors.push('timeoutMs must be between 1000 and 300000 (5 minutes)');
       }
     }
 

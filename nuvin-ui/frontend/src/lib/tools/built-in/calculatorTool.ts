@@ -3,27 +3,29 @@ import { Tool } from '@/types/tools';
 export const calculatorTool: Tool = {
   definition: {
     name: 'calculator',
-    description: 'Perform mathematical calculations with basic arithmetic operations',
+    description:
+      'Perform mathematical calculations with basic arithmetic operations',
     parameters: {
       type: 'object',
       properties: {
         expression: {
           type: 'string',
-          description: 'Mathematical expression to evaluate (e.g., "2 + 3 * 4", "sqrt(16)", "sin(pi/2)")'
-        }
+          description:
+            'Mathematical expression to evaluate (e.g., "2 + 3 * 4", "sqrt(16)", "sin(pi/2)")',
+        },
       },
-      required: ['expression']
-    }
+      required: ['expression'],
+    },
   },
-  
+
   async execute(parameters) {
     try {
       const { expression } = parameters;
-      
+
       if (!expression || typeof expression !== 'string') {
         return {
           success: false,
-          error: 'Expression parameter is required and must be a string'
+          error: 'Expression parameter is required and must be a string',
         };
       }
 
@@ -49,7 +51,7 @@ export const calculatorTool: Tool = {
         exp: Math.exp,
         pow: Math.pow,
         min: Math.min,
-        max: Math.max
+        max: Math.max,
       };
 
       // Create a safe evaluation function
@@ -60,11 +62,16 @@ export const calculatorTool: Tool = {
           if (typeof func === 'function') {
             const regex = new RegExp(`\\b${name}\\s*\\(([^)]+)\\)`, 'g');
             processedExpr = processedExpr.replace(regex, (match, args) => {
-              const argValues = args.split(',').map((arg: string) => evaluateExpression(arg.trim()));
+              const argValues = args
+                .split(',')
+                .map((arg: string) => evaluateExpression(arg.trim()));
               return (func as any).apply(null, argValues).toString();
             });
           } else {
-            processedExpr = processedExpr.replace(new RegExp(`\\b${name}\\b`, 'g'), func.toString());
+            processedExpr = processedExpr.replace(
+              new RegExp(`\\b${name}\\b`, 'g'),
+              func.toString(),
+            );
           }
         });
 
@@ -77,7 +84,7 @@ export const calculatorTool: Tool = {
       if (isNaN(result)) {
         return {
           success: false,
-          error: 'Invalid mathematical expression'
+          error: 'Invalid mathematical expression',
         };
       }
 
@@ -86,22 +93,25 @@ export const calculatorTool: Tool = {
         data: {
           expression: expression,
           result: result,
-          formatted: `${expression} = ${result}`
-        }
+          formatted: `${expression} = ${result}`,
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: `Calculation error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        error: `Calculation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   },
 
   validate(parameters) {
-    return typeof parameters.expression === 'string' && parameters.expression.trim().length > 0;
+    return (
+      typeof parameters.expression === 'string' &&
+      parameters.expression.trim().length > 0
+    );
   },
 
   category: 'utility',
   version: '1.0.0',
-  author: 'system'
+  author: 'system',
 };

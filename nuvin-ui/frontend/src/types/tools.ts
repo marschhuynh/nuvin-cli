@@ -1,6 +1,6 @@
 // Tool parameter schema following JSON Schema specification
 export interface ToolParameter {
-  type: "string" | "number" | "boolean" | "object" | "array";
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
   description: string;
   required?: boolean;
   enum?: string[] | number[];
@@ -17,7 +17,7 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parameters: {
-    type: "object";
+    type: 'object';
     properties: Record<string, ToolParameter>;
     required?: string[];
   };
@@ -42,7 +42,7 @@ export interface Tool {
   definition: ToolDefinition;
   execute: (
     parameters: Record<string, any>,
-    context?: ToolContext
+    context?: ToolContext,
   ) => Promise<ToolExecutionResult>;
   validate?: (parameters: Record<string, any>) => boolean;
   category?: string;

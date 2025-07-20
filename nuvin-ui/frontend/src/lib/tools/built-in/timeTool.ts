@@ -1,26 +1,26 @@
-import { Tool } from "@/types/tools";
+import { Tool } from '@/types/tools';
 
 export const timeTool: Tool = {
   definition: {
-    name: "get_current_time",
+    name: 'get_current_time',
     description:
-      "Get current date and time information in various formats and timezones",
+      'Get current date and time information in various formats and timezones',
     parameters: {
-      type: "object",
+      type: 'object',
       properties: {
         timezone: {
-          type: "string",
+          type: 'string',
           description:
             'Timezone identifier (e.g., "UTC", "America/New_York", "Europe/London")',
         },
         format: {
-          type: "string",
+          type: 'string',
           description:
             'Output format: "iso", "readable", "timestamp", "custom"',
-          enum: ["iso", "readable", "timestamp", "custom"],
+          enum: ['iso', 'readable', 'timestamp', 'custom'],
         },
         customFormat: {
-          type: "string",
+          type: 'string',
           description:
             'Custom date format string (only used when format is "custom")',
         },
@@ -31,8 +31,8 @@ export const timeTool: Tool = {
   async execute(parameters) {
     try {
       const {
-        timezone = "UTC",
-        format = "readable",
+        timezone = 'UTC',
+        format = 'readable',
         customFormat,
       } = parameters;
 
@@ -45,22 +45,22 @@ export const timeTool: Tool = {
         iso: now.toISOString(),
       };
 
-      if (timezone && timezone !== "UTC") {
+      if (timezone && timezone !== 'UTC') {
         try {
           const options: Intl.DateTimeFormatOptions = {
             timeZone: timezone,
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            timeZoneName: "short",
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short',
           };
 
           timeData.timezone = timezone;
-          timeData.localized = new Intl.DateTimeFormat("en-US", options).format(
-            now
+          timeData.localized = new Intl.DateTimeFormat('en-US', options).format(
+            now,
           );
         } catch (error) {
           return {
@@ -71,13 +71,13 @@ export const timeTool: Tool = {
       }
 
       switch (format) {
-        case "iso":
+        case 'iso':
           timeString = timeData.iso;
           break;
-        case "timestamp":
+        case 'timestamp':
           timeString = timeData.timestamp.toString();
           break;
-        case "custom":
+        case 'custom':
           if (!customFormat) {
             return {
               success: false,
@@ -87,12 +87,12 @@ export const timeTool: Tool = {
           }
           // Basic custom formatting (simplified)
           timeString = customFormat
-            .replace("YYYY", now.getFullYear().toString())
-            .replace("MM", (now.getMonth() + 1).toString().padStart(2, "0"))
-            .replace("DD", now.getDate().toString().padStart(2, "0"))
-            .replace("HH", now.getHours().toString().padStart(2, "0"))
-            .replace("mm", now.getMinutes().toString().padStart(2, "0"))
-            .replace("ss", now.getSeconds().toString().padStart(2, "0"));
+            .replace('YYYY', now.getFullYear().toString())
+            .replace('MM', (now.getMonth() + 1).toString().padStart(2, '0'))
+            .replace('DD', now.getDate().toString().padStart(2, '0'))
+            .replace('HH', now.getHours().toString().padStart(2, '0'))
+            .replace('mm', now.getMinutes().toString().padStart(2, '0'))
+            .replace('ss', now.getSeconds().toString().padStart(2, '0'));
           break;
         default:
           timeString = timeData.localized || now.toLocaleString();
@@ -111,7 +111,7 @@ export const timeTool: Tool = {
       return {
         success: false,
         error: `Time retrieval error: ${
-          error instanceof Error ? error.message : "Unknown error"
+          error instanceof Error ? error.message : 'Unknown error'
         }`,
       };
     }
@@ -120,17 +120,17 @@ export const timeTool: Tool = {
   validate(parameters) {
     if (
       parameters.format &&
-      !["iso", "readable", "timestamp", "custom"].includes(parameters.format)
+      !['iso', 'readable', 'timestamp', 'custom'].includes(parameters.format)
     ) {
       return false;
     }
-    if (parameters.format === "custom" && !parameters.customFormat) {
+    if (parameters.format === 'custom' && !parameters.customFormat) {
       return false;
     }
     return true;
   },
 
-  category: "utility",
-  version: "1.0.0",
-  author: "system",
+  category: 'utility',
+  version: '1.0.0',
+  author: 'system',
 };

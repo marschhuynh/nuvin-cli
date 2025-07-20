@@ -1,11 +1,11 @@
-import { toolRegistry } from "../tool-registry";
-import { calculatorTool } from "./calculatorTool";
-import { timeTool } from "./timeTool";
-import { randomTool } from "./randomTool";
+import { toolRegistry } from '../tool-registry';
+import { calculatorTool } from './calculatorTool';
+import { timeTool } from './timeTool';
+import { randomTool } from './randomTool';
 
-export * from "./calculatorTool";
-export * from "./timeTool";
-export * from "./randomTool";
+export * from './calculatorTool';
+export * from './timeTool';
+export * from './randomTool';
 
 /**
  * Register all built-in tools with the tool registry
@@ -16,13 +16,13 @@ export function registerBuiltInTools(): void {
     toolRegistry.registerTool(timeTool);
     toolRegistry.registerTool(randomTool);
 
-    console.log("Built-in tools registered successfully:", {
+    console.log('Built-in tools registered successfully:', {
       calculator: calculatorTool.definition.name,
       time: timeTool.definition.name,
       random: randomTool.definition.name,
     });
   } catch (error) {
-    console.error("Failed to register built-in tools:", error);
+    console.error('Failed to register built-in tools:', error);
   }
 }
 

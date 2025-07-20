@@ -3,24 +3,24 @@ import type {
   CompletionParams,
   CompletionResult,
   ModelInfo,
-} from "./llm-provider";
+} from './llm-provider';
 
 export class OpenAIProvider implements LLMProvider {
-  readonly type = "OpenAI";
+  readonly type = 'OpenAI';
   private apiKey: string;
-  private apiUrl: string = "https://api.openai.com";
+  private apiUrl: string = 'https://api.openai.com';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
   async generateCompletion(
-    params: CompletionParams
+    params: CompletionParams,
   ): Promise<CompletionResult> {
     const response = await fetch(`${this.apiUrl}/v1/chat/completions`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
@@ -41,22 +41,22 @@ export class OpenAIProvider implements LLMProvider {
 
     const data = await response.json();
     const message = data.choices?.[0]?.message;
-    const content: string = message?.content ?? "";
+    const content: string = message?.content ?? '';
     const tool_calls = message?.tool_calls;
-    
-    return { 
+
+    return {
       content,
-      ...(tool_calls && { tool_calls })
+      ...(tool_calls && { tool_calls }),
     };
   }
 
   async *generateCompletionStream(
-    params: CompletionParams
+    params: CompletionParams,
   ): AsyncGenerator<string> {
     const response = await fetch(`${this.apiUrl}/v1/chat/completions`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
@@ -79,21 +79,21 @@ export class OpenAIProvider implements LLMProvider {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let done = false;
-    let buffer = "";
+    let buffer = '';
 
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
       if (value) {
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
-          if (trimmed === "data: [DONE]") return;
-          if (!trimmed.startsWith("data:")) continue;
-          const data = JSON.parse(trimmed.slice("data:".length));
+          if (trimmed === 'data: [DONE]') return;
+          if (!trimmed.startsWith('data:')) continue;
+          const data = JSON.parse(trimmed.slice('data:'.length));
           const delta = data.choices?.[0]?.delta?.content;
           if (delta) {
             yield delta;
@@ -106,7 +106,7 @@ export class OpenAIProvider implements LLMProvider {
   async getModels(): Promise<ModelInfo[]> {
     try {
       const response = await fetch(`${this.apiUrl}/v1/models`, {
-        method: "GET",
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
         },
@@ -114,7 +114,7 @@ export class OpenAIProvider implements LLMProvider {
 
       if (!response.ok) {
         console.warn(
-          `OpenAI models API error: ${response.status}. Returning empty models list.`
+          `OpenAI models API error: ${response.status}. Returning empty models list.`,
         );
         return [];
       }
@@ -126,61 +126,61 @@ export class OpenAIProvider implements LLMProvider {
       const chatModels = models
         .filter(
           (model: { id: string }) =>
-            model.id.includes("gpt") || model.id.includes("chat")
+            model.id.includes('gpt') || model.id.includes('chat'),
         )
         .map((model: { id: string }): ModelInfo => {
           const modelInfo: ModelInfo = {
             id: model.id,
             name: model.id,
             supportedParameters: [
-              "temperature",
-              "top_p",
-              "max_tokens",
-              "frequency_penalty",
-              "presence_penalty",
-              "tools",
+              'temperature',
+              'top_p',
+              'max_tokens',
+              'frequency_penalty',
+              'presence_penalty',
+              'tools',
             ],
           };
 
           // Add known context lengths, pricing, and modality info
           switch (true) {
-            case model.id.includes("gpt-4o"):
+            case model.id.includes('gpt-4o'):
               modelInfo.contextLength = 128000;
               modelInfo.inputCost = 2.5;
               modelInfo.outputCost = 10;
-              modelInfo.modality = "multimodal";
-              modelInfo.inputModalities = ["text", "image", "audio"];
-              modelInfo.outputModalities = ["text", "audio"];
+              modelInfo.modality = 'multimodal';
+              modelInfo.inputModalities = ['text', 'image', 'audio'];
+              modelInfo.outputModalities = ['text', 'audio'];
               break;
-            case model.id.includes("gpt-4-turbo"):
+            case model.id.includes('gpt-4-turbo'):
               modelInfo.contextLength = 128000;
               modelInfo.inputCost = 10;
               modelInfo.outputCost = 30;
-              modelInfo.modality = "multimodal";
-              modelInfo.inputModalities = ["text", "image"];
-              modelInfo.outputModalities = ["text"];
+              modelInfo.modality = 'multimodal';
+              modelInfo.inputModalities = ['text', 'image'];
+              modelInfo.outputModalities = ['text'];
               break;
-            case model.id.includes("gpt-4"):
+            case model.id.includes('gpt-4'):
               modelInfo.contextLength = 8192;
               modelInfo.inputCost = 30;
               modelInfo.outputCost = 60;
-              modelInfo.modality = "text";
-              modelInfo.inputModalities = ["text"];
-              modelInfo.outputModalities = ["text"];
+              modelInfo.modality = 'text';
+              modelInfo.inputModalities = ['text'];
+              modelInfo.outputModalities = ['text'];
               break;
-            case model.id.includes("gpt-3.5-turbo"):
+            case model.id.includes('gpt-3.5-turbo'):
               modelInfo.contextLength = 16385;
               modelInfo.inputCost = 0.5;
               modelInfo.outputCost = 1.5;
-              modelInfo.modality = "text";
-              modelInfo.inputModalities = ["text"];
-              modelInfo.outputModalities = ["text"];
+              modelInfo.modality = 'text';
+              modelInfo.inputModalities = ['text'];
+              modelInfo.outputModalities = ['text'];
               break;
             default:
               modelInfo.contextLength = 4096;
-              modelInfo.modality = "text";
-              modelInfo.inputModalities = ["text"];
-              modelInfo.outputModalities = ["text"];
+              modelInfo.modality = 'text';
+              modelInfo.inputModalities = ['text'];
+              modelInfo.outputModalities = ['text'];
               break;
           }
 
@@ -190,7 +190,7 @@ export class OpenAIProvider implements LLMProvider {
 
       return chatModels;
     } catch (error) {
-      console.error("Failed to fetch OpenAI models:", error);
+      console.error('Failed to fetch OpenAI models:', error);
       return [];
     }
   }

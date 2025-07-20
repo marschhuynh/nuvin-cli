@@ -95,12 +95,13 @@ export const useConversationStore = create<ConversationState>()(
           if (message.role === 'user') {
             updatedConversations = state.conversations.map((c) =>
               c.id === conversationId && !c.summary
-                ? { 
-                    ...c, 
-                    title: message.content.length > 50 
-                      ? message.content.substring(0, 50) + '...' 
-                      : message.content,
-                    summary: message.content 
+                ? {
+                    ...c,
+                    title:
+                      message.content.length > 50
+                        ? message.content.substring(0, 50) + '...'
+                        : message.content,
+                    summary: message.content,
                   }
                 : c,
             );
