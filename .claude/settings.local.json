@@ -3,7 +3,8 @@
     "allow": [
       "Bash(sed:*)",
       "Bash(node:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(wails dev:*)"
     ],
     "deny": []
   }
