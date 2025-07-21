@@ -382,7 +382,7 @@ export default function Messenger() {
             streamingMessageId={streamingMessageId}
             initialLoadCount={15}
             loadMoreCount={15}
-            conversationId={activeConversationId}
+            conversationId={activeConversationId ?? undefined}
           />
 
           {/* Agent Status Bar */}
