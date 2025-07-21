@@ -5,7 +5,8 @@ import { useActiveModel, useActiveModelActions } from '../hooks/useActiveModel';
 import { useModelsStore } from '@/store/useModelsStore';
 import { useProviderStore } from '@/store/useProviderStore';
 import { CheckCircle, Circle, Eye, EyeOff, Search, RefreshCw, Type, Image, Mic, Volume2, FileText, Filter } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { fetchProviderModels, type ProviderType } from '@/lib/providers/provider-utils';
 
 export function ModelStateManager() {
@@ -46,6 +47,16 @@ export function ModelStateManager() {
 
     return models;
   }, [availableModels, searchQuery, modalityFilter]);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    useAnimationFrameWithResizeObserver: true,
+    count: filteredModels.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 140,
+    overscan: 7,
+    measureElement: (el) => el?.getBoundingClientRect().height ?? 140,
+  });
 
   const handleReloadModels = async () => {
     if (!activeProvider || !activeProviderId || isLoading) {
@@ -232,7 +243,7 @@ export function ModelStateManager() {
         </div>
 
         {/* Individual Model Controls */}
-        <div className="space-y-2 flex-1 overflow-y-auto">
+        <div className="space-y-2 flex-1 overflow-y-auto" ref={listRef}>
           {isLoading ? (
             <div className="text-center text-muted-foreground py-4">
               <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2" />
@@ -245,16 +256,33 @@ export function ModelStateManager() {
                 : 'No models available'}
             </div>
           ) : (
-            filteredModels.map((model) => (
-              <div
-                key={model.id}
-                className={`group relative p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
-                  model.enabled 
-                    ? 'bg-card border-primary/20 shadow-sm' 
-                    : 'bg-muted/10 border-border hover:bg-muted/20'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
+            <div
+              style={{ height: virtualizer.getTotalSize(), position: 'relative' }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const model = filteredModels[virtualItem.index];
+                return (
+                  <div
+                    key={model.id}
+                    data-index={virtualItem.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                    className="pb-2"
+                  >
+                    <div
+                      className={`group relative p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
+                        model.enabled
+                          ? 'bg-card border-primary/20 shadow-sm'
+                          : 'bg-muted/10 border-border hover:bg-muted/20'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-3">
                     {/* Model ID, Modality Icons, and Toggle */}
                     <div className="flex items-center justify-between gap-3">
@@ -366,8 +394,9 @@ export function ModelStateManager() {
                     )}
                   </div>
                 </div>
-              </div>
-            ))
+              );
+              })}
+            </div>
           )}
         </div>
       </div>
