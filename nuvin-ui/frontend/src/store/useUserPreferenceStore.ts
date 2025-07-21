@@ -12,7 +12,7 @@ export interface MCPConfig {
 }
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'ocean' | 'system';
+  theme: 'light' | 'dark' | 'ocean' | 'liquid-glass' | 'system';
   notifications: boolean;
   autoSave: boolean;
   fontSize: 'small' | 'medium' | 'large';

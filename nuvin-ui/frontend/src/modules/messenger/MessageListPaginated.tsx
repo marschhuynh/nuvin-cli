@@ -97,7 +97,7 @@ export function MessageListPaginated({
   useEffect(() => {
     // Initial scroll to bottom or new message is user message
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage.role === "user") {
+    if (lastMessage && lastMessage.role === "user") {
       scrollToBottom();
     }
   }, [messages]);

@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sun, Moon, Monitor, Droplet } from 'lucide-react';
+import { Sun, Moon, Monitor, Droplet, GlassWater } from 'lucide-react';
 import type { UserPreferences } from '@/store/useUserPreferenceStore';
 import { useTheme } from '@/lib/theme';
 import { CheckForUpdates } from '../../../wailsjs/go/main/App';
@@ -34,7 +34,7 @@ export function GeneralSettings({
           <Label htmlFor="theme">Theme</Label>
           <Select
             value={settings.theme}
-            onValueChange={(value: 'light' | 'dark' | 'ocean' | 'system') =>
+            onValueChange={(value: 'light' | 'dark' | 'ocean' | 'liquid-glass' | 'system') =>
               onSettingsChange({ theme: value })
             }
           >
@@ -44,6 +44,7 @@ export function GeneralSettings({
                   {settings.theme === 'light' && <Sun className="h-4 w-4" />}
                   {settings.theme === 'dark' && <Moon className="h-4 w-4" />}
                   {settings.theme === 'ocean' && <Droplet className="h-4 w-4" />}
+                  {settings.theme === 'liquid-glass' && <GlassWater className="h-4 w-4" />}
                   {settings.theme === 'system' && <Monitor className="h-4 w-4" />}
                   <span className="capitalize">{settings.theme}</span>
                   {settings.theme === 'system' && (
@@ -71,6 +72,12 @@ export function GeneralSettings({
                 <div className="flex items-center gap-2">
                   <Droplet className="h-4 w-4" />
                   <span>Ocean</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="liquid-glass">
+                <div className="flex items-center gap-2">
+                  <GlassWater className="h-4 w-4" />
+                  <span>Liquid Glass</span>
                 </div>
               </SelectItem>
               <SelectItem value="system">

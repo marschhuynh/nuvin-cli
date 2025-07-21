@@ -1,4 +1,4 @@
-export type ThemeName = 'light' | 'dark' | 'ocean';
+export type ThemeName = 'light' | 'dark' | 'ocean' | 'liquid-glass';
 
 export type ThemeVariables = Record<string, string>;
 
@@ -104,6 +104,40 @@ export const themes: Record<ThemeName, ThemeVariables> = {
     'sidebar-border': '#1e2a3a',
     'sidebar-ring': '#64ffda',
     'message-list-background': '#0f1e33',
+  },
+  'liquid-glass': {
+    background: 'rgba(8, 8, 18, 0.95)',
+    foreground: 'rgba(255, 255, 255, 0.98)',
+    card: 'rgba(255, 255, 255, 0.12)',
+    'card-foreground': 'rgba(255, 255, 255, 0.96)',
+    popover: 'rgba(255, 255, 255, 0.15)',
+    'popover-foreground': 'rgba(255, 255, 255, 0.98)',
+    primary: 'rgba(99, 102, 241, 0.9)',
+    'primary-foreground': 'rgba(255, 255, 255, 1)',
+    secondary: 'rgba(255, 255, 255, 0.15)',
+    'secondary-foreground': 'rgba(255, 255, 255, 0.95)',
+    muted: 'rgba(255, 255, 255, 0.08)',
+    'muted-foreground': 'rgba(255, 255, 255, 0.78)',
+    accent: 'rgba(168, 85, 247, 0.85)',
+    'accent-foreground': 'rgba(255, 255, 255, 1)',
+    destructive: 'rgba(239, 68, 68, 0.9)',
+    border: 'rgba(255, 255, 255, 0.18)',
+    input: 'rgba(255, 255, 255, 0.1)',
+    ring: 'rgba(99, 102, 241, 0.8)',
+    'chart-1': 'rgba(99, 102, 241, 0.9)',
+    'chart-2': 'rgba(236, 72, 153, 0.9)',
+    'chart-3': 'rgba(34, 197, 94, 0.9)',
+    'chart-4': 'rgba(251, 191, 36, 0.9)',
+    'chart-5': 'rgba(168, 85, 247, 0.9)',
+    sidebar: 'rgba(255, 255, 255, 0.08)',
+    'sidebar-foreground': 'rgba(255, 255, 255, 0.96)',
+    'sidebar-primary': 'rgba(99, 102, 241, 0.9)',
+    'sidebar-primary-foreground': 'rgba(255, 255, 255, 1)',
+    'sidebar-accent': 'rgba(168, 85, 247, 0.6)',
+    'sidebar-accent-foreground': 'rgba(255, 255, 255, 1)',
+    'sidebar-border': 'rgba(255, 255, 255, 0.15)',
+    'sidebar-ring': 'rgba(99, 102, 241, 0.8)',
+    'message-list-background': 'rgba(12, 12, 22, 0.4)',
   },
 };
 
