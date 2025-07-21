@@ -214,9 +214,9 @@ export class ToolRegistry {
     if (!this.mcpTools.has(serverId)) {
       this.mcpTools.set(serverId, new Map());
     }
-    
+
     const serverTools = this.mcpTools.get(serverId)!;
-    
+
     // Remove existing tools for this server from main registry
     for (const [toolName] of serverTools) {
       this.tools.delete(toolName);
@@ -231,20 +231,20 @@ export class ToolRegistry {
         }
       }
     }
-    
+
     // Clear server tools map
     serverTools.clear();
-    
+
     // Register new tools
     for (const mcpTool of mcpTools) {
       const toolName = mcpTool.definition.name;
-      
+
       // Add to main registry
       this.tools.set(toolName, mcpTool);
-      
+
       // Add to server-specific map
       serverTools.set(toolName, mcpTool);
-      
+
       // Add to category
       if (mcpTool.category) {
         if (!this.categories.has(mcpTool.category)) {
@@ -267,7 +267,7 @@ export class ToolRegistry {
     // Remove all tools for this server from main registry
     for (const [toolName] of serverTools) {
       this.tools.delete(toolName);
-      
+
       // Remove from categories
       for (const [category, toolNames] of this.categories) {
         const index = toolNames.indexOf(toolName);
@@ -307,7 +307,7 @@ export class ToolRegistry {
    * Get all built-in (non-MCP) tools
    */
   getBuiltInTools(): Tool[] {
-    return Array.from(this.tools.values()).filter(tool => !isMCPTool(tool));
+    return Array.from(this.tools.values()).filter((tool) => !isMCPTool(tool));
   }
 
   /**

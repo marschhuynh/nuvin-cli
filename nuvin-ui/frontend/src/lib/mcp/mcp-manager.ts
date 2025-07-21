@@ -87,13 +87,16 @@ export class MCPManager {
       const mcpTools = createMCPTools(client, client.getTools(), serverId);
       toolRegistry.registerMCPTools(serverId, mcpTools);
 
-      console.log(`MCP server '${serverId}' started successfully with ${extendedConfig.toolCount} tools`);
+      console.log(
+        `MCP server '${serverId}' started successfully with ${extendedConfig.toolCount} tools`,
+      );
     } catch (error) {
       console.error(`Failed to start MCP server '${serverId}':`, error);
-      
+
       // Update config with error status
       extendedConfig.status = 'error';
-      extendedConfig.lastError = error instanceof Error ? error.message : String(error);
+      extendedConfig.lastError =
+        error instanceof Error ? error.message : String(error);
 
       // Remove client if it was created
       this.clients.delete(serverId);
@@ -149,10 +152,10 @@ export class MCPManager {
 
     console.log(`Restarting MCP server '${serverId}'`);
     await this.stopServer(serverId);
-    
+
     // Wait a bit before restarting
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     await this.startServer(config);
   }
 
@@ -171,7 +174,7 @@ export class MCPManager {
 
     // Clean up frontend state
     const serverIds = Array.from(this.clients.keys());
-    await Promise.all(serverIds.map(serverId => this.stopServer(serverId)));
+    await Promise.all(serverIds.map((serverId) => this.stopServer(serverId)));
   }
 
   /**
@@ -214,16 +217,20 @@ export class MCPManager {
   /**
    * Update server configuration
    */
-  async updateServerConfig(serverId: string, newConfig: MCPConfig): Promise<void> {
+  async updateServerConfig(
+    serverId: string,
+    newConfig: MCPConfig,
+  ): Promise<void> {
     const currentConfig = this.configs.get(serverId);
-    
+
     if (currentConfig) {
       // Check if server needs restart
-      const needsRestart = this.isServerRunning(serverId) && (
-        currentConfig.command !== newConfig.command ||
-        JSON.stringify(currentConfig.args) !== JSON.stringify(newConfig.args) ||
-        JSON.stringify(currentConfig.env) !== JSON.stringify(newConfig.env)
-      );
+      const needsRestart =
+        this.isServerRunning(serverId) &&
+        (currentConfig.command !== newConfig.command ||
+          JSON.stringify(currentConfig.args) !==
+            JSON.stringify(newConfig.args) ||
+          JSON.stringify(currentConfig.env) !== JSON.stringify(newConfig.env));
 
       // Update config
       const updatedConfig: ExtendedMCPConfig = {
@@ -323,7 +330,9 @@ export class MCPManager {
         config.toolCount = 0;
         config.resourceCount = 0;
         toolRegistry.unregisterMCPServer(serverId);
-        console.log(`MCP server '${serverId}' disconnected: ${event.reason || 'Unknown reason'}`);
+        console.log(
+          `MCP server '${serverId}' disconnected: ${event.reason || 'Unknown reason'}`,
+        );
         break;
 
       case 'error':
@@ -339,12 +348,16 @@ export class MCPManager {
           const mcpTools = createMCPTools(client, event.tools, serverId);
           toolRegistry.registerMCPTools(serverId, mcpTools);
         }
-        console.log(`MCP server '${serverId}' tools updated: ${config.toolCount} tools`);
+        console.log(
+          `MCP server '${serverId}' tools updated: ${config.toolCount} tools`,
+        );
         break;
 
       case 'resourcesChanged':
         config.resourceCount = event.resources.length;
-        console.log(`MCP server '${serverId}' resources updated: ${config.resourceCount} resources`);
+        console.log(
+          `MCP server '${serverId}' resources updated: ${config.resourceCount} resources`,
+        );
         break;
     }
 
@@ -368,10 +381,10 @@ export class MCPManager {
     totalResources: number;
   } {
     const configs = Array.from(this.configs.values());
-    
+
     return {
       totalServers: configs.length,
-      runningServers: configs.filter(c => c.status === 'connected').length,
+      runningServers: configs.filter((c) => c.status === 'connected').length,
       totalTools: configs.reduce((sum, c) => sum + c.toolCount, 0),
       totalResources: configs.reduce((sum, c) => sum + c.resourceCount, 0),
     };

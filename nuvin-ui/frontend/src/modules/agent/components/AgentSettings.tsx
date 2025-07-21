@@ -1,21 +1,50 @@
-import { Plus, Bot, Globe, Home, Clock, CheckCircle, Circle, Edit, Trash2, Save, X, Loader2, AlertTriangle, Wifi, WifiOff, Check, Wrench } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Textarea } from '@/components/ui/textarea';
-import { useAgentStore } from '@/store/useAgentStore';
-import { useState, useEffect } from 'react';
-import type { AgentSettings as AgentSettingsType } from '@/types';
-import type { AgentToolConfig } from '@/types/tools';
-import { a2aService, A2AError } from '@/lib';
-import { toolRegistry } from '@/lib/tools';
-import { LogInfo } from '@wails/runtime';
+import {
+  Plus,
+  Bot,
+  Globe,
+  Home,
+  Clock,
+  CheckCircle,
+  Circle,
+  Edit,
+  Trash2,
+  Save,
+  X,
+  Loader2,
+  AlertTriangle,
+  Wifi,
+  WifiOff,
+  Check,
+  Wrench,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
+import { useAgentStore } from "@/store/useAgentStore";
+import { useState, useEffect } from "react";
+import type { AgentSettings as AgentSettingsType } from "@/types";
+import type { AgentToolConfig } from "@/types/tools";
+import { a2aService, A2AError } from "@/lib";
+import { toolRegistry } from "@/lib/tools";
+import { LogInfo } from "@wails/runtime";
 
-type AgentPersona = 'helpful' | 'professional' | 'creative' | 'analytical' | 'casual';
-type ResponseLength = 'short' | 'medium' | 'long';
-type AgentType = 'local' | 'remote';
+type AgentPersona =
+  | "helpful"
+  | "professional"
+  | "creative"
+  | "analytical"
+  | "casual";
+type ResponseLength = "short" | "medium" | "long";
+type AgentType = "local" | "remote";
 
 export function AgentSettings() {
   const { agents, deleteAgent, addAgent, updateAgent } = useAgentStore();
@@ -24,7 +53,9 @@ export function AgentSettings() {
   const [isCreating, setIsCreating] = useState(false);
 
   const [testingConnection, setTestingConnection] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error' | 'warning'>('idle');
+  const [connectionStatus, setConnectionStatus] = useState<
+    "idle" | "success" | "error" | "warning"
+  >("idle");
 
   const [agentData, setAgentData] = useState<{
     name: string;
@@ -37,7 +68,7 @@ export function AgentSettings() {
     agentType: AgentType;
     url: string;
     auth: {
-      type: 'bearer' | 'apikey' | 'basic' | 'none';
+      type: "bearer" | "apikey" | "basic" | "none";
       token?: string;
       username?: string;
       password?: string;
@@ -45,16 +76,17 @@ export function AgentSettings() {
     };
     toolConfig: AgentToolConfig;
   }>({
-    name: '',
-    persona: 'helpful',
-    responseLength: 'medium',
+    name: "",
+    persona: "helpful",
+    responseLength: "medium",
     temperature: 0.7,
     topP: 1.0,
     maxTokens: 2048,
-    systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
-    agentType: 'local',
-    url: '',
-    auth: { type: 'none' },
+    systemPrompt:
+      "You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.",
+    agentType: "local",
+    url: "",
+    auth: { type: "none" },
     toolConfig: {
       enabledTools: [],
       maxConcurrentCalls: 3,
@@ -62,7 +94,7 @@ export function AgentSettings() {
     },
   });
 
-  const selectedAgent = agents.find(agent => agent.id === selectedAgentId);
+  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
 
   // Initialize with first agent if available
   useEffect(() => {
@@ -77,29 +109,32 @@ export function AgentSettings() {
       setAgentData({
         name: selectedAgent.name,
         persona: selectedAgent.persona,
-        responseLength: selectedAgent.responseLength === 'detailed' ? 'long' : selectedAgent.responseLength,
+        responseLength:
+          selectedAgent.responseLength === "detailed"
+            ? "long"
+            : selectedAgent.responseLength,
         temperature: selectedAgent.temperature,
         topP: selectedAgent.topP,
         maxTokens: selectedAgent.maxTokens,
         systemPrompt: selectedAgent.systemPrompt,
         agentType: selectedAgent.agentType,
-        url: selectedAgent.url || '',
-        auth: selectedAgent.auth || { type: 'none' },
+        url: selectedAgent.url || "",
+        auth: selectedAgent.auth || { type: "none" },
         toolConfig: selectedAgent.toolConfig || {
           enabledTools: [],
           maxConcurrentCalls: 3,
           timeoutMs: 30000,
         },
       });
-      setConnectionStatus('idle');
+      setConnectionStatus("idle");
     }
   }, [selectedAgent, isCreating]);
 
-  const getStatusIcon = (status?: AgentSettingsType['status']) => {
+  const getStatusIcon = (status?: AgentSettingsType["status"]) => {
     switch (status) {
-      case 'active':
+      case "active":
         return <CheckCircle className="h-3 w-3 text-green-500" />;
-      case 'busy':
+      case "busy":
         return <Clock className="h-3 w-3 text-yellow-500" />;
       default:
         return <Circle className="h-3 w-3 text-gray-400" />;
@@ -110,8 +145,10 @@ export function AgentSettings() {
     deleteAgent(agentId);
     // If we deleted the selected agent, select another one
     if (selectedAgentId === agentId) {
-      const remainingAgents = agents.filter(a => a.id !== agentId);
-      setSelectedAgentId(remainingAgents.length > 0 ? remainingAgents[0].id : null);
+      const remainingAgents = agents.filter((a) => a.id !== agentId);
+      setSelectedAgentId(
+        remainingAgents.length > 0 ? remainingAgents[0].id : null
+      );
     }
   };
 
@@ -121,23 +158,24 @@ export function AgentSettings() {
     setSelectedAgentId(null);
     // Reset form to defaults
     setAgentData({
-      name: '',
-      persona: 'helpful',
-      responseLength: 'medium',
+      name: "",
+      persona: "helpful",
+      responseLength: "medium",
       temperature: 0.7,
       topP: 1.0,
       maxTokens: 2048,
-      systemPrompt: 'You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.',
-      agentType: 'local',
-      url: '',
-      auth: { type: 'none' },
+      systemPrompt:
+        "You are a helpful AI assistant. Provide clear, accurate, and useful responses to help users with their questions and tasks.",
+      agentType: "local",
+      url: "",
+      auth: { type: "none" },
       toolConfig: {
         enabledTools: [],
         maxConcurrentCalls: 3,
         timeoutMs: 30000,
       },
     });
-    setConnectionStatus('idle');
+    setConnectionStatus("idle");
   };
 
   const handleEditAgent = () => {
@@ -153,14 +191,17 @@ export function AgentSettings() {
       setAgentData({
         name: selectedAgent.name,
         persona: selectedAgent.persona,
-        responseLength: selectedAgent.responseLength === 'detailed' ? 'long' : selectedAgent.responseLength,
+        responseLength:
+          selectedAgent.responseLength === "detailed"
+            ? "long"
+            : selectedAgent.responseLength,
         temperature: selectedAgent.temperature,
         topP: selectedAgent.topP,
         maxTokens: selectedAgent.maxTokens,
         systemPrompt: selectedAgent.systemPrompt,
         agentType: selectedAgent.agentType,
-        url: selectedAgent.url || '',
-        auth: selectedAgent.auth || { type: 'none' },
+        url: selectedAgent.url || "",
+        auth: selectedAgent.auth || { type: "none" },
         toolConfig: selectedAgent.toolConfig || {
           enabledTools: [],
           maxConcurrentCalls: 3,
@@ -168,19 +209,19 @@ export function AgentSettings() {
         },
       });
     }
-    setConnectionStatus('idle');
+    setConnectionStatus("idle");
   };
 
   const handleSaveAgent = () => {
     if (!agentData.name.trim()) return;
-    if (agentData.agentType === 'remote' && !agentData.url.trim()) return;
+    if (agentData.agentType === "remote" && !agentData.url.trim()) return;
 
     if (isCreating) {
       // Create new agent
       const newAgent: AgentSettingsType = {
         ...agentData,
         id: Date.now().toString(),
-        auth: agentData.agentType === 'remote' ? agentData.auth : undefined,
+        auth: agentData.agentType === "remote" ? agentData.auth : undefined,
         toolConfig: agentData.toolConfig,
       };
       addAgent(newAgent);
@@ -190,7 +231,7 @@ export function AgentSettings() {
       const updatedAgent: AgentSettingsType = {
         ...agentData,
         id: selectedAgent.id,
-        auth: agentData.agentType === 'remote' ? agentData.auth : undefined,
+        auth: agentData.agentType === "remote" ? agentData.auth : undefined,
         toolConfig: agentData.toolConfig,
       };
       updateAgent(updatedAgent);
@@ -204,33 +245,39 @@ export function AgentSettings() {
     if (!agentData.url.trim()) return;
 
     setTestingConnection(true);
-    setConnectionStatus('idle');
+    setConnectionStatus("idle");
 
     try {
-      const authConfig = agentData.auth.type !== 'none' ? {
-        type: agentData.auth.type,
-        token: agentData.auth.token,
-        username: agentData.auth.username,
-        password: agentData.auth.password,
-        headerName: agentData.auth.headerName,
-      } : undefined;
+      const authConfig =
+        agentData.auth.type !== "none"
+          ? {
+              type: agentData.auth.type,
+              token: agentData.auth.token,
+              username: agentData.auth.username,
+              password: agentData.auth.password,
+              headerName: agentData.auth.headerName,
+            }
+          : undefined;
 
-      const isConnected = await a2aService.testConnection(agentData.url, authConfig);
+      const isConnected = await a2aService.testConnection(
+        agentData.url,
+        authConfig
+      );
       LogInfo(`isConnected: ${isConnected}`);
 
       if (isConnected) {
-        setConnectionStatus('success');
+        setConnectionStatus("success");
       } else {
-        setConnectionStatus('error');
+        setConnectionStatus("error");
       }
     } catch (error: unknown) {
-      console.error('A2A connection test failed:', error);
+      console.error("A2A connection test failed:", error);
 
       if (error instanceof A2AError) {
         // Set warning for network errors, error for others
-        setConnectionStatus('warning');
+        setConnectionStatus("warning");
       } else {
-        setConnectionStatus('error');
+        setConnectionStatus("error");
       }
     } finally {
       setTestingConnection(false);
@@ -239,11 +286,11 @@ export function AgentSettings() {
 
   const getConnectionIcon = () => {
     switch (connectionStatus) {
-      case 'success':
+      case "success":
         return <Check className="h-4 w-4 text-green-500" />;
-      case 'error':
+      case "error":
         return <X className="h-4 w-4 text-red-500" />;
-      case 'warning':
+      case "warning":
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       default:
         return testingConnection ? (
@@ -256,8 +303,10 @@ export function AgentSettings() {
     }
   };
 
-  const isFormValid = agentData.name.trim() &&
-    (agentData.agentType === 'local' || (agentData.agentType === 'remote' && agentData.url.trim()));
+  const isFormValid =
+    agentData.name.trim() &&
+    (agentData.agentType === "local" ||
+      (agentData.agentType === "remote" && agentData.url.trim()));
 
   return (
     <div className="flex h-full">
@@ -283,7 +332,9 @@ export function AgentSettings() {
           {agents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bot className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="font-medium text-muted-foreground mb-2">No agents yet</h3>
+              <h3 className="font-medium text-muted-foreground mb-2">
+                No agents yet
+              </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Create your first AI agent to get started
               </p>
@@ -299,8 +350,8 @@ export function AgentSettings() {
                   key={agent.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
                     selectedAgentId === agent.id && !isCreating
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-border hover:border-primary/50'
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border hover:border-primary/50"
                   }`}
                   onClick={() => {
                     if (!isEditing) {
@@ -311,7 +362,7 @@ export function AgentSettings() {
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {agent.agentType === 'remote' ? (
+                      {agent.agentType === "remote" ? (
                         <Globe className="h-4 w-4 text-blue-500 flex-shrink-0" />
                       ) : (
                         <Home className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -325,7 +376,7 @@ export function AgentSettings() {
                     <span>•</span>
                     <span>{agent.responseLength} responses</span>
                   </div>
-                  {agent.agentType === 'remote' && agent.url && (
+                  {agent.agentType === "remote" && agent.url && (
                     <div className="text-xs text-muted-foreground mt-1 font-mono truncate">
                       {agent.url}
                     </div>
@@ -345,8 +396,14 @@ export function AgentSettings() {
             <div className="p-4 bg-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${agentData.agentType === 'remote' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-green-50 dark:bg-green-950/30'}`}>
-                    {agentData.agentType === 'remote' ? (
+                  <div
+                    className={`p-2 rounded-lg ${
+                      agentData.agentType === "remote"
+                        ? "bg-blue-50 dark:bg-blue-950/30"
+                        : "bg-green-50 dark:bg-green-950/30"
+                    }`}
+                  >
+                    {agentData.agentType === "remote" ? (
                       <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     ) : (
                       <Home className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -354,18 +411,28 @@ export function AgentSettings() {
                   </div>
                   <div>
                     <h1 className="text-lg font-semibold">
-                      {isCreating ? 'Create New Agent' : `Edit ${selectedAgent?.name}`}
+                      {isCreating
+                        ? "Create New Agent"
+                        : `Edit ${selectedAgent?.name}`}
                     </h1>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   {isEditing && (
                     <>
-                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                      >
                         <X className="h-4 w-4 mr-1" />
                         Cancel
                       </Button>
-                      <Button size="sm" onClick={handleSaveAgent} disabled={!isFormValid}>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveAgent}
+                        disabled={!isFormValid}
+                      >
                         <Save className="h-4 w-4 mr-1" />
                         Save
                       </Button>
@@ -373,7 +440,11 @@ export function AgentSettings() {
                   )}
                   {!isEditing && selectedAgent && (
                     <>
-                      <Button variant="outline" size="sm" onClick={handleEditAgent}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEditAgent}
+                      >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
@@ -404,12 +475,17 @@ export function AgentSettings() {
                         <Input
                           id="agentName"
                           value={agentData.name}
-                          onChange={(e) => setAgentData(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            setAgentData((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
                           placeholder="Enter agent name"
                         />
                       ) : (
                         <div className="px-3 py-2 border rounded-md bg-background text-sm select-all h-9 flex items-center">
-                          {agentData.name || 'Unnamed Agent'}
+                          {agentData.name || "Unnamed Agent"}
                         </div>
                       )}
                     </div>
@@ -420,22 +496,32 @@ export function AgentSettings() {
                         <div className="flex items-center space-x-0 bg-muted rounded-md p-0.5 h-9">
                           <button
                             type="button"
-                            onClick={() => setAgentData(prev => ({ ...prev, agentType: 'local' }))}
+                            onClick={() =>
+                              setAgentData((prev) => ({
+                                ...prev,
+                                agentType: "local",
+                              }))
+                            }
                             className={`px-3 py-1.5 rounded text-xs font-medium transition-all flex-1 ${
-                              agentData.agentType === 'local'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
+                              agentData.agentType === "local"
+                                ? "bg-background text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
                             }`}
                           >
                             Local
                           </button>
                           <button
                             type="button"
-                            onClick={() => setAgentData(prev => ({ ...prev, agentType: 'remote' }))}
+                            onClick={() =>
+                              setAgentData((prev) => ({
+                                ...prev,
+                                agentType: "remote",
+                              }))
+                            }
                             className={`px-3 py-1.5 rounded text-xs font-medium transition-all flex-1 ${
-                              agentData.agentType === 'remote'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
+                              agentData.agentType === "remote"
+                                ? "bg-background text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
                             }`}
                           >
                             Remote
@@ -443,40 +529,53 @@ export function AgentSettings() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-background text-sm h-9">
-                          {agentData.agentType === 'remote' ? (
+                          {agentData.agentType === "remote" ? (
                             <Globe className="h-4 w-4 text-blue-500" />
                           ) : (
                             <Home className="h-4 w-4 text-green-500" />
                           )}
-                          <span className="capitalize">{agentData.agentType}</span>
+                          <span className="capitalize">
+                            {agentData.agentType}
+                          </span>
                         </div>
                       )}
                     </div>
 
                     <div className="grid gap-2">
                       <Label htmlFor="persona">Persona</Label>
-                      {agentData.agentType === 'local' ? (
+                      {agentData.agentType === "local" ? (
                         isEditing ? (
                           <Select
                             value={agentData.persona}
                             onValueChange={(value: AgentPersona) =>
-                              setAgentData(prev => ({ ...prev, persona: value }))
+                              setAgentData((prev) => ({
+                                ...prev,
+                                persona: value,
+                              }))
                             }
                           >
                             <SelectTrigger className="h-9">
                               <SelectValue placeholder="Select persona" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="helpful">Helpful Assistant</SelectItem>
-                              <SelectItem value="professional">Professional</SelectItem>
+                              <SelectItem value="helpful">
+                                Helpful Assistant
+                              </SelectItem>
+                              <SelectItem value="professional">
+                                Professional
+                              </SelectItem>
                               <SelectItem value="creative">Creative</SelectItem>
-                              <SelectItem value="analytical">Analytical</SelectItem>
+                              <SelectItem value="analytical">
+                                Analytical
+                              </SelectItem>
                               <SelectItem value="casual">Casual</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
                           <div className="px-3 py-2 border rounded-md bg-background text-sm capitalize select-all h-9 flex items-center">
-                            {agentData.persona === 'helpful' ? 'Helpful Assistant' : agentData.persona}
+                            {agentData.persona === "helpful"
+                              ? "Helpful Assistant"
+                              : agentData.persona}
                           </div>
                         )
                       ) : (
@@ -489,15 +588,20 @@ export function AgentSettings() {
 
                   {/* Right Column */}
                   <div className="space-y-4">
-                    {agentData.agentType === 'local' ? (
+                    {agentData.agentType === "local" ? (
                       <>
                         <div className="grid gap-2">
-                          <Label htmlFor="responseLength">Response Length</Label>
+                          <Label htmlFor="responseLength">
+                            Response Length
+                          </Label>
                           {isEditing ? (
                             <Select
                               value={agentData.responseLength}
                               onValueChange={(value: ResponseLength) =>
-                                setAgentData(prev => ({ ...prev, responseLength: value }))
+                                setAgentData((prev) => ({
+                                  ...prev,
+                                  responseLength: value,
+                                }))
                               }
                             >
                               <SelectTrigger>
@@ -525,7 +629,10 @@ export function AgentSettings() {
                               <Slider
                                 value={[agentData.temperature]}
                                 onValueChange={(value) =>
-                                  setAgentData(prev => ({ ...prev, temperature: value[0] }))
+                                  setAgentData((prev) => ({
+                                    ...prev,
+                                    temperature: value[0],
+                                  }))
                                 }
                                 max={2}
                                 min={0}
@@ -539,9 +646,15 @@ export function AgentSettings() {
                             </>
                           ) : (
                             <div className="px-3 py-2 border rounded-md bg-background h-9 flex items-center justify-between">
-                              <span className="select-all text-sm">{agentData.temperature}</span>
+                              <span className="select-all text-sm">
+                                {agentData.temperature}
+                              </span>
                               <span className="text-xs text-muted-foreground">
-                                {agentData.temperature <= 0.3 ? 'Focused' : agentData.temperature >= 1.5 ? 'Creative' : 'Balanced'}
+                                {agentData.temperature <= 0.3
+                                  ? "Focused"
+                                  : agentData.temperature >= 1.5
+                                  ? "Creative"
+                                  : "Balanced"}
                               </span>
                             </div>
                           )}
@@ -557,9 +670,9 @@ export function AgentSettings() {
                               max="8192"
                               value={agentData.maxTokens}
                               onChange={(e) =>
-                                setAgentData(prev => ({
+                                setAgentData((prev) => ({
                                   ...prev,
-                                  maxTokens: parseInt(e.target.value) || 2048
+                                  maxTokens: parseInt(e.target.value) || 2048,
                                 }))
                               }
                             />
@@ -580,8 +693,11 @@ export function AgentSettings() {
                                 id="agentUrl"
                                 value={agentData.url}
                                 onChange={(e) => {
-                                  setAgentData(prev => ({ ...prev, url: e.target.value }));
-                                  setConnectionStatus('idle');
+                                  setAgentData((prev) => ({
+                                    ...prev,
+                                    url: e.target.value,
+                                  }));
+                                  setConnectionStatus("idle");
                                 }}
                                 placeholder="https://example.com/agent"
                                 className="h-9"
@@ -592,7 +708,7 @@ export function AgentSettings() {
                             </>
                           ) : (
                             <div className="px-3 py-2 border rounded-md bg-background text-sm font-mono break-all select-all h-9 flex items-center">
-                              {agentData.url || 'No URL configured'}
+                              {agentData.url || "No URL configured"}
                             </div>
                           )}
                         </div>
@@ -605,24 +721,29 @@ export function AgentSettings() {
                               variant="outline"
                               size="sm"
                               onClick={testConnection}
-                              disabled={!agentData.url.trim() || testingConnection}
+                              disabled={
+                                !agentData.url.trim() || testingConnection
+                              }
                               className="flex items-center gap-2 h-8.5"
                             >
                               {getConnectionIcon()}
                               Test Connection
                             </Button>
 
-                            {connectionStatus !== 'idle' && (
-                              <span className={`text-sm font-medium ${
-                                connectionStatus === 'success'
-                                  ? 'text-green-600'
-                                  : connectionStatus === 'error'
-                                  ? 'text-red-600'
-                                  : 'text-yellow-600'
-                              }`}>
-                                {connectionStatus === 'success' && '✅ Connected'}
-                                {connectionStatus === 'error' && '❌ Failed'}
-                                {connectionStatus === 'warning' && '⚠️ Issues'}
+                            {connectionStatus !== "idle" && (
+                              <span
+                                className={`text-sm font-medium ${
+                                  connectionStatus === "success"
+                                    ? "text-green-600"
+                                    : connectionStatus === "error"
+                                    ? "text-red-600"
+                                    : "text-yellow-600"
+                                }`}
+                              >
+                                {connectionStatus === "success" &&
+                                  "✅ Connected"}
+                                {connectionStatus === "error" && "❌ Failed"}
+                                {connectionStatus === "warning" && "⚠️ Issues"}
                               </span>
                             )}
                           </div>
@@ -640,7 +761,7 @@ export function AgentSettings() {
                 </div>
 
                 {/* Remote Agent Authentication */}
-                {agentData.agentType === 'remote' && (
+                {agentData.agentType === "remote" && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -648,75 +769,101 @@ export function AgentSettings() {
                         {isEditing ? (
                           <Select
                             value={agentData.auth.type}
-                            onValueChange={(value: 'bearer' | 'apikey' | 'basic' | 'none') =>
-                              setAgentData(prev => ({ ...prev, auth: { ...prev.auth, type: value } }))
+                            onValueChange={(
+                              value: "bearer" | "apikey" | "basic" | "none"
+                            ) =>
+                              setAgentData((prev) => ({
+                                ...prev,
+                                auth: { ...prev.auth, type: value },
+                              }))
                             }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select authentication type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">No Authentication</SelectItem>
-                              <SelectItem value="bearer">Bearer Token</SelectItem>
+                              <SelectItem value="none">
+                                No Authentication
+                              </SelectItem>
+                              <SelectItem value="bearer">
+                                Bearer Token
+                              </SelectItem>
                               <SelectItem value="apikey">API Key</SelectItem>
                               <SelectItem value="basic">Basic Auth</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
                           <div className="px-3 py-2 border rounded-md bg-background text-sm select-all h-9 flex items-center">
-                            {agentData.auth.type === 'none' ? 'No Authentication' :
-                             agentData.auth.type === 'bearer' ? 'Bearer Token' :
-                             agentData.auth.type === 'apikey' ? 'API Key' :
-                             agentData.auth.type === 'basic' ? 'Basic Authentication' : agentData.auth.type}
+                            {agentData.auth.type === "none"
+                              ? "No Authentication"
+                              : agentData.auth.type === "bearer"
+                              ? "Bearer Token"
+                              : agentData.auth.type === "apikey"
+                              ? "API Key"
+                              : agentData.auth.type === "basic"
+                              ? "Basic Authentication"
+                              : agentData.auth.type}
                           </div>
                         )}
                       </div>
 
-                      {(agentData.auth.type === 'bearer' || agentData.auth.type === 'apikey') && (
+                      {(agentData.auth.type === "bearer" ||
+                        agentData.auth.type === "apikey") && (
                         <div className="space-y-2">
                           <Label htmlFor="authToken">
-                            {agentData.auth.type === 'bearer' ? 'Bearer Token' : 'API Key'}
+                            {agentData.auth.type === "bearer"
+                              ? "Bearer Token"
+                              : "API Key"}
                           </Label>
                           {isEditing ? (
                             <Input
                               id="authToken"
                               type="password"
-                              value={agentData.auth.token || ''}
+                              value={agentData.auth.token || ""}
                               onChange={(e) =>
-                                setAgentData(prev => ({
+                                setAgentData((prev) => ({
                                   ...prev,
-                                  auth: { ...prev.auth, token: e.target.value }
+                                  auth: { ...prev.auth, token: e.target.value },
                                 }))
                               }
-                              placeholder={agentData.auth.type === 'bearer' ? 'Enter bearer token' : 'Enter API key'}
+                              placeholder={
+                                agentData.auth.type === "bearer"
+                                  ? "Enter bearer token"
+                                  : "Enter API key"
+                              }
                             />
                           ) : (
                             <div className="px-3 py-2 border rounded-md bg-background text-sm h-9 flex items-center">
-                              {agentData.auth.token ? '••••••••••••••••' : 'Not configured'}
+                              {agentData.auth.token
+                                ? "••••••••••••••••"
+                                : "Not configured"}
                             </div>
                           )}
                         </div>
                       )}
 
-                      {agentData.auth.type === 'basic' && (
+                      {agentData.auth.type === "basic" && (
                         <>
                           <div className="space-y-2">
                             <Label htmlFor="username">Username</Label>
                             {isEditing ? (
                               <Input
                                 id="username"
-                                value={agentData.auth.username || ''}
+                                value={agentData.auth.username || ""}
                                 onChange={(e) =>
-                                  setAgentData(prev => ({
+                                  setAgentData((prev) => ({
                                     ...prev,
-                                    auth: { ...prev.auth, username: e.target.value }
+                                    auth: {
+                                      ...prev.auth,
+                                      username: e.target.value,
+                                    },
                                   }))
                                 }
                                 placeholder="Enter username"
                               />
                             ) : (
                               <div className="px-3 py-2 border rounded-md bg-background text-sm select-all h-9 flex items-center">
-                                {agentData.auth.username || 'Not configured'}
+                                {agentData.auth.username || "Not configured"}
                               </div>
                             )}
                           </div>
@@ -726,18 +873,23 @@ export function AgentSettings() {
                               <Input
                                 id="password"
                                 type="password"
-                                value={agentData.auth.password || ''}
+                                value={agentData.auth.password || ""}
                                 onChange={(e) =>
-                                  setAgentData(prev => ({
+                                  setAgentData((prev) => ({
                                     ...prev,
-                                    auth: { ...prev.auth, password: e.target.value }
+                                    auth: {
+                                      ...prev.auth,
+                                      password: e.target.value,
+                                    },
                                   }))
                                 }
                                 placeholder="Enter password"
                               />
                             ) : (
                               <div className="px-3 py-2 border rounded-md bg-background text-sm h-9 flex items-center">
-                                {agentData.auth.password ? '••••••••••••••••' : 'Not configured'}
+                                {agentData.auth.password
+                                  ? "••••••••••••••••"
+                                  : "Not configured"}
                               </div>
                             )}
                           </div>
@@ -748,75 +900,92 @@ export function AgentSettings() {
                 )}
 
                 {/* Tools Configuration - Only for Local Agents */}
-                {agentData.agentType === 'local' && (
+                {agentData.agentType === "local" && (
                   <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
                     <div className="flex items-center gap-2 mb-4">
                       <Wrench className="h-5 w-5 text-muted-foreground" />
                       <h3 className="text-base font-medium">Function Tools</h3>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Available Tools */}
                       <div className="space-y-2">
                         <Label>Available Tools</Label>
                         <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2 bg-background">
                           {toolRegistry.getAllTools().map((tool) => (
-                            <div key={tool.definition.name} className="flex items-center gap-2">
+                            <div
+                              key={tool.definition.name}
+                              className="flex items-center gap-2"
+                            >
                               <input
                                 type="checkbox"
                                 id={`tool-${tool.definition.name}`}
-                                checked={agentData.toolConfig.enabledTools.includes(tool.definition.name)}
+                                checked={agentData.toolConfig.enabledTools.includes(
+                                  tool.definition.name
+                                )}
                                 onChange={(e) => {
                                   if (!isEditing) return;
                                   const enabled = e.target.checked;
-                                  setAgentData(prev => ({
+                                  setAgentData((prev) => ({
                                     ...prev,
                                     toolConfig: {
                                       ...prev.toolConfig,
                                       enabledTools: enabled
-                                        ? [...prev.toolConfig.enabledTools, tool.definition.name]
-                                        : prev.toolConfig.enabledTools.filter((name: string) => name !== tool.definition.name)
-                                    }
+                                        ? [
+                                            ...prev.toolConfig.enabledTools,
+                                            tool.definition.name,
+                                          ]
+                                        : prev.toolConfig.enabledTools.filter(
+                                            (name: string) =>
+                                              name !== tool.definition.name
+                                          ),
+                                    },
                                   }));
                                 }}
                                 disabled={!isEditing}
                                 className="h-4 w-4"
                               />
-                              <label 
+                              <label
                                 htmlFor={`tool-${tool.definition.name}`}
                                 className="text-sm font-medium cursor-pointer flex-1"
                               >
                                 {tool.definition.name}
                               </label>
                               <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
-                                {tool.category || 'utility'}
+                                {tool.category || "utility"}
                               </span>
                             </div>
                           ))}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Enable tools that this agent can use during conversations
+                          Enable tools that this agent can use during
+                          conversations
                         </p>
                       </div>
 
                       {/* Tool Settings */}
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="maxConcurrentCalls">Max Concurrent Tool Calls</Label>
+                          <Label htmlFor="maxConcurrentCalls">
+                            Max Concurrent Tool Calls
+                          </Label>
                           {isEditing ? (
                             <Input
                               id="maxConcurrentCalls"
                               type="number"
                               min="1"
                               max="10"
-                              value={agentData.toolConfig.maxConcurrentCalls || 3}
+                              value={
+                                agentData.toolConfig.maxConcurrentCalls || 3
+                              }
                               onChange={(e) =>
-                                setAgentData(prev => ({
+                                setAgentData((prev) => ({
                                   ...prev,
                                   toolConfig: {
                                     ...prev.toolConfig,
-                                    maxConcurrentCalls: parseInt(e.target.value) || 3
-                                  }
+                                    maxConcurrentCalls:
+                                      parseInt(e.target.value) || 3,
+                                  },
                                 }))
                               }
                               className="h-9"
@@ -839,26 +1008,35 @@ export function AgentSettings() {
                               step="1000"
                               value={agentData.toolConfig.timeoutMs || 30000}
                               onChange={(e) =>
-                                setAgentData(prev => ({
+                                setAgentData((prev) => ({
                                   ...prev,
                                   toolConfig: {
                                     ...prev.toolConfig,
-                                    timeoutMs: parseInt(e.target.value) || 30000
-                                  }
+                                    timeoutMs:
+                                      parseInt(e.target.value) || 30000,
+                                  },
                                 }))
                               }
                               className="h-9"
                             />
                           ) : (
                             <div className="px-3 py-2 border rounded-md bg-background text-sm h-9 flex items-center">
-                              {(agentData.toolConfig.timeoutMs || 30000).toLocaleString()}ms
+                              {(
+                                agentData.toolConfig.timeoutMs || 30000
+                              ).toLocaleString()}
+                              ms
                             </div>
                           )}
                         </div>
 
                         <div className="text-xs text-muted-foreground space-y-1">
-                          <p>• Max Concurrent: How many tools can run simultaneously</p>
-                          <p>• Timeout: Maximum time to wait for tool execution</p>
+                          <p>
+                            • Max Concurrent: How many tools can run
+                            simultaneously
+                          </p>
+                          <p>
+                            • Timeout: Maximum time to wait for tool execution
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -867,8 +1045,11 @@ export function AgentSettings() {
                     {agentData.toolConfig.enabledTools.length > 0 && (
                       <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/30 rounded-md">
                         <p className="text-sm text-green-700 dark:text-green-300">
-                          <strong>{agentData.toolConfig.enabledTools.length} tools enabled:</strong>{' '}
-                          {agentData.toolConfig.enabledTools.join(', ')}
+                          <strong>
+                            {agentData.toolConfig.enabledTools.length} tools
+                            enabled:
+                          </strong>{" "}
+                          {agentData.toolConfig.enabledTools.join(", ")}
                         </p>
                       </div>
                     )}
@@ -879,24 +1060,31 @@ export function AgentSettings() {
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="grid gap-2 mb-4">
                     <Label htmlFor="systemPrompt">
-                      {agentData.agentType === 'remote' ? 'Instructions' : 'System Prompt'}
+                      {agentData.agentType === "remote"
+                        ? "Instructions"
+                        : "System Prompt"}
                     </Label>
                   </div>
                   {isEditing ? (
                     <Textarea
                       id="systemPrompt"
                       value={agentData.systemPrompt}
-                      onChange={(e) => setAgentData(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                      onChange={(e) =>
+                        setAgentData((prev) => ({
+                          ...prev,
+                          systemPrompt: e.target.value,
+                        }))
+                      }
                       placeholder={
-                        agentData.agentType === 'remote'
-                          ? 'Enter instructions for the remote agent...'
-                          : 'Enter system prompt...'
+                        agentData.agentType === "remote"
+                          ? "Enter instructions for the remote agent..."
+                          : "Enter system prompt..."
                       }
                       className="flex-1 resize-none w-full min-h-[200px]"
                     />
                   ) : (
                     <div className="flex-1 p-3 border rounded-md bg-background text-sm leading-relaxed whitespace-pre-wrap min-h-[200px] overflow-auto select-all">
-                      {agentData.systemPrompt || 'No system prompt configured'}
+                      {agentData.systemPrompt || "No system prompt configured"}
                     </div>
                   )}
                 </div>

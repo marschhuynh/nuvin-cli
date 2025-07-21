@@ -25,19 +25,22 @@ export class MCPClient {
   private transportOptions: MCPTransportOptions;
   private eventHandlers: MCPClientEventHandler[] = [];
   private requestId = 0;
-  private pendingRequests = new Map<string | number, {
-    resolve: (value: any) => void;
-    reject: (error: Error) => void;
-    timeout: NodeJS.Timeout;
-  }>();
-  
+  private pendingRequests = new Map<
+    string | number,
+    {
+      resolve: (value: any) => void;
+      reject: (error: Error) => void;
+      timeout: NodeJS.Timeout;
+    }
+  >();
+
   // Cached data
   private tools: Map<string, MCPToolSchema> = new Map();
   private resources: Map<string, MCPResource> = new Map();
   private resourceTemplates: Map<string, MCPResourceTemplate> = new Map();
   private initialized = false;
   private serverInfo: any = null;
-  
+
   constructor(serverId: string, transportOptions: MCPTransportOptions) {
     this.serverId = serverId;
     this.transportOptions = transportOptions;
@@ -56,11 +59,11 @@ export class MCPClient {
       this.setupEventHandlers();
       await this.initialize();
       this.initialized = true;
-      
+
       // Discover tools and resources
       await this.discoverTools();
       await this.discoverResources();
-      
+
       this.emitEvent({
         type: 'connected',
         serverId: this.serverId,
@@ -98,7 +101,7 @@ export class MCPClient {
       this.tools.clear();
       this.resources.clear();
       this.resourceTemplates.clear();
-      
+
       this.emitEvent({
         type: 'disconnected',
         serverId: this.serverId,
@@ -154,7 +157,9 @@ export class MCPClient {
 
       return response as MCPToolResult;
     } catch (error) {
-      throw new Error(`Tool execution failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -177,7 +182,9 @@ export class MCPClient {
       const response = await this.sendRequest('resources/read', { uri });
       return response as MCPResourceContents;
     } catch (error) {
-      throw new Error(`Resource access failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Resource access failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -214,7 +221,9 @@ export class MCPClient {
     } else if (this.transportOptions.type === 'http') {
       return this.createHttpConnection();
     } else {
-      throw new Error(`Unsupported transport type: ${this.transportOptions.type}`);
+      throw new Error(
+        `Unsupported transport type: ${this.transportOptions.type}`,
+      );
     }
   }
 
@@ -223,7 +232,7 @@ export class MCPClient {
    */
   private async createStdioConnection(): Promise<MCPConnection> {
     const { command, args = [], env = {} } = this.transportOptions;
-    
+
     if (!command) {
       throw new Error('Command is required for stdio transport');
     }
@@ -231,11 +240,16 @@ export class MCPClient {
     // Import Wails transport dynamically to avoid issues if not available
     try {
       const { createWailsMCPConnection } = await import('./wails-transport');
-      const connection = createWailsMCPConnection(this.serverId, this.transportOptions);
+      const connection = createWailsMCPConnection(
+        this.serverId,
+        this.transportOptions,
+      );
       await connection.connect();
       return connection;
     } catch (error) {
-      throw new Error(`Failed to create Wails stdio connection: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to create Wails stdio connection: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -244,14 +258,16 @@ export class MCPClient {
    */
   private async createHttpConnection(): Promise<MCPConnection> {
     const { url, headers = {} } = this.transportOptions;
-    
+
     if (!url) {
       throw new Error('URL is required for HTTP transport');
     }
 
     // Note: This is a simplified HTTP transport implementation
     // In practice, you might want to use WebSockets or Server-Sent Events
-    throw new Error('HTTP transport not implemented - requires WebSocket or SSE implementation');
+    throw new Error(
+      'HTTP transport not implemented - requires WebSocket or SSE implementation',
+    );
   }
 
   /**
@@ -320,7 +336,7 @@ export class MCPClient {
     try {
       const response = await this.sendRequest('tools/list', {});
       const tools = response.tools || [];
-      
+
       this.tools.clear();
       for (const tool of tools) {
         this.tools.set(tool.name, tool);
@@ -332,10 +348,16 @@ export class MCPClient {
         tools: Array.from(this.tools.values()),
       });
     } catch (error: any) {
-      if (error.message?.includes('Method not found') || error.message?.includes('-32601')) {
+      if (
+        error.message?.includes('Method not found') ||
+        error.message?.includes('-32601')
+      ) {
         console.debug(`Server ${this.serverId} does not support tools`);
       } else {
-        console.warn(`Failed to discover tools for server ${this.serverId}:`, error);
+        console.warn(
+          `Failed to discover tools for server ${this.serverId}:`,
+          error,
+        );
       }
     }
   }
@@ -348,39 +370,58 @@ export class MCPClient {
       // Get resource templates (optional method - not all servers support)
       if (this.serverInfo?.capabilities?.resources?.templates) {
         try {
-          const templatesResponse = await this.sendRequest('resources/templates/list', {});
+          const templatesResponse = await this.sendRequest(
+            'resources/templates/list',
+            {},
+          );
           const templates = templatesResponse.resourceTemplates || [];
-          
+
           this.resourceTemplates.clear();
           for (const template of templates) {
             this.resourceTemplates.set(template.uriTemplate, template);
           }
         } catch (error: any) {
           // Ignore method not found errors for optional endpoints
-          if (error.message?.includes('Method not found') || error.message?.includes('-32601')) {
-            console.debug(`Server ${this.serverId} does not support resource templates`);
+          if (
+            error.message?.includes('Method not found') ||
+            error.message?.includes('-32601')
+          ) {
+            console.debug(
+              `Server ${this.serverId} does not support resource templates`,
+            );
           } else {
-            console.warn(`Failed to discover resource templates for server ${this.serverId}:`, error);
+            console.warn(
+              `Failed to discover resource templates for server ${this.serverId}:`,
+              error,
+            );
           }
         }
       } else {
-        console.debug(`Server ${this.serverId} does not advertise resource template support`);
+        console.debug(
+          `Server ${this.serverId} does not advertise resource template support`,
+        );
       }
 
       // Get resources
       try {
         const resourcesResponse = await this.sendRequest('resources/list', {});
         const resources = resourcesResponse.resources || [];
-        
+
         this.resources.clear();
         for (const resource of resources) {
           this.resources.set(resource.uri, resource);
         }
       } catch (error: any) {
-        if (error.message?.includes('Method not found') || error.message?.includes('-32601')) {
+        if (
+          error.message?.includes('Method not found') ||
+          error.message?.includes('-32601')
+        ) {
           console.debug(`Server ${this.serverId} does not support resources`);
         } else {
-          console.warn(`Failed to discover resources for server ${this.serverId}:`, error);
+          console.warn(
+            `Failed to discover resources for server ${this.serverId}:`,
+            error,
+          );
         }
       }
 
@@ -390,7 +431,10 @@ export class MCPClient {
         resources: Array.from(this.resources.values()),
       });
     } catch (error) {
-      console.warn(`Failed to discover resources for server ${this.serverId}:`, error);
+      console.warn(
+        `Failed to discover resources for server ${this.serverId}:`,
+        error,
+      );
     }
   }
 
@@ -417,7 +461,7 @@ export class MCPClient {
       }, 30000); // 30 second timeout
 
       this.pendingRequests.set(id, { resolve, reject, timeout });
-      
+
       this.connection!.send(request).catch((error) => {
         this.pendingRequests.delete(id);
         clearTimeout(timeout);
@@ -440,7 +484,9 @@ export class MCPClient {
     clearTimeout(pending.timeout);
 
     if (response.error) {
-      pending.reject(new Error(`${response.error.message} (${response.error.code})`));
+      pending.reject(
+        new Error(`${response.error.message} (${response.error.code})`),
+      );
     } else {
       pending.resolve(response.result);
     }
@@ -459,7 +505,10 @@ export class MCPClient {
         this.discoverResources();
         break;
       default:
-        console.log(`Received notification: ${notification.method}`, notification.params);
+        console.log(
+          `Received notification: ${notification.method}`,
+          notification.params,
+        );
     }
   }
 

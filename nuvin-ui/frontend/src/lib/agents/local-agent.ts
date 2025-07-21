@@ -115,18 +115,29 @@ export class LocalAgent extends BaseAgent {
     const result = await provider.generateCompletion(enhancedParams);
 
     // Process any tool calls
-    console.log(`[LocalAgent] Processing completion result. Has tool_calls:`, !!result.tool_calls);
+    console.log(
+      `[LocalAgent] Processing completion result. Has tool_calls:`,
+      !!result.tool_calls,
+    );
     if (result.tool_calls) {
-      console.log(`[LocalAgent] Tool calls detected:`, result.tool_calls.map(tc => tc.function.name));
+      console.log(
+        `[LocalAgent] Tool calls detected:`,
+        result.tool_calls.map((tc) => tc.function.name),
+      );
     }
-    
+
     const processed = await toolIntegrationService.processCompletionResult(
       result,
       toolContext,
       this.agentSettings.toolConfig,
     );
 
-    console.log(`[LocalAgent] Processed result. RequiresFollowUp:`, processed.requiresFollowUp, 'ToolCalls:', processed.toolCalls?.length || 0);
+    console.log(
+      `[LocalAgent] Processed result. RequiresFollowUp:`,
+      processed.requiresFollowUp,
+      'ToolCalls:',
+      processed.toolCalls?.length || 0,
+    );
 
     let finalResult = result;
 
@@ -141,7 +152,10 @@ export class LocalAgent extends BaseAgent {
         toolContext,
         this.agentSettings.toolConfig,
       );
-      console.log(`[LocalAgent] Final result after tool execution:`, finalResult.content?.substring(0, 200));
+      console.log(
+        `[LocalAgent] Final result after tool execution:`,
+        finalResult.content?.substring(0, 200),
+      );
     } else {
       console.log(`[LocalAgent] No follow-up required, using original result`);
     }

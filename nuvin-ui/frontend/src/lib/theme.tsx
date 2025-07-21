@@ -40,7 +40,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   };
 
   const resolvedTheme: ThemeName =
-    theme === 'system' ? getSystemTheme() : (theme as ThemeName);
+    theme === 'system' ? getSystemTheme() : 
+    (theme && theme in themes ? theme as ThemeName : 'light');
 
   // Apply theme changes (including initial load) - only after hydration
   useEffect(() => {
@@ -54,8 +55,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     // Add the resolved theme class
     root.classList.add(resolvedTheme);
 
-    // Apply CSS custom properties
-    const vars = themes[resolvedTheme];
+    // Apply CSS custom properties with fallback to light theme
+    const vars = themes[resolvedTheme] || themes.light;
     Object.entries(vars).forEach(([key, value]) => {
       root.style.setProperty(`--${key}`, value);
     });
@@ -74,7 +75,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       root.classList.remove(...themeNames);
       root.classList.add(systemTheme);
 
-      const vars = themes[systemTheme];
+      const vars = themes[systemTheme] || themes.light;
       Object.entries(vars).forEach(([key, value]) => {
         root.style.setProperty(`--${key}`, value);
       });

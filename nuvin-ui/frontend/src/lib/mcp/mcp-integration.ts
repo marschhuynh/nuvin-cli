@@ -22,15 +22,18 @@ export class MCPIntegrationService {
     await this.waitForStoreHydration();
 
     // Get current MCP configurations
-    const mcpConfigs = useUserPreferenceStore.getState().preferences.mcpServers || [];
-    
-    console.log(`Initializing MCP integration with ${mcpConfigs.length} servers`);
+    const mcpConfigs =
+      useUserPreferenceStore.getState().preferences.mcpServers || [];
+
+    console.log(
+      `Initializing MCP integration with ${mcpConfigs.length} servers`,
+    );
 
     // Initialize MCP servers
     try {
       // Stop any existing servers first to prevent "already running" conflicts
       await mcpManager.stopAllServers();
-      
+
       await mcpManager.initializeServers(mcpConfigs);
       console.log('MCP servers initialized successfully');
     } catch (error) {
@@ -92,7 +95,7 @@ export class MCPIntegrationService {
           setTimeout(checkHydration, 100);
         }
       };
-      
+
       checkHydration();
     });
   }
@@ -103,28 +106,33 @@ export class MCPIntegrationService {
   private subscribeToPreferenceChanges(): void {
     let previousMCPServers: MCPConfig[] = [];
 
-    this.unsubscribe = useUserPreferenceStore.subscribe(
-      async (state) => {
-        if (!this.initialized) {
-          return;
-        }
+    this.unsubscribe = useUserPreferenceStore.subscribe(async (state) => {
+      if (!this.initialized) {
+        return;
+      }
 
-        const currentMCPServers = state.preferences.mcpServers || [];
-        
-        // Check if MCP servers have changed
-        if (JSON.stringify(previousMCPServers) !== JSON.stringify(currentMCPServers)) {
-          try {
-            await this.handleMCPServerChanges(previousMCPServers, currentMCPServers);
-            previousMCPServers = [...currentMCPServers];
-          } catch (error) {
-            console.error('Failed to handle MCP server changes:', error);
-          }
+      const currentMCPServers = state.preferences.mcpServers || [];
+
+      // Check if MCP servers have changed
+      if (
+        JSON.stringify(previousMCPServers) !== JSON.stringify(currentMCPServers)
+      ) {
+        try {
+          await this.handleMCPServerChanges(
+            previousMCPServers,
+            currentMCPServers,
+          );
+          previousMCPServers = [...currentMCPServers];
+        } catch (error) {
+          console.error('Failed to handle MCP server changes:', error);
         }
-      },
-    );
+      }
+    });
 
     // Store initial state
-    previousMCPServers = [...(useUserPreferenceStore.getState().preferences.mcpServers || [])];
+    previousMCPServers = [
+      ...(useUserPreferenceStore.getState().preferences.mcpServers || []),
+    ];
   }
 
   /**
@@ -134,29 +142,32 @@ export class MCPIntegrationService {
     previous: MCPConfig[],
     current: MCPConfig[],
   ): Promise<void> {
-    const prevMap = new Map(previous.map(config => [config.id, config]));
-    const currentMap = new Map(current.map(config => [config.id, config]));
+    const prevMap = new Map(previous.map((config) => [config.id, config]));
+    const currentMap = new Map(current.map((config) => [config.id, config]));
 
     // Find added servers
-    const added = current.filter(config => !prevMap.has(config.id));
-    
+    const added = current.filter((config) => !prevMap.has(config.id));
+
     // Find removed servers
-    const removed = previous.filter(config => !currentMap.has(config.id));
-    
+    const removed = previous.filter((config) => !currentMap.has(config.id));
+
     // Find modified servers
-    const modified = current.filter(config => {
+    const modified = current.filter((config) => {
       const prev = prevMap.get(config.id);
-      return prev && (
-        prev.enabled !== config.enabled ||
-        prev.command !== config.command ||
-        JSON.stringify(prev.args) !== JSON.stringify(config.args) ||
-        JSON.stringify(prev.env) !== JSON.stringify(config.env) ||
-        prev.name !== config.name ||
-        prev.description !== config.description
+      return (
+        prev &&
+        (prev.enabled !== config.enabled ||
+          prev.command !== config.command ||
+          JSON.stringify(prev.args) !== JSON.stringify(config.args) ||
+          JSON.stringify(prev.env) !== JSON.stringify(config.env) ||
+          prev.name !== config.name ||
+          prev.description !== config.description)
       );
     });
 
-    console.log(`MCP server changes detected: ${added.length} added, ${removed.length} removed, ${modified.length} modified`);
+    console.log(
+      `MCP server changes detected: ${added.length} added, ${removed.length} removed, ${modified.length} modified`,
+    );
 
     // Handle removed servers
     for (const config of removed) {
@@ -180,9 +191,9 @@ export class MCPIntegrationService {
   async addMCPServer(config: MCPConfig): Promise<void> {
     const store = useUserPreferenceStore.getState();
     const currentServers = store.preferences.mcpServers || [];
-    
+
     // Check for duplicate IDs
-    if (currentServers.some(server => server.id === config.id)) {
+    if (currentServers.some((server) => server.id === config.id)) {
       throw new Error(`MCP server with ID '${config.id}' already exists`);
     }
 
@@ -195,17 +206,25 @@ export class MCPIntegrationService {
   /**
    * Update an existing MCP server configuration
    */
-  async updateMCPServer(serverId: string, updates: Partial<MCPConfig>): Promise<void> {
+  async updateMCPServer(
+    serverId: string,
+    updates: Partial<MCPConfig>,
+  ): Promise<void> {
     const store = useUserPreferenceStore.getState();
     const currentServers = store.preferences.mcpServers || [];
-    
-    const serverIndex = currentServers.findIndex(server => server.id === serverId);
+
+    const serverIndex = currentServers.findIndex(
+      (server) => server.id === serverId,
+    );
     if (serverIndex === -1) {
       throw new Error(`MCP server with ID '${serverId}' not found`);
     }
 
     const updatedServers = [...currentServers];
-    updatedServers[serverIndex] = { ...updatedServers[serverIndex], ...updates };
+    updatedServers[serverIndex] = {
+      ...updatedServers[serverIndex],
+      ...updates,
+    };
 
     // Update store
     store.updatePreferences({
@@ -219,8 +238,10 @@ export class MCPIntegrationService {
   async removeMCPServer(serverId: string): Promise<void> {
     const store = useUserPreferenceStore.getState();
     const currentServers = store.preferences.mcpServers || [];
-    
-    const filteredServers = currentServers.filter(server => server.id !== serverId);
+
+    const filteredServers = currentServers.filter(
+      (server) => server.id !== serverId,
+    );
 
     // Update store
     store.updatePreferences({
@@ -240,8 +261,8 @@ export class MCPIntegrationService {
     const stats = mcpManager.getStats();
     const configs = mcpManager.getAllServerConfigs();
     const errors = configs
-      .filter(config => config.status === 'error' && config.lastError)
-      .map(config => `${config.name}: ${config.lastError}`);
+      .filter((config) => config.status === 'error' && config.lastError)
+      .map((config) => `${config.name}: ${config.lastError}`);
 
     return {
       totalServers: stats.totalServers,
@@ -255,8 +276,9 @@ export class MCPIntegrationService {
    * Restart all MCP servers
    */
   async restartAllMCPServers(): Promise<void> {
-    const configs = useUserPreferenceStore.getState().preferences.mcpServers || [];
-    const enabledConfigs = configs.filter(config => config.enabled);
+    const configs =
+      useUserPreferenceStore.getState().preferences.mcpServers || [];
+    const enabledConfigs = configs.filter((config) => config.enabled);
 
     console.log(`Restarting ${enabledConfigs.length} MCP servers`);
 

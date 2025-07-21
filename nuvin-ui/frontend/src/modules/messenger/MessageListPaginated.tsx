@@ -1,0 +1,188 @@
+import { useRef, useEffect, useState, useCallback } from "react";
+import { Message as MessageType } from "@/types";
+import { Message } from "./Message";
+import { LoadingMessage } from "./components/LoadingMessage";
+import { Loader2 } from "lucide-react";
+
+interface MessageListPaginatedProps {
+  messages: MessageType[];
+  isLoading?: boolean;
+  streamingMessageId?: string | null;
+  initialLoadCount?: number;
+  loadMoreCount?: number;
+  conversationId?: string;
+}
+
+export function MessageListPaginated({
+  messages,
+  isLoading = false,
+  streamingMessageId,
+  initialLoadCount = 15,
+  loadMoreCount = 15,
+  conversationId,
+}: MessageListPaginatedProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [displayedCount, setDisplayedCount] = useState(initialLoadCount);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const lastScrollTop = useRef(10);
+
+  // Get the messages to display (from the end, newest first)
+  const displayedMessages = messages.slice(-displayedCount);
+  const hasMoreMessages = messages.length > displayedCount;
+
+  const scrollToBottom = (smooth = false) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        block: "end",
+      });
+    }
+  };
+
+  // Load more messages
+  const loadMoreMessages = useCallback(async () => {
+    if (isLoadingMore || !hasMoreMessages) return;
+
+    setIsLoadingMore(true);
+
+    // Store current scroll position before loading more
+    const scrollElement = parentRef.current;
+    const scrollTopBefore = scrollElement?.scrollTop || 0;
+    const scrollHeightBefore = scrollElement?.scrollHeight || 0;
+
+    // Simulate loading delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    setDisplayedCount((prev) =>
+      Math.min(prev + loadMoreCount, messages.length)
+    );
+
+    // Restore scroll position after DOM update
+    setTimeout(() => {
+      if (scrollElement) {
+        const scrollHeightAfter = scrollElement.scrollHeight;
+        const heightDifference = scrollHeightAfter - scrollHeightBefore;
+        scrollElement.scrollTop = scrollTopBefore + heightDifference;
+      }
+      setIsLoadingMore(false);
+    }, 0);
+  }, [isLoadingMore, hasMoreMessages, loadMoreCount, messages.length]);
+
+  // Handle scroll to detect when user scrolls up and reaches the top
+  const handleScroll = useCallback(() => {
+    if (!parentRef.current || isLoadingMore || !hasMoreMessages) return;
+
+    const { scrollTop } = parentRef.current;
+    const isScrollingUp = scrollTop < lastScrollTop.current;
+
+    // Only load more messages if user is scrolling UP and near the top
+    if (isScrollingUp && scrollTop <= 200) {
+      loadMoreMessages();
+    }
+
+    // Update last scroll position after checking
+    lastScrollTop.current = scrollTop;
+  }, [isLoadingMore, hasMoreMessages, loadMoreMessages]);
+
+  // Attach scroll listener
+  useEffect(() => {
+    const scrollElement = parentRef.current;
+    if (!scrollElement) return;
+
+    scrollElement.addEventListener("scroll", handleScroll);
+    return () => scrollElement.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  useEffect(() => {
+    // Initial scroll to bottom or new message is user message
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.role === "user") {
+      scrollToBottom();
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (conversationId) {
+      console.log("conversationId", conversationId);
+      scrollToBottom();
+    }
+  }, [conversationId]);
+
+  // Reset displayed count when messages change significantly
+  useEffect(() => {
+    if (messages.length < displayedCount) {
+      setDisplayedCount(Math.max(initialLoadCount, messages.length));
+    }
+  }, [messages.length, displayedCount, initialLoadCount]);
+
+  const renderMessages = () => {
+    if (messages.length === 0 && !isLoading) {
+      return (
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="text-center">
+            <p className="text-lg mb-2">Welcome to Nuvin Space</p>
+            <p className="text-sm">
+              Start a conversation by typing a message below.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Load More Indicator */}
+        {hasMoreMessages && (
+          <div className="flex justify-center py-4">
+            {isLoadingMore ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Loading more messages...</span>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Scroll up to load{" "}
+                  {Math.min(loadMoreCount, messages.length - displayedCount)}{" "}
+                  more messages
+                </p>
+                <div className="text-xs text-muted-foreground">
+                  Showing {displayedCount} of {messages.length} messages
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Messages */}
+        {displayedMessages.map((message) => (
+          <Message
+            key={message.id}
+            id={message.id}
+            role={message.role}
+            content={message.content}
+            timestamp={message.timestamp}
+            isStreaming={streamingMessageId === message.id}
+          />
+        ))}
+
+        {/* Loading Message */}
+        {isLoading && <LoadingMessage />}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex-1 overflow-hidden bg-message-list-background">
+      <div ref={parentRef} className="h-full overflow-auto">
+        <div className="p-6">
+          <div className="max-w-4xl mx-auto">
+            {renderMessages()}
+            <div ref={messagesEndRef} className='h-2 w-2 mt-4' />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

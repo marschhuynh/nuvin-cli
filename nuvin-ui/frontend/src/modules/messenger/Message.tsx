@@ -1,7 +1,9 @@
 import { User, Cpu, Copy, Check, FileText } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { parseToolCalls, stripToolCalls } from '@/lib/utils/tool-call-parser';
+import { ToolCall } from './components/ToolCall';
 
 interface MessageProps {
   id: string;
@@ -15,22 +17,35 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
   const [copied, setCopied] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
 
-  const trimmedContent = content.trim()
+  const trimmedContent = content.trim();
+  
+  // Parse tool calls from the content
+  const parsedContent = useMemo(() => {
+    return parseToolCalls(trimmedContent);
+  }, [trimmedContent]);
+
+  // Get clean content without tool call markup
+  const cleanContent = useMemo(() => {
+    return parsedContent.hasToolCalls ? stripToolCalls(trimmedContent) : trimmedContent;
+  }, [parsedContent.hasToolCalls, trimmedContent]);
 
   const handleCopy = useCallback(async () => {
     try {
+      // Copy raw content in raw view, clean content otherwise
+      const contentToCopy = showRaw ? trimmedContent : cleanContent;
+      
       // Try Wails clipboard first, fallback to browser clipboard
       if (typeof ClipboardSetText === 'function') {
-        await ClipboardSetText(trimmedContent);
+        await ClipboardSetText(contentToCopy);
       } else {
-        await navigator.clipboard.writeText(trimmedContent);
+        await navigator.clipboard.writeText(contentToCopy);
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
     } catch (error) {
       console.error('Failed to copy message:', error);
     }
-  }, [trimmedContent]);
+  }, [trimmedContent, cleanContent, showRaw]);
 
   const toggleRawView = useCallback(() => {
     setShowRaw((prev) => !prev);
@@ -82,12 +97,21 @@ export function Message({ role, content, isStreaming = false }: MessageProps) {
             {trimmedContent}
           </pre>
         ) : (
-          // For assistant messages in rendered view, show markdown
+          // For assistant messages in rendered view, show parsed content
           <div className="text-sm relative">
-            <MarkdownRenderer
-              content={trimmedContent}
-              className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-            />
+            {/* Render tool calls first */}
+            {parsedContent.hasToolCalls && parsedContent.toolCalls.map((toolCall, index) => (
+              <ToolCall key={`${toolCall.name}-${toolCall.id}-${index}`} toolCall={toolCall} />
+            ))}
+            
+            {/* Render clean content if there's any */}
+            {cleanContent.trim().length > 0 && (
+              <MarkdownRenderer
+                content={cleanContent}
+                className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+              />
+            )}
+            
             {isStreaming && (
               <div className="inline-flex items-center animate-in fade-in duration-300">
                 <span className="text-xs text-muted-foreground/80 animate-pulse">

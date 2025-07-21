@@ -25,12 +25,16 @@ export class MCPTool implements Tool {
   private mcpSchema: MCPToolSchema;
   private serverId: string;
 
-  constructor(mcpClient: MCPClient, mcpSchema: MCPToolSchema, serverId: string) {
+  constructor(
+    mcpClient: MCPClient,
+    mcpSchema: MCPToolSchema,
+    serverId: string,
+  ) {
     this.mcpClient = mcpClient;
     this.mcpSchema = mcpSchema;
     this.serverId = serverId;
     this.author = `MCP Server: ${serverId}`;
-    
+
     // Convert MCP tool schema to internal ToolDefinition format
     this.definition = this.convertMCPSchemaToToolDefinition(mcpSchema);
   }
@@ -58,7 +62,8 @@ export class MCPTool implements Tool {
       };
 
       // Execute the tool via MCP client
-      const mcpResult: MCPToolResult = await this.mcpClient.executeTool(toolCall);
+      const mcpResult: MCPToolResult =
+        await this.mcpClient.executeTool(toolCall);
 
       // Convert MCP result to internal format
       const result = this.convertMCPResultToToolResult(mcpResult);
@@ -91,7 +96,10 @@ export class MCPTool implements Tool {
     try {
       return this.validateParameters(parameters, this.mcpSchema.inputSchema);
     } catch (error) {
-      console.warn(`Parameter validation failed for MCP tool '${this.mcpSchema.name}':`, error);
+      console.warn(
+        `Parameter validation failed for MCP tool '${this.mcpSchema.name}':`,
+        error,
+      );
       return false;
     }
   }
@@ -120,13 +128,17 @@ export class MCPTool implements Tool {
   /**
    * Convert MCP tool schema to internal ToolDefinition format
    */
-  private convertMCPSchemaToToolDefinition(mcpSchema: MCPToolSchema): ToolDefinition {
+  private convertMCPSchemaToToolDefinition(
+    mcpSchema: MCPToolSchema,
+  ): ToolDefinition {
     return {
       name: `mcp_${this.serverId}_${mcpSchema.name}`, // Prefix to avoid naming conflicts
       description: `${mcpSchema.description} (from MCP server: ${this.serverId})`,
       parameters: {
         type: 'object',
-        properties: this.convertMCPProperties(mcpSchema.inputSchema.properties || {}),
+        properties: this.convertMCPProperties(
+          mcpSchema.inputSchema.properties || {},
+        ),
         required: mcpSchema.inputSchema.required || [],
       },
     };
@@ -135,7 +147,9 @@ export class MCPTool implements Tool {
   /**
    * Convert MCP schema properties to internal format
    */
-  private convertMCPProperties(mcpProperties: Record<string, any>): Record<string, any> {
+  private convertMCPProperties(
+    mcpProperties: Record<string, any>,
+  ): Record<string, any> {
     const converted: Record<string, any> = {};
 
     for (const [name, prop] of Object.entries(mcpProperties)) {
@@ -159,8 +173,10 @@ export class MCPTool implements Tool {
     if (mcpProp.enum) converted.enum = mcpProp.enum;
     if (mcpProp.minimum !== undefined) converted.minimum = mcpProp.minimum;
     if (mcpProp.maximum !== undefined) converted.maximum = mcpProp.maximum;
-    if (mcpProp.minLength !== undefined) converted.minLength = mcpProp.minLength;
-    if (mcpProp.maxLength !== undefined) converted.maxLength = mcpProp.maxLength;
+    if (mcpProp.minLength !== undefined)
+      converted.minLength = mcpProp.minLength;
+    if (mcpProp.maxLength !== undefined)
+      converted.maxLength = mcpProp.maxLength;
 
     // Handle nested objects and arrays
     if (mcpProp.type === 'object' && mcpProp.properties) {
@@ -187,7 +203,7 @@ export class MCPTool implements Tool {
     }
 
     // Multiple content items, return as array
-    return mcpResult.content.map(content => this.convertMCPContent(content));
+    return mcpResult.content.map((content) => this.convertMCPContent(content));
   }
 
   /**
@@ -197,21 +213,21 @@ export class MCPTool implements Tool {
     switch (content.type) {
       case 'text':
         return content.text || '';
-      
+
       case 'image':
         return {
           type: 'image',
           data: content.data,
           mimeType: content.mimeType,
         };
-      
+
       case 'resource':
         return {
           type: 'resource',
           data: content.data,
           mimeType: content.mimeType,
         };
-      
+
       default:
         return content;
     }
@@ -220,7 +236,10 @@ export class MCPTool implements Tool {
   /**
    * Validate parameters against MCP schema
    */
-  private validateParameters(parameters: Record<string, any>, schema: any): boolean {
+  private validateParameters(
+    parameters: Record<string, any>,
+    schema: any,
+  ): boolean {
     // Basic validation - in a production environment, you might want to use a proper JSON schema validator
     if (schema.type !== 'object') {
       return false;
@@ -257,8 +276,10 @@ export class MCPTool implements Tool {
     switch (type) {
       case 'string':
         if (typeof value !== 'string') return false;
-        if (propSchema.minLength && value.length < propSchema.minLength) return false;
-        if (propSchema.maxLength && value.length > propSchema.maxLength) return false;
+        if (propSchema.minLength && value.length < propSchema.minLength)
+          return false;
+        if (propSchema.maxLength && value.length > propSchema.maxLength)
+          return false;
         if (propSchema.enum && !propSchema.enum.includes(value)) return false;
         break;
 
@@ -266,8 +287,10 @@ export class MCPTool implements Tool {
       case 'integer':
         if (typeof value !== 'number') return false;
         if (type === 'integer' && !Number.isInteger(value)) return false;
-        if (propSchema.minimum !== undefined && value < propSchema.minimum) return false;
-        if (propSchema.maximum !== undefined && value > propSchema.maximum) return false;
+        if (propSchema.minimum !== undefined && value < propSchema.minimum)
+          return false;
+        if (propSchema.maximum !== undefined && value > propSchema.maximum)
+          return false;
         if (propSchema.enum && !propSchema.enum.includes(value)) return false;
         break;
 
@@ -285,7 +308,8 @@ export class MCPTool implements Tool {
         break;
 
       case 'object':
-        if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+        if (typeof value !== 'object' || value === null || Array.isArray(value))
+          return false;
         if (propSchema.properties) {
           return this.validateParameters(value, propSchema);
         }
@@ -308,7 +332,7 @@ export function createMCPTools(
   mcpSchemas: MCPToolSchema[],
   serverId: string,
 ): MCPTool[] {
-  return mcpSchemas.map(schema => new MCPTool(mcpClient, schema, serverId));
+  return mcpSchemas.map((schema) => new MCPTool(mcpClient, schema, serverId));
 }
 
 /**
@@ -321,7 +345,9 @@ export function isMCPTool(tool: Tool): tool is MCPTool {
 /**
  * Helper function to extract server ID from MCP tool name
  */
-export function extractServerIdFromMCPToolName(toolName: string): string | null {
+export function extractServerIdFromMCPToolName(
+  toolName: string,
+): string | null {
   const match = toolName.match(/^mcp_([^_]+)_/);
   return match ? match[1] : null;
 }

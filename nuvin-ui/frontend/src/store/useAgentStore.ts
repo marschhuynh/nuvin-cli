@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { AgentSettings } from '@/types';
+import type { AgentSettings } from '@/types';
 
 interface AgentState {
   agents: AgentSettings[];

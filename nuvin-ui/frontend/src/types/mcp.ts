@@ -107,7 +107,9 @@ export interface MCPResourceContents {
 export interface MCPConnection {
   send(message: JSONRPCRequest | JSONRPCNotification): Promise<void>;
   close(): Promise<void>;
-  onMessage(handler: (message: JSONRPCResponse | JSONRPCNotification) => void): void;
+  onMessage(
+    handler: (message: JSONRPCResponse | JSONRPCNotification) => void,
+  ): void;
   onError(handler: (error: Error) => void): void;
   onClose(handler: () => void): void;
 }
@@ -144,7 +146,7 @@ export interface ExtendedMCPConfig extends MCPConfig {
 }
 
 // MCP Client events
-export type MCPClientEvent = 
+export type MCPClientEvent =
   | { type: 'connected'; serverId: string; serverInfo: MCPServerInfo }
   | { type: 'disconnected'; serverId: string; reason?: string }
   | { type: 'error'; serverId: string; error: Error }
@@ -169,7 +171,7 @@ export interface MCPInitializeResult {
 }
 
 // MCP standard methods
-export type MCPMethod = 
+export type MCPMethod =
   | 'initialize'
   | 'tools/list'
   | 'tools/call'
@@ -191,7 +193,7 @@ export enum MCPErrorCode {
   METHOD_NOT_FOUND = -32601,
   INVALID_PARAMS = -32602,
   INTERNAL_ERROR = -32603,
-  
+
   // MCP-specific error codes
   INITIALIZATION_FAILED = -32000,
   TOOL_NOT_FOUND = -32001,

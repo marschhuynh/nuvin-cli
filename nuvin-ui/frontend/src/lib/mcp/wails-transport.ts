@@ -22,12 +22,17 @@ declare global {
  */
 export class WailsMCPConnection implements MCPConnection {
   private serverId: string;
-  private messageHandlers: Array<(message: JSONRPCResponse | JSONRPCNotification) => void> = [];
+  private messageHandlers: Array<
+    (message: JSONRPCResponse | JSONRPCNotification) => void
+  > = [];
   private errorHandlers: Array<(error: Error) => void> = [];
   private closeHandlers: Array<() => void> = [];
   private isConnected = false;
 
-  constructor(serverId: string, private options: MCPTransportOptions) {
+  constructor(
+    serverId: string,
+    private options: MCPTransportOptions,
+  ) {
     this.serverId = serverId;
     this.setupEventListeners();
   }
@@ -64,7 +69,7 @@ export class WailsMCPConnection implements MCPConnection {
       }
       this.isConnected = false;
       this.cleanupEventListeners();
-      
+
       // Notify close handlers
       for (const handler of this.closeHandlers) {
         try {
@@ -94,7 +99,9 @@ export class WailsMCPConnection implements MCPConnection {
     }
   }
 
-  onMessage(handler: (message: JSONRPCResponse | JSONRPCNotification) => void): void {
+  onMessage(
+    handler: (message: JSONRPCResponse | JSONRPCNotification) => void,
+  ): void {
     this.messageHandlers.push(handler);
   }
 

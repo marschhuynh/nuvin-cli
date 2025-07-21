@@ -5,7 +5,12 @@ export * from '@/types/mcp';
 
 // MCP Client and Tools
 export { MCPClient } from './mcp-client';
-export { MCPTool, createMCPTools, isMCPTool, extractServerIdFromMCPToolName } from './mcp-tool';
+export {
+  MCPTool,
+  createMCPTools,
+  isMCPTool,
+  extractServerIdFromMCPToolName,
+} from './mcp-tool';
 
 // MCP Manager
 export { MCPManager, mcpManager } from './mcp-manager';

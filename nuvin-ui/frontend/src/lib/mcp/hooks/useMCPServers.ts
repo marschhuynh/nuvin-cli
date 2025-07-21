@@ -8,7 +8,9 @@ import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
  */
 export function useMCPServers() {
   const { preferences, updatePreferences } = useUserPreferenceStore();
-  const [serverStatuses, setServerStatuses] = useState<Map<string, ExtendedMCPConfig>>(new Map());
+  const [serverStatuses, setServerStatuses] = useState<
+    Map<string, ExtendedMCPConfig>
+  >(new Map());
 
   // Update server statuses from MCP manager
   const updateServerStatuses = () => {
@@ -18,7 +20,7 @@ export function useMCPServers() {
 
     const manager = mcpIntegration.getManager();
     const configs = manager.getAllServerConfigs();
-    const statusMap = new Map(configs.map(config => [config.id, config]));
+    const statusMap = new Map(configs.map((config) => [config.id, config]));
     setServerStatuses(statusMap);
   };
 
@@ -34,15 +36,17 @@ export function useMCPServers() {
   // Merge configuration with runtime status
   const getServersWithStatus = (): ExtendedMCPConfig[] => {
     const configs = preferences.mcpServers || [];
-    
-    return configs.map(config => {
+
+    return configs.map((config) => {
       const status = serverStatuses.get(config.id);
-      return status || {
-        ...config,
-        status: 'disconnected' as const,
-        toolCount: 0,
-        resourceCount: 0,
-      };
+      return (
+        status || {
+          ...config,
+          status: 'disconnected' as const,
+          toolCount: 0,
+          resourceCount: 0,
+        }
+      );
     });
   };
 
@@ -56,7 +60,10 @@ export function useMCPServers() {
     }
   };
 
-  const updateServer = async (serverId: string, updates: Partial<MCPConfig>) => {
+  const updateServer = async (
+    serverId: string,
+    updates: Partial<MCPConfig>,
+  ) => {
     try {
       await mcpIntegration.updateMCPServer(serverId, updates);
     } catch (error) {
@@ -76,7 +83,9 @@ export function useMCPServers() {
 
   const startServer = async (serverId: string) => {
     const manager = mcpIntegration.getManager();
-    const config = (preferences.mcpServers || []).find(s => s.id === serverId);
+    const config = (preferences.mcpServers || []).find(
+      (s) => s.id === serverId,
+    );
     if (config) {
       await manager.startServer(config);
     }

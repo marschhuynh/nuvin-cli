@@ -309,9 +309,7 @@ export class A2AClient {
   /**
    * Send message with streaming and get text updates
    */
-  async *sendMessageStreamText(
-    params: MessageSendParams,
-  ): AsyncGenerator<{
+  async *sendMessageStreamText(params: MessageSendParams): AsyncGenerator<{
     type: 'text' | 'status' | 'complete';
     content: string;
     status?: string;

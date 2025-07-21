@@ -1,8 +1,8 @@
-import { useRef, useEffect } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Message as MessageType } from '@/types';
-import { Message } from './Message';
-import { LoadingMessage } from './components/LoadingMessage';
+import { useRef, useEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Message as MessageType } from "@/types";
+import { Message } from "./Message";
+import { LoadingMessage } from "./components/LoadingMessage";
 
 interface MessageListProps {
   messages: MessageType[];
@@ -11,7 +11,12 @@ interface MessageListProps {
   useVirtualizer?: boolean;
 }
 
-export function MessageList({ messages, isLoading = false, streamingMessageId, useVirtualizer: enableVirtualizer = true }: MessageListProps) {
+export function MessageList({
+  messages,
+  isLoading = false,
+  streamingMessageId,
+  useVirtualizer: enableVirtualizer = true,
+}: MessageListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -21,7 +26,7 @@ export function MessageList({ messages, isLoading = false, streamingMessageId, u
     count: messages.length + (isLoading ? 1 : 0),
     getScrollElement: () => parentRef.current,
     estimateSize: () => 200,
-    overscan: 7,
+    overscan: 4,
     measureElement: (element) => {
       return element?.getBoundingClientRect().height ?? 200;
     },
@@ -76,7 +81,7 @@ export function MessageList({ messages, isLoading = false, streamingMessageId, u
       <div
         style={{
           height: virtualizer.getTotalSize(),
-          position: 'relative',
+          position: "relative",
         }}
       >
         {virtualizer.getVirtualItems().map((virtualItem) => {
@@ -89,15 +94,15 @@ export function MessageList({ messages, isLoading = false, streamingMessageId, u
               data-index={virtualItem.index}
               ref={virtualizer.measureElement}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: '100%',
+                width: "100%",
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
               <div className="pb-6">
-                {(isLoadingItem) ? (
+                {isLoadingItem ? (
                   <LoadingMessage />
                 ) : (
                   <Message
