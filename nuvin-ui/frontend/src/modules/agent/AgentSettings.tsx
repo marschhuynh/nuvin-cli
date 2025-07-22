@@ -320,7 +320,7 @@ export function AgentSettings() {
                 <button
                   key={agent.id}
                   type="button"
-                  className={`w-full text-left p-3 rounded-lg border transition-all hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                  className={`cursor-pointer w-full text-left p-3 rounded-lg border transition-all hover:shadow-sm focus:outline-none  ${
                     selectedAgentId === agent.id && !isCreating
                       ? 'border-primary bg-primary/5 shadow-sm'
                       : 'border-border hover:border-primary/50'

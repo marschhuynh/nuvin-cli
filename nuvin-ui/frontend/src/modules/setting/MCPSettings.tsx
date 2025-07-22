@@ -15,7 +15,7 @@ import {
   Save,
 } from 'lucide-react';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
-import { MCPConfig } from '@/store/useUserPreferenceStore';
+import type { MCPConfig } from '@/store/useUserPreferenceStore';
 import {
   Dialog,
   DialogContent,

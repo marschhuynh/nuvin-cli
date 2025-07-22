@@ -35,11 +35,6 @@ export function ProviderSettings({ onAddProvider }: ProviderSettingsProps) {
       </div>
 
       <div className="flex flex-1 flex-col min-h-0 p-6 h-[calc(100vh-var(--header-height))]">
-        {/* Header with Add Provider Button */}
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold">Provider Settings</h3>
-        </div>
-
         {/* Main Content - Split Layout */}
         <div className="flex flex-1 gap-4 min-h-0 overflow-hidden">
           {/* Left Side - Provider List */}

@@ -1,6 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Wrench } from 'lucide-react';
+import { Wrench, Search } from 'lucide-react';
+import { useState } from 'react';
 import { toolRegistry } from '@/lib/tools';
 import type { AgentToolConfig } from '@/types/tools';
 
@@ -15,6 +16,8 @@ export function ToolSettings({
   isEditing,
   onToolConfigChange,
 }: ToolSettingsProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+
   const handleToolToggle = (toolName: string, enabled: boolean) => {
     const enabledTools = enabled
       ? [...toolConfig.enabledTools, toolName]
@@ -31,8 +34,22 @@ export function ToolSettings({
     onToolConfigChange({ ...toolConfig, timeoutMs });
   };
 
+  const filteredTools = toolRegistry
+    .getAllTools()
+    .filter(
+      (tool) =>
+        tool.definition.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tool.definition.description &&
+          tool.definition.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (tool.category &&
+          tool.category.toLowerCase().includes(searchTerm.toLowerCase())),
+    );
+
   return (
-    <div className="space-y-4">
+    // <div className="space-y-4 flex flex-col h-[calc(100vh-12rem)]">
+    <div className="space-y-4 flex flex-col">
       {/* Tool Settings */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -80,36 +97,75 @@ export function ToolSettings({
       </div>
 
       {/* Available Tools */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-1 flex flex-col min-h-0">
         <Label>Available Tools</Label>
-        <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-2 bg-background">
-          {toolRegistry.getAllTools().map((tool) => (
-            <div key={tool.definition.name} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id={`tool-${tool.definition.name}`}
-                checked={toolConfig.enabledTools.includes(tool.definition.name)}
-                onChange={(e) => {
-                  if (!isEditing) return;
-                  handleToolToggle(tool.definition.name, e.target.checked);
-                }}
-                disabled={!isEditing}
-                className="h-4 w-4"
-              />
-              <label
-                htmlFor={`tool-${tool.definition.name}`}
-                className="text-sm font-medium cursor-pointer flex-1"
-              >
-                {tool.definition.name}
-              </label>
-              <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
-                {tool.category || 'utility'}
-              </span>
-            </div>
-          ))}
+        <div className="space-y-2 flex-1 flex flex-col min-h-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Filter tools..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-9"
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto border rounded-md bg-background">
+            {filteredTools.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No tools found matching "{searchTerm}"
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {filteredTools.map((tool) => (
+                  <div
+                    key={tool.definition.name}
+                    className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`tool-${tool.definition.name}`}
+                      checked={toolConfig.enabledTools.includes(
+                        tool.definition.name,
+                      )}
+                      onChange={(e) => {
+                        if (!isEditing) return;
+                        handleToolToggle(
+                          tool.definition.name,
+                          e.target.checked,
+                        );
+                      }}
+                      disabled={!isEditing}
+                      className="h-4 w-4 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor={`tool-${tool.definition.name}`}
+                          className="text-sm font-medium cursor-pointer truncate"
+                        >
+                          {tool.definition.name}
+                        </label>
+                        <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded shrink-0">
+                          {tool.category || 'utility'}
+                        </span>
+                      </div>
+                      {tool.definition.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {tool.definition.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Enable tools that this agent can use during conversations
+          {filteredTools.length} tools available •{' '}
+          {toolConfig.enabledTools.length} enabled
         </p>
       </div>
     </div>
