@@ -24,16 +24,13 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
-interface MCPSettingsProps {
-  settings: any;
-  onSettingsChange: (settings: any) => void;
-}
-
-export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
+export function MCPSettings() {
   const { preferences, updatePreferences } = useUserPreferenceStore();
   const [showAddMCPModal, setShowAddMCPModal] = useState(false);
   const [editingMCP, setEditingMCP] = useState<MCPConfig | null>(null);
-  const [selectedMCPId, setSelectedMCPId] = useState<string | null>(null);
+  const [selectedMCPId, setSelectedMCPId] = useState<string | null>(
+    preferences?.mcpServers[0].id,
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [mcpForm, setMcpForm] = useState<Partial<MCPConfig>>({
     name: '',
@@ -47,19 +44,6 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
   const selectedMCP = (preferences?.mcpServers || []).find(
     (mcp) => mcp.id === selectedMCPId,
   );
-
-  const handleAddMCP = () => {
-    setEditingMCP(null);
-    setMcpForm({
-      name: '',
-      command: '',
-      args: [],
-      env: {},
-      enabled: true,
-      description: '',
-    });
-    setShowAddMCPModal(true);
-  };
 
   const handleEditMCP = (mcp: MCPConfig) => {
     setEditingMCP(mcp);
@@ -160,15 +144,15 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
 
     const newMCP: MCPConfig = {
       id: editingMCP?.id || crypto.randomUUID(),
-      name: mcpForm.name!,
-      command: mcpForm.command!,
+      name: mcpForm.name,
+      command: mcpForm.command,
       args: mcpForm.args || [],
       env: mcpForm.env || {},
-      enabled: mcpForm.enabled!,
+      enabled: mcpForm.enabled ?? false,
       description: mcpForm.description || '',
     };
 
-    let updatedServers;
+    let updatedServers: MCPConfig[] = [];
     if (editingMCP) {
       updatedServers = (preferences?.mcpServers || []).map((server) =>
         server.id === editingMCP.id ? newMCP : server,
@@ -225,7 +209,7 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
     <>
       <div className="flex h-full">
         {/* Left Panel - MCP Server List */}
-        <div className="w-80 flex-shrink-0 border-r bg-card">
+        <div className="flex flex-col w-80 border-r bg-card">
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b">
             <div className="flex items-center gap-2">
@@ -260,9 +244,10 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
             ) : (
               <div className="space-y-2">
                 {(preferences?.mcpServers || []).map((mcp) => (
-                  <div
+                  <button
+                    type="button"
                     key={mcp.id}
-                    className={`p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
+                    className={`w-full text-left p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
                       selectedMCPId === mcp.id
                         ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-border hover:border-primary/50'
@@ -272,6 +257,13 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
                         setSelectedMCPId(mcp.id);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if ((e.key === 'Enter' || e.key === ' ') && !isEditing) {
+                        e.preventDefault();
+                        setSelectedMCPId(mcp.id);
+                      }
+                    }}
+                    disabled={isEditing}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -298,7 +290,7 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
                         mcp.args.length > 0 &&
                         ` ${mcp.args.join(' ')}`}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -479,7 +471,10 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
                         {isEditing ? (
                           <div className="space-y-2">
                             {(mcpForm.args || []).map((arg, index) => (
-                              <div key={index} className="flex gap-2">
+                              <div
+                                key={`arg-${index}-${arg}`}
+                                className="flex gap-2"
+                              >
                                 <Input
                                   value={arg}
                                   onChange={(e) =>
@@ -723,7 +718,7 @@ export function MCPSettings({ settings, onSettingsChange }: MCPSettingsProps) {
                 <Label>Arguments</Label>
                 <div className="space-y-2">
                   {(mcpForm.args || []).map((arg, index) => (
-                    <div key={index} className="flex gap-2">
+                    <div key={`arg-${index}-${arg}`} className="flex gap-2">
                       <Input
                         value={arg}
                         onChange={(e) => handleArgChange(index, e.target.value)}
