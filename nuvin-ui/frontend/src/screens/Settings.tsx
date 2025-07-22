@@ -99,12 +99,7 @@ export default function Settings() {
 
           {activeTab === 'agent' && <AgentSettings />}
 
-          {activeTab === 'mcp' && (
-            <MCPSettings
-              settings={preferences}
-              onSettingsChange={updatePreferences}
-            />
-          )}
+          {activeTab === 'mcp' && <MCPSettings />}
 
           {activeTab === 'debug' && <ToolDebugger />}
         </div>
