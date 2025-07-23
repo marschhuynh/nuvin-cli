@@ -1,139 +1,88 @@
-import {
+import { BaseLLMProvider } from './base-provider';
+import type {
   CompletionParams,
   CompletionResult,
   StreamChunk,
-  LLMProvider,
   ModelInfo,
 } from './llm-provider';
 
-export class AnthropicProvider implements LLMProvider {
-  readonly type = 'Anthropic';
-  private apiKey: string;
-  private apiUrl: string = 'https://api.anthropic.com';
-
+export class AnthropicProvider extends BaseLLMProvider {
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    super({
+      providerName: 'Anthropic',
+      apiKey,
+      apiUrl: 'https://api.anthropic.com',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+    });
   }
 
   async generateCompletion(
     params: CompletionParams,
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
-    const response = await fetch(`${this.apiUrl}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
+    const response = await this.makeRequest('/v1/messages', {
+      body: {
         model: params.model,
-        messages: params.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-          ...(m.tool_calls && { tool_calls: m.tool_calls }),
-          ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
-          ...(m.name && { name: m.name }),
-        })),
+        messages: this.transformMessagesForProvider(
+          params.messages,
+          'Anthropic',
+        ),
         temperature: params.temperature,
         max_tokens: params.maxTokens,
         top_p: params.topP,
         ...(params.tools && {
-          tools: params.tools.map((tool) => tool.function),
+          tools: this.transformToolsForProvider(params.tools, 'Anthropic'),
         }),
         ...(params.tool_choice && { tool_choice: params.tool_choice }),
-      }),
+      },
       signal,
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Anthropic API error: ${response.status} - ${text}`);
-    }
-
     const data = await response.json();
-    const content: string = data.content?.[0]?.text ?? '';
-    const tool_calls = data.tool_calls;
-
-    return {
-      content,
-      ...(tool_calls && { tool_calls }),
-      usage: data.usage
-        ? {
-            prompt_tokens: data.usage.input_tokens,
-            completion_tokens: data.usage.output_tokens,
-            total_tokens: data.usage.input_tokens + data.usage.output_tokens,
-          }
-        : undefined,
-    };
+    return this.createCompletionResult(data);
   }
 
   async *generateCompletionStream(
     params: CompletionParams,
     signal?: AbortSignal,
   ): AsyncGenerator<string> {
-    const response = await fetch(`${this.apiUrl}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
+    const response = await this.makeRequest('/v1/messages', {
+      body: {
         model: params.model,
-        messages: params.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-          ...(m.tool_calls && { tool_calls: m.tool_calls }),
-          ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
-          ...(m.name && { name: m.name }),
-        })),
+        messages: this.transformMessagesForProvider(
+          params.messages,
+          'Anthropic',
+        ),
         temperature: params.temperature,
         max_tokens: params.maxTokens,
         top_p: params.topP,
         stream: true,
         ...(params.tools && {
-          tools: params.tools.map((tool) => tool.function),
+          tools: this.transformToolsForProvider(params.tools, 'Anthropic'),
         }),
         ...(params.tool_choice && { tool_choice: params.tool_choice }),
-      }),
+      },
       signal,
     });
 
-    if (!response.ok || !response.body) {
-      const text = await response.text();
-      throw new Error(`Anthropic API error: ${response.status} - ${text}`);
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body for streaming');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-    let buffer = '';
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-
-      // Check for cancellation
-      if (signal?.aborted) {
-        throw new Error('Request cancelled by user');
-      }
-
-      if (value) {
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          if (trimmed === 'data: [DONE]') return;
-          if (!trimmed.startsWith('data:')) continue;
-          const data = JSON.parse(trimmed.slice('data:'.length));
-          const delta = data.delta?.text;
-          if (delta) {
-            yield delta;
-          }
-        }
+    for await (const data of this.parseStream(
+      reader,
+      {
+        contentPath: 'delta.text',
+      },
+      signal,
+    )) {
+      const content = this.extractValue(data, 'delta.text');
+      if (content) {
+        yield content;
       }
     }
   }
@@ -142,191 +91,67 @@ export class AnthropicProvider implements LLMProvider {
     params: CompletionParams,
     signal?: AbortSignal,
   ): AsyncGenerator<StreamChunk> {
-    const response = await fetch(`${this.apiUrl}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
+    const response = await this.makeRequest('/v1/messages', {
+      body: {
         model: params.model,
-        messages: params.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-          ...(m.tool_calls && { tool_calls: m.tool_calls }),
-          ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
-          ...(m.name && { name: m.name }),
-        })),
+        messages: this.transformMessagesForProvider(
+          params.messages,
+          'Anthropic',
+        ),
         temperature: params.temperature,
         max_tokens: params.maxTokens,
         top_p: params.topP,
         stream: true,
         ...(params.tools && {
-          tools: params.tools.map((tool) => tool.function),
+          tools: this.transformToolsForProvider(params.tools, 'Anthropic'),
         }),
         ...(params.tool_choice && { tool_choice: params.tool_choice }),
-      }),
+      },
       signal,
     });
 
-    if (!response.ok || !response.body) {
-      const text = await response.text();
-      throw new Error(`Anthropic API error: ${response.status} - ${text}`);
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body for streaming');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-    let buffer = '';
-    let accumulatedToolCalls: any[] = [];
-    let usage: any = null;
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-
-      // Check for cancellation
-      if (signal?.aborted) {
-        throw new Error('Request cancelled by user');
-      }
-
-      if (value) {
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          if (trimmed === 'data: [DONE]') {
-            if (accumulatedToolCalls.length > 0 || usage) {
-              yield {
-                tool_calls:
-                  accumulatedToolCalls.length > 0
-                    ? accumulatedToolCalls
-                    : undefined,
-                finished: true,
-                usage: usage
-                  ? {
-                      prompt_tokens: usage.input_tokens,
-                      completion_tokens: usage.output_tokens,
-                      total_tokens: usage.input_tokens + usage.output_tokens,
-                    }
-                  : undefined,
-              };
-            }
-            return;
-          }
-          if (!trimmed.startsWith('data:')) continue;
-
-          try {
-            const data = JSON.parse(trimmed.slice('data:'.length));
-
-            // Handle usage data
-            if (data.usage) {
-              usage = data.usage;
-            }
-
-            // Handle text content
-            const delta = data.delta?.text;
-            if (delta) {
-              yield { content: delta };
-            }
-
-            // Handle tool calls
-            if (data.delta?.tool_calls) {
-              const toolCallDeltas = data.delta.tool_calls;
-              for (const tcDelta of toolCallDeltas) {
-                if (tcDelta.index !== undefined) {
-                  // Initialize tool call if needed
-                  if (!accumulatedToolCalls[tcDelta.index]) {
-                    accumulatedToolCalls[tcDelta.index] = {
-                      id: tcDelta.id || '',
-                      type: 'function',
-                      function: {
-                        name: '',
-                        arguments: '',
-                      },
-                    };
-                  }
-
-                  const toolCall = accumulatedToolCalls[tcDelta.index];
-
-                  // Update tool call with delta
-                  if (tcDelta.id) toolCall.id = tcDelta.id;
-                  if (tcDelta.function?.name) {
-                    toolCall.function.name += tcDelta.function.name;
-                  }
-                  if (tcDelta.function?.arguments) {
-                    toolCall.function.arguments += tcDelta.function.arguments;
-                  }
-                }
-              }
-
-              // Yield updated tool calls
-              yield { tool_calls: [...accumulatedToolCalls] };
-            }
-          } catch (error) {
-            console.warn('Failed to parse streaming data:', error);
-          }
-        }
-      }
-    }
-
-    if (accumulatedToolCalls.length > 0) {
-      yield { tool_calls: accumulatedToolCalls, finished: true };
+    for await (const chunk of this.parseStreamWithTools(
+      reader,
+      {
+        contentPath: 'delta.text',
+        toolCallsPath: 'delta.tool_calls',
+        usagePath: 'usage',
+      },
+      signal,
+    )) {
+      yield chunk;
     }
   }
 
   async getModels(): Promise<ModelInfo[]> {
-    try {
-      const response = await fetch(`${this.apiUrl}/v1/models`, {
-        method: 'GET',
-        headers: {
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-      });
+    const response = await this.makeRequest('/v1/models', {
+      method: 'GET',
+    });
 
-      if (!response.ok) {
-        console.warn(
-          `Anthropic models API error: ${response.status}. Returning empty models list.`,
-        );
-        return [];
-      }
+    const data = await response.json();
+    const models = data.data || [];
 
-      const data = await response.json();
-      const models = data.data || [];
+    const transformedModels = models
+      .map((model: any): ModelInfo => {
+        return this.formatModelInfo(model, {
+          name: this.getModelDisplayName(model.id),
+          contextLength: this.getContextLength(model.id),
+          inputCost: this.getInputCost(model.id),
+          outputCost: this.getOutputCost(model.id),
+          modality: this.getModality(model.id),
+          inputModalities: this.getInputModalities(model.id),
+          outputModalities: this.getOutputModalities(model.id),
+          supportedParameters: ['temperature', 'top_p', 'max_tokens', 'tools'],
+        });
+      })
+      .sort((a: ModelInfo, b: ModelInfo) => this.sortModelsByPriority(a, b));
 
-      // Transform Anthropic models to our ModelInfo format
-      const transformedModels = models
-        .map((model: any): ModelInfo => {
-          const modelInfo: ModelInfo = {
-            id: model.id,
-            name: this.getModelDisplayName(model.id),
-            contextLength: this.getContextLength(model.id),
-            inputCost: this.getInputCost(model.id),
-            outputCost: this.getOutputCost(model.id),
-            modality: this.getModality(model.id),
-            inputModalities: this.getInputModalities(model.id),
-            outputModalities: this.getOutputModalities(model.id),
-            supportedParameters: [
-              'temperature',
-              'top_p',
-              'max_tokens',
-              'tools',
-            ],
-          };
-          return modelInfo;
-        })
-        .sort((a: ModelInfo, b: ModelInfo) => this.sortModels(a, b));
-
-      return transformedModels;
-    } catch (error) {
-      console.error('Failed to fetch Anthropic models:', error);
-      return [];
-    }
+    return transformedModels;
   }
 
   private getModelDisplayName(modelId: string): string {
@@ -341,24 +166,6 @@ export class AnthropicProvider implements LLMProvider {
       'claude-3-haiku-20240307': 'Claude 3 Haiku',
     };
     return nameMap[modelId] || modelId;
-  }
-
-  private getModelDescription(modelId: string): string {
-    const descriptionMap: Record<string, string> = {
-      'claude-sonnet-4-20250514':
-        'Latest Claude 4 model with extended thinking capabilities',
-      'claude-opus-4-20250514':
-        'Most capable Claude 4 model with extended thinking',
-      'claude-3-7-sonnet-20250219':
-        'Most intelligent model with extended thinking capability',
-      'claude-3-5-sonnet-20241022': 'Most intelligent model for complex tasks',
-      'claude-3-5-haiku-20241022': 'Fastest model for everyday tasks',
-      'claude-3-opus-20240229':
-        'Previous top-tier model for most complex tasks',
-      'claude-3-sonnet-20240229': 'Balance of intelligence and speed',
-      'claude-3-haiku-20240307': 'Fast and cost-effective',
-    };
-    return descriptionMap[modelId] || `Claude model: ${modelId}`;
   }
 
   private getContextLength(modelId: string): number {
@@ -406,7 +213,7 @@ export class AnthropicProvider implements LLMProvider {
     return ['text'];
   }
 
-  private sortModels(a: ModelInfo, b: ModelInfo): number {
+  private sortModelsByPriority(a: ModelInfo, b: ModelInfo): number {
     // Sort by model version (4 > 3.7 > 3.5 > 3) and then by tier (Opus > Sonnet > Haiku)
     const getModelPriority = (id: string): number => {
       if (id.includes('claude-sonnet-4')) return 100;

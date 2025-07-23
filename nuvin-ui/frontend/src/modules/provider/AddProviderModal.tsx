@@ -24,10 +24,16 @@ import {
   getDefaultModel,
   fetchProviderModels,
   type ProviderType,
+  PROVIDER_TYPES,
 } from '@/lib/providers/provider-utils';
 import { useModelsStore } from '@/store/useModelsStore';
 
-const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'OpenRouter', 'GitHub'];
+const PROVIDER_OPTIONS = [
+  PROVIDER_TYPES.OpenAI,
+  PROVIDER_TYPES.Anthropic,
+  PROVIDER_TYPES.OpenRouter,
+  PROVIDER_TYPES.GitHub,
+];
 
 interface AddProviderModalProps {
   open: boolean;
@@ -41,7 +47,9 @@ export function AddProviderModal({
   const { addProvider, isNameUnique, setActiveProvider } = useProviderStore();
   const { setModels } = useModelsStore();
   const [newProviderName, setNewProviderName] = useState('');
-  const [newProviderType, setNewProviderType] = useState('');
+  const [newProviderType, setNewProviderType] = useState<PROVIDER_TYPES>(
+    PROVIDER_TYPES.OpenAI,
+  );
   const [newProviderKey, setNewProviderKey] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -71,9 +79,9 @@ export function AddProviderModal({
   };
 
   // Reset model selection when provider type changes
-  const handleProviderTypeChange = (value: string) => {
+  const handleProviderTypeChange = (value: PROVIDER_TYPES) => {
     setNewProviderType(value);
-    setSelectedModel(getDefaultModel(value as any));
+    setSelectedModel('');
   };
 
   const handleSubmit = async () => {
@@ -83,11 +91,12 @@ export function AddProviderModal({
     const newProvider = {
       id: newProviderId,
       name: newProviderName.trim(),
-      type: newProviderType,
+      type: newProviderType as PROVIDER_TYPES,
       apiKey: newProviderKey,
       activeModel: {
-        model: selectedModel || getDefaultModel(newProviderType as any),
-        maxTokens: 2048,
+        model:
+          selectedModel || getDefaultModel(newProviderType as ProviderType),
+        maxTokens: 2048, // Default max tokens, can be adjusted later
       },
     };
 
@@ -112,7 +121,7 @@ export function AddProviderModal({
     }
 
     setNewProviderName('');
-    setNewProviderType('');
+    setNewProviderType(PROVIDER_TYPES.OpenAI);
     setNewProviderKey('');
     setSelectedModel('');
     setNameError('');
@@ -132,15 +141,18 @@ export function AddProviderModal({
       setNewProviderKey(token);
 
       // If GitHub is selected, auto-add the provider
-      if (newProviderType === 'GitHub' && validateName(newProviderName)) {
+      if (
+        newProviderType === PROVIDER_TYPES.GitHub &&
+        validateName(newProviderName)
+      ) {
         const newProviderId = Date.now().toString();
         const newProvider = {
           id: newProviderId,
           name: newProviderName.trim(),
-          type: 'GitHub',
+          type: PROVIDER_TYPES.GitHub,
           apiKey: token,
           activeModel: {
-            model: selectedModel || getDefaultModel('GitHub'),
+            model: selectedModel || getDefaultModel(PROVIDER_TYPES.GitHub),
             maxTokens: 2048,
           },
         };
@@ -154,7 +166,7 @@ export function AddProviderModal({
         // Auto-fetch models for the new provider
         try {
           const fetchedModels = await fetchProviderModels({
-            type: 'GitHub' as ProviderType,
+            type: PROVIDER_TYPES.GitHub,
             apiKey: token,
             name: newProviderName.trim(),
           });
@@ -167,7 +179,7 @@ export function AddProviderModal({
         }
 
         setNewProviderName('');
-        setNewProviderType('');
+        setNewProviderType(PROVIDER_TYPES.OpenAI);
         setNewProviderKey('');
         setSelectedModel('');
         setNameError('');
@@ -183,7 +195,7 @@ export function AddProviderModal({
 
   const handleCancel = () => {
     setNewProviderName('');
-    setNewProviderType('');
+    setNewProviderType(PROVIDER_TYPES.OpenAI);
     setNewProviderKey('');
     setSelectedModel('');
     setNameError('');
@@ -260,7 +272,7 @@ export function AddProviderModal({
                     )}
                   </Button>
                 </div>
-                {newProviderType === 'GitHub' && (
+                {newProviderType === PROVIDER_TYPES.GitHub && (
                   <Button
                     type="button"
                     variant="outline"
@@ -273,7 +285,7 @@ export function AddProviderModal({
                   </Button>
                 )}
               </div>
-              {newProviderType === 'GitHub' && (
+              {newProviderType === PROVIDER_TYPES.GitHub && (
                 <p className="text-sm text-muted-foreground">
                   Click "Get Token" to authenticate with GitHub and get an
                   access token. This will be a GitHub API token, not a Copilot

@@ -1,46 +1,49 @@
+import { BaseLLMProvider } from './base-provider';
 import type {
-  LLMProvider,
   CompletionParams,
   CompletionResult,
+  StreamChunk,
   ModelInfo,
 } from './llm-provider';
 import { smartFetch } from '../fetch-proxy';
 
-export class GithubCopilotProvider implements LLMProvider {
-  readonly type = 'GitHub';
-  private apiKey: string;
-  private apiUrl: string = 'https://api.githubcopilot.com';
-  // private apiUrl: string = 'https://api.business.githubcopilot.com';
-
+export class GithubCopilotProvider extends BaseLLMProvider {
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    super({
+      providerName: 'GitHub',
+      apiKey,
+      apiUrl: 'https://api.githubcopilot.com',
+    });
   }
 
-  async generateCompletion(
-    params: CompletionParams,
-    signal?: AbortSignal,
-  ): Promise<CompletionResult> {
-    const response = await smartFetch(`${this.apiUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'editor-version': 'vscode/1.100.3',
-        'editor-plugin-version': 'GitHub.copilot/1.330.0',
-        'content-type': 'application/json',
-        'user-agent': 'GithubCopilot/1.330.0',
-        'accept-encoding': 'gzip,deflate,br',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: params.model,
-        messages: params.messages,
-        temperature: params.temperature,
-        max_tokens: params.maxTokens,
-        top_p: params.topP,
-        ...(params.tools && { tools: params.tools }),
-        ...(params.tool_choice && { tool_choice: params.tool_choice }),
-      }),
-      signal,
+  protected getCommonHeaders(): Record<string, string> {
+    return {
+      ...super.getCommonHeaders(),
+      accept: 'application/json',
+      'editor-version': 'vscode/1.100.3',
+      'editor-plugin-version': 'GitHub.copilot/1.330.0',
+      'user-agent': 'GithubCopilot/1.330.0',
+      'accept-encoding': 'gzip,deflate,br',
+    };
+  }
+
+  protected async makeRequest(
+    endpoint: string,
+    options: {
+      method?: string;
+      body?: any;
+      signal?: AbortSignal;
+      headers?: Record<string, string>;
+    } = {},
+  ): Promise<Response> {
+    const url = `${this.apiUrl}${endpoint}`;
+    const headers = { ...this.getCommonHeaders(), ...options.headers };
+
+    const response = await smartFetch(url, {
+      method: options.method || 'POST',
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: options.signal,
     });
 
     if (!response.ok) {
@@ -53,33 +56,36 @@ export class GithubCopilotProvider implements LLMProvider {
       throw new Error(`GitHub Copilot API error: ${response.status} - ${text}`);
     }
 
-    const data = await response.json();
-    const message = data.choices?.[0]?.message;
-    const content: string = message?.content ?? '';
-    const tool_calls = message?.tool_calls;
+    return response;
+  }
 
-    return {
-      content,
-      ...(tool_calls && { tool_calls }),
-    };
+  async generateCompletion(
+    params: CompletionParams,
+    signal?: AbortSignal,
+  ): Promise<CompletionResult> {
+    const response = await this.makeRequest('/chat/completions', {
+      body: {
+        model: params.model,
+        messages: params.messages,
+        temperature: params.temperature,
+        max_tokens: params.maxTokens,
+        top_p: params.topP,
+        ...(params.tools && { tools: params.tools }),
+        ...(params.tool_choice && { tool_choice: params.tool_choice }),
+      },
+      signal,
+    });
+
+    const data = await response.json();
+    return this.createCompletionResult(data);
   }
 
   async *generateCompletionStream(
     params: CompletionParams,
     signal?: AbortSignal,
   ): AsyncGenerator<string> {
-    const response = await smartFetch(`${this.apiUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'editor-version': 'vscode/1.100.3',
-        'editor-plugin-version': 'GitHub.copilot/1.330.0',
-        'content-type': 'application/json',
-        'user-agent': 'GithubCopilot/1.330.0',
-        'accept-encoding': 'gzip,deflate,br',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
+    const response = await this.makeRequest('/chat/completions', {
+      body: {
         model: params.model,
         messages: params.messages,
         temperature: params.temperature,
@@ -88,70 +94,58 @@ export class GithubCopilotProvider implements LLMProvider {
         stream: true,
         ...(params.tools && { tools: params.tools }),
         ...(params.tool_choice && { tool_choice: params.tool_choice }),
-      }),
+      },
       signal,
     });
 
-    if (!response.ok || !response.body) {
-      const text = await response.text();
-      if (response.status === 403) {
-        throw new Error(
-          `GitHub Copilot API access denied. Please ensure you have a valid GitHub Copilot subscription and the correct authentication token. Status: ${response.status}`,
-        );
-      }
-      throw new Error(`GitHub Copilot API error: ${response.status} - ${text}`);
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body for streaming');
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-    let buffer = '';
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-
-      // Check for cancellation
-      if (signal?.aborted) {
-        throw new Error('Request cancelled by user');
+    for await (const data of this.parseStream(reader, {}, signal)) {
+      const content = this.extractValue(data, 'choices.0.delta.content');
+      if (content) {
+        yield content;
       }
+    }
+  }
 
-      if (value) {
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          if (trimmed === 'data: [DONE]') return;
-          if (!trimmed.startsWith('data:')) continue;
-          const data = JSON.parse(trimmed.slice('data:'.length));
-          const delta = data.choices?.[0]?.delta?.content;
-          if (delta) {
-            yield delta;
-          }
-        }
-      }
+  async *generateCompletionStreamWithTools(
+    params: CompletionParams,
+    signal?: AbortSignal,
+  ): AsyncGenerator<StreamChunk> {
+    const response = await this.makeRequest('/chat/completions', {
+      body: {
+        model: params.model,
+        messages: params.messages,
+        temperature: params.temperature,
+        max_tokens: params.maxTokens,
+        top_p: params.topP,
+        stream: true,
+        ...(params.tools && { tools: params.tools }),
+        ...(params.tool_choice && { tool_choice: params.tool_choice }),
+      },
+      signal,
+    });
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body for streaming');
+    }
+
+    for await (const chunk of this.parseStreamWithTools(reader, {}, signal)) {
+      yield chunk;
     }
   }
 
   async getModels(): Promise<ModelInfo[]> {
     try {
       // Try Copilot API first, fallback to public GitHub Models API
-      let response;
+      let response: Response;
       try {
-        response = await smartFetch(`${this.apiUrl}/models`, {
+        response = await this.makeRequest('/models', {
           method: 'GET',
-          headers: {
-            accept: 'application/json',
-            'editor-version': 'vscode/1.100.3',
-            'editor-plugin-version': 'GitHub.copilot/1.330.0',
-            'content-type': 'application/json',
-            'user-agent': 'GithubCopilot/1.330.0',
-            'accept-encoding': 'gzip,deflate,br',
-            Authorization: `Bearer ${this.apiKey}`,
-            'x-github-api-version': '2025-05-01',
-          },
         });
       } catch (error) {
         console.warn(
@@ -179,11 +173,9 @@ export class GithubCopilotProvider implements LLMProvider {
         ? data
         : data.models || data.data || [];
 
-      // Transform GitHub models to our ModelInfo format
       const transformedModels = models
         .map((model: any): ModelInfo => {
-          return {
-            id: model.id,
+          return this.formatModelInfo(model, {
             name: model.name || this.getModelDisplayName(model.id),
             contextLength: this.getContextLength(model.id),
             inputCost: 0, // No additional cost through Copilot subscription
@@ -191,10 +183,9 @@ export class GithubCopilotProvider implements LLMProvider {
             modality: this.getModality(model.id),
             inputModalities: this.getInputModalities(model.id),
             outputModalities: this.getOutputModalities(model.id),
-            supportedParameters: ['temperature', 'top_p', 'max_tokens'],
-          };
+          });
         })
-        .sort((a: ModelInfo, b: ModelInfo) => this.sortModels(a, b));
+        .sort((a: ModelInfo, b: ModelInfo) => this.sortModelsByPriority(a, b));
 
       return transformedModels;
     } catch (error) {
@@ -270,18 +261,10 @@ export class GithubCopilotProvider implements LLMProvider {
   }
 
   private getOutputModalities(modelId: string): string[] {
-    if (
-      modelId.includes('gpt-4o') ||
-      modelId.includes('o1') ||
-      modelId.includes('o3') ||
-      modelId.includes('o4')
-    ) {
-      return ['text'];
-    }
     return ['text'];
   }
 
-  private sortModels(a: ModelInfo, b: ModelInfo): number {
+  private sortModelsByPriority(a: ModelInfo, b: ModelInfo): number {
     // Sort by model priority (GPT-4.1 > o4-mini > o3 > o1 > GPT-4o > Jamba > Cohere)
     const getModelPriority = (id: string): number => {
       if (

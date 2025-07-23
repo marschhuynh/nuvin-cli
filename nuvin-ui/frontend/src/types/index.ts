@@ -1,4 +1,5 @@
 // Import tool configuration from tools module
+import type { PROVIDER_TYPES } from '@/lib/providers/provider-utils';
 import type { AgentToolConfig } from './tools';
 
 export interface Message {
@@ -51,7 +52,7 @@ export interface AgentConfig {
 export interface ProviderConfig {
   id: string;
   name: string; // Custom name for the provider instance
-  type: string; // Provider type (OpenAI, Anthropic, GitHub, etc.)
+  type: PROVIDER_TYPES; // Provider type (OpenAI, Anthropic, GitHub, etc.)
   apiKey: string;
   activeModel: ModelConfig;
 }

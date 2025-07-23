@@ -1,4 +1,4 @@
-import { AgentSettings, Message } from '@/types';
+import type { AgentSettings, Message } from '@/types';
 import type { ChatMessage } from '../providers';
 import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 

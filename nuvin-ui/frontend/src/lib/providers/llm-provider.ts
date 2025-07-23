@@ -18,7 +18,7 @@ export interface ChatMessage {
 export interface FunctionDefinition {
   name: string;
   description: string;
-  parameters: any; // JSON Schema
+  parameters: object; // JSON Schema
 }
 
 export interface ToolDefinition {

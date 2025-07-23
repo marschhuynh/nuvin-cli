@@ -1,9 +1,14 @@
-import { AgentSettings, ProviderConfig, Message } from '@/types';
+import type { AgentSettings, ProviderConfig, Message } from '@/types';
 import { generateUUID } from './utils';
-
-import { a2aService, A2AAuthConfig, A2AError, A2AErrorType } from './a2a';
-import type { Task } from './a2a';
-import { BaseAgent, LocalAgent, A2AAgent } from './agents';
+import {
+  a2aService,
+  type A2AAuthConfig,
+  A2AError,
+  type A2AErrorType,
+  type Task,
+} from './a2a';
+import { type BaseAgent, LocalAgent, A2AAgent } from './agents';
+import { PROVIDER_TYPES } from './providers/provider-utils';
 
 export interface SendMessageOptions {
   conversationId?: string;
@@ -396,18 +401,18 @@ export class AgentManager {
 
     // TODO: Implement dynamic model listing based on provider
     switch (this.activeProvider.type) {
-      case 'OpenAI':
+      case PROVIDER_TYPES.OpenAI:
         return ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
-      case 'Anthropic':
+      case PROVIDER_TYPES.Anthropic:
         return [
           'claude-3-opus',
           'claude-3-sonnet',
           'claude-3-haiku',
           'claude-2',
         ];
-      case 'GitHub':
+      case PROVIDER_TYPES.GitHub:
         return ['gpt-4', 'gpt-3.5-turbo'];
-      case 'OpenRouter':
+      case PROVIDER_TYPES.OpenRouter:
         return [
           'openai/gpt-4',
           'openai/gpt-4-turbo',

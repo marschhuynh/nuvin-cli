@@ -18,8 +18,20 @@ import {
 } from '@/components/ui/select';
 import { useProviderStore } from '@/store/useProviderStore';
 import { fetchGithubCopilotKey } from '@/lib/github';
+import { PROVIDER_TYPES } from '@/lib/providers/provider-utils';
 
-const PROVIDER_OPTIONS = ['OpenAI', 'Anthropic', 'OpenRouter', 'GitHub'];
+const PROVIDER_OPTIONS = [
+  PROVIDER_TYPES.OpenAI,
+  PROVIDER_TYPES.Anthropic,
+  PROVIDER_TYPES.OpenRouter,
+  PROVIDER_TYPES.GitHub,
+];
+
+console.log(
+  'EditProviderModal loaded',
+  PROVIDER_OPTIONS.map((type) => type.toString()),
+  PROVIDER_TYPES.OpenAI,
+);
 
 interface EditProviderModalProps {
   open: boolean;
@@ -33,8 +45,8 @@ export function EditProviderModal({
   provider,
 }: EditProviderModalProps) {
   const { updateProvider, isNameUnique } = useProviderStore();
-  const [editName, setEditName] = useState('');
-  const [editType, setEditType] = useState('');
+  const [editName, setEditName] = useState(PROVIDER_TYPES.OpenAI);
+  const [editType, setEditType] = useState(PROVIDER_TYPES.OpenAI);
   const [editKey, setEditKey] = useState('');
   const [nameError, setNameError] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -74,7 +86,7 @@ export function EditProviderModal({
   const handleClose = () => {
     onOpenChange(false);
     setEditName('');
-    setEditType('');
+    setEditType(PROVIDER_TYPES.OpenAI);
     setEditKey('');
     setNameError('');
     setShowApiKey(false);
@@ -122,7 +134,7 @@ export function EditProviderModal({
 
           <div>
             <Label htmlFor="provider-type">Provider Type</Label>
-            <Select value={editType} onValueChange={setEditType}>
+            <Select value={editType} onValueChange={setEditType as any}>
               <SelectTrigger>
                 <SelectValue placeholder="Select provider type" />
               </SelectTrigger>
@@ -162,7 +174,7 @@ export function EditProviderModal({
                   )}
                 </Button>
               </div>
-              {editType === 'GitHub' && (
+              {editType === PROVIDER_TYPES.GitHub && (
                 <Button
                   type="button"
                   variant="outline"

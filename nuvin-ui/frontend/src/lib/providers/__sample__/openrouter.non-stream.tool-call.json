@@ -1,0 +1,37 @@
+{
+    "id": "gen-1753252281-C0eE9rjoR7XCr1INVkIr",
+    "provider": "DeepInfra",
+    "model": "moonshotai/kimi-k2",
+    "object": "chat.completion",
+    "created": 1753252281,
+    "choices": [
+        {
+            "logprobs": null,
+            "finish_reason": null,
+            "native_finish_reason": null,
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "I'll check the current time for you.",
+                "refusal": null,
+                "reasoning": null,
+                "tool_calls": [
+                    {
+                        "index": 0,
+                        "id": "0",
+                        "function": {
+                            "arguments": "{\"format\": \"readable\"}",
+                            "name": "get_current_time"
+                        },
+                        "type": "function"
+                    }
+                ]
+            }
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 466,
+        "completion_tokens": 18,
+        "total_tokens": 484
+    }
+}

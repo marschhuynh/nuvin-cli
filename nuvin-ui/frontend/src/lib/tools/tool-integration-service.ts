@@ -99,11 +99,11 @@ export class ToolIntegrationService {
     const enabledToolNames = new Set(agentToolConfig?.enabledTools || []);
 
     // Only include MCP tools that are explicitly enabled
-    const mcpTools = toolRegistry.getAllMCPTools();
-    const explicitlyEnabledMCPTools = mcpTools.filter(
-      (mcpTool) =>
-        enabledToolNames.has(mcpTool.definition.name) && mcpTool.isAvailable(),
-    );
+    // const mcpTools = toolRegistry.getAllMCPTools();
+    // const explicitlyEnabledMCPTools = mcpTools.filter(
+    //   (mcpTool) =>
+    //     enabledToolNames.has(mcpTool.definition.name) && mcpTool.isAvailable(),
+    // );
 
     // Filter tool calls to only include enabled tools
     const allowedToolCalls = result.tool_calls.filter((call) =>

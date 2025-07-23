@@ -24,5 +24,8 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "biome.enabled": true
+  "biome.enabled": true,
+  "cSpell.words": [
+    "openrouter"
+  ]
 }

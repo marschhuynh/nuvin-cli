@@ -1,28 +1,35 @@
-import { LLMProvider, ModelInfo } from './llm-provider';
+import type { LLMProvider, ModelInfo } from './llm-provider';
 import { OpenAIProvider } from './openai-provider';
 import { AnthropicProvider } from './anthropic-provider';
 import { OpenRouterProvider } from './openrouter-provider';
 import { GithubCopilotProvider } from './github-provider';
 
-export type ProviderType = 'OpenAI' | 'Anthropic' | 'OpenRouter' | 'GitHub';
+export enum PROVIDER_TYPES {
+  OpenAI = 'openai',
+  Anthropic = 'anthropic',
+  OpenRouter = 'openrouter',
+  GitHub = 'github',
+}
+
+export type ProviderType = PROVIDER_TYPES;
 
 export type { ModelInfo } from './llm-provider';
 
 export interface LLMProviderConfig {
-  type: ProviderType;
+  type: PROVIDER_TYPES;
   apiKey: string;
   name?: string;
 }
 
 export function createProvider(config: LLMProviderConfig): LLMProvider {
   switch (config.type) {
-    case 'OpenAI':
+    case PROVIDER_TYPES.OpenAI:
       return new OpenAIProvider(config.apiKey);
-    case 'Anthropic':
+    case PROVIDER_TYPES.Anthropic:
       return new AnthropicProvider(config.apiKey);
-    case 'OpenRouter':
+    case PROVIDER_TYPES.OpenRouter:
       return new OpenRouterProvider(config.apiKey);
-    case 'GitHub':
+    case PROVIDER_TYPES.GitHub:
       return new GithubCopilotProvider(config.apiKey);
     default:
       throw new Error(`Unsupported provider type: ${config.type}`);
@@ -62,13 +69,13 @@ export async function fetchAllProviderModels(
 
 export function getDefaultModel(providerType: ProviderType): string {
   switch (providerType) {
-    case 'OpenAI':
+    case PROVIDER_TYPES.OpenAI:
       return 'gpt-4o';
-    case 'Anthropic':
+    case PROVIDER_TYPES.Anthropic:
       return 'claude-3-5-sonnet-20241022';
-    case 'OpenRouter':
+    case PROVIDER_TYPES.OpenRouter:
       return 'meta-llama/llama-3.2-3b-instruct:free';
-    case 'GitHub':
+    case PROVIDER_TYPES.GitHub:
       return 'gpt-4o';
     default:
       return '';

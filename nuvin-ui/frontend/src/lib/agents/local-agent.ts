@@ -1,25 +1,11 @@
-import { ProviderConfig, AgentSettings, Message } from '@/types';
-import {
-  createProvider,
-  ChatMessage,
-  LLMProviderConfig,
-  ProviderType,
-} from '../providers';
+import type { ProviderConfig, AgentSettings, Message } from '@/types';
+import type { ToolContext } from '@/types/tools';
+import { createProvider, type ChatMessage } from '../providers';
 import { generateUUID } from '../utils';
 import { calculateCost } from '../utils/cost-calculator';
-import { BaseAgent } from './base-agent';
 import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 import { toolIntegrationService } from '../tools';
-import type { ToolContext } from '@/types/tools';
-
-// Convert from existing ProviderConfig to our LLMProviderConfig
-function convertToLLMProviderConfig(config: ProviderConfig): LLMProviderConfig {
-  return {
-    type: config.type as ProviderType,
-    apiKey: config.apiKey,
-    name: config.name,
-  };
-}
+import { BaseAgent } from './base-agent';
 
 export class LocalAgent extends BaseAgent {
   private abortController: AbortController | null = null;
@@ -43,7 +29,8 @@ export class LocalAgent extends BaseAgent {
     const startTime = Date.now();
     const messageId = generateUUID();
     const provider = createProvider(
-      convertToLLMProviderConfig(this.providerConfig),
+      // convertToLLMProviderConfig(this.providerConfig),
+      this.providerConfig,
     );
     const convoId = options.conversationId || 'default';
     const messages: ChatMessage[] = this.buildContext(convoId, content);
@@ -163,7 +150,7 @@ export class LocalAgent extends BaseAgent {
     if (result.tool_calls) {
       console.log(
         `[LocalAgent] Tool calls detected:`,
-        result.tool_calls.map((tc) => tc.function.name),
+        result.tool_calls.map((tc: any) => tc.function.name),
       );
     }
 
@@ -254,7 +241,8 @@ export class LocalAgent extends BaseAgent {
     startTime: number,
   ): Promise<MessageResponse> {
     const provider = createProvider(
-      convertToLLMProviderConfig(this.providerConfig),
+      // convertToLLMProviderConfig(this.providerConfig),
+      this.providerConfig,
     );
 
     if (!provider.generateCompletionStreamWithTools) {
