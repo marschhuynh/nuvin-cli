@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useAgentStore } from '@/store/useAgentStore';
 import { useProviderStore } from '@/store/useProviderStore';
+import { useConversationStore } from '@/store/useConversationStore';
 import {
   agentManager,
   type SendMessageOptions,
@@ -30,6 +31,10 @@ export function useAgentManager() {
     activeProviderId,
     setActiveProvider: setStoreActiveProvider,
   } = useProviderStore();
+  const {
+    getConversationMessages,
+    activeConversationId,
+  } = useConversationStore();
 
   // Get current active agent and provider
   const activeAgent = useMemo(
@@ -55,6 +60,14 @@ export function useAgentManager() {
       agentManager.setActiveProvider(activeProvider);
     }
   }, [activeProvider]);
+
+  // Initialize conversation history when active conversation changes
+  useEffect(() => {
+    agentManager.initializeHistoryFromStore({
+      getConversationMessages,
+      activeConversationId,
+    });
+  }, [activeConversationId, getConversationMessages]);
 
   // Set active agent (updates both store and manager)
   const setActiveAgent = useCallback(

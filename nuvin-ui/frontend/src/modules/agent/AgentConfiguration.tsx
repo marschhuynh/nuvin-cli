@@ -29,7 +29,6 @@ import {
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { formatContextLength } from '@/lib/providers/provider-utils';
-import { AgentStatusDisplay } from '@/components/agent/AgentStatusDisplay';
 
 interface AgentConfigurationProps {
   onConfigChange?: (config: AgentConfig) => void;
@@ -574,9 +573,6 @@ export function AgentConfiguration({
               )}
             </div>
           )}
-
-          {/* Agent Status Display - Always show when an agent is selected */}
-          <AgentStatusDisplay className="mt-4" />
         </div>
       </div>
     </div>

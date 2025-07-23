@@ -440,6 +440,44 @@ export class AgentManager {
   }
 
   /**
+   * Initialize conversation history from conversation store
+   * This should be called when the app initializes or when conversation changes
+   */
+  initializeHistoryFromStore(conversationStore: {
+    getConversationMessages: (conversationId: string) => Message[];
+    activeConversationId: string | null;
+  }): void {
+    this.conversationHistory.clear();
+    
+    if (!conversationStore.activeConversationId) {
+      return;
+    }
+
+    const messages = conversationStore.getConversationMessages(conversationStore.activeConversationId);
+    if (messages && messages.length > 0) {
+      this.conversationHistory.set(conversationStore.activeConversationId, [...messages]);
+    }
+  }
+
+  /**
+   * Refresh conversation history for a specific conversation
+   * Useful for manual refresh scenarios
+   */
+  refreshHistoryForConversation(
+    conversationStore: {
+      getConversationMessages: (conversationId: string) => Message[];
+    },
+    conversationId: string
+  ): void {
+    const messages = conversationStore.getConversationMessages(conversationId);
+    if (messages && messages.length > 0) {
+      this.conversationHistory.set(conversationId, [...messages]);
+    } else {
+      this.conversationHistory.delete(conversationId);
+    }
+  }
+
+  /**
    * Get connection health for an agent
    */
   getConnectionHealth(agentUrl: string) {
