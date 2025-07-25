@@ -294,14 +294,46 @@ export function AgentSettings() {
               {agents.length}
             </span>
           </div>
-          <Button size="sm" onClick={handleCreateAgent}>
-            <Plus className="h-4 w-4 mr-1" />
-            Add
+          <Button
+            size="sm"
+            onClick={isCreating ? handleCancelEdit : handleCreateAgent}
+            variant={isCreating ? 'outline' : 'default'}
+            className={
+              isCreating
+                ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30'
+                : ''
+            }
+          >
+            {isCreating ? (
+              <>
+                <X className="h-4 w-4 mr-1" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </>
+            )}
           </Button>
         </div>
 
         {/* Agent List */}
         <div className="flex-1 overflow-auto p-4">
+          {/* Create Mode Banner */}
+          {isCreating && (
+            <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Creating New Agent
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                Fill out the form to create your new agent
+              </p>
+            </div>
+          )}
+
           {agents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bot className="h-12 w-12 text-muted-foreground mb-4" />
@@ -317,7 +349,7 @@ export function AgentSettings() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className={`space-y-2 ${isCreating ? 'opacity-50' : ''}`}>
               {agents.map((agent) => (
                 <button
                   key={agent.id}
@@ -326,7 +358,7 @@ export function AgentSettings() {
                     selectedAgentId === agent.id && !isCreating
                       ? 'border-primary bg-primary/5 shadow-sm'
                       : 'border-border hover:border-primary/50'
-                  }`}
+                  } ${isCreating ? 'pointer-events-none' : ''}`}
                   onClick={() => {
                     if (!isEditing) {
                       setSelectedAgentId(agent.id);
@@ -375,24 +407,38 @@ export function AgentSettings() {
         {(selectedAgent && !isCreating) || isEditing ? (
           <>
             {/* Form Header */}
-            <div className="p-4 bg-card border-b">
+            <div
+              className={`p-4 border-b ${
+                isCreating
+                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800'
+                  : 'bg-card'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div
                     className={`p-1.5 rounded-lg ${
-                      agentData.agentType === 'remote'
-                        ? 'bg-blue-50 dark:bg-blue-950/30'
-                        : 'bg-green-50 dark:bg-green-950/30'
+                      isCreating
+                        ? 'bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-200 dark:ring-blue-700'
+                        : agentData.agentType === 'remote'
+                          ? 'bg-blue-50 dark:bg-blue-950/30'
+                          : 'bg-green-50 dark:bg-green-950/30'
                     }`}
                   >
-                    {agentData.agentType === 'remote' ? (
+                    {isCreating ? (
+                      <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    ) : agentData.agentType === 'remote' ? (
                       <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     ) : (
                       <Home className="h-5 w-5 text-green-600 dark:text-green-400" />
                     )}
                   </div>
                   <div>
-                    <h1 className="text-lg font-semibold">
+                    <h1
+                      className={`text-lg font-semibold ${
+                        isCreating ? 'text-blue-900 dark:text-blue-100' : ''
+                      }`}
+                    >
                       {isCreating
                         ? 'Create New Agent'
                         : `${isEditing ? 'Edit' : ''} ${selectedAgent?.name}`}
@@ -416,7 +462,7 @@ export function AgentSettings() {
                         disabled={!isFormValid}
                       >
                         <Save className="h-4 w-4 mr-1" />
-                        Save
+                        {isCreating ? 'Create' : 'Save'}
                       </Button>
                     </>
                   )}
@@ -445,7 +491,7 @@ export function AgentSettings() {
             </div>
 
             {/* Agent Form - 2 Column Layout */}
-            <div className="flex-1 flex p-6 gap-6 min-h-0 overflow-hidden">
+            <div className={`flex-1 flex p-6 gap-6 min-h-0 overflow-hidden`}>
               {/* Left Column - Agent Configuration */}
               <div className="flex flex-col w-1/3 space-y-6">
                 {/* Basic Settings */}

@@ -36,6 +36,7 @@ export function MCPSettings() {
   const { preferences, updatePreferences } = useUserPreferenceStore();
   const [showAddMCPModal, setShowAddMCPModal] = useState(false);
   const [editingMCP, setEditingMCP] = useState<MCPConfig | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [selectedMCPId, setSelectedMCPId] = useState<string | null>(
     preferences?.mcpServers?.[0]?.id || null,
   );
@@ -58,6 +59,7 @@ export function MCPSettings() {
   const handleEditMCP = (mcp: MCPConfig) => {
     setEditingMCP(mcp);
     setSelectedMCPId(mcp.id);
+    setIsCreating(false);
     setMcpForm({
       name: mcp.name,
       type: mcp.type,
@@ -87,11 +89,14 @@ export function MCPSettings() {
   const handleCreateMCP = () => {
     setEditingMCP(null);
     setSelectedMCPId(null);
+    setIsCreating(true);
     setMcpForm({
       name: '',
+      type: 'stdio',
       command: '',
       args: [],
       env: {},
+      url: '',
       enabled: true,
       description: '',
     });
@@ -100,6 +105,7 @@ export function MCPSettings() {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setIsCreating(false);
     setEditingMCP(null);
     if (selectedMCP) {
       // Reload MCP data
@@ -145,6 +151,7 @@ export function MCPSettings() {
     }
 
     setIsEditing(false);
+    setIsCreating(false);
     setEditingMCP(null);
   };
 
@@ -239,14 +246,46 @@ export function MCPSettings() {
                 {(preferences?.mcpServers || []).length}
               </span>
             </div>
-            <Button size="sm" onClick={handleCreateMCP}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add
+            <Button
+              size="sm"
+              onClick={isCreating ? handleCancelEdit : handleCreateMCP}
+              variant={isCreating ? 'outline' : 'default'}
+              className={
+                isCreating
+                  ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30'
+                  : ''
+              }
+            >
+              {isCreating ? (
+                <>
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </>
+              )}
             </Button>
           </div>
 
           {/* MCP Server List */}
           <div className="flex-1 overflow-auto p-4">
+            {/* Create Mode Banner */}
+            {isCreating && (
+              <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    Creating New MCP Server
+                  </span>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                  Fill out the form to create your new MCP server
+                </p>
+              </div>
+            )}
+
             {(preferences?.mcpServers || []).length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Settings className="h-12 w-12 text-muted-foreground mb-4" />
@@ -262,25 +301,27 @@ export function MCPSettings() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className={`space-y-2 ${isCreating ? 'opacity-50' : ''}`}>
                 {(preferences?.mcpServers || []).map((mcp) => (
                   <button
                     type="button"
                     key={mcp.id}
                     className={`w-full text-left p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${
-                      selectedMCPId === mcp.id
+                      selectedMCPId === mcp.id && !isCreating
                         ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-border hover:border-primary/50'
-                    }`}
+                    } ${isCreating ? 'pointer-events-none' : ''}`}
                     onClick={() => {
                       if (!isEditing) {
                         setSelectedMCPId(mcp.id);
+                        setIsCreating(false);
                       }
                     }}
                     onKeyDown={(e) => {
                       if ((e.key === 'Enter' || e.key === ' ') && !isEditing) {
                         e.preventDefault();
                         setSelectedMCPId(mcp.id);
+                        setIsCreating(false);
                       }
                     }}
                     disabled={isEditing}
@@ -325,22 +366,42 @@ export function MCPSettings() {
 
         {/* Right Panel - Details/Configuration */}
         <div className="flex-1 flex flex-col">
-          {(selectedMCP && !editingMCP) || isEditing ? (
+          {(selectedMCP && !isCreating) || isEditing ? (
             <>
               {/* Server Details Header */}
-              <div className="p-4 bg-card">
+              <div
+                className={`p-4 border-b ${
+                  isCreating
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800'
+                    : 'bg-card'
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30">
-                      <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div
+                      className={`p-1.5 rounded-lg ${
+                        isCreating
+                          ? 'bg-blue-100 dark:bg-blue-900/50 ring-2 ring-blue-200 dark:ring-blue-700'
+                          : 'bg-blue-50 dark:bg-blue-950/30'
+                      }`}
+                    >
+                      {isCreating ? (
+                        <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      ) : (
+                        <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      )}
                     </div>
                     <div>
-                      <h1 className="text-lg font-semibold">
-                        {editingMCP
-                          ? `Edit ${editingMCP.name}`
-                          : !selectedMCP
-                            ? 'Create New MCP Server'
-                            : selectedMCP.name}
+                      <h1
+                        className={`text-lg font-semibold ${
+                          isCreating ? 'text-blue-900 dark:text-blue-100' : ''
+                        }`}
+                      >
+                        {isCreating
+                          ? 'Create New MCP Server'
+                          : editingMCP
+                            ? `Edit ${editingMCP.name}`
+                            : selectedMCP?.name}
                       </h1>
                     </div>
                   </div>
@@ -410,7 +471,7 @@ export function MCPSettings() {
               </div>
 
               {/* Server Details Content */}
-              <div className="flex-1 p-6 overflow-auto">
+              <div className={`flex-1 p-6 overflow-auto `}>
                 <div className="space-y-6">
                   {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -455,7 +516,9 @@ export function MCPSettings() {
                               <SelectValue placeholder="Select transport type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="stdio">Stdio (Process)</SelectItem>
+                              <SelectItem value="stdio">
+                                Stdio (Process)
+                              </SelectItem>
                               <SelectItem value="http">HTTP/SSE</SelectItem>
                             </SelectContent>
                           </Select>
