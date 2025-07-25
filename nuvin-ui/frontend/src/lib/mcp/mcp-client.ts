@@ -18,6 +18,157 @@ import type {
   MCPClientInfo,
 } from '@/types/mcp';
 
+/**
+ * HTTP-based MCP connection implementation
+ */
+class HttpMCPConnection implements MCPConnection {
+  private url: string;
+  private headers: Record<string, string>;
+  private messageHandler?: (message: JSONRPCResponse | JSONRPCNotification) => void;
+  private errorHandler?: (error: Error) => void;
+  private closeHandler?: () => void;
+  private eventSource?: EventSource;
+  private isConnected = false;
+  private requestQueue: Array<{ request: JSONRPCRequest | JSONRPCNotification; resolve: () => void; reject: (error: Error) => void }> = [];
+
+  constructor(url: string, headers: Record<string, string> = {}) {
+    this.url = url;
+    this.headers = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+  }
+
+  async connect(): Promise<void> {
+    if (this.isConnected) {
+      return;
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        // Set up Server-Sent Events for receiving messages
+        const sseUrl = new URL(this.url);
+        sseUrl.pathname = sseUrl.pathname.replace(/\/$/, '') + '/events';
+        
+        this.eventSource = new EventSource(sseUrl.toString());
+        
+        const timeout = setTimeout(() => {
+          this.eventSource?.close();
+          reject(new Error('Connection timeout'));
+        }, 10000);
+
+        this.eventSource.onopen = () => {
+          clearTimeout(timeout);
+          this.isConnected = true;
+          // Process any queued requests
+          this.processRequestQueue();
+          resolve();
+        };
+
+        this.eventSource.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            if (this.messageHandler) {
+              this.messageHandler(message);
+            }
+          } catch (error) {
+            console.error('Failed to parse SSE message:', error);
+            if (this.errorHandler) {
+              this.errorHandler(error instanceof Error ? error : new Error(String(error)));
+            }
+          }
+        };
+
+        this.eventSource.onerror = (error) => {
+          console.error('SSE connection error:', error);
+          if (!this.isConnected) {
+            clearTimeout(timeout);
+            reject(new Error('SSE connection failed'));
+          } else {
+            this.isConnected = false;
+            if (this.errorHandler) {
+              this.errorHandler(new Error('SSE connection error'));
+            }
+          }
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  async send(message: JSONRPCRequest | JSONRPCNotification): Promise<void> {
+    if (!this.isConnected) {
+      // Queue the request until connected
+      return new Promise((resolve, reject) => {
+        this.requestQueue.push({ request: message, resolve, reject });
+      });
+    }
+
+    try {
+      const response = await fetch(this.url, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(message),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // For requests (not notifications), we expect a response via SSE
+      // For notifications, we just need to ensure the POST was successful
+    } catch (error) {
+      throw error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  async close(): Promise<void> {
+    this.isConnected = false;
+    
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = undefined;
+    }
+
+    // Reject any queued requests
+    for (const item of this.requestQueue) {
+      item.reject(new Error('Connection closed'));
+    }
+    this.requestQueue = [];
+
+    if (this.closeHandler) {
+      this.closeHandler();
+    }
+  }
+
+  onMessage(handler: (message: JSONRPCResponse | JSONRPCNotification) => void): void {
+    this.messageHandler = handler;
+  }
+
+  onError(handler: (error: Error) => void): void {
+    this.errorHandler = handler;
+  }
+
+  onClose(handler: () => void): void {
+    this.closeHandler = handler;
+  }
+
+  private async processRequestQueue(): Promise<void> {
+    while (this.requestQueue.length > 0 && this.isConnected) {
+      const item = this.requestQueue.shift();
+      if (item) {
+        try {
+          await this.send(item.request);
+          item.resolve();
+        } catch (error) {
+          item.reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+    }
+  }
+}
+
 export class MCPClient {
   private connection: MCPConnection | null = null;
   private serverId: string;
@@ -259,11 +410,9 @@ export class MCPClient {
       throw new Error('URL is required for HTTP transport');
     }
 
-    // Note: This is a simplified HTTP transport implementation
-    // In practice, you might want to use WebSockets or Server-Sent Events
-    throw new Error(
-      'HTTP transport not implemented - requires WebSocket or SSE implementation',
-    );
+    const connection = new HttpMCPConnection(url, headers);
+    await connection.connect();
+    return connection;
   }
 
   /**

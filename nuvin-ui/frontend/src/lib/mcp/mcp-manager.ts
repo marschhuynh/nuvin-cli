@@ -4,6 +4,7 @@ import type {
   ExtendedMCPConfig,
   MCPClientEvent,
   MCPClientEventHandler,
+  MCPTransportOptions,
 } from '@/types/mcp';
 import { MCPClient } from './mcp-client';
 import { type MCPTool, createMCPTools } from './mcp-tool';
@@ -62,13 +63,21 @@ export class MCPManager {
     this.configs.set(serverId, extendedConfig);
 
     try {
-      // Create MCP client
-      const client = new MCPClient(serverId, {
-        type: 'stdio', // For now, only stdio is implemented
-        command: config.command,
-        args: config.args,
-        env: config.env,
-      });
+      // Create MCP client with appropriate transport options
+      const transportOptions: MCPTransportOptions = config.type === 'http' 
+        ? {
+            type: 'http',
+            url: config.url,
+            headers: config.env, // Use env field for HTTP headers
+          }
+        : {
+            type: 'stdio',
+            command: config.command,
+            args: config.args,
+            env: config.env,
+          };
+
+      const client = new MCPClient(serverId, transportOptions);
 
       // Set up event handling
       client.onEvent(this.handleClientEvent.bind(this));

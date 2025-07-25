@@ -123,13 +123,15 @@ export interface MCPTransportOptions {
   headers?: Record<string, string>;
 }
 
-// Extended MCP Config (building on existing MCPConfig)
+// MCP Config for server configuration
 export interface MCPConfig {
   id: string;
   name: string;
-  command: string;
+  type: 'stdio' | 'http';
+  command?: string;
   args?: string[];
   env?: Record<string, string>;
+  url?: string;
   enabled: boolean;
   description?: string;
 }

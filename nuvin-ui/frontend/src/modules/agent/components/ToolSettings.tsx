@@ -1,7 +1,7 @@
+import { useState } from 'react';
+import { Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Wrench, Search } from 'lucide-react';
-import { useState } from 'react';
 import { toolRegistry } from '@/lib/tools';
 import type { AgentToolConfig } from '@/types/tools';
 
@@ -53,7 +53,7 @@ export function ToolSettings({
       {/* Tool Settings */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="maxConcurrentCalls">Max Concurrent Tool Calls</Label>
+          <Label htmlFor="maxConcurrentCalls">Max Concurrent</Label>
           {isEditing ? (
             <Input
               id="maxConcurrentCalls"

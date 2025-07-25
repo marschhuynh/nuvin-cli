@@ -5,6 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Plus,
   Edit,
   Trash2,
@@ -15,7 +22,7 @@ import {
   Save,
 } from 'lucide-react';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
-import type { MCPConfig } from '@/store/useUserPreferenceStore';
+import type { MCPConfig } from '@/types/mcp';
 import {
   Dialog,
   DialogContent,
@@ -30,14 +37,16 @@ export function MCPSettings() {
   const [showAddMCPModal, setShowAddMCPModal] = useState(false);
   const [editingMCP, setEditingMCP] = useState<MCPConfig | null>(null);
   const [selectedMCPId, setSelectedMCPId] = useState<string | null>(
-    preferences?.mcpServers[0]?.id || null,
+    preferences?.mcpServers?.[0]?.id || null,
   );
   const [isEditing, setIsEditing] = useState(false);
   const [mcpForm, setMcpForm] = useState<Partial<MCPConfig>>({
     name: '',
+    type: 'stdio',
     command: '',
     args: [],
     env: {},
+    url: '',
     enabled: true,
     description: '',
   });
@@ -51,9 +60,11 @@ export function MCPSettings() {
     setSelectedMCPId(mcp.id);
     setMcpForm({
       name: mcp.name,
+      type: mcp.type,
       command: mcp.command,
       args: mcp.args || [],
       env: mcp.env || {},
+      url: mcp.url,
       enabled: mcp.enabled,
       description: mcp.description || '',
     });
@@ -94,9 +105,11 @@ export function MCPSettings() {
       // Reload MCP data
       setMcpForm({
         name: selectedMCP.name,
+        type: selectedMCP.type,
         command: selectedMCP.command,
         args: selectedMCP.args || [],
         env: selectedMCP.env || {},
+        url: selectedMCP.url,
         enabled: selectedMCP.enabled,
         description: selectedMCP.description || '',
       });
@@ -104,7 +117,9 @@ export function MCPSettings() {
   };
 
   const handleSaveMCPInline = () => {
-    if (!mcpForm.name || !mcpForm.command) return;
+    if (!mcpForm.name) return;
+    if (mcpForm.type === 'stdio' && !mcpForm.command) return;
+    if (mcpForm.type === 'http' && !mcpForm.url) return;
 
     if (editingMCP) {
       // Update existing MCP
@@ -141,14 +156,18 @@ export function MCPSettings() {
   };
 
   const handleSaveMCP = () => {
-    if (!mcpForm.name || !mcpForm.command) return;
+    if (!mcpForm.name) return;
+    if (mcpForm.type === 'stdio' && !mcpForm.command) return;
+    if (mcpForm.type === 'http' && !mcpForm.url) return;
 
     const newMCP: MCPConfig = {
       id: editingMCP?.id || crypto.randomUUID(),
       name: mcpForm.name,
+      type: mcpForm.type || 'stdio',
       command: mcpForm.command,
       args: mcpForm.args || [],
       env: mcpForm.env || {},
+      url: mcpForm.url,
       enabled: mcpForm.enabled ?? false,
       description: mcpForm.description || '',
     };
@@ -286,10 +305,16 @@ export function MCPSettings() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground font-mono truncate">
-                      {mcp.command}
-                      {mcp.args &&
-                        mcp.args.length > 0 &&
-                        ` ${mcp.args.join(' ')}`}
+                      {mcp.type === 'http' ? (
+                        mcp.url
+                      ) : (
+                        <>
+                          {mcp.command}
+                          {mcp.args &&
+                            mcp.args.length > 0 &&
+                            ` ${mcp.args.join(' ')}`}
+                        </>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -333,7 +358,11 @@ export function MCPSettings() {
                         <Button
                           size="sm"
                           onClick={handleSaveMCPInline}
-                          disabled={!mcpForm.name || !mcpForm.command}
+                          disabled={
+                            !mcpForm.name ||
+                            (mcpForm.type === 'stdio' && !mcpForm.command) ||
+                            (mcpForm.type === 'http' && !mcpForm.url)
+                          }
                         >
                           <Save className="h-4 w-4 mr-1" />
                           {editingMCP ? 'Update' : 'Create'}
@@ -409,6 +438,40 @@ export function MCPSettings() {
                       </div>
 
                       <div className="grid gap-2">
+                        <Label className="text-sm font-medium">
+                          Transport Type
+                        </Label>
+                        {isEditing ? (
+                          <Select
+                            value={mcpForm.type || 'stdio'}
+                            onValueChange={(value: 'stdio' | 'http') =>
+                              setMcpForm((prev) => ({
+                                ...prev,
+                                type: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Select transport type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="stdio">Stdio (Process)</SelectItem>
+                              <SelectItem value="http">HTTP/SSE</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="px-3 py-2 border rounded-md bg-background text-sm h-9 flex items-center">
+                            <span className="inline-flex items-center gap-2">
+                              <Settings className="h-3 w-3" />
+                              {selectedMCP?.type === 'stdio'
+                                ? 'Stdio (Process)'
+                                : 'HTTP/SSE'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid gap-2">
                         <Label className="text-sm font-medium">Status</Label>
                         {isEditing ? (
                           <div className="flex items-center space-x-2">
@@ -447,71 +510,102 @@ export function MCPSettings() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="grid gap-2">
-                        <Label className="text-sm font-medium">Command</Label>
-                        {isEditing ? (
-                          <Input
-                            value={mcpForm.command}
-                            onChange={(e) =>
-                              setMcpForm((prev) => ({
-                                ...prev,
-                                command: e.target.value,
-                              }))
-                            }
-                            placeholder="python /path/to/server.py"
-                          />
-                        ) : (
-                          <div className="px-3 py-2 border rounded-md bg-background text-sm font-mono select-all h-9 flex items-center">
-                            {selectedMCP?.command}
-                          </div>
-                        )}
-                      </div>
+                      {(isEditing ? mcpForm.type : selectedMCP?.type) ===
+                      'stdio' ? (
+                        <div className="grid gap-2">
+                          <Label className="text-sm font-medium">Command</Label>
+                          {isEditing ? (
+                            <Input
+                              value={mcpForm.command || ''}
+                              onChange={(e) =>
+                                setMcpForm((prev) => ({
+                                  ...prev,
+                                  command: e.target.value,
+                                }))
+                              }
+                              placeholder="python /path/to/server.py"
+                            />
+                          ) : (
+                            <div className="px-3 py-2 border rounded-md bg-background text-sm font-mono select-all h-9 flex items-center">
+                              {selectedMCP?.command}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid gap-2">
+                          <Label className="text-sm font-medium">
+                            Server URL
+                          </Label>
+                          {isEditing ? (
+                            <Input
+                              value={mcpForm.url || ''}
+                              onChange={(e) =>
+                                setMcpForm((prev) => ({
+                                  ...prev,
+                                  url: e.target.value,
+                                }))
+                              }
+                              placeholder="http://localhost:8080/mcp"
+                            />
+                          ) : (
+                            <div className="px-3 py-2 border rounded-md bg-background text-sm font-mono select-all h-9 flex items-center">
+                              {selectedMCP?.url}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                      <div className="grid gap-2">
-                        <Label className="text-sm font-medium">Arguments</Label>
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            {(mcpForm.args || []).map((arg, index) => (
-                              <div
-                                key={`arg-${index}-${arg}`}
-                                className="flex gap-2"
-                              >
-                                <Input
-                                  value={arg}
-                                  onChange={(e) =>
-                                    handleArgChange(index, e.target.value)
-                                  }
-                                  placeholder="Argument"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeArg(index)}
-                                  className="h-9 w-9"
+                      {(isEditing ? mcpForm.type : selectedMCP?.type) ===
+                        'stdio' && (
+                        <div className="grid gap-2">
+                          <Label className="text-sm font-medium">
+                            Arguments
+                          </Label>
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              {(mcpForm.args || []).map((arg, index) => (
+                                <div
+                                  key={`arg-${index}-${arg}`}
+                                  className="flex gap-2"
                                 >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              variant="outline"
-                              onClick={addArg}
-                              className="h-9"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Argument
-                            </Button>
-                          </div>
-                        ) : selectedMCP?.args && selectedMCP.args.length > 0 ? (
-                          <div className="px-3 py-2 border rounded-md bg-background text-sm font-mono select-all min-h-[36px] flex items-center">
-                            {selectedMCP.args.join(' ')}
-                          </div>
-                        ) : (
-                          <div className="px-3 py-2 border rounded-md bg-background text-sm text-muted-foreground h-9 flex items-center">
-                            No arguments
-                          </div>
-                        )}
-                      </div>
+                                  <Input
+                                    value={arg}
+                                    onChange={(e) =>
+                                      handleArgChange(index, e.target.value)
+                                    }
+                                    placeholder="Argument"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeArg(index)}
+                                    className="h-9 w-9"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                variant="outline"
+                                onClick={addArg}
+                                className="h-9"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Argument
+                              </Button>
+                            </div>
+                          ) : selectedMCP?.args &&
+                            selectedMCP.args.length > 0 ? (
+                            <div className="px-3 py-2 border rounded-md bg-background text-sm font-mono select-all min-h-[36px] flex items-center">
+                              {selectedMCP.args.join(' ')}
+                            </div>
+                          ) : (
+                            <div className="px-3 py-2 border rounded-md bg-background text-sm text-muted-foreground h-9 flex items-center">
+                              No arguments
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -537,10 +631,12 @@ export function MCPSettings() {
                     )}
                   </div>
 
-                  {/* Environment Variables */}
+                  {/* Environment Variables / HTTP Headers */}
                   <div className="grid gap-2">
                     <Label className="text-sm font-medium">
-                      Environment Variables
+                      {(isEditing ? mcpForm.type : selectedMCP?.type) === 'http'
+                        ? 'HTTP Headers'
+                        : 'Environment Variables'}
                     </Label>
                     {isEditing ? (
                       <div className="space-y-2">
@@ -559,7 +655,11 @@ export function MCPSettings() {
                                     env: newEnv,
                                   }));
                                 }}
-                                placeholder="KEY"
+                                placeholder={
+                                  mcpForm.type === 'http'
+                                    ? 'Header-Name'
+                                    : 'KEY'
+                                }
                                 className="w-1/3"
                               />
                               <Input
@@ -567,7 +667,11 @@ export function MCPSettings() {
                                 onChange={(e) =>
                                   handleEnvVarChange(key, e.target.value)
                                 }
-                                placeholder="value"
+                                placeholder={
+                                  mcpForm.type === 'http'
+                                    ? 'header value'
+                                    : 'value'
+                                }
                                 className="w-2/3"
                               />
                               <Button
@@ -587,7 +691,9 @@ export function MCPSettings() {
                           className="h-9"
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Add Environment Variable
+                          {mcpForm.type === 'http'
+                            ? 'Add HTTP Header'
+                            : 'Add Environment Variable'}
                         </Button>
                       </div>
                     ) : selectedMCP?.env &&
@@ -618,24 +724,38 @@ export function MCPSettings() {
                       </div>
                     ) : (
                       <div className="px-3 py-2 border rounded-md bg-background text-sm text-muted-foreground min-h-[60px] flex items-center">
-                        No environment variables
+                        {selectedMCP?.type === 'http'
+                          ? 'No HTTP headers'
+                          : 'No environment variables'}
                       </div>
                     )}
                   </div>
 
-                  {/* Command Preview */}
+                  {/* Connection Preview */}
                   <div className="grid gap-2">
-                    <Label className="text-sm font-medium">Full Command</Label>
+                    <Label className="text-sm font-medium">
+                      {selectedMCP?.type === 'stdio'
+                        ? 'Full Command'
+                        : 'Connection URL'}
+                    </Label>
                     <div className="px-3 py-2 border rounded-md bg-muted/50 text-sm font-mono select-all leading-relaxed">
-                      {isEditing ? mcpForm.command : selectedMCP?.command}
-                      {isEditing &&
-                        mcpForm.args &&
-                        mcpForm.args.length > 0 &&
-                        ` ${mcpForm.args.join(' ')}`}
-                      {!isEditing &&
-                        selectedMCP?.args &&
-                        selectedMCP.args.length > 0 &&
-                        ` ${selectedMCP.args.join(' ')}`}
+                      {selectedMCP?.type === 'stdio' ? (
+                        <>
+                          {isEditing ? mcpForm.command : selectedMCP?.command}
+                          {isEditing &&
+                            mcpForm.args &&
+                            mcpForm.args.length > 0 &&
+                            ` ${mcpForm.args.join(' ')}`}
+                          {!isEditing &&
+                            selectedMCP?.args &&
+                            selectedMCP.args.length > 0 &&
+                            ` ${selectedMCP.args.join(' ')}`}
+                        </>
+                      ) : isEditing ? (
+                        mcpForm.url
+                      ) : (
+                        selectedMCP?.url
+                      )}
                     </div>
                   </div>
 
@@ -718,6 +838,27 @@ export function MCPSettings() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="type">Server Type</Label>
+                <Select
+                  value={mcpForm.type || 'stdio'}
+                  onValueChange={(value: 'stdio' | 'http') =>
+                    setMcpForm((prev) => ({
+                      ...prev,
+                      type: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select server type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stdio">Stdio (Command-based)</SelectItem>
+                    <SelectItem value="http">HTTP (URL-based)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -733,17 +874,34 @@ export function MCPSettings() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="command">Command *</Label>
-                <Input
-                  id="command"
-                  value={mcpForm.command}
-                  onChange={(e) =>
-                    setMcpForm((prev) => ({ ...prev, command: e.target.value }))
-                  }
-                  placeholder="python /path/to/server.py"
-                />
-              </div>
+              {mcpForm.type === 'stdio' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="command">Command *</Label>
+                  <Input
+                    id="command"
+                    value={mcpForm.command}
+                    onChange={(e) =>
+                      setMcpForm((prev) => ({
+                        ...prev,
+                        command: e.target.value,
+                      }))
+                    }
+                    placeholder="python /path/to/server.py"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="url">URL *</Label>
+                  <Input
+                    id="url"
+                    value={mcpForm.url}
+                    onChange={(e) =>
+                      setMcpForm((prev) => ({ ...prev, url: e.target.value }))
+                    }
+                    placeholder="http://localhost:3000"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Arguments</Label>

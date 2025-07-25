@@ -1,15 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-export interface MCPConfig {
-  id: string;
-  name: string;
-  command: string;
-  args?: string[];
-  env?: Record<string, string>;
-  enabled: boolean;
-  description?: string;
-}
+import type { MCPConfig } from '@/types/mcp';
 
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'ocean' | 'liquid-glass' | 'system';

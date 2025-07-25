@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { toolRegistry } from '@/lib/tools/tool-registry';
-import type { MCPConfig } from '@/store/useUserPreferenceStore';
+import type { MCPConfig } from '@/types/mcp';
 
 interface MCPServerToolsListProps {
   server: MCPConfig;

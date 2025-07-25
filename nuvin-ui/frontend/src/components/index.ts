@@ -1,6 +1,5 @@
 // Main components
 export { Navbar } from './Navbar';
-export { ModelSelector } from '../modules/agent/components/ModelSelector';
 export { ConversationHistory } from '../modules/conversation/ConversationHistory';
 export { ConversationItem } from '../modules/conversation/ConversationItem';
 

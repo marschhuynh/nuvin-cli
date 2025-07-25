@@ -58,8 +58,8 @@ export function ToolDebugger() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center">
             <Bug className="w-5 h-5 mr-2" />
@@ -71,7 +71,7 @@ export function ToolDebugger() {
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 max-h-[60vh] overflow-y-auto">
+      <CardContent className="space-y-4 flex-1 overflow-y-auto">
         {/* Selected Agent */}
         <div>
           <h4 className="font-medium text-sm mb-2">Selected Agent</h4>
@@ -168,14 +168,12 @@ export function ToolDebugger() {
         </div>
 
         {/* Raw Debug Data */}
-        <details className="text-xs">
-          <summary className="cursor-pointer font-medium mb-2">
-            Raw Debug Data
-          </summary>
-          <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-96 border border-gray-200">
+        <div className="text-xs">
+          <h4 className="font-medium text-sm mb-2">Raw Debug Data</h4>
+          <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-xs overflow-auto flex-1 border border-gray-200 dark:border-gray-700 min-h-[300px]">
             {JSON.stringify(debugInfo, null, 2)}
           </pre>
-        </details>
+        </div>
       </CardContent>
     </Card>
   );

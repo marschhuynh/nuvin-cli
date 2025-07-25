@@ -513,7 +513,6 @@ export function AgentSettings() {
                 )}
 
                 {/* Tool Settings for Local Agents */}
-
                 {agentData.agentType === 'local' && (
                   <ToolSettings
                     toolConfig={agentData.toolConfig}

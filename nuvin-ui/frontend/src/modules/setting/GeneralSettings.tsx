@@ -156,7 +156,7 @@ export function GeneralSettings({
         {/* Application Update Section */}
         <div className="flex items-center justify-between pt-4 border-t">
           <Label className="text-sm font-medium">Application Update</Label>
-          <Button type="button" onClick={() => CheckForUpdates()}>
+          <Button type="button" onClick={() => CheckForUpdates()} disabled>
             Check for Updates
           </Button>
         </div>
