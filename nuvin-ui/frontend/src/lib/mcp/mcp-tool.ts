@@ -134,12 +134,12 @@ export class MCPTool implements Tool {
     const convertedProperties = this.convertMCPProperties(
       mcpSchema.inputSchema.properties || {},
     );
-    
+
     // Validate the converted schema
     for (const [key, prop] of Object.entries(convertedProperties)) {
       this.validateToolParameter(prop, `${mcpSchema.name}.${key}`);
     }
-    
+
     return {
       name: `mcp_${this.serverId}_${mcpSchema.name}`, // Prefix to avoid naming conflicts
       description: `${mcpSchema.description} (from MCP server: ${this.serverId})`,
@@ -171,15 +171,17 @@ export class MCPTool implements Tool {
    */
   private validateToolParameter(param: any, path: string = ''): void {
     if (param.type === 'array' && !param.items) {
-      console.warn(`Invalid tool schema at ${path}: Array type missing 'items' property. Adding fallback.`);
+      console.warn(
+        `Invalid tool schema at ${path}: Array type missing 'items' property. Adding fallback.`,
+      );
     }
-    
+
     if (param.type === 'object' && param.properties) {
       for (const [key, prop] of Object.entries(param.properties)) {
         this.validateToolParameter(prop, path ? `${path}.${key}` : key);
       }
     }
-    
+
     if (param.type === 'array' && param.items) {
       this.validateToolParameter(param.items, `${path}[]`);
     }
@@ -216,7 +218,7 @@ export class MCPTool implements Tool {
         // Fallback to generic schema if items not specified
         converted.items = {
           type: 'string',
-          description: 'Array item'
+          description: 'Array item',
         };
       }
     }

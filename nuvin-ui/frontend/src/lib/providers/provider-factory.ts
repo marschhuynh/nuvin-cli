@@ -5,7 +5,12 @@ import { GithubCopilotProvider } from './github-provider';
 import { OpenAICompatibleProvider } from './openai-compatible-provider';
 import type { LLMProvider } from './types/base';
 
-export type ProviderType = 'openrouter' | 'openai' | 'anthropic' | 'github' | 'openai-compatible';
+export type ProviderType =
+  | 'openrouter'
+  | 'openai'
+  | 'anthropic'
+  | 'github'
+  | 'openai-compatible';
 
 export interface ProviderConfig {
   type: ProviderType;

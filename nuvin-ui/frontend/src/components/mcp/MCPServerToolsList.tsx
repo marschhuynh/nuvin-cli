@@ -26,7 +26,7 @@ export function MCPServerToolsList({
   // Force refresh of tools when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger !== undefined) {
-      setToolsRefreshKey(prev => prev + 1);
+      setToolsRefreshKey((prev) => prev + 1);
     }
   }, [refreshTrigger]);
 

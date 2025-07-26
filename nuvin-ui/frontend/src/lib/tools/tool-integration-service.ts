@@ -206,6 +206,46 @@ export class ToolIntegrationService {
   }
 
   /**
+   * Embed tool results directly into message content
+   */
+  embedToolResultsInContent(
+    originalContent: string,
+    originalToolCalls: LLMToolCall[],
+    toolResults: ToolCallResult[],
+  ): string {
+    // If no tool calls, return original content
+    if (!originalToolCalls || originalToolCalls.length === 0) {
+      return originalContent;
+    }
+
+    // Build tool calls markup with results
+    let toolCallsMarkup = '<|tool_calls_section_begin|>';
+
+    originalToolCalls.forEach((toolCall) => {
+      const result = toolResults.find((r) => r.id === toolCall.id);
+
+      toolCallsMarkup += `<|tool_call_begin|>${toolCall.function.name}:${toolCall.id}<|tool_call_argument_begin|>${toolCall.function.arguments}`;
+
+      if (result) {
+        const resultJson = JSON.stringify({
+          success: result.result.success,
+          data: result.result.data,
+          error: result.result.error,
+          metadata: result.result.metadata,
+        });
+        toolCallsMarkup += `<|tool_call_result_begin|>${resultJson}`;
+      }
+
+      toolCallsMarkup += '<|tool_call_end|>';
+    });
+
+    toolCallsMarkup += '<|tool_calls_section_end|>';
+
+    // Combine tool calls markup with original content
+    return toolCallsMarkup + (originalContent ? '\n\n' + originalContent : '');
+  }
+
+  /**
    * Complete tool calling flow - execute tools and get final response
    */
   async completeToolCallingFlow(
@@ -233,7 +273,19 @@ export class ToolIntegrationService {
       tool_choice: undefined,
     };
 
-    return llmProvider.generateCompletion(followUpParams);
+    const finalResult = await llmProvider.generateCompletion(followUpParams);
+
+    // Embed tool results in the content so they're preserved in the UI
+    const contentWithToolResults = this.embedToolResultsInContent(
+      finalResult.content || '',
+      firstResult.tool_calls,
+      toolResults,
+    );
+
+    return {
+      ...finalResult,
+      content: contentWithToolResults,
+    };
   }
 
   /**

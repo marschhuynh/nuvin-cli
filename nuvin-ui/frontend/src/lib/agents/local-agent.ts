@@ -302,15 +302,19 @@ export class LocalAgent extends BaseAgent {
                   provider,
                 );
 
-              // Stream the final response
+              // Stream the final response with embedded tool results
               if (finalResult.content) {
-                const additionalContent = finalResult.content.slice(
+                // The finalResult.content now contains embedded tool results
+                // We need to replace our accumulated content and stream the difference
+                const toolResultsContent = finalResult.content;
+                const contentToStream = toolResultsContent.slice(
                   accumulated.length,
                 );
-                if (additionalContent) {
-                  options.onChunk?.(additionalContent);
-                  accumulated = finalResult.content;
+
+                if (contentToStream) {
+                  options.onChunk?.(contentToStream);
                 }
+                accumulated = toolResultsContent;
               }
             }
           }

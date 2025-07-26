@@ -3,6 +3,14 @@ export interface ParsedToolCall {
   name: string;
   arguments: any;
   raw: string;
+  result?: ToolResult;
+}
+
+export interface ToolResult {
+  success: boolean;
+  data?: any;
+  error?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface ParsedContent {
@@ -13,7 +21,7 @@ export interface ParsedContent {
 
 /**
  * Parses message content that may contain tool calls in the format:
- * <|tool_calls_section_begin|><|tool_call_begin|>toolName:id<|tool_call_argument_begin|>{json}<|tool_call_end|><|tool_calls_section_end|>
+ * <|tool_calls_section_begin|><|tool_call_begin|>toolName:id<|tool_call_argument_begin|>{json}<|tool_call_result_begin|>{result_json}<|tool_call_end|><|tool_calls_section_end|>
  */
 export function parseToolCalls(content: string): ParsedContent {
   const result: ParsedContent = {
@@ -50,13 +58,15 @@ export function parseToolCalls(content: string): ParsedContent {
     const textAfter = endMatch ? endMatch[1].trim() : '';
 
     // Parse individual tool calls within the section
+    // Updated pattern to optionally include tool results
     const toolCallMatches = toolCallsSection.matchAll(
-      /<\|tool_call_begin\|>(.*?)<\|tool_call_argument_begin\|>(.*?)<\|tool_call_end\|>/gs,
+      /<\|tool_call_begin\|>(.*?)<\|tool_call_argument_begin\|>(.*?)(?:<\|tool_call_result_begin\|>(.*?))?<\|tool_call_end\|>/gs,
     );
 
     for (const match of toolCallMatches) {
       const nameAndId = match[1].trim();
       const argumentsStr = match[2].trim();
+      const resultStr = match[3]?.trim(); // Optional result
 
       // Extract tool name and ID (format: toolName:id or mcp_uuid_toolName:id)
       const nameIdMatch = nameAndId.match(/^(?:mcp_[a-f0-9-]+_)?(.+):(.+)$/);
@@ -66,10 +76,31 @@ export function parseToolCalls(content: string): ParsedContent {
 
         try {
           const parsedArgs = JSON.parse(argumentsStr);
+          let parsedResult: ToolResult | undefined;
+
+          // Parse tool result if present
+          if (resultStr) {
+            try {
+              parsedResult = JSON.parse(resultStr);
+            } catch (error) {
+              console.warn(
+                'Failed to parse tool call result:',
+                resultStr,
+                error,
+              );
+              parsedResult = {
+                success: false,
+                error: 'Failed to parse result',
+                data: resultStr,
+              };
+            }
+          }
+
           result.toolCalls.push({
             id: toolId,
             name: toolName,
             arguments: parsedArgs,
+            result: parsedResult,
             raw: match[0],
           });
         } catch (error) {
@@ -83,6 +114,13 @@ export function parseToolCalls(content: string): ParsedContent {
             id: toolId,
             name: toolName,
             arguments: argumentsStr,
+            result: resultStr
+              ? {
+                  success: false,
+                  error: 'Failed to parse arguments',
+                  data: resultStr,
+                }
+              : undefined,
             raw: match[0],
           });
         }

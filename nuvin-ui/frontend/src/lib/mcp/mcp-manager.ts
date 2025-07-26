@@ -64,18 +64,19 @@ export class MCPManager {
 
     try {
       // Create MCP client with appropriate transport options
-      const transportOptions: MCPTransportOptions = config.type === 'http' 
-        ? {
-            type: 'http',
-            url: config.url,
-            headers: config.env, // Use env field for HTTP headers
-          }
-        : {
-            type: 'stdio',
-            command: config.command,
-            args: config.args,
-            env: config.env,
-          };
+      const transportOptions: MCPTransportOptions =
+        config.type === 'http'
+          ? {
+              type: 'http',
+              url: config.url,
+              headers: config.env, // Use env field for HTTP headers
+            }
+          : {
+              type: 'stdio',
+              command: config.command,
+              args: config.args,
+              env: config.env,
+            };
 
       const client = new MCPClient(serverId, transportOptions);
 

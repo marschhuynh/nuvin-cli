@@ -85,7 +85,7 @@ export function MessageListPaginated({
     // Check if content is shorter than the container (no scrollbar needed)
     const containerHeight = scrollElement.clientHeight;
     const contentHeight = scrollElement.scrollHeight;
-    
+
     if (contentHeight <= containerHeight) {
       // Content doesn't fill the container, load more messages
       loadMoreMessages();
