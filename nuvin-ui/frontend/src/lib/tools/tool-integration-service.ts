@@ -88,8 +88,14 @@ export class ToolIntegrationService {
     toolCalls?: ToolCallResult[];
     requiresFollowUp: boolean;
   }> {
+    console.log('[DEBUG] processCompletionResult called with:', {
+      result,
+      enabledTools: agentToolConfig?.enabledTools,
+    });
+
     // If no tool calls, return as-is
     if (!result.tool_calls || result.tool_calls.length === 0) {
+      console.log('[DEBUG] No tool calls found in result');
       return {
         result,
         requiresFollowUp: false,
@@ -107,11 +113,18 @@ export class ToolIntegrationService {
     );
 
     // Filter tool calls to only include enabled tools
-    const allowedToolCalls = result.tool_calls.filter((call) =>
-      enabledToolNames.has(call.function.name),
+    const allowedToolCalls = result.tool_calls.filter((call) => {
+      const isEnabled = enabledToolNames.has(call.function.name);
+      console.log(`[DEBUG] Tool ${call.function.name} enabled: ${isEnabled}`);
+      return isEnabled;
+    });
+
+    console.log(
+      `[DEBUG] Filtered tool calls: ${allowedToolCalls.length}/${result.tool_calls.length}`,
     );
 
     if (allowedToolCalls.length === 0) {
+      console.log('[DEBUG] No allowed tool calls, returning error message');
       return {
         result: {
           content:
@@ -206,6 +219,44 @@ export class ToolIntegrationService {
   }
 
   /**
+   * Build tool calls markup for display
+   */
+  buildToolCallsMarkup(
+    originalToolCalls: LLMToolCall[],
+    toolResults: ToolCallResult[],
+  ): string {
+    // If no tool calls, return empty string
+    if (!originalToolCalls || originalToolCalls.length === 0) {
+      return '';
+    }
+
+    // Build tool calls markup with results
+    let toolCallsMarkup = '<|tool_calls_section_begin|>';
+
+    originalToolCalls.forEach((toolCall) => {
+      const result = toolResults.find((r) => r.id === toolCall.id);
+
+      toolCallsMarkup += `<|tool_call_begin|>${toolCall.function.name}:${toolCall.id}<|tool_call_argument_begin|>${toolCall.function.arguments}`;
+
+      if (result) {
+        const resultJson = JSON.stringify({
+          success: result.result.success,
+          data: result.result.data,
+          error: result.result.error,
+          metadata: result.result.metadata,
+        });
+        toolCallsMarkup += `<|tool_call_result_begin|>${resultJson}`;
+      }
+
+      toolCallsMarkup += '<|tool_call_end|>';
+    });
+
+    toolCallsMarkup += '<|tool_calls_section_end|>';
+
+    return toolCallsMarkup;
+  }
+
+  /**
    * Embed tool results directly into message content
    */
   embedToolResultsInContent(
@@ -275,16 +326,17 @@ export class ToolIntegrationService {
 
     const finalResult = await llmProvider.generateCompletion(followUpParams);
 
-    // Embed tool results in the content so they're preserved in the UI
-    const contentWithToolResults = this.embedToolResultsInContent(
-      finalResult.content || '',
-      firstResult.tool_calls,
-      toolResults,
-    );
+    // For multi-message flow, just return the final LLM response
+    // The local agent handles the separation of original content, tool calls, and final response
+    console.log('[DEBUG] Tool calling flow - final response:', {
+      originalContent: firstResult.content || '',
+      finalContent: finalResult.content || '',
+      toolCallsCount: firstResult.tool_calls?.length || 0,
+    });
 
     return {
       ...finalResult,
-      content: contentWithToolResults,
+      content: finalResult.content || '',
     };
   }
 

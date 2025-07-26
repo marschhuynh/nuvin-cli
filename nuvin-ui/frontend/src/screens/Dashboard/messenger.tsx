@@ -150,6 +150,19 @@ export default function Messenger() {
             // Update local streaming content as chunks arrive
             setStreamingContent((prev) => prev + chunk);
           },
+          onAdditionalMessage: (message) => {
+            // Handle additional messages from tool execution flow
+            if (conversationId) {
+              const newMessage: Message = {
+                id: message.id,
+                role: message.role,
+                content: message.content,
+                timestamp: message.timestamp,
+                metadata: message.metadata,
+              };
+              addMessage(conversationId, newMessage);
+            }
+          },
           onComplete: (finalContent: string) => {
             // Final update when streaming is complete - metadata will be added after sendMessage resolves
             if (conversationId) {
@@ -289,7 +302,19 @@ export default function Messenger() {
         timeoutRef.current = null;
       }
     },
-    [addMessage, activeConversationId, agentType, activeProvider, sendMessage],
+    [
+      addMessage,
+      activeConversationId,
+      agentType,
+      activeProvider,
+      sendMessage,
+      activeAgent,
+      getConversationMessages,
+      isReady,
+      streamingContent,
+      updateMessage, // Trigger background summarization
+      summarizeConversation,
+    ],
   );
 
   const handleStopGeneration = useCallback(async () => {
@@ -343,11 +368,10 @@ export default function Messenger() {
   }, [
     addMessage,
     activeConversationId,
-    agentType,
-    activeProvider,
-    sendMessage,
     cancelRequest,
     isLoading,
+    streamingMessageId,
+    updateMessage,
   ]);
 
   // Handler to create a new conversation

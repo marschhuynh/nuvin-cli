@@ -38,7 +38,7 @@ export function AgentConfiguration({
 }: AgentConfigurationProps) {
   const navigate = useNavigate();
   const { agents, activeAgentId, setActiveAgent } = useAgentStore();
-  const { providers, activeProviderId, updateProvider } = useProviderStore();
+  const { providers, activeProviderId, updateProvider, setActiveProvider } = useProviderStore();
   const { getEnabledModels, loading, errors } = useModelsStore();
 
   // Notify parent when store changes
@@ -56,21 +56,50 @@ export function AgentConfiguration({
     setActiveAgent(agentId);
   };
 
-  const handleModelChange = useCallback(
-    (modelName: string) => {
-      const activeProvider = providers.find((p) => p.id === activeProviderId);
-      if (activeProvider) {
-        const updatedProvider = {
-          ...activeProvider,
-          activeModel: {
-            ...activeProvider.activeModel,
-            model: modelName,
-          },
-        };
-        updateProvider(updatedProvider);
+  // Helper function to find which provider a model belongs to
+  const findProviderForModel = useCallback((modelId: string) => {
+    const { models } = useModelsStore.getState();
+    for (const [providerId, providerModels] of Object.entries(models)) {
+      if (providerModels.some(model => model.id === modelId)) {
+        return providerId;
       }
+    }
+    return null;
+  }, []);
+
+  const handleModelChange = useCallback(
+    (modelId: string) => {
+      // Find which provider this model belongs to
+      const targetProviderId = findProviderForModel(modelId);
+      
+      if (!targetProviderId) {
+        console.error('Could not find provider for model:', modelId);
+        return;
+      }
+
+      // Find the target provider
+      const targetProvider = providers.find((p) => p.id === targetProviderId);
+      if (!targetProvider) {
+        console.error('Provider not found:', targetProviderId);
+        return;
+      }
+
+      // Update the active provider if it's different
+      if (activeProviderId !== targetProviderId) {
+        setActiveProvider(targetProviderId);
+      }
+
+      // Update the model in the target provider
+      const updatedProvider = {
+        ...targetProvider,
+        activeModel: {
+          ...targetProvider.activeModel,
+          model: modelId,
+        },
+      };
+      updateProvider(updatedProvider);
     },
-    [activeProviderId, providers, updateProvider],
+    [providers, activeProviderId, setActiveProvider, updateProvider, findProviderForModel],
   );
 
   const handleNavigateToProviderSettings = () => {
@@ -146,8 +175,6 @@ export function AgentConfiguration({
       };
     });
   }, [enabledModels, getModalityIcons]);
-
-  console.log('AgentConfiguration modelOptions:', modelOptions);
 
   return (
     <div className="min-w-[200px] w-full max-w-[300px] border-l border-border bg-card overflow-auto">

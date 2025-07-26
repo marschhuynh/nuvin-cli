@@ -19,6 +19,7 @@ export interface SendMessageOptions {
   onChunk?: (chunk: string) => void;
   onComplete?: (response: string) => void;
   onError?: (error: Error) => void;
+  onAdditionalMessage?: (message: MessageResponse) => void; // For multi-message flows
   timeout?: number;
   enableRetry?: boolean;
   maxRetries?: number;
@@ -155,6 +156,8 @@ export class AgentManager {
     content: string,
     options: SendMessageOptions = {},
   ): Promise<MessageResponse> {
+    console.log(`Sending message with content: "${content}"`, options);
+
     if (!this.activeAgent) {
       throw new Error('No active agent selected');
     }

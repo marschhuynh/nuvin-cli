@@ -11,9 +11,18 @@ export interface ChatCompletionResponse {
     index: number;
     message: {
       role: string;
-      content: string;
+      content: string | null;
       refusal: null;
       reasoning: null;
+      tool_calls?: Array<{
+        index: number;
+        id: string;
+        function: {
+          arguments: string;
+          name: string;
+        };
+        type: string;
+      }>;
     };
   }>;
   usage: {

@@ -24,33 +24,87 @@ export class OpenRouterProvider extends BaseLLMProvider {
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
     const startTime = Date.now();
+    const requestBody: any = {
+      model: params.model,
+      messages: params.messages,
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+      top_p: params.topP,
+      stream: false,
+    };
+
+    // Only add tools if they exist and are not empty
+    if (params.tools && params.tools.length > 0) {
+      requestBody.tools = params.tools;
+    }
+
+    // Only add tool_choice if tools are present
+    if (params.tool_choice && params.tools && params.tools.length > 0) {
+      requestBody.tool_choice = params.tool_choice;
+    }
+
+    console.log('OpenRouter non-streaming request body:', requestBody);
+
     const response = await this.makeRequest('/api/v1/chat/completions', {
-      body: {
-        model: params.model,
-        messages: params.messages,
-        temperature: params.temperature,
-        max_tokens: params.maxTokens,
-        top_p: params.topP,
-        ...(params.tools && { tools: params.tools }),
-        ...(params.tool_choice && { tool_choice: params.tool_choice }),
-      },
+      body: requestBody,
       signal,
     });
 
     const data: ChatCompletionResponse = await response.json();
     console.log('OpenRouter response:', data);
-    return this.createCompletionResult<ChatCompletionResponse>(data, startTime);
+
+    // Debug tool calls specifically
+    if (data.choices?.[0]?.message?.tool_calls) {
+      console.log(
+        'OpenRouter tool calls found:',
+        data.choices[0].message.tool_calls,
+      );
+    }
+
+    const result = this.createCompletionResult<ChatCompletionResponse>(
+      data,
+      startTime,
+    );
+    console.log('Created completion result:', result);
+
+    return result;
   }
 
   async *generateCompletionStream(
     params: CompletionParams,
     signal?: AbortSignal,
   ): AsyncGenerator<string> {
-    const reader = await this.makeStreamingRequest(
-      '/api/v1/chat/completions',
-      params,
+    const requestBody: any = {
+      model: params.model,
+      messages: params.messages,
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+      top_p: params.topP,
+      stream: true,
+    };
+
+    // Only add tools if they exist and are not empty
+    if (params.tools && params.tools.length > 0) {
+      requestBody.tools = params.tools;
+    }
+
+    // Only add tool_choice if tools are present
+    if (params.tool_choice && params.tools && params.tools.length > 0) {
+      requestBody.tool_choice = params.tool_choice;
+    }
+
+    console.log('OpenRouter streaming request body:', requestBody);
+
+    const response = await this.makeRequest('/api/v1/chat/completions', {
+      body: requestBody,
       signal,
-    );
+    });
+
+    if (!response.body) {
+      throw new Error('No response body for streaming');
+    }
+
+    const reader = response.body.getReader();
 
     for await (const data of this.parseStream(reader, {}, signal)) {
       const content = extractValue(data, 'choices.0.delta.content');
@@ -64,12 +118,40 @@ export class OpenRouterProvider extends BaseLLMProvider {
     params: CompletionParams,
     signal?: AbortSignal,
   ): AsyncGenerator<StreamChunk> {
+    console.log('Starting OpenRouter streaming with tools:', params);
     const startTime = Date.now();
-    const reader = await this.makeStreamingRequest(
-      '/api/v1/chat/completions',
-      params,
+    
+    const requestBody: any = {
+      model: params.model,
+      messages: params.messages,
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+      top_p: params.topP,
+      stream: true,
+    };
+
+    // Only add tools if they exist and are not empty
+    if (params.tools && params.tools.length > 0) {
+      requestBody.tools = params.tools;
+    }
+
+    // Only add tool_choice if tools are present
+    if (params.tool_choice && params.tools && params.tools.length > 0) {
+      requestBody.tool_choice = params.tool_choice;
+    }
+
+    console.log('OpenRouter streaming with tools request body:', requestBody);
+
+    const response = await this.makeRequest('/api/v1/chat/completions', {
+      body: requestBody,
       signal,
-    );
+    });
+
+    if (!response.body) {
+      throw new Error('No response body for streaming');
+    }
+
+    const reader = response.body.getReader();
 
     for await (const chunk of this.parseStreamWithTools(
       reader,
@@ -77,6 +159,7 @@ export class OpenRouterProvider extends BaseLLMProvider {
       signal,
       startTime,
     )) {
+      console.log('OpenRouter streaming chunk:', chunk);
       yield chunk;
     }
   }
