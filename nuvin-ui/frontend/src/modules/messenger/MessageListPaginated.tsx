@@ -125,7 +125,7 @@ export function MessageListPaginated({
         scrollToBottom(true);
       }, 100); // Delay to ensure DOM updates
     }
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   useLayoutEffect(() => {
     if (conversationId) {
@@ -151,7 +151,7 @@ export function MessageListPaginated({
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [displayedCount, checkAndLoadMoreIfNeeded]);
+  }, [checkAndLoadMoreIfNeeded]);
 
   // Also check after loading completes
   useEffect(() => {

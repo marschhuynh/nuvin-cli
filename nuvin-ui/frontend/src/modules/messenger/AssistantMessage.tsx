@@ -1,4 +1,4 @@
-import { Cpu, Copy, Check, FileText, Info } from 'lucide-react';
+import { Cpu, Copy, Check, FileText } from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
 import { parseToolCalls, stripToolCalls } from '@/lib/utils/tool-call-parser';
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime';
@@ -17,11 +17,9 @@ export function AssistantMessage({
   content,
   isStreaming = false,
   messageMode,
-  metadata,
 }: AssistantMessageProps) {
   const [copied, setCopied] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
-  const [showMetadata, setShowMetadata] = useState(false);
 
   const trimmedContent = content.trim();
 
@@ -58,23 +56,22 @@ export function AssistantMessage({
     setShowRaw((prev) => !prev);
   }, []);
 
-  const toggleMetadataView = useCallback(() => {
-    setShowMetadata((prev) => !prev);
-  }, []);
-
   if (trimmedContent.length === 0) return null;
 
   return (
     <>
       {/* Assistant avatar */}
       <div
-        className={`h-8 w-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden ${isStreaming ? 'animate-pulse' : ''}`}
+        className={`h-8 w-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden ${isStreaming ? 'animate-pulse shadow-lg shadow-primary/30' : ''}`}
       >
         {isStreaming && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent animate-ping" />
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent animate-ping" />
+            <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+          </>
         )}
         <Cpu
-          className={`h-4 w-4 text-primary-foreground relative z-10 ${isStreaming ? 'animate-bounce' : ''}`}
+          className={`h-4 w-4 text-primary-foreground relative z-10 transition-all duration-300 ${isStreaming ? 'animate-spin' : ''}`}
         />
       </div>
 
@@ -118,8 +115,8 @@ export function AssistantMessage({
               )}
 
               {isStreaming && (
-                <div className="inline-flex items-center animate-in fade-in duration-300">
-                  <span className="text-xs text-muted-foreground/80 animate-pulse">
+                <div className="inline-flex items-center gap-2 animate-in fade-in duration-300 mt-2">
+                  <span className="text-sm text-muted-foreground font-medium">
                     Generating...
                   </span>
                 </div>

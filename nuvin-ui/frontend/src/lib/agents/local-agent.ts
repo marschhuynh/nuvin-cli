@@ -1,17 +1,11 @@
-import type {
-  ProviderConfig,
-  AgentSettings,
-  Message,
-  MessageMetadata,
-} from '@/types';
+import type { ProviderConfig, AgentSettings, Message } from '@/types';
 import type { ToolContext } from '@/types/tools';
-import { createProvider, ToolCall, type ChatMessage } from '../providers';
+import { createProvider, type ToolCall, type ChatMessage } from '../providers';
 import { generateUUID } from '../utils';
 import { calculateCost } from '../utils/cost-calculator';
 import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 import { toolIntegrationService } from '../tools';
 import { BaseAgent } from './base-agent';
-import { UsageData } from '../providers/types/base';
 
 export class LocalAgent extends BaseAgent {
   private abortController: AbortController | null = null;
@@ -36,6 +30,11 @@ export class LocalAgent extends BaseAgent {
     const provider = createProvider(this.providerConfig);
     const convoId = options.conversationId || 'default';
     const messages: ChatMessage[] = this.buildContext(convoId, content);
+
+    console.log(
+      `[LocalAgent] Sending message with content: "${content}" to provider: ${this.providerConfig.type}`,
+      options,
+    );
 
     const toolContext: ToolContext = {
       userId: options.userId,
@@ -266,6 +265,7 @@ export class LocalAgent extends BaseAgent {
 
         if (chunk.content) {
           accumulated += chunk.content;
+          console.log('[DEBUG] Accumulated content:', accumulated);
           options.onChunk?.(chunk.content);
         }
 
@@ -282,8 +282,6 @@ export class LocalAgent extends BaseAgent {
 
           // If this is the final tool call chunk, execute tools
           if (chunk.finished && currentToolCalls.length > 0) {
-            options.onChunk?.('\n\n[Executing tools...]');
-
             // Process tool calls
             const processed =
               await toolIntegrationService.processCompletionResult(
@@ -293,6 +291,30 @@ export class LocalAgent extends BaseAgent {
               );
 
             if (processed.requiresFollowUp && processed.toolCalls) {
+              // Emit Message 2: Tool execution message
+              const toolCallsMarkup =
+                toolIntegrationService.buildToolCallsMarkup(
+                  currentToolCalls,
+                  processed.toolCalls,
+                );
+
+              if (toolCallsMarkup && options.onAdditionalMessage) {
+                const toolMessage: MessageResponse = {
+                  id: generateUUID(),
+                  content: toolCallsMarkup,
+                  role: 'assistant',
+                  timestamp: new Date().toISOString(),
+                  metadata: {
+                    agentType: 'local',
+                    agentId: this.agentSettings.id,
+                    provider: this.providerConfig.type,
+                    model: this.providerConfig.activeModel.model,
+                    toolCalls: currentToolCalls.length,
+                  },
+                };
+                options.onAdditionalMessage(toolMessage);
+              }
+
               // Execute tools and get follow-up response
               const finalResult =
                 await toolIntegrationService.completeToolCallingFlow(
@@ -302,19 +324,22 @@ export class LocalAgent extends BaseAgent {
                   provider,
                 );
 
-              // Stream the final response with embedded tool results
-              if (finalResult.content) {
-                // The finalResult.content now contains embedded tool results
-                // We need to replace our accumulated content and stream the difference
-                const toolResultsContent = finalResult.content;
-                const contentToStream = toolResultsContent.slice(
-                  accumulated.length,
-                );
-
-                if (contentToStream) {
-                  options.onChunk?.(contentToStream);
-                }
-                accumulated = toolResultsContent;
+              // Emit Message 3: Final response
+              if (finalResult.content?.trim() && options.onAdditionalMessage) {
+                const finalMessage: MessageResponse = {
+                  id: generateUUID(),
+                  content: finalResult.content,
+                  role: 'assistant',
+                  timestamp: new Date().toISOString(),
+                  metadata: {
+                    agentType: 'local',
+                    agentId: this.agentSettings.id,
+                    provider: this.providerConfig.type,
+                    model: this.providerConfig.activeModel.model,
+                    responseTime: Date.now() - startTime,
+                  },
+                };
+                options.onAdditionalMessage(finalMessage);
               }
             }
           }
@@ -338,6 +363,7 @@ export class LocalAgent extends BaseAgent {
       finalMetadata?.estimatedCost ||
       calculateCost(model, promptTokens, completionTokens);
 
+    console.log('[DEBUG] Final response accumulated content:', accumulated);
     const response: MessageResponse = {
       id: messageId,
       content: accumulated,
