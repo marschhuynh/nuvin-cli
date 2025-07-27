@@ -6,6 +6,10 @@ export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
 
+export function ExecuteCommand(arg1) {
+  return window['go']['main']['App']['ExecuteCommand'](arg1);
+}
+
 export function FetchGithubCopilotKey() {
   return window['go']['main']['App']['FetchGithubCopilotKey']();
 }

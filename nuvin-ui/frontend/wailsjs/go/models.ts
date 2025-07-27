@@ -1,5 +1,51 @@
 export namespace main {
 	
+	export class CommandRequest {
+	    command: string;
+	    args?: string[];
+	    workingDir?: string;
+	    env?: Record<string, string>;
+	    timeout?: number;
+	    description?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CommandRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.command = source["command"];
+	        this.args = source["args"];
+	        this.workingDir = source["workingDir"];
+	        this.env = source["env"];
+	        this.timeout = source["timeout"];
+	        this.description = source["description"];
+	    }
+	}
+	export class CommandResponse {
+	    success: boolean;
+	    exitCode: number;
+	    stdout: string;
+	    stderr: string;
+	    error?: string;
+	    duration: number;
+	    truncated?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new CommandResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.exitCode = source["exitCode"];
+	        this.stdout = source["stdout"];
+	        this.stderr = source["stderr"];
+	        this.error = source["error"];
+	        this.duration = source["duration"];
+	        this.truncated = source["truncated"];
+	    }
+	}
 	export class FetchRequest {
 	    url: string;
 	    method: string;

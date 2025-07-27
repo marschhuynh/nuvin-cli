@@ -4,6 +4,8 @@ import {main} from '../models';
 
 export function CheckForUpdates():Promise<void>;
 
+export function ExecuteCommand(arg1:main.CommandRequest):Promise<main.CommandResponse>;
+
 export function FetchGithubCopilotKey():Promise<string>;
 
 export function FetchProxy(arg1:main.FetchRequest):Promise<main.FetchResponse>;
