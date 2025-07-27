@@ -8,7 +8,7 @@ import {
   Clock,
 } from 'lucide-react';
 import {
-  ParsedToolCall,
+  type ParsedToolCall,
   formatToolArguments,
 } from '@/lib/utils/tool-call-parser';
 
@@ -49,7 +49,7 @@ export function ToolCall({ toolCall }: ToolCallProps) {
   };
 
   return (
-    <div className="border border-border/50 rounded-lg p-3 bg-muted/20 my-2">
+    <div className="rounded-lg p-3 bg-muted/20">
       <div
         className="flex items-center gap-2 cursor-pointer hover:bg-muted/30 -m-1 p-1 rounded transition-colors"
         onClick={toggleExpanded}

@@ -39,7 +39,6 @@ export const useConversationStore = create<ConversationState>()(
       messages: defaultMessages,
       activeConversationId: null,
 
-      // Conversation actions
       addConversation: (conversation) =>
         set((state) => ({
           conversations: [
@@ -80,28 +79,29 @@ export const useConversationStore = create<ConversationState>()(
           activeConversationId: id,
         })),
 
-      // Message actions
-      addMessage: (conversationId, message) =>
+      addMessage: (conversationId, newMessage) =>
         set((state) => {
           const newMessages = {
             ...state.messages,
             [conversationId]: [
               ...(state.messages[conversationId] || []),
-              message,
+              newMessage,
             ],
           };
 
+          // If the message is from the user and the conversation has no summary,
+          // update the conversation title and summary
           let updatedConversations = state.conversations;
-          if (message.role === 'user') {
+          if (newMessage.role === 'user') {
             updatedConversations = state.conversations.map((c) =>
               c.id === conversationId && !c.summary
                 ? {
                     ...c,
                     title:
-                      message.content.length > 50
-                        ? message.content.substring(0, 50) + '...'
-                        : message.content,
-                    summary: message.content,
+                      newMessage.content.length > 50
+                        ? `${newMessage.content.substring(0, 50)}...`
+                        : newMessage.content,
+                    summary: newMessage.content,
                   }
                 : c,
             );

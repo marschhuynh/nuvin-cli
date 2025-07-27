@@ -5,6 +5,7 @@ import { generateUUID } from '../utils';
 import { calculateCost } from '../utils/cost-calculator';
 import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 import { toolIntegrationService } from '../tools';
+import type { UsageData } from '../providers/types/base';
 import { BaseAgent } from './base-agent';
 
 export class LocalAgent extends BaseAgent {
@@ -325,7 +326,7 @@ export class LocalAgent extends BaseAgent {
                 );
 
               // Emit Message 3: Final response
-              if (finalResult.content?.trim() && options.onAdditionalMessage) {
+              if (finalResult.content.trim() && options.onAdditionalMessage) {
                 const finalMessage: MessageResponse = {
                   id: generateUUID(),
                   content: finalResult.content,
