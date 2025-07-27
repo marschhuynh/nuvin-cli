@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { useAgentManager } from '@/hooks';
 import { generateUUID } from '@/lib/utils';
 import { useConversationStore } from '@/store';
@@ -37,14 +37,25 @@ export default function Messenger() {
   const [isLoading, setIsLoading] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // State for streaming message
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
-    null,
-  );
-  const [streamingContent, setStreamingContent] = useState<string>('');
+  // State for streaming message per conversation
+  const [streamingStates, setStreamingStates] = useState<
+    Record<string, { messageId: string; content: string }>
+  >({});
 
   // Get current conversation messages
   const storeMessages = getActiveMessages();
+
+  // Get current conversation's streaming state
+  const currentStreamingState = activeConversationId
+    ? streamingStates[activeConversationId]
+    : undefined;
+  const streamingMessageId = currentStreamingState?.messageId || null;
+  const streamingContent = currentStreamingState?.content || '';
+
+  // Clear loading state when conversation changes (but keep streaming states for other conversations)
+  useEffect(() => {
+    setIsLoading(false);
+  }, [activeConversationId]);
 
   // Helper to summarize conversation using the active agent
   const summarizeConversation = useCallback(
@@ -69,7 +80,7 @@ export default function Messenger() {
         // Use a separate conversation ID to prevent summary from being added to main conversation
         const summaryConversationId = `summary-${conversationId}`;
         const resp = await sendMessage(
-          `Provide a very brief 7-10 word summary of this conversation:\n${convoText}`,
+          `Provide a very brief 7-10 word summary of this conversation for user:\n${convoText}`,
           { conversationId: summaryConversationId },
         );
         console.log('Summary response:', resp.content.trim());
@@ -123,8 +134,10 @@ export default function Messenger() {
 
       // Create streaming assistant message
       const streamingId = generateUUID();
-      setStreamingMessageId(streamingId);
-      setStreamingContent('');
+      setStreamingStates((prev) => ({
+        ...prev,
+        [conversationId]: { messageId: streamingId, content: '' },
+      }));
 
       const initialAssistantMessage: Message = {
         id: streamingId,
@@ -147,8 +160,14 @@ export default function Messenger() {
           conversationId: conversationId,
           stream: true,
           onChunk: (chunk: string) => {
-            // Update local streaming content as chunks arrive
-            setStreamingContent((prev) => prev + chunk);
+            // Update streaming content for this specific conversation
+            setStreamingStates((prev) => ({
+              ...prev,
+              [conversationId]: {
+                messageId: streamingId,
+                content: (prev[conversationId]?.content || '') + chunk,
+              },
+            }));
           },
           onAdditionalMessage: (message) => {
             // Handle additional messages from tool execution flow
@@ -166,8 +185,10 @@ export default function Messenger() {
           onComplete: (finalContent: string) => {
             // Final update when streaming is complete - metadata will be added after sendMessage resolves
             if (conversationId) {
-              // Use finalContent if it's not empty, otherwise use accumulated streamingContent
-              const contentToUse = finalContent || streamingContent;
+              // Get the accumulated content for this conversation
+              const accumulatedContent =
+                streamingStates[conversationId]?.content || '';
+              const contentToUse = finalContent || accumulatedContent;
 
               // Only update if we have content to show
               if (contentToUse) {
@@ -180,10 +201,13 @@ export default function Messenger() {
                 };
                 updateMessage(conversationId, finalMessage);
 
-                // Clear streaming state after updating the message
+                // Clear streaming state for this conversation after updating the message
                 setTimeout(() => {
-                  setStreamingMessageId(null);
-                  setStreamingContent('');
+                  setStreamingStates((prev) => {
+                    const newState = { ...prev };
+                    delete newState[conversationId];
+                    return newState;
+                  });
                 }, 50);
 
                 // Trigger background summarization
@@ -193,9 +217,12 @@ export default function Messenger() {
                 console.warn('No content to finalize, keeping streaming state');
               }
             } else {
-              // No active conversation, clear streaming state
-              setStreamingMessageId(null);
-              setStreamingContent('');
+              // No active conversation, clear streaming state for this conversation
+              setStreamingStates((prev) => {
+                const newState = { ...prev };
+                delete newState[conversationId];
+                return newState;
+              });
             }
           },
           onError: (error) => {
@@ -210,8 +237,12 @@ export default function Messenger() {
               };
               updateMessage(conversationId, errorMessage);
             }
-            setStreamingMessageId(null);
-            setStreamingContent('');
+            // Clear streaming state for this conversation
+            setStreamingStates((prev) => {
+              const newState = { ...prev };
+              delete newState[conversationId];
+              return newState;
+            });
             setIsLoading(false);
           },
         });
@@ -280,8 +311,8 @@ export default function Messenger() {
             content: `${
               error instanceof Error &&
               error.message === 'Request cancelled by user'
-                ? '⏹️ Message cancelled. Feel free to try sending another message.'
-                : `❌ Something went wrong sending your message. ${
+                ? 'Message cancelled. Feel free to try sending another message.'
+                : `Something went wrong sending your message. ${
                     !activeAgent
                       ? 'Please select an agent first.'
                       : !activeProvider && agentType === 'local'
@@ -295,8 +326,12 @@ export default function Messenger() {
           };
           updateMessage(conversationId, errorMessage);
         }
-        setStreamingMessageId(null);
-        setStreamingContent('');
+        // Clear streaming state for this conversation
+        setStreamingStates((prev) => {
+          const newState = { ...prev };
+          delete newState[conversationId];
+          return newState;
+        });
       } finally {
         setIsLoading(false);
         timeoutRef.current = null;
@@ -311,7 +346,7 @@ export default function Messenger() {
       activeAgent,
       getConversationMessages,
       isReady,
-      streamingContent,
+      streamingStates,
       updateMessage, // Trigger background summarization
       summarizeConversation,
     ],
@@ -359,9 +394,14 @@ export default function Messenger() {
         addMessage(activeConversationId, stopMessage);
       }
 
-      // Clear streaming state
-      setStreamingMessageId(null);
-      setStreamingContent('');
+      // Clear streaming state for the current conversation
+      if (activeConversationId) {
+        setStreamingStates((prev) => {
+          const newState = { ...prev };
+          delete newState[activeConversationId];
+          return newState;
+        });
+      }
 
       console.log('Generation stopped by user');
     }

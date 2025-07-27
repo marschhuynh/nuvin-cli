@@ -79,7 +79,7 @@ export function AssistantMessage({
       <div className="relative max-w-[70%]">
         {/* Message bubble */}
         <div
-          className={`rounded-lg overflow-auto transition-all duration-300 p-4 relative ${
+          className={`rounded-lg overflow-auto transition-all duration-300 ${parsedContent.hasToolCalls ? '' : 'p-4'} relative ${
             messageMode === 'transparent'
               ? 'text-foreground'
               : isStreaming

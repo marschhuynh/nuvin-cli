@@ -211,6 +211,7 @@ export function MessageListPaginated({
             ) : (
               <div className="text-center space-y-2">
                 <button
+                  type="button"
                   onClick={() => loadMoreMessages()}
                   className="px-4 py-2 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
                   disabled={isLoadingMore}
