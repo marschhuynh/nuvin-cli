@@ -1,0 +1,76 @@
+{
+  "model": "gpt-4.1",
+  "input": [
+    {
+      "role": "user",
+      "content": [{ "type": "input_text", "text": "gen me 5 random numbers" }]
+    },
+    {
+      "type": "function_call",
+      "id": "fc_68866c928bd4819e963ba7ae3b0e9eba0094ebd4330d2c0e",
+      "call_id": "call_0vdWe0p0mMv60HykxRmVhVZj",
+      "name": "random_number",
+      "arguments": "{\"min\":0,\"max\":100}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_0vdWe0p0mMv60HykxRmVhVZj",
+      "output": "{\n  \"random_number\": 47\n}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_m3XA6iS08JyrW9k012bGehod",
+      "output": "{\n  \"random_number\": 42\n}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_UZobor89xNzhEmXLsujZcRGe",
+      "output": "{\n  \"random_number\": 47\n}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_FajqMuZud8nV3HfHE69UPQON",
+      "output": "{\n  \"random_number\": 42\n}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_r1VFs09diyRfZ6IQNSndrRdY",
+      "output": "{\n  \"function\": \"random_number\",\n  \"arguments\": {\n    \"min\": 0,\n    \"max\": 100\n  },\n  \"result\": 42\n}"
+    },
+    {
+      "role": "user",
+      "content": [{ "type": "input_text", "text": "sum all of them" }]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "name": "random_number",
+      "description": "Generates a random number within a specified range",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "Minimum value of the range, inclusive"
+          },
+          "max": {
+            "type": "number",
+            "description": "Maximum value of the range, inclusive"
+          }
+        },
+        "required": ["min", "max"],
+        "additionalProperties": false
+      },
+      "strict": true
+    }
+  ],
+  "text": { "format": { "type": "text" } },
+  "temperature": 1,
+  "top_p": 1,
+  "parallel_tool_calls": true,
+  "reasoning": {},
+  "stream": true,
+  "max_output_tokens": 2048,
+  "store": false
+}

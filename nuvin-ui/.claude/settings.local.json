@@ -9,7 +9,10 @@
       "Bash(pnpm build)",
       "Bash(npm run typecheck:*)",
       "Bash(npm run:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(pnpm vitest run:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm test:*)"
     ],
     "deny": []
   }

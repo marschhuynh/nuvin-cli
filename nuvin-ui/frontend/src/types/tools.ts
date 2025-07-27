@@ -2,7 +2,7 @@
 export interface ToolParameter {
   type: 'string' | 'number' | 'boolean' | 'object' | 'array';
   description: string;
-  required?: boolean;
+  required?: boolean | string[];
   enum?: string[] | number[];
   items?: ToolParameter; // For array types
   properties?: Record<string, ToolParameter>; // For object types
