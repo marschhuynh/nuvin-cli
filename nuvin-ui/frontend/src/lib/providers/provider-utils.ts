@@ -116,14 +116,3 @@ export function formatContextLength(contextLength?: number): string {
   return `${contextLength} tokens`;
 }
 
-export function extractValue(obj: any, path: string) {
-  return path.split('.').reduce((current, key) => {
-    if (current === null || current === undefined) return undefined;
-    if (key.includes('[') && key.includes(']')) {
-      const [arrayKey, indexStr] = key.split('[');
-      const index = parseInt(indexStr.replace(']', ''));
-      return current[arrayKey]?.[index];
-    }
-    return current[key];
-  }, obj);
-}

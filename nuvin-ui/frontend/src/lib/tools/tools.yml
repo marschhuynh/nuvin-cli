@@ -3,8 +3,7 @@ tools:
     description: >-
       Launch a new agent that has access to the following tools: Bash, Glob,
       Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write, NotebookRead,
-      NotebookEdit, WebFetch, TodoWrite, WebSearch,
-      mcp__context7__resolve-library-id, mcp__context7__get-library-docs. When
+      NotebookEdit, WebFetch, TodoWrite, WebSearch. When
       you are searching for a keyword or file and are not confident that you
       will find the right match in the first few tries, use the Agent tool to
       perform the search for you.

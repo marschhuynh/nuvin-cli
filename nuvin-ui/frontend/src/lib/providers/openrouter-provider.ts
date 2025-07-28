@@ -1,5 +1,5 @@
 import { BaseLLMProvider } from './base-provider';
-import { extractValue } from './provider-utils';
+import { extractValue } from './utils';
 import type {
   CompletionParams,
   CompletionResult,

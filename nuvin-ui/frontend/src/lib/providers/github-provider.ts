@@ -6,7 +6,7 @@ import type {
   ModelInfo,
 } from './types/base';
 import { smartFetch } from '../fetch-proxy';
-import { extractValue } from './provider-utils';
+import { extractValue } from './utils';
 
 export class GithubCopilotProvider extends BaseLLMProvider {
   constructor(apiKey: string) {

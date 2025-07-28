@@ -1,4 +1,4 @@
-import { extractValue } from './provider-utils';
+import { extractValue } from './utils';
 import type {
   LLMProvider,
   CompletionParams,
