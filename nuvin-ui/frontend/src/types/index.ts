@@ -109,3 +109,25 @@ export interface AgentSettings {
   status?: 'active' | 'inactive' | 'busy';
   lastUsed?: string;
 }
+
+// Todo item interface
+export interface TodoItem {
+  id: string;
+  content: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'high' | 'medium' | 'low';
+  createdAt?: string;
+  updatedAt?: string;
+  conversationId?: string; // Optional: associate with a conversation
+}
+
+// Todo list summary statistics
+export interface TodoStats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  highPriority: number;
+  mediumPriority: number;
+  lowPriority: number;
+}
