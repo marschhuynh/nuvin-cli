@@ -33,8 +33,13 @@ describe('taskTool', () => {
       expect(taskTool.definition.name).toBe('Task');
       expect(taskTool.definition.description).toContain('Launch a new agent');
       expect(taskTool.definition.parameters.type).toBe('object');
-      expect(taskTool.definition.parameters.required).toEqual(['description', 'prompt']);
-      expect(taskTool.definition.parameters.properties.description).toBeDefined();
+      expect(taskTool.definition.parameters.required).toEqual([
+        'description',
+        'prompt',
+      ]);
+      expect(
+        taskTool.definition.parameters.properties.description,
+      ).toBeDefined();
       expect(taskTool.definition.parameters.properties.prompt).toBeDefined();
     });
 
@@ -108,7 +113,8 @@ describe('taskTool', () => {
 
     const mockResponse: MessageResponse = {
       id: 'test-response-id',
-      content: 'Task completed successfully. Found 15 TypeScript files in the project.',
+      content:
+        'Task completed successfully. Found 15 TypeScript files in the project.',
       role: 'assistant',
       timestamp: new Date().toISOString(),
       metadata: {
@@ -135,7 +141,8 @@ describe('taskTool', () => {
         taskId: 'test-task-id-123',
         description: 'Search files',
         prompt: 'Find all TypeScript files in the project',
-        response: 'Task completed successfully. Found 15 TypeScript files in the project.',
+        response:
+          'Task completed successfully. Found 15 TypeScript files in the project.',
         agentId: 'test-agent',
         agentType: 'local',
         tokensUsed: 150,
@@ -154,7 +161,7 @@ describe('taskTool', () => {
           taskId: 'test-task-id-123',
           userId: 'system',
           timeout: 300000,
-        }
+        },
       );
     });
 
@@ -172,7 +179,9 @@ describe('taskTool', () => {
 
     it('should handle agent execution errors', async () => {
       mockAgentManager.getActiveAgent.mockReturnValue(mockActiveAgent);
-      mockAgentManager.sendMessage.mockRejectedValue(new Error('Agent timeout'));
+      mockAgentManager.sendMessage.mockRejectedValue(
+        new Error('Agent timeout'),
+      );
 
       const result = await taskTool.execute({
         description: 'Search files',
@@ -194,7 +203,9 @@ describe('taskTool', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Description parameter is required and must be a string');
+      expect(result.error).toBe(
+        'Description parameter is required and must be a string',
+      );
     });
 
     it('should validate prompt parameter', async () => {
@@ -203,7 +214,9 @@ describe('taskTool', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Prompt parameter is required and must be a string');
+      expect(result.error).toBe(
+        'Prompt parameter is required and must be a string',
+      );
     });
 
     it('should validate description length', async () => {
@@ -214,16 +227,21 @@ describe('taskTool', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Description should be 3-5 words (2-8 words accepted)');
+      expect(result.error).toBe(
+        'Description should be 3-5 words (2-8 words accepted)',
+      );
 
       // Test very long description (>8 words)
       result = await taskTool.execute({
-        description: 'this is a very long description that exceeds the maximum word limit',
+        description:
+          'this is a very long description that exceeds the maximum word limit',
         prompt: 'Find all TypeScript files in the project',
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Description should be 3-5 words (2-8 words accepted)');
+      expect(result.error).toBe(
+        'Description should be 3-5 words (2-8 words accepted)',
+      );
     });
 
     it('should accept valid description lengths', async () => {

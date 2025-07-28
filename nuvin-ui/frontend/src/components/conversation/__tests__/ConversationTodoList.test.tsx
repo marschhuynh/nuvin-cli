@@ -25,11 +25,19 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: null,
     } as any);
-    
+
     // Mock the todo store
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => []),
-      getTodoStats: vi.fn(() => ({ total: 0, pending: 0, inProgress: 0, completed: 0, highPriority: 0, mediumPriority: 0, lowPriority: 0 })),
+      getTodoStats: vi.fn(() => ({
+        total: 0,
+        pending: 0,
+        inProgress: 0,
+        completed: 0,
+        highPriority: 0,
+        mediumPriority: 0,
+        lowPriority: 0,
+      })),
     } as any);
 
     const { container } = render(<ConversationTodoList />);
@@ -41,13 +49,21 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: 'test-conversation',
     } as any);
-    
+
     // Mock the todo store to return empty todos
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => []),
-      getTodoStats: vi.fn(() => ({ total: 0, pending: 0, inProgress: 0, completed: 0, highPriority: 0, mediumPriority: 0, lowPriority: 0 })),
+      getTodoStats: vi.fn(() => ({
+        total: 0,
+        pending: 0,
+        inProgress: 0,
+        completed: 0,
+        highPriority: 0,
+        mediumPriority: 0,
+        lowPriority: 0,
+      })),
     } as any);
-    
+
     const { container } = render(<ConversationTodoList />);
     expect(container.firstChild).toBeNull();
   });
@@ -88,7 +104,7 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: 'test-conversation',
     } as any);
-    
+
     // Mock the todo store
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => mockTodos),
@@ -119,7 +135,7 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: 'test-conversation',
     } as any);
-    
+
     // Mock the todo store
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => mockTodos),
@@ -157,7 +173,7 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: 'test-conversation',
     } as any);
-    
+
     // Mock the todo store
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => mockTodos),
@@ -176,7 +192,7 @@ describe('ConversationTodoList', () => {
 
     // Should NOT be expanded by default since all items are completed
     expect(screen.queryByText('Test todo 1')).not.toBeInTheDocument();
-    
+
     // But should show the header
     expect(screen.getByText('Todo List')).toBeInTheDocument();
   });
@@ -198,7 +214,7 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: 'test-conversation',
     } as any);
-    
+
     // Mock the todo store
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => mockTodos),
@@ -252,7 +268,7 @@ describe('ConversationTodoList', () => {
     vi.mocked(useConversationStore).mockReturnValue({
       activeConversationId: 'test-conversation',
     } as any);
-    
+
     // Mock the todo store
     vi.mocked(useTodoStore).mockReturnValue({
       getTodos: vi.fn(() => mockTodos),
@@ -272,7 +288,7 @@ describe('ConversationTodoList', () => {
     // Should be auto-expanded and show todo items without progress section or priority badges
     expect(screen.getByText('Test todo 1')).toBeInTheDocument();
     expect(screen.getByText('Test todo 2')).toBeInTheDocument();
-    
+
     // Should not show progress information
     expect(screen.queryByText('Progress')).not.toBeInTheDocument();
     expect(screen.queryByText('50%')).not.toBeInTheDocument();

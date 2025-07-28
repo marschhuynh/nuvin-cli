@@ -12,11 +12,18 @@ const todoWriteValidate = (parameters: any): boolean => {
 
   // Validate each todo item structure
   for (const todo of parameters.todos) {
-    if (!todo.content || typeof todo.content !== 'string' || todo.content.trim().length === 0) {
+    if (
+      !todo.content ||
+      typeof todo.content !== 'string' ||
+      todo.content.trim().length === 0
+    ) {
       return false;
     }
 
-    if (!todo.status || !['pending', 'in_progress', 'completed'].includes(todo.status)) {
+    if (
+      !todo.status ||
+      !['pending', 'in_progress', 'completed'].includes(todo.status)
+    ) {
       return false;
     }
 
@@ -24,7 +31,11 @@ const todoWriteValidate = (parameters: any): boolean => {
       return false;
     }
 
-    if (!todo.id || typeof todo.id !== 'string' || todo.id.trim().length === 0) {
+    if (
+      !todo.id ||
+      typeof todo.id !== 'string' ||
+      todo.id.trim().length === 0
+    ) {
       return false;
     }
   }
@@ -42,12 +53,12 @@ const todoWriteValidate = (parameters: any): boolean => {
 const generateTodoStats = (todos: any[]) => {
   return {
     total: todos.length,
-    pending: todos.filter(todo => todo.status === 'pending').length,
-    inProgress: todos.filter(todo => todo.status === 'in_progress').length,
-    completed: todos.filter(todo => todo.status === 'completed').length,
-    highPriority: todos.filter(todo => todo.priority === 'high').length,
-    mediumPriority: todos.filter(todo => todo.priority === 'medium').length,
-    lowPriority: todos.filter(todo => todo.priority === 'low').length,
+    pending: todos.filter((todo) => todo.status === 'pending').length,
+    inProgress: todos.filter((todo) => todo.status === 'in_progress').length,
+    completed: todos.filter((todo) => todo.status === 'completed').length,
+    highPriority: todos.filter((todo) => todo.priority === 'high').length,
+    mediumPriority: todos.filter((todo) => todo.priority === 'medium').length,
+    lowPriority: todos.filter((todo) => todo.priority === 'low').length,
   };
 };
 
@@ -83,88 +94,123 @@ describe('todoWriteTool', () => {
     it('should reject invalid parameters', () => {
       // Missing todos
       expect(todoWriteValidate({})).toBe(false);
-      
+
       // Todos is not an array
       expect(todoWriteValidate({ todos: 'invalid' })).toBe(false);
-      
+
       // Empty todos array
       expect(todoWriteValidate({ todos: [] })).toBe(false);
     });
 
     it('should reject invalid todo items', () => {
       // Missing content
-      expect(todoWriteValidate({
-        todos: [{ id: '1', status: 'pending', priority: 'high' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [{ id: '1', status: 'pending', priority: 'high' }],
+        }),
+      ).toBe(false);
 
       // Empty content
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: '', status: 'pending', priority: 'high' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [
+            { id: '1', content: '', status: 'pending', priority: 'high' },
+          ],
+        }),
+      ).toBe(false);
 
       // Invalid status
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: 'Task', status: 'invalid', priority: 'high' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [
+            { id: '1', content: 'Task', status: 'invalid', priority: 'high' },
+          ],
+        }),
+      ).toBe(false);
 
       // Invalid priority
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: 'Task', status: 'pending', priority: 'urgent' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [
+            { id: '1', content: 'Task', status: 'pending', priority: 'urgent' },
+          ],
+        }),
+      ).toBe(false);
 
       // Missing id
-      expect(todoWriteValidate({
-        todos: [{ content: 'Task', status: 'pending', priority: 'high' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [{ content: 'Task', status: 'pending', priority: 'high' }],
+        }),
+      ).toBe(false);
 
       // Empty id
-      expect(todoWriteValidate({
-        todos: [{ id: '', content: 'Task', status: 'pending', priority: 'high' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [
+            { id: '', content: 'Task', status: 'pending', priority: 'high' },
+          ],
+        }),
+      ).toBe(false);
     });
 
     it('should reject duplicate IDs', () => {
-      expect(todoWriteValidate({
-        todos: [
-          { id: '1', content: 'Task 1', status: 'pending', priority: 'high' },
-          { id: '1', content: 'Task 2', status: 'pending', priority: 'medium' },
-        ]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [
+            { id: '1', content: 'Task 1', status: 'pending', priority: 'high' },
+            {
+              id: '1',
+              content: 'Task 2',
+              status: 'pending',
+              priority: 'medium',
+            },
+          ],
+        }),
+      ).toBe(false);
     });
 
     it('should validate allowed status values', () => {
       const validStatuses = ['pending', 'in_progress', 'completed'];
-      
+
       for (const status of validStatuses) {
-        expect(todoWriteValidate({
-          todos: [{ id: '1', content: 'Task', status, priority: 'high' }]
-        })).toBe(true);
+        expect(
+          todoWriteValidate({
+            todos: [{ id: '1', content: 'Task', status, priority: 'high' }],
+          }),
+        ).toBe(true);
       }
 
       const invalidStatuses = ['todo', 'done', 'working', 'active'];
-      
+
       for (const status of invalidStatuses) {
-        expect(todoWriteValidate({
-          todos: [{ id: '1', content: 'Task', status, priority: 'high' }]
-        })).toBe(false);
+        expect(
+          todoWriteValidate({
+            todos: [{ id: '1', content: 'Task', status, priority: 'high' }],
+          }),
+        ).toBe(false);
       }
     });
 
     it('should validate allowed priority values', () => {
       const validPriorities = ['high', 'medium', 'low'];
-      
+
       for (const priority of validPriorities) {
-        expect(todoWriteValidate({
-          todos: [{ id: '1', content: 'Task', status: 'pending', priority }]
-        })).toBe(true);
+        expect(
+          todoWriteValidate({
+            todos: [{ id: '1', content: 'Task', status: 'pending', priority }],
+          }),
+        ).toBe(true);
       }
 
       const invalidPriorities = ['urgent', 'critical', 'normal', '1', '2', '3'];
-      
+
       for (const priority of invalidPriorities) {
-        expect(todoWriteValidate({
-          todos: [{ id: '1', content: 'Task', status: 'pending', priority }]
-        })).toBe(false);
+        expect(
+          todoWriteValidate({
+            todos: [{ id: '1', content: 'Task', status: 'pending', priority }],
+          }),
+        ).toBe(false);
       }
     });
   });
@@ -173,7 +219,12 @@ describe('todoWriteTool', () => {
     it('should generate correct statistics', () => {
       const todos = [
         { id: '1', content: 'Task 1', status: 'pending', priority: 'high' },
-        { id: '2', content: 'Task 2', status: 'in_progress', priority: 'medium' },
+        {
+          id: '2',
+          content: 'Task 2',
+          status: 'in_progress',
+          priority: 'medium',
+        },
         { id: '3', content: 'Task 3', status: 'completed', priority: 'low' },
         { id: '4', content: 'Task 4', status: 'completed', priority: 'high' },
         { id: '5', content: 'Task 5', status: 'pending', priority: 'medium' },
@@ -207,7 +258,9 @@ describe('todoWriteTool', () => {
     it('should calculate progress percentage correctly', () => {
       const calculateProgress = (todos: any[]) => {
         const stats = generateTodoStats(todos);
-        return stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+        return stats.total > 0
+          ? Math.round((stats.completed / stats.total) * 100)
+          : 0;
       };
 
       // 50% complete
@@ -227,7 +280,12 @@ describe('todoWriteTool', () => {
       // 0% complete
       const todos3 = [
         { id: '1', content: 'Task 1', status: 'pending', priority: 'high' },
-        { id: '2', content: 'Task 2', status: 'in_progress', priority: 'medium' },
+        {
+          id: '2',
+          content: 'Task 2',
+          status: 'in_progress',
+          priority: 'medium',
+        },
       ];
       expect(calculateProgress(todos3)).toBe(0);
 
@@ -240,24 +298,36 @@ describe('todoWriteTool', () => {
     it('should identify multiple in_progress tasks', () => {
       const todos = [
         { id: '1', content: 'Task 1', status: 'in_progress', priority: 'high' },
-        { id: '2', content: 'Task 2', status: 'in_progress', priority: 'medium' },
+        {
+          id: '2',
+          content: 'Task 2',
+          status: 'in_progress',
+          priority: 'medium',
+        },
         { id: '3', content: 'Task 3', status: 'pending', priority: 'low' },
       ];
 
-      const inProgressCount = todos.filter(todo => todo.status === 'in_progress').length;
+      const inProgressCount = todos.filter(
+        (todo) => todo.status === 'in_progress',
+      ).length;
       expect(inProgressCount).toBeGreaterThan(1);
     });
 
     it('should find current and next tasks', () => {
       const todos = [
         { id: '1', content: 'Task 1', status: 'completed', priority: 'high' },
-        { id: '2', content: 'Task 2', status: 'in_progress', priority: 'medium' },
+        {
+          id: '2',
+          content: 'Task 2',
+          status: 'in_progress',
+          priority: 'medium',
+        },
         { id: '3', content: 'Task 3', status: 'pending', priority: 'low' },
         { id: '4', content: 'Task 4', status: 'pending', priority: 'high' },
       ];
 
-      const currentTask = todos.find(todo => todo.status === 'in_progress');
-      const nextTask = todos.find(todo => todo.status === 'pending');
+      const currentTask = todos.find((todo) => todo.status === 'in_progress');
+      const nextTask = todos.find((todo) => todo.status === 'pending');
 
       expect(currentTask?.content).toBe('Task 2');
       expect(nextTask?.content).toBe('Task 3');
@@ -266,27 +336,58 @@ describe('todoWriteTool', () => {
 
   describe('edge cases', () => {
     it('should handle todos with whitespace in content', () => {
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: '   ', status: 'pending', priority: 'high' }]
-      })).toBe(false);
+      expect(
+        todoWriteValidate({
+          todos: [
+            { id: '1', content: '   ', status: 'pending', priority: 'high' },
+          ],
+        }),
+      ).toBe(false);
 
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: '  Valid task  ', status: 'pending', priority: 'high' }]
-      })).toBe(true);
+      expect(
+        todoWriteValidate({
+          todos: [
+            {
+              id: '1',
+              content: '  Valid task  ',
+              status: 'pending',
+              priority: 'high',
+            },
+          ],
+        }),
+      ).toBe(true);
     });
 
     it('should handle very long task content', () => {
       const longContent = 'A'.repeat(1000);
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: longContent, status: 'pending', priority: 'high' }]
-      })).toBe(true);
+      expect(
+        todoWriteValidate({
+          todos: [
+            {
+              id: '1',
+              content: longContent,
+              status: 'pending',
+              priority: 'high',
+            },
+          ],
+        }),
+      ).toBe(true);
     });
 
     it('should handle special characters in content', () => {
       const specialContent = 'Task with émojis 🚀 and spëcial chàracters!';
-      expect(todoWriteValidate({
-        todos: [{ id: '1', content: specialContent, status: 'pending', priority: 'high' }]
-      })).toBe(true);
+      expect(
+        todoWriteValidate({
+          todos: [
+            {
+              id: '1',
+              content: specialContent,
+              status: 'pending',
+              priority: 'high',
+            },
+          ],
+        }),
+      ).toBe(true);
     });
   });
 });

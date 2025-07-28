@@ -49,7 +49,9 @@ describe('bashTool', () => {
   describe('validation', () => {
     it('should validate correct parameters', () => {
       expect(bashToolValidate({ command: 'ls -la' })).toBe(true);
-      expect(bashToolValidate({ command: 'echo hello', timeout: 5000 })).toBe(true);
+      expect(bashToolValidate({ command: 'echo hello', timeout: 5000 })).toBe(
+        true,
+      );
       expect(bashToolValidate({ command: 'git status' })).toBe(true);
     });
 
@@ -66,11 +68,13 @@ describe('bashTool', () => {
       expect(bashToolValidate({ command: 'ls', timeout: 1000 })).toBe(true);
       expect(bashToolValidate({ command: 'ls', timeout: 300000 })).toBe(true);
       expect(bashToolValidate({ command: 'ls', timeout: 600000 })).toBe(true);
-      
+
       // Invalid timeouts
       expect(bashToolValidate({ command: 'ls', timeout: 500 })).toBe(false);
       expect(bashToolValidate({ command: 'ls', timeout: 700000 })).toBe(false);
-      expect(bashToolValidate({ command: 'ls', timeout: 'invalid' })).toBe(false);
+      expect(bashToolValidate({ command: 'ls', timeout: 'invalid' })).toBe(
+        false,
+      );
       expect(bashToolValidate({ command: 'ls', timeout: -1000 })).toBe(false);
     });
   });
@@ -79,7 +83,7 @@ describe('bashTool', () => {
     it('should detect dangerous commands', () => {
       const dangerousCommands = [
         'rm -rf /',
-        'sudo rm -rf /important', 
+        'sudo rm -rf /important',
         'dd if=/dev/zero of=/dev/sda',
         'shutdown now',
         'reboot',

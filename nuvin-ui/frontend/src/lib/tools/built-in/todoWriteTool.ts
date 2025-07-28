@@ -66,7 +66,8 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
           type: 'array',
           items: {
             type: 'object',
-            description: 'A todo item with content, status, priority, and unique ID',
+            description:
+              'A todo item with content, status, priority, and unique ID',
             properties: {
               content: {
                 type: 'string',
@@ -187,9 +188,9 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
 
       // Access the store directly (since this is outside React component)
       const todoStore = useTodoStore.getState();
-      
+
       // Convert input todos to TodoItem format
-      const todoItems: TodoItem[] = todos.map(todo => ({
+      const todoItems: TodoItem[] = todos.map((todo) => ({
         id: todo.id,
         content: todo.content,
         status: todo.status as TodoItem['status'],
@@ -220,7 +221,8 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
             currentTask:
               inProgressTasks.length > 0 ? inProgressTasks[0].content : null,
             nextTask:
-              todoItems.find((todo) => todo.status === 'pending')?.content || null,
+              todoItems.find((todo) => todo.status === 'pending')?.content ||
+              null,
           },
         },
       };

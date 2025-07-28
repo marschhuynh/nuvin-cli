@@ -133,10 +133,25 @@ describe('todoWriteTool integration', () => {
   it('should identify current and next tasks', async () => {
     const orderedTasksParams = {
       todos: [
-        { id: '1', content: 'Completed task', status: 'completed', priority: 'high' },
-        { id: '2', content: 'Current task', status: 'in_progress', priority: 'medium' },
+        {
+          id: '1',
+          content: 'Completed task',
+          status: 'completed',
+          priority: 'high',
+        },
+        {
+          id: '2',
+          content: 'Current task',
+          status: 'in_progress',
+          priority: 'medium',
+        },
         { id: '3', content: 'Next task', status: 'pending', priority: 'low' },
-        { id: '4', content: 'Future task', status: 'pending', priority: 'high' },
+        {
+          id: '4',
+          content: 'Future task',
+          status: 'pending',
+          priority: 'high',
+        },
       ],
     };
 
@@ -150,7 +165,12 @@ describe('todoWriteTool integration', () => {
   it('should handle single completed task', async () => {
     const completedParams = {
       todos: [
-        { id: '1', content: 'All done!', status: 'completed', priority: 'high' },
+        {
+          id: '1',
+          content: 'All done!',
+          status: 'completed',
+          priority: 'high',
+        },
       ],
     };
 

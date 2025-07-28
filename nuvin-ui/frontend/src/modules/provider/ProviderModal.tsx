@@ -43,6 +43,7 @@ const PROVIDER_OPTIONS = [
   PROVIDER_TYPES.OpenRouter,
   PROVIDER_TYPES.GitHub,
   PROVIDER_TYPES.OpenAICompatible,
+  PROVIDER_TYPES.DeepInfra,
 ];
 
 interface ProviderModalProps {

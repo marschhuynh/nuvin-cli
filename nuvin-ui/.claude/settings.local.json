@@ -13,7 +13,9 @@
       "Bash(pnpm vitest run:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm test:*)",
-      "Bash(npx vitest run:*)"
+      "Bash(npx vitest run:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }

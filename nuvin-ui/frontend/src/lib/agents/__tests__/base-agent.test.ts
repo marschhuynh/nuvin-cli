@@ -5,7 +5,10 @@ import type { SendMessageOptions, MessageResponse } from '../../agent-manager';
 
 // Mock concrete implementation for testing
 class TestAgent extends BaseAgent {
-  async sendMessage(content: string, options?: SendMessageOptions): Promise<MessageResponse> {
+  async sendMessage(
+    content: string,
+    options?: SendMessageOptions,
+  ): Promise<MessageResponse> {
     throw new Error('Method not implemented.');
   }
 
@@ -53,7 +56,10 @@ describe('BaseAgent buildContext', () => {
     // Add messages to history
     (agent as any).addToHistory(conversationId, messages);
 
-    const context = agent.buildContext(conversationId, 'What can you help me with?');
+    const context = agent.buildContext(
+      conversationId,
+      'What can you help me with?',
+    );
 
     expect(context).toEqual([
       { role: 'system', content: 'You are a helpful assistant.' },
@@ -75,7 +81,8 @@ describe('BaseAgent buildContext', () => {
       {
         id: '2',
         role: 'assistant',
-        content: '<|tool_calls_section_begin|><|tool_call_begin|>random_number:call_123<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_result_begin|>{"random_number": 47}<|tool_call_end|><|tool_calls_section_end|>Here are your random numbers!',
+        content:
+          '<|tool_calls_section_begin|><|tool_call_begin|>random_number:call_123<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_result_begin|>{"random_number": 47}<|tool_call_end|><|tool_calls_section_end|>Here are your random numbers!',
         timestamp: '2023-01-01T00:01:00Z',
       },
     ];
@@ -91,14 +98,16 @@ describe('BaseAgent buildContext', () => {
       {
         role: 'assistant',
         content: null,
-        tool_calls: [{
-          id: 'call_123',
-          type: 'function',
-          function: {
-            name: 'random_number',
-            arguments: '{"min":0,"max":100}',
-          }
-        }],
+        tool_calls: [
+          {
+            id: 'call_123',
+            type: 'function',
+            function: {
+              name: 'random_number',
+              arguments: '{"min":0,"max":100}',
+            },
+          },
+        ],
       },
       {
         role: 'tool',
@@ -117,7 +126,8 @@ describe('BaseAgent buildContext', () => {
       {
         id: '1',
         role: 'assistant',
-        content: '<|tool_calls_section_begin|><|tool_call_begin|>random_number:call_123<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_result_begin|>{"random_number": 47}<|tool_call_end|><|tool_call_begin|>random_number:call_456<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_result_begin|>{"random_number": 82}<|tool_call_end|><|tool_calls_section_end|>Generated two numbers.',
+        content:
+          '<|tool_calls_section_begin|><|tool_call_begin|>random_number:call_123<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_result_begin|>{"random_number": 47}<|tool_call_end|><|tool_call_begin|>random_number:call_456<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_result_begin|>{"random_number": 82}<|tool_call_end|><|tool_calls_section_end|>Generated two numbers.',
         timestamp: '2023-01-01T00:00:00Z',
       },
     ];
@@ -139,7 +149,7 @@ describe('BaseAgent buildContext', () => {
             function: {
               name: 'random_number',
               arguments: '{"min":0,"max":100}',
-            }
+            },
           },
           {
             id: 'call_456',
@@ -147,8 +157,8 @@ describe('BaseAgent buildContext', () => {
             function: {
               name: 'random_number',
               arguments: '{"min":0,"max":100}',
-            }
-          }
+            },
+          },
         ],
       },
       {
@@ -174,7 +184,8 @@ describe('BaseAgent buildContext', () => {
       {
         id: '1',
         role: 'assistant',
-        content: '<|tool_calls_section_begin|><|tool_call_begin|>random_number:call_123<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_end|><|tool_calls_section_end|>',
+        content:
+          '<|tool_calls_section_begin|><|tool_call_begin|>random_number:call_123<|tool_call_argument_begin|>{"min":0,"max":100}<|tool_call_end|><|tool_calls_section_end|>',
         timestamp: '2023-01-01T00:00:00Z',
       },
     ];
@@ -189,14 +200,16 @@ describe('BaseAgent buildContext', () => {
       {
         role: 'assistant',
         content: null,
-        tool_calls: [{
-          id: 'call_123',
-          type: 'function',
-          function: {
-            name: 'random_number',
-            arguments: '{"min":0,"max":100}',
-          }
-        }],
+        tool_calls: [
+          {
+            id: 'call_123',
+            type: 'function',
+            function: {
+              name: 'random_number',
+              arguments: '{"min":0,"max":100}',
+            },
+          },
+        ],
       },
       { role: 'user', content: 'What happened?' },
     ]);

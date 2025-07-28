@@ -24,19 +24,26 @@ const CollapsibleContext = React.createContext<{
   onOpenChange: (open: boolean) => void;
 } | null>(null);
 
-export function Collapsible({ open, onOpenChange, children, className }: CollapsibleProps) {
+export function Collapsible({
+  open,
+  onOpenChange,
+  children,
+  className,
+}: CollapsibleProps) {
   return (
     <CollapsibleContext.Provider value={{ open, onOpenChange }}>
-      <div className={cn('', className)}>
-        {children}
-      </div>
+      <div className={cn('', className)}>{children}</div>
     </CollapsibleContext.Provider>
   );
 }
 
-export function CollapsibleTrigger({ asChild, children, className }: CollapsibleTriggerProps) {
+export function CollapsibleTrigger({
+  asChild,
+  children,
+  className,
+}: CollapsibleTriggerProps) {
   const context = React.useContext(CollapsibleContext);
-  
+
   if (!context) {
     throw new Error('CollapsibleTrigger must be used within a Collapsible');
   }
@@ -50,24 +57,26 @@ export function CollapsibleTrigger({ asChild, children, className }: Collapsible
   if (asChild) {
     return React.cloneElement(children as React.ReactElement, {
       onClick: handleClick,
-      className: cn((children as React.ReactElement).props.className, className),
+      className: cn(
+        (children as React.ReactElement).props.className,
+        className,
+      ),
     });
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className={cn('', className)}
-    >
+    <button type="button" onClick={handleClick} className={cn('', className)}>
       {children}
     </button>
   );
 }
 
-export function CollapsibleContent({ children, className }: CollapsibleContentProps) {
+export function CollapsibleContent({
+  children,
+  className,
+}: CollapsibleContentProps) {
   const context = React.useContext(CollapsibleContext);
-  
+
   if (!context) {
     throw new Error('CollapsibleContent must be used within a Collapsible');
   }
@@ -79,7 +88,9 @@ export function CollapsibleContent({ children, className }: CollapsibleContentPr
   }
 
   return (
-    <div className={cn('animate-in slide-in-from-top-1 duration-200', className)}>
+    <div
+      className={cn('animate-in slide-in-from-top-1 duration-200', className)}
+    >
       {children}
     </div>
   );

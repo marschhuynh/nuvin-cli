@@ -46,5 +46,13 @@ export function registerBuiltInTools(): void {
  * Get all built-in tools
  */
 export function getBuiltInTools() {
-  return [calculatorTool, timeTool, randomTool, bashTool, todoWriteTool, todoReadTool, taskTool];
+  return [
+    calculatorTool,
+    timeTool,
+    randomTool,
+    bashTool,
+    todoWriteTool,
+    todoReadTool,
+    taskTool,
+  ];
 }

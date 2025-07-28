@@ -27,7 +27,7 @@ interface TodoState {
   markAsInProgress: (todoId: string) => void;
   markAsCompleted: (todoId: string) => void;
   markAsPending: (todoId: string) => void;
-  
+
   reset: () => void;
 }
 
@@ -38,12 +38,12 @@ const generateId = (): string => {
 const calculateStats = (todos: TodoItem[]): TodoStats => {
   return {
     total: todos.length,
-    pending: todos.filter(t => t.status === 'pending').length,
-    inProgress: todos.filter(t => t.status === 'in_progress').length,
-    completed: todos.filter(t => t.status === 'completed').length,
-    highPriority: todos.filter(t => t.priority === 'high').length,
-    mediumPriority: todos.filter(t => t.priority === 'medium').length,
-    lowPriority: todos.filter(t => t.priority === 'low').length,
+    pending: todos.filter((t) => t.status === 'pending').length,
+    inProgress: todos.filter((t) => t.status === 'in_progress').length,
+    completed: todos.filter((t) => t.status === 'completed').length,
+    highPriority: todos.filter((t) => t.priority === 'high').length,
+    mediumPriority: todos.filter((t) => t.priority === 'medium').length,
+    lowPriority: todos.filter((t) => t.priority === 'low').length,
   };
 };
 
@@ -92,7 +92,9 @@ export const useTodoStore = create<TodoState>()(
 
         set((state) => {
           // Try to find in global todos first
-          const globalIndex = state.globalTodos.findIndex(t => t.id === todoId);
+          const globalIndex = state.globalTodos.findIndex(
+            (t) => t.id === todoId,
+          );
           if (globalIndex !== -1) {
             const updatedGlobalTodos = [...state.globalTodos];
             updatedGlobalTodos[globalIndex] = {
@@ -105,7 +107,9 @@ export const useTodoStore = create<TodoState>()(
           // Search in conversation todos
           const newTodos = { ...state.todos };
           for (const conversationId in newTodos) {
-            const todoIndex = newTodos[conversationId].findIndex(t => t.id === todoId);
+            const todoIndex = newTodos[conversationId].findIndex(
+              (t) => t.id === todoId,
+            );
             if (todoIndex !== -1) {
               const updatedConversationTodos = [...newTodos[conversationId]];
               updatedConversationTodos[todoIndex] = {
@@ -124,20 +128,26 @@ export const useTodoStore = create<TodoState>()(
       deleteTodo: (todoId) => {
         set((state) => {
           // Try to remove from global todos first
-          const globalIndex = state.globalTodos.findIndex(t => t.id === todoId);
+          const globalIndex = state.globalTodos.findIndex(
+            (t) => t.id === todoId,
+          );
           if (globalIndex !== -1) {
             return {
               ...state,
-              globalTodos: state.globalTodos.filter(t => t.id !== todoId),
+              globalTodos: state.globalTodos.filter((t) => t.id !== todoId),
             };
           }
 
           // Search and remove from conversation todos
           const newTodos = { ...state.todos };
           for (const conversationId in newTodos) {
-            const todoIndex = newTodos[conversationId].findIndex(t => t.id === todoId);
+            const todoIndex = newTodos[conversationId].findIndex(
+              (t) => t.id === todoId,
+            );
             if (todoIndex !== -1) {
-              newTodos[conversationId] = newTodos[conversationId].filter(t => t.id !== todoId);
+              newTodos[conversationId] = newTodos[conversationId].filter(
+                (t) => t.id !== todoId,
+              );
               break;
             }
           }
@@ -167,7 +177,7 @@ export const useTodoStore = create<TodoState>()(
 
       setTodos: (todos, conversationId) => {
         const now = new Date().toISOString();
-        const todosWithTimestamp = todos.map(todo => ({
+        const todosWithTimestamp = todos.map((todo) => ({
           ...todo,
           updatedAt: now,
           conversationId: conversationId || todo.conversationId,
@@ -198,13 +208,17 @@ export const useTodoStore = create<TodoState>()(
           let sourceConversationId: string | null = null;
 
           // Find the todo to move
-          const globalIndex = state.globalTodos.findIndex(t => t.id === todoId);
+          const globalIndex = state.globalTodos.findIndex(
+            (t) => t.id === todoId,
+          );
           if (globalIndex !== -1) {
             todoToMove = state.globalTodos[globalIndex];
             sourceIsGlobal = true;
           } else {
             for (const convId in state.todos) {
-              const todoIndex = state.todos[convId].findIndex(t => t.id === todoId);
+              const todoIndex = state.todos[convId].findIndex(
+                (t) => t.id === todoId,
+              );
               if (todoIndex !== -1) {
                 todoToMove = state.todos[convId][todoIndex];
                 sourceConversationId = convId;
@@ -225,11 +239,15 @@ export const useTodoStore = create<TodoState>()(
           // Remove from source
           let newState = { ...state };
           if (sourceIsGlobal) {
-            newState.globalTodos = state.globalTodos.filter(t => t.id !== todoId);
+            newState.globalTodos = state.globalTodos.filter(
+              (t) => t.id !== todoId,
+            );
           } else if (sourceConversationId) {
             newState.todos = {
               ...state.todos,
-              [sourceConversationId]: state.todos[sourceConversationId].filter(t => t.id !== todoId),
+              [sourceConversationId]: state.todos[sourceConversationId].filter(
+                (t) => t.id !== todoId,
+              ),
             };
           }
 
@@ -237,10 +255,16 @@ export const useTodoStore = create<TodoState>()(
           if (conversationId) {
             newState.todos = {
               ...newState.todos,
-              [conversationId]: [...(newState.todos[conversationId] || []), updatedTodo],
+              [conversationId]: [
+                ...(newState.todos[conversationId] || []),
+                updatedTodo,
+              ],
             };
           } else {
-            newState.globalTodos = [...newState.globalTodos, { ...updatedTodo, conversationId: undefined }];
+            newState.globalTodos = [
+              ...newState.globalTodos,
+              { ...updatedTodo, conversationId: undefined },
+            ];
           }
 
           return newState;
@@ -249,21 +273,21 @@ export const useTodoStore = create<TodoState>()(
 
       getTodos: (conversationId) => {
         const state = get();
-        return conversationId 
-          ? (state.todos[conversationId] || [])
+        return conversationId
+          ? state.todos[conversationId] || []
           : state.globalTodos;
       },
 
       getTodoById: (todoId) => {
         const state = get();
-        
+
         // Search in global todos
-        const globalTodo = state.globalTodos.find(t => t.id === todoId);
+        const globalTodo = state.globalTodos.find((t) => t.id === todoId);
         if (globalTodo) return globalTodo;
 
         // Search in conversation todos
         for (const conversationId in state.todos) {
-          const todo = state.todos[conversationId].find(t => t.id === todoId);
+          const todo = state.todos[conversationId].find((t) => t.id === todoId);
           if (todo) return todo;
         }
 
@@ -272,8 +296,8 @@ export const useTodoStore = create<TodoState>()(
 
       getTodoStats: (conversationId) => {
         const state = get();
-        const todos = conversationId 
-          ? (state.todos[conversationId] || [])
+        const todos = conversationId
+          ? state.todos[conversationId] || []
           : state.globalTodos;
         return calculateStats(todos);
       },
@@ -281,11 +305,11 @@ export const useTodoStore = create<TodoState>()(
       getAllTodos: () => {
         const state = get();
         const allTodos = [...state.globalTodos];
-        
+
         for (const conversationId in state.todos) {
           allTodos.push(...state.todos[conversationId]);
         }
-        
+
         return allTodos;
       },
 

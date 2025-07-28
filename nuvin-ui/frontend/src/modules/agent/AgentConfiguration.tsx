@@ -39,7 +39,8 @@ export function AgentConfiguration({
 }: AgentConfigurationProps) {
   const navigate = useNavigate();
   const { agents, activeAgentId, setActiveAgent } = useAgentStore();
-  const { providers, activeProviderId, updateProvider, setActiveProvider } = useProviderStore();
+  const { providers, activeProviderId, updateProvider, setActiveProvider } =
+    useProviderStore();
   const { getEnabledModels, loading, errors } = useModelsStore();
 
   // Notify parent when store changes
@@ -61,7 +62,7 @@ export function AgentConfiguration({
   const findProviderForModel = useCallback((modelId: string) => {
     const { models } = useModelsStore.getState();
     for (const [providerId, providerModels] of Object.entries(models)) {
-      if (providerModels.some(model => model.id === modelId)) {
+      if (providerModels.some((model) => model.id === modelId)) {
         return providerId;
       }
     }
@@ -72,7 +73,7 @@ export function AgentConfiguration({
     (modelId: string) => {
       // Find which provider this model belongs to
       const targetProviderId = findProviderForModel(modelId);
-      
+
       if (!targetProviderId) {
         console.error('Could not find provider for model:', modelId);
         return;
@@ -100,7 +101,13 @@ export function AgentConfiguration({
       };
       updateProvider(updatedProvider);
     },
-    [providers, activeProviderId, setActiveProvider, updateProvider, findProviderForModel],
+    [
+      providers,
+      activeProviderId,
+      setActiveProvider,
+      updateProvider,
+      findProviderForModel,
+    ],
   );
 
   const handleNavigateToProviderSettings = () => {

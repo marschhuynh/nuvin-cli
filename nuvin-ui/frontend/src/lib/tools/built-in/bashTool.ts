@@ -16,7 +16,7 @@ export const bashTool: Tool = {
         description: {
           type: 'string',
           description:
-            'Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory \'foo\'',
+            "Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
         },
         timeout: {
           type: 'number',
@@ -111,8 +111,10 @@ export const bashTool: Tool = {
 
       // Add error information if command failed
       if (!response.success) {
-        result.error = response.error || `Command failed with exit code ${response.exitCode}`;
-        
+        result.error =
+          response.error ||
+          `Command failed with exit code ${response.exitCode}`;
+
         // Include stderr in error if available
         if (response.stderr) {
           result.error += `\nStderr: ${response.stderr}`;
@@ -126,7 +128,8 @@ export const bashTool: Tool = {
 
       // Add truncation warning if needed
       if (response.truncated) {
-        result.data.warning = (result.data.warning ? result.data.warning + '. ' : '') + 
+        result.data.warning =
+          (result.data.warning ? result.data.warning + '. ' : '') +
           'Output was truncated due to size limits';
       }
 

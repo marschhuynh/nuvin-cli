@@ -10,10 +10,18 @@ describe('TodoRead Tool', () => {
 
   it('should read global todos correctly', async () => {
     const store = useTodoStore.getState();
-    
+
     // Add some global todos
-    store.addTodo({ content: 'Global todo 1', status: 'pending', priority: 'high' });
-    store.addTodo({ content: 'Global todo 2', status: 'completed', priority: 'medium' });
+    store.addTodo({
+      content: 'Global todo 1',
+      status: 'pending',
+      priority: 'high',
+    });
+    store.addTodo({
+      content: 'Global todo 2',
+      status: 'completed',
+      priority: 'medium',
+    });
 
     const result = await todoReadTool.execute({ global: true });
 
@@ -27,14 +35,24 @@ describe('TodoRead Tool', () => {
   it('should read conversation todos correctly', async () => {
     const store = useTodoStore.getState();
     const conversationId = 'test-conversation';
-    
+
     // Add some conversation todos
-    store.addTodo({ content: 'Conv todo 1', status: 'pending', priority: 'high', conversationId });
-    store.addTodo({ content: 'Conv todo 2', status: 'in_progress', priority: 'low', conversationId });
+    store.addTodo({
+      content: 'Conv todo 1',
+      status: 'pending',
+      priority: 'high',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'Conv todo 2',
+      status: 'in_progress',
+      priority: 'low',
+      conversationId,
+    });
 
     const result = await todoReadTool.execute(
       { conversationId },
-      { sessionId: conversationId }
+      { sessionId: conversationId },
     );
 
     expect(result.success).toBe(true);
@@ -46,15 +64,30 @@ describe('TodoRead Tool', () => {
   it('should filter todos by status', async () => {
     const store = useTodoStore.getState();
     const conversationId = 'test-conversation';
-    
+
     // Add todos with different statuses
-    store.addTodo({ content: 'Pending todo', status: 'pending', priority: 'high', conversationId });
-    store.addTodo({ content: 'In progress todo', status: 'in_progress', priority: 'medium', conversationId });
-    store.addTodo({ content: 'Completed todo', status: 'completed', priority: 'low', conversationId });
+    store.addTodo({
+      content: 'Pending todo',
+      status: 'pending',
+      priority: 'high',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'In progress todo',
+      status: 'in_progress',
+      priority: 'medium',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'Completed todo',
+      status: 'completed',
+      priority: 'low',
+      conversationId,
+    });
 
     const result = await todoReadTool.execute(
       { conversationId, status: 'pending' },
-      { sessionId: conversationId }
+      { sessionId: conversationId },
     );
 
     expect(result.success).toBe(true);
@@ -66,15 +99,30 @@ describe('TodoRead Tool', () => {
   it('should filter todos by priority', async () => {
     const store = useTodoStore.getState();
     const conversationId = 'test-conversation';
-    
+
     // Add todos with different priorities
-    store.addTodo({ content: 'High priority', status: 'pending', priority: 'high', conversationId });
-    store.addTodo({ content: 'Medium priority', status: 'pending', priority: 'medium', conversationId });
-    store.addTodo({ content: 'Low priority', status: 'pending', priority: 'low', conversationId });
+    store.addTodo({
+      content: 'High priority',
+      status: 'pending',
+      priority: 'high',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'Medium priority',
+      status: 'pending',
+      priority: 'medium',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'Low priority',
+      status: 'pending',
+      priority: 'low',
+      conversationId,
+    });
 
     const result = await todoReadTool.execute(
       { conversationId, priority: 'high' },
-      { sessionId: conversationId }
+      { sessionId: conversationId },
     );
 
     expect(result.success).toBe(true);
@@ -86,15 +134,30 @@ describe('TodoRead Tool', () => {
   it('should include stats when requested', async () => {
     const store = useTodoStore.getState();
     const conversationId = 'test-conversation';
-    
+
     // Add some todos
-    store.addTodo({ content: 'Pending high', status: 'pending', priority: 'high', conversationId });
-    store.addTodo({ content: 'In progress medium', status: 'in_progress', priority: 'medium', conversationId });
-    store.addTodo({ content: 'Completed low', status: 'completed', priority: 'low', conversationId });
+    store.addTodo({
+      content: 'Pending high',
+      status: 'pending',
+      priority: 'high',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'In progress medium',
+      status: 'in_progress',
+      priority: 'medium',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'Completed low',
+      status: 'completed',
+      priority: 'low',
+      conversationId,
+    });
 
     const result = await todoReadTool.execute(
       { conversationId, includeStats: true },
-      { sessionId: conversationId }
+      { sessionId: conversationId },
     );
 
     expect(result.success).toBe(true);
@@ -108,20 +171,35 @@ describe('TodoRead Tool', () => {
   it('should sort todos by priority', async () => {
     const store = useTodoStore.getState();
     const conversationId = 'test-conversation';
-    
+
     // Add todos with different priorities (reverse order to test sorting)
-    store.addTodo({ content: 'Low priority', status: 'pending', priority: 'low', conversationId });
-    store.addTodo({ content: 'High priority', status: 'pending', priority: 'high', conversationId });
-    store.addTodo({ content: 'Medium priority', status: 'pending', priority: 'medium', conversationId });
+    store.addTodo({
+      content: 'Low priority',
+      status: 'pending',
+      priority: 'low',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'High priority',
+      status: 'pending',
+      priority: 'high',
+      conversationId,
+    });
+    store.addTodo({
+      content: 'Medium priority',
+      status: 'pending',
+      priority: 'medium',
+      conversationId,
+    });
 
     const result = await todoReadTool.execute(
       { conversationId },
-      { sessionId: conversationId }
+      { sessionId: conversationId },
     );
 
     expect(result.success).toBe(true);
     expect(result.data?.todos).toHaveLength(3);
-    
+
     // Should be sorted: high priority first, then medium, then low
     const priorities = result.data?.todos.map((t: any) => t.priority);
     expect(priorities?.[0]).toBe('high');
@@ -132,7 +210,7 @@ describe('TodoRead Tool', () => {
   it('should handle empty todo list', async () => {
     const result = await todoReadTool.execute(
       { global: true },
-      { sessionId: 'test-conversation' }
+      { sessionId: 'test-conversation' },
     );
 
     expect(result.success).toBe(true);
@@ -144,13 +222,18 @@ describe('TodoRead Tool', () => {
   it('should use context sessionId when no conversationId provided', async () => {
     const store = useTodoStore.getState();
     const conversationId = 'context-conversation';
-    
+
     // Add todo to the context conversation
-    store.addTodo({ content: 'Context todo', status: 'pending', priority: 'medium', conversationId });
+    store.addTodo({
+      content: 'Context todo',
+      status: 'pending',
+      priority: 'medium',
+      conversationId,
+    });
 
     const result = await todoReadTool.execute(
       {}, // No conversationId provided
-      { sessionId: conversationId } // Should use this from context
+      { sessionId: conversationId }, // Should use this from context
     );
 
     expect(result.success).toBe(true);
@@ -163,6 +246,8 @@ describe('TodoRead Tool', () => {
     // All parameters are optional, so should always return true
     expect(todoReadTool.validate?.({})).toBe(true);
     expect(todoReadTool.validate?.({ global: true })).toBe(true);
-    expect(todoReadTool.validate?.({ conversationId: 'test', status: 'pending' })).toBe(true);
+    expect(
+      todoReadTool.validate?.({ conversationId: 'test', status: 'pending' }),
+    ).toBe(true);
   });
 });

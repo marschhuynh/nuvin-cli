@@ -33,11 +33,11 @@ export function ConversationTodoList({ className }: ConversationTodoListProps) {
     : null;
 
   // Check if there are any uncompleted items
-  const hasUncompletedItems = todos.some(todo => todo.status !== 'completed');
-  
+  const hasUncompletedItems = todos.some((todo) => todo.status !== 'completed');
+
   // Auto-expand if there are uncompleted items
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Update isOpen when hasUncompletedItems changes
   useEffect(() => {
     setIsOpen(hasUncompletedItems);
