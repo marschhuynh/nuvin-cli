@@ -27,6 +27,7 @@ import {
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { formatContextLength } from '@/lib/providers/provider-utils';
+import { ConversationTodoList } from '@/components/conversation/ConversationTodoList';
 
 interface AgentConfigurationProps {
   onConfigChange?: (config: AgentConfig) => void;
@@ -307,6 +308,11 @@ export function AgentConfiguration({
               )}
             </div>
           )}
+        </div>
+
+        {/* Todo List Section */}
+        <div className="mt-6">
+          <ConversationTodoList />
         </div>
       </div>
     </div>

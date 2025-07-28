@@ -1,4 +1,6 @@
 import { Tool } from '@/types/tools';
+import { useTodoStore } from '@/store/useTodoStore';
+import type { TodoItem } from '@/types';
 
 export const todoWriteTool: Tool = {
   definition: {
@@ -95,7 +97,7 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
     } as any,
   },
 
-  async execute(parameters) {
+  async execute(parameters, context) {
     try {
       const { todos } = parameters;
 
@@ -180,18 +182,28 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
         );
       }
 
+      // Get conversation ID from context
+      const conversationId = context?.sessionId;
+
+      // Access the store directly (since this is outside React component)
+      const todoStore = useTodoStore.getState();
+      
+      // Convert input todos to TodoItem format
+      const todoItems: TodoItem[] = todos.map(todo => ({
+        id: todo.id,
+        content: todo.content,
+        status: todo.status as TodoItem['status'],
+        priority: todo.priority as TodoItem['priority'],
+        conversationId,
+        createdAt: todo.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+
+      // Update the store with new todos
+      todoStore.setTodos(todoItems, conversationId);
+
       // Generate summary statistics
-      const stats = {
-        total: todos.length,
-        pending: todos.filter((todo) => todo.status === 'pending').length,
-        inProgress: todos.filter((todo) => todo.status === 'in_progress')
-          .length,
-        completed: todos.filter((todo) => todo.status === 'completed').length,
-        highPriority: todos.filter((todo) => todo.priority === 'high').length,
-        mediumPriority: todos.filter((todo) => todo.priority === 'medium')
-          .length,
-        lowPriority: todos.filter((todo) => todo.priority === 'low').length,
-      };
+      const stats = todoStore.getTodoStats(conversationId);
 
       // Format progress percentage
       const progressPercentage =
@@ -200,7 +212,7 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
       return {
         success: true,
         data: {
-          todos: todos,
+          todos: todoItems,
           summary: {
             message: `Todo list updated successfully with ${stats.total} items (${stats.completed} completed, ${stats.inProgress} in progress, ${stats.pending} pending)`,
             progress: `${progressPercentage}% complete`,
@@ -208,7 +220,7 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
             currentTask:
               inProgressTasks.length > 0 ? inProgressTasks[0].content : null,
             nextTask:
-              todos.find((todo) => todo.status === 'pending')?.content || null,
+              todoItems.find((todo) => todo.status === 'pending')?.content || null,
           },
         },
       };

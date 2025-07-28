@@ -12,7 +12,8 @@
       "Bash(rm:*)",
       "Bash(pnpm vitest run:*)",
       "Bash(pnpm run:*)",
-      "Bash(pnpm test:*)"
+      "Bash(pnpm test:*)",
+      "Bash(npx vitest run:*)"
     ],
     "deny": []
   }
