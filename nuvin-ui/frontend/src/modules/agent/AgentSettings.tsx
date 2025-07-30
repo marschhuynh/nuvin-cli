@@ -19,8 +19,6 @@ import type { AgentToolConfig } from '@/types/tools';
 import { a2aService, A2AError } from '@/lib';
 import { LogInfo } from '@wails/runtime';
 
-// Import new modular components
-import { BasicAgentSettings } from './components/BasicAgentSettings';
 import { LocalAgentSettings } from './components/LocalAgentSettings';
 import { RemoteAgentSettings } from './components/RemoteAgentSettings';
 import { AuthenticationSettings } from './components/AuthenticationSettings';
@@ -35,6 +33,30 @@ type AgentPersona =
   | 'casual';
 type ResponseLength = 'short' | 'medium' | 'long';
 type AgentType = 'local' | 'remote';
+
+export function EmptyAgentSelected({
+  handleCreateAgent,
+}: {
+  handleCreateAgent: () => void;
+}) {
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center">
+        <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-muted-foreground mb-2">
+          No agent selected
+        </h3>
+        <p className="text-muted-foreground mb-4">
+          Select an agent from the list to edit its configuration
+        </p>
+        <Button onClick={handleCreateAgent}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create New Agent
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function AgentSettings() {
   const { agents, deleteAgent, addAgent, updateAgent } = useAgentStore();
@@ -491,29 +513,26 @@ export function AgentSettings() {
             </div>
 
             {/* Agent Form - 2 Column Layout */}
-            <div className={`flex-1 flex p-6 gap-6 min-h-0 overflow-hidden`}>
+            <div className={'flex-1 flex gap-6 min-h-0 p-6 overflow-hidden'}>
               {/* Left Column - Agent Configuration */}
-              <div className="flex flex-col w-1/3 space-y-6">
-                {/* Basic Settings */}
-                <BasicAgentSettings
-                  name={agentData.name}
-                  agentType={agentData.agentType}
-                  isEditing={isEditing}
-                  onNameChange={(name) => setAgentData({ ...agentData, name })}
-                  onAgentTypeChange={(agentType) =>
-                    setAgentData({ ...agentData, agentType })
-                  }
-                />
-
+              <div className="flex flex-col w-2/5 space-y-6">
                 {/* Local Agent Settings */}
                 {agentData.agentType === 'local' && (
                   <LocalAgentSettings
+                    name={agentData.name}
+                    agentType={agentData.agentType}
+                    isEditing={isEditing}
+                    onNameChange={(name) =>
+                      setAgentData({ ...agentData, name })
+                    }
+                    onAgentTypeChange={(agentType) =>
+                      setAgentData({ ...agentData, agentType })
+                    }
                     persona={agentData.persona}
                     responseLength={agentData.responseLength}
                     temperature={agentData.temperature}
                     topP={agentData.topP}
                     maxTokens={agentData.maxTokens}
-                    isEditing={isEditing}
                     onPersonaChange={(persona) =>
                       setAgentData({ ...agentData, persona })
                     }
@@ -569,9 +588,8 @@ export function AgentSettings() {
                   />
                 )}
               </div>
-
               {/* Right Column - System Prompt */}
-              <div className="w-2/3 h-full">
+              <div className="w-3/5 h-full">
                 <SystemPromptSettings
                   systemPrompt={agentData.systemPrompt}
                   agentType={agentData.agentType}
@@ -584,22 +602,7 @@ export function AgentSettings() {
             </div>
           </>
         ) : (
-          // No agent selected or creating new agent
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-muted-foreground mb-2">
-                No agent selected
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Select an agent from the list to edit its configuration
-              </p>
-              <Button onClick={handleCreateAgent}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Agent
-              </Button>
-            </div>
-          </div>
+          <EmptyAgentSelected handleCreateAgent={handleCreateAgent} />
         )}
       </div>
     </div>

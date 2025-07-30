@@ -45,11 +45,8 @@ export function ToolSettings({
         tool.category?.toLowerCase?.().includes(searchTerm.toLowerCase()),
     );
 
-  console.log(`Rendering ToolSettings with ${filteredTools.length} tools`, {
-    filteredTools,
-  });
   return (
-    <div className="space-y-4 flex flex-col h-full min-h-0">
+    <div className="space-y-4 flex flex-col h-full min-h-[100px]">
       {/* Tool Settings */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -98,7 +95,7 @@ export function ToolSettings({
 
       {/* Available Tools */}
       <div className="space-y-2 flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between">
           <Label>Available Tools</Label>
           <p className="text-xs text-muted-foreground">
             {filteredTools.length} tools available •{' '}
@@ -128,7 +125,7 @@ export function ToolSettings({
                 {filteredTools.map((tool) => (
                   <div
                     key={tool.definition.name}
-                    className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
+                    className="flex gap-2 p-2 hover:bg-muted/50 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -144,7 +141,7 @@ export function ToolSettings({
                         );
                       }}
                       disabled={!isEditing}
-                      className="h-4 w-4 shrink-0"
+                      className="h-4 w-4 shrink-0 mt-1.5"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
