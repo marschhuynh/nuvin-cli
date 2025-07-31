@@ -52,7 +52,6 @@ export function Message({
       ) : role === 'tool' && toolCall ? (
         <ToolCallMessage
           toolName={toolCall.name}
-          toolId={toolCall.id}
           arguments={toolCall.arguments}
           result={toolCall.result}
           isExecuting={toolCall.isExecuting}

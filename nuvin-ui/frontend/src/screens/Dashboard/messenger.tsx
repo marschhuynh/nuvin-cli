@@ -52,10 +52,12 @@ export default function Messenger() {
   const streamingMessageId = currentStreamingState?.messageId || null;
   const streamingContent = currentStreamingState?.content || '';
 
-  // Clear loading state when conversation changes (but keep streaming states for other conversations)
   useEffect(() => {
-    setIsLoading(false);
-  }, [activeConversationId]);
+    if (!streamingMessageId) {
+      setIsLoading(false);
+    }
+    // console.log('currentStreamingState:', currentStreamingState);
+  }, [streamingMessageId]);
 
   // Helper to summarize conversation using the active agent
   const summarizeConversation = useCallback(
@@ -66,8 +68,6 @@ export default function Messenger() {
         messages.length % SUMMARY_TRIGGER_COUNT !== 0
       )
         return;
-
-      console.log('Summarizing conversation:', conversationId);
 
       const conversation = getActiveConversation();
       if (!conversation) return;
@@ -104,11 +104,16 @@ export default function Messenger() {
 
   // Create combined messages with streaming content
   const messages = streamingMessageId
-    ? storeMessages.map((msg) =>
-        msg.id === streamingMessageId
-          ? { ...msg, content: streamingContent }
-          : msg,
-      )
+    ? [
+        ...storeMessages,
+        {
+          id: streamingMessageId,
+          role: 'assistant' as const,
+          content: streamingContent,
+          timestamp: new Date().toISOString(),
+          isStreaming: true,
+        },
+      ]
     : storeMessages;
 
   // Handlers
