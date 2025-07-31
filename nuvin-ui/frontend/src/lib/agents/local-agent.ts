@@ -206,15 +206,51 @@ export class LocalAgent extends BaseAgent {
       },
     };
 
-    this.addToHistory(convoId, [
+    // Build messages to add to history
+    const messagesToAdd: Message[] = [
       { id: generateUUID(), role: 'user', content, timestamp },
-      {
-        id: generateUUID(),
-        role: 'assistant',
-        content: finalResult.content,
-        timestamp,
-      },
-    ]);
+    ];
+
+    // Add tool call messages if tools were executed
+    if (
+      processed.requiresFollowUp &&
+      processed.toolCalls &&
+      result.tool_calls
+    ) {
+      for (const toolCallResult of processed.toolCalls) {
+        // Find the original tool call to get parameters
+        const originalToolCall = result.tool_calls.find(
+          (tc) => tc.id === toolCallResult.id,
+        );
+        const parameters = originalToolCall
+          ? JSON.parse(originalToolCall.function.arguments || '{}')
+          : {};
+
+        messagesToAdd.push({
+          id: generateUUID(),
+          role: 'tool',
+          content: `Executed tool: ${toolCallResult.name}`,
+          timestamp,
+          toolCall: {
+            name: toolCallResult.name,
+            id: toolCallResult.id,
+            arguments: parameters,
+            result: toolCallResult.result,
+            isExecuting: false,
+          },
+        });
+      }
+    }
+
+    // Add final assistant response
+    messagesToAdd.push({
+      id: generateUUID(),
+      role: 'assistant',
+      content: finalResult.content,
+      timestamp,
+    });
+
+    this.addToHistory(convoId, messagesToAdd);
 
     options.onComplete?.(finalResult.content);
     return response;
@@ -246,6 +282,7 @@ export class LocalAgent extends BaseAgent {
 
     let accumulated = '';
     let currentToolCalls: ToolCall[] = [];
+    let processedToolResults: any[] = [];
     let usage: UsageData = {
       prompt_tokens: 0,
       completion_tokens: 0,
@@ -292,6 +329,9 @@ export class LocalAgent extends BaseAgent {
               );
 
             if (processed.requiresFollowUp && processed.toolCalls) {
+              // Store processed tool results for history
+              processedToolResults = processed.toolCalls;
+
               // Emit separate messages for each tool call
               if (options.onAdditionalMessage) {
                 for (let i = 0; i < currentToolCalls.length; i++) {
@@ -398,26 +438,58 @@ export class LocalAgent extends BaseAgent {
       },
     };
 
-    this.addToHistory(convoId, [
+    // Build messages to add to history
+    const messagesToAddStreaming: Message[] = [
       { id: generateUUID(), role: 'user', content, timestamp },
-      {
-        id: generateUUID(),
-        role: 'assistant',
-        content: accumulated,
-        timestamp,
-        metadata: {
-          agentType: 'local',
-          agentId: this.agentSettings.id,
-          provider: this.providerConfig.type,
-          model,
-          responseTime: Date.now() - startTime,
-          promptTokens,
-          completionTokens,
-          totalTokens,
-          estimatedCost,
-        },
+    ];
+
+    // Add tool call messages if tools were executed during streaming
+    if (processedToolResults.length > 0) {
+      for (const toolCallResult of processedToolResults) {
+        // Find the original tool call to get parameters
+        const originalToolCall = currentToolCalls.find(
+          (tc) => tc.id === toolCallResult.id,
+        );
+        const parameters = originalToolCall
+          ? JSON.parse(originalToolCall.function.arguments || '{}')
+          : {};
+
+        messagesToAddStreaming.push({
+          id: generateUUID(),
+          role: 'tool',
+          content: `Executed tool: ${toolCallResult.name}`,
+          timestamp,
+          toolCall: {
+            name: toolCallResult.name,
+            id: toolCallResult.id,
+            arguments: parameters,
+            result: toolCallResult.result,
+            isExecuting: false,
+          },
+        });
+      }
+    }
+
+    // Add final assistant response
+    messagesToAddStreaming.push({
+      id: generateUUID(),
+      role: 'assistant',
+      content: accumulated,
+      timestamp,
+      metadata: {
+        agentType: 'local',
+        agentId: this.agentSettings.id,
+        provider: this.providerConfig.type,
+        model,
+        responseTime: Date.now() - startTime,
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        estimatedCost,
       },
-    ]);
+    });
+
+    this.addToHistory(convoId, messagesToAddStreaming);
 
     options.onComplete?.(accumulated);
     return response;

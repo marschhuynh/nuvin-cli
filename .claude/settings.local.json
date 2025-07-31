@@ -4,7 +4,10 @@
       "Bash(sed:*)",
       "Bash(node:*)",
       "Bash(rg:*)",
-      "Bash(wails dev:*)"
+      "Bash(wails dev:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm exec tsc:*)"
     ],
     "deny": []
   }

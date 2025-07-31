@@ -8,7 +8,7 @@ import type {
 } from './types/base';
 
 export class OpenAIProvider extends BaseLLMProvider {
-  constructor(apiKey: string, apiUrl: string = 'https://api.openai.com') {
+  constructor(apiKey: string, apiUrl: string = 'https://api.openai.com/v1') {
     super({
       providerName: 'OpenAI',
       apiKey,
@@ -20,7 +20,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     params: CompletionParams,
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
-    const response = await this.makeRequest('/v1/chat/completions', {
+    const response = await this.makeRequest('/chat/completions', {
       body: {
         model: params.model,
         messages: params.messages,
@@ -42,7 +42,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     signal?: AbortSignal,
   ): AsyncGenerator<string> {
     const reader = await this.makeStreamingRequest(
-      '/v1/chat/completions',
+      'chat/completions',
       params,
       signal,
     );
@@ -60,7 +60,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     signal?: AbortSignal,
   ): AsyncGenerator<StreamChunk> {
     const reader = await this.makeStreamingRequest(
-      '/v1/chat/completions',
+      '/chat/completions',
       params,
       signal,
     );
@@ -71,7 +71,7 @@ export class OpenAIProvider extends BaseLLMProvider {
   }
 
   async getModels(): Promise<ModelInfo[]> {
-    const response = await this.makeRequest('/v1/models', {
+    const response = await this.makeRequest('/models', {
       method: 'GET',
     });
 
@@ -99,7 +99,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return this.sortModels(transformedModels);
   }
 
-  private getContextLength(modelId: string): number {
+  protected getContextLength(modelId: string): number {
     const contextMap: Record<string, number> = {
       'gpt-4.1': 200000,
       'gpt-4.1-mini': 200000,
@@ -119,7 +119,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return contextMap[modelId] || 4096;
   }
 
-  private getInputCost(modelId: string): number | undefined {
+  protected getInputCost(modelId: string): number | undefined {
     const costMap: Record<string, number> = {
       'gpt-4.1': 2.0,
       'gpt-4.1-mini': 0.4,
@@ -139,7 +139,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return costMap[modelId];
   }
 
-  private getOutputCost(modelId: string): number | undefined {
+  protected getOutputCost(modelId: string): number | undefined {
     const costMap: Record<string, number> = {
       'gpt-4.1': 8.0,
       'gpt-4.1-mini': 1.6,
@@ -159,7 +159,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return costMap[modelId];
   }
 
-  private getModality(modelId: string): string {
+  protected getModality(modelId: string): string {
     if (
       modelId.includes('gpt-4o') ||
       modelId.includes('o1') ||
@@ -171,7 +171,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return 'text';
   }
 
-  private getInputModalities(modelId: string): string[] {
+  protected getInputModalities(modelId: string): string[] {
     if (
       modelId.includes('gpt-4o') ||
       modelId.includes('o1') ||
@@ -183,7 +183,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return ['text'];
   }
 
-  private getOutputModalities(modelId: string): string[] {
+  protected getOutputModalities(modelId: string): string[] {
     return ['text'];
   }
 
