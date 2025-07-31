@@ -106,11 +106,11 @@ export class ToolIntegrationService {
     const enabledToolNames = new Set(agentToolConfig?.enabledTools || []);
 
     // Only include MCP tools that are explicitly enabled
-    const mcpTools = toolRegistry.getAllMCPTools();
-    const explicitlyEnabledMCPTools = mcpTools.filter(
-      (mcpTool) =>
-        enabledToolNames.has(mcpTool.definition.name) && mcpTool.isAvailable(),
-    );
+    // const mcpTools = toolRegistry.getAllMCPTools();
+    // const explicitlyEnabledMCPTools = mcpTools.filter(
+    //   (mcpTool) =>
+    //     enabledToolNames.has(mcpTool.definition.name) && mcpTool.isAvailable(),
+    // );
 
     // Filter tool calls to only include enabled tools
     const allowedToolCalls = result.tool_calls.filter((call) => {
@@ -161,7 +161,7 @@ export class ToolIntegrationService {
     });
 
     console.log(
-      `[MCP] Processing ${toolCalls.length} tool calls:`,
+      `[ToolIntegrationService] Processing ${toolCalls.length} tool calls:`,
       toolCalls.map((c) => c.name),
     );
 
@@ -173,7 +173,10 @@ export class ToolIntegrationService {
       maxConcurrent,
     );
 
-    console.log(`[MCP] Tool execution results:`, toolResults);
+    console.log(
+      `[ToolIntegrationService] Tool execution results:`,
+      toolResults,
+    );
 
     return {
       result,
@@ -245,6 +248,8 @@ export class ToolIntegrationService {
       tools: undefined,
       tool_choice: undefined,
     };
+
+    console.log('followUpParams', followUpParams);
 
     const finalResult = await llmProvider.generateCompletion(followUpParams);
 

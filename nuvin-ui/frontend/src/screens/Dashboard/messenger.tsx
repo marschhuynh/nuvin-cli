@@ -132,27 +132,16 @@ export default function Messenger() {
       }
       setIsLoading(true);
 
-      // Create streaming assistant message
+      // Create streaming assistant message ID but don't add it yet
       const streamingId = generateUUID();
       setStreamingStates((prev) => ({
         ...prev,
         [conversationId]: { messageId: streamingId, content: '' },
       }));
 
-      const initialAssistantMessage: Message = {
-        id: streamingId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date().toISOString(),
-      };
-
       // Capture current conversation ID so callbacks continue updating
       // the correct conversation even if the user switches views
       const conversationId = activeConversationId?.toString() || 'default';
-
-      if (activeConversationId) {
-        addMessage(activeConversationId, initialAssistantMessage);
-      }
 
       try {
         // Send message using AgentManager with streaming
@@ -191,32 +180,29 @@ export default function Messenger() {
                 streamingStates[conversationId]?.content || '';
               const contentToUse = finalContent || accumulatedContent;
 
-              // Only update if we have content to show
+              // Always add the final assistant message at the end (after all tool calls)
               if (contentToUse) {
-                const finalMessage: Message = {
+                const finalAssistantMessage: Message = {
                   id: streamingId,
                   role: 'assistant',
                   content: contentToUse,
                   timestamp: new Date().toISOString(),
                   // Metadata will be updated when sendMessage Promise resolves
                 };
-                updateMessage(conversationId, finalMessage);
-
-                // Clear streaming state for this conversation after updating the message
-                setTimeout(() => {
-                  setStreamingStates((prev) => {
-                    const newState = { ...prev };
-                    delete newState[conversationId];
-                    return newState;
-                  });
-                }, 50);
-
-                // Trigger background summarization
-                summarizeConversation(conversationId);
-              } else {
-                // If no content, keep the streaming state to preserve what was shown
-                console.warn('No content to finalize, keeping streaming state');
+                addMessage(conversationId, finalAssistantMessage);
               }
+
+              // Clear streaming state for this conversation after updating the message
+              setTimeout(() => {
+                setStreamingStates((prev) => {
+                  const newState = { ...prev };
+                  delete newState[conversationId];
+                  return newState;
+                });
+              }, 50);
+
+              // Trigger background summarization  
+              summarizeConversation(conversationId);
             } else {
               // No active conversation, clear streaming state for this conversation
               setStreamingStates((prev) => {

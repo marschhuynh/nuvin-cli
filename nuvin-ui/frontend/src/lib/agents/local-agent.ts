@@ -163,9 +163,47 @@ export class LocalAgent extends BaseAgent {
 
     let finalResult = result;
 
-    // If tools were called, get the final response
+    // If tools were called, emit tool messages first, then get the final response
     if (processed.requiresFollowUp && processed.toolCalls) {
       console.log(`[LocalAgent] Executing tool calling flow...`);
+      
+      // Emit tool call messages immediately via onAdditionalMessage callback
+      if (options.onAdditionalMessage && result.tool_calls) {
+        const timestamp = new Date().toISOString();
+        const model = this.providerConfig.activeModel.model;
+        
+        for (const toolCallResult of processed.toolCalls) {
+          // Find the original tool call to get parameters
+          const originalToolCall = result.tool_calls.find(
+            (tc) => tc.id === toolCallResult.id,
+          );
+          const parameters = originalToolCall
+            ? JSON.parse(originalToolCall.function.arguments || '{}')
+            : {};
+
+          const toolMessageResponse: MessageResponse = {
+            id: generateUUID(),
+            content: `Executed tool: ${toolCallResult.name}`,
+            role: 'tool',
+            timestamp,
+            toolCall: {
+              name: toolCallResult.name,
+              id: toolCallResult.id,
+              arguments: parameters,
+              result: toolCallResult.result,
+              isExecuting: false,
+            },
+            metadata: {
+              agentType: 'local',
+              agentId: this.agentSettings.id,
+              provider: this.providerConfig.type,
+              model,
+            },
+          };
+          options.onAdditionalMessage(toolMessageResponse);
+        }
+      }
+      
       finalResult = await toolIntegrationService.completeToolCallingFlow(
         enhancedParams,
         result,
@@ -211,7 +249,7 @@ export class LocalAgent extends BaseAgent {
       { id: generateUUID(), role: 'user', content, timestamp },
     ];
 
-    // Add tool call messages if tools were executed
+    // Add tool call messages if tools were executed (for internal history)
     if (
       processed.requiresFollowUp &&
       processed.toolCalls &&
@@ -226,7 +264,7 @@ export class LocalAgent extends BaseAgent {
           ? JSON.parse(originalToolCall.function.arguments || '{}')
           : {};
 
-        messagesToAdd.push({
+        const toolMessage: Message = {
           id: generateUUID(),
           role: 'tool',
           content: `Executed tool: ${toolCallResult.name}`,
@@ -238,7 +276,9 @@ export class LocalAgent extends BaseAgent {
             result: toolCallResult.result,
             isExecuting: false,
           },
-        });
+        };
+
+        messagesToAdd.push(toolMessage);
       }
     }
 
