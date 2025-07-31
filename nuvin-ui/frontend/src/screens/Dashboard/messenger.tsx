@@ -147,7 +147,7 @@ export default function Messenger() {
         // Send message using AgentManager with streaming
         const response = await sendMessage(content, {
           conversationId: conversationId,
-          stream: false,
+          stream: true,
           onChunk: (chunk: string) => {
             // Update streaming content for this specific conversation
             setStreamingStates((prev) => ({
@@ -201,7 +201,7 @@ export default function Messenger() {
                 });
               }, 50);
 
-              // Trigger background summarization  
+              // Trigger background summarization
               summarizeConversation(conversationId);
             } else {
               // No active conversation, clear streaming state for this conversation

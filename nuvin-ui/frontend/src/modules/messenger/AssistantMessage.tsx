@@ -73,7 +73,7 @@ export function AssistantMessage({
               ? 'text-foreground'
               : isStreaming
                 ? 'bg-gradient-to-br from-card to-card/80 border-border/50 shadow-md border'
-                : 'bg-card border-border hover:shadow-xl hover:border-border/80 shadow-lg border'
+                : 'bg-card border-border hover:shadow-xs hover:border-border/80 shadow-xxs border'
           }`}
         >
           {/* Metadata positioned absolutely inside the message */}

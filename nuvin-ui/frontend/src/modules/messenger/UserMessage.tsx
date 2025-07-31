@@ -51,7 +51,7 @@ export function UserMessage({ content, messageMode }: UserMessageProps) {
         className={`max-w-[70%] overflow-auto transition-all duration-300 ${
           messageMode === 'transparent'
             ? 'text-foreground'
-            : 'rounded-lg p-4 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-primary/20 shadow-primary/20 shadow-lg border'
+            : 'rounded-lg p-4 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-primary/20 shadow-primary/20 hover:shadow-sm shadow-xxs border'
         }`}
       >
         <pre className="text-sm whitespace-pre-wrap font-sans">
@@ -60,7 +60,7 @@ export function UserMessage({ content, messageMode }: UserMessageProps) {
       </div>
 
       {/* User avatar */}
-      <div className="h-8 w-8 bg-gradient-to-br from-secondary to-secondary/80 rounded-full flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-shadow">
+      <div className="h-8 w-8 bg-gradient-to-br from-secondary to-secondary/80 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow">
         <User className="h-4 w-4 text-secondary-foreground" />
       </div>
     </>
