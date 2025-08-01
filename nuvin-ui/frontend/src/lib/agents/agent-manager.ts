@@ -1,14 +1,14 @@
 import type { AgentSettings, ProviderConfig, Message } from '@/types';
-import { generateUUID } from './utils';
+import { generateUUID } from '../utils';
 import {
   a2aService,
   type A2AAuthConfig,
   A2AError,
   type A2AErrorType,
   type Task,
-} from './a2a';
-import { type BaseAgent, LocalAgent, A2AAgent } from './agents';
-import { PROVIDER_TYPES } from './providers/provider-utils';
+} from '../a2a';
+import { type BaseAgent, LocalAgent, A2AAgent } from '.';
+import { PROVIDER_TYPES } from '../providers/provider-utils';
 
 export interface SendMessageOptions {
   conversationId?: string;

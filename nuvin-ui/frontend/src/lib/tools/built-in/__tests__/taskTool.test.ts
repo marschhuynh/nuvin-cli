@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { taskTool } from '../taskTool';
-import { agentManager } from '@/lib/agent-manager';
-import type { MessageResponse } from '@/lib/agent-manager';
+import { agentManager } from '@/lib/agents/agent-manager';
+import type { MessageResponse } from '@/lib/agents/agent-manager';
 import type { AgentSettings } from '@/types';
 
 // Mock the agent manager

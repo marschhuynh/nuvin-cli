@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AgentManager } from '../agent-manager';
+import { AgentManager } from '../agents/agent-manager';
 import type { AgentSettings, Message } from '@/types';
 
 // Mock dependencies

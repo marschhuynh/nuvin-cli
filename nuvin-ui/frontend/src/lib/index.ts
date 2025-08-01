@@ -1,10 +1,10 @@
 // Agent Manager
-export { agentManager, AgentManager } from './agent-manager';
+export { agentManager, AgentManager } from './agents/agent-manager';
 export type {
   SendMessageOptions,
   MessageResponse,
   AgentStatus,
-} from './agent-manager';
+} from './agents/agent-manager';
 
 // A2A Service
 export { a2aService, A2AService, A2AError, A2AErrorType } from './a2a';

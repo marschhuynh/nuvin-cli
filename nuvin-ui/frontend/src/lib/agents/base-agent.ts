@@ -1,6 +1,6 @@
 import type { AgentSettings, Message } from '@/types';
 import type { ChatMessage } from '../providers';
-import type { SendMessageOptions, MessageResponse } from '../agent-manager';
+import type { SendMessageOptions, MessageResponse } from './agent-manager';
 
 export abstract class BaseAgent {
   constructor(
@@ -48,16 +48,19 @@ export abstract class BaseAgent {
         transformedHistory.push({
           role: 'assistant',
           content: null,
-          tool_calls: [{
-            id: message.toolCall.id,
-            type: 'function' as const,
-            function: {
-              name: message.toolCall.name,
-              arguments: typeof message.toolCall.arguments === 'string'
-                ? message.toolCall.arguments
-                : JSON.stringify(message.toolCall.arguments),
+          tool_calls: [
+            {
+              id: message.toolCall.id,
+              type: 'function' as const,
+              function: {
+                name: message.toolCall.name,
+                arguments:
+                  typeof message.toolCall.arguments === 'string'
+                    ? message.toolCall.arguments
+                    : JSON.stringify(message.toolCall.arguments),
+              },
             },
-          }],
+          ],
         });
 
         // Then add the tool result if available

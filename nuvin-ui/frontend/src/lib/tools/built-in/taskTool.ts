@@ -1,5 +1,5 @@
 import { Tool } from '@/types/tools';
-import { agentManager } from '@/lib/agent-manager';
+import { agentManager } from '@/lib/agents/agent-manager';
 import { generateUUID } from '@/lib/utils';
 
 export const taskTool: Tool = {

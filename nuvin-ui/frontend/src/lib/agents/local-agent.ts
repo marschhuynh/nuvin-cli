@@ -3,7 +3,7 @@ import type { ToolContext } from '@/types/tools';
 import { createProvider, type ToolCall, type ChatMessage } from '../providers';
 import { generateUUID } from '../utils';
 import { calculateCost } from '../utils/cost-calculator';
-import type { SendMessageOptions, MessageResponse } from '../agent-manager';
+import type { SendMessageOptions, MessageResponse } from './agent-manager';
 import { toolIntegrationService } from '../tools';
 import type { UsageData } from '../providers/types/base';
 import { BaseAgent } from './base-agent';
@@ -166,12 +166,12 @@ export class LocalAgent extends BaseAgent {
     // If tools were called, emit tool messages first, then get the final response
     if (processed.requiresFollowUp && processed.toolCalls) {
       console.log(`[LocalAgent] Executing tool calling flow...`);
-      
+
       // Emit tool call messages immediately via onAdditionalMessage callback
       if (options.onAdditionalMessage && result.tool_calls) {
         const timestamp = new Date().toISOString();
         const model = this.providerConfig.activeModel.model;
-        
+
         for (const toolCallResult of processed.toolCalls) {
           // Find the original tool call to get parameters
           const originalToolCall = result.tool_calls.find(
@@ -203,7 +203,7 @@ export class LocalAgent extends BaseAgent {
           options.onAdditionalMessage(toolMessageResponse);
         }
       }
-      
+
       finalResult = await toolIntegrationService.completeToolCallingFlow(
         enhancedParams,
         result,

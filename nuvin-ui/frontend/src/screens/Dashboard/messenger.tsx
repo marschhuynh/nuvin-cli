@@ -283,7 +283,7 @@ export default function Messenger() {
 
           // Update agent metrics if we have an active agent
           if (activeAgent) {
-            import('@/lib/agent-manager').then(({ AgentManager }) => {
+            import('@/lib/agents/agent-manager').then(({ AgentManager }) => {
               const agentManager = AgentManager.getInstance();
               agentManager.updateAgentMetrics(
                 activeAgent.id,

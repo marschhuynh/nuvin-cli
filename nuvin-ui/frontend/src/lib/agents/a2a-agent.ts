@@ -2,7 +2,7 @@ import { AgentSettings, Message } from '@/types';
 import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError } from '../a2a';
 import { BaseAgent } from './base-agent';
 import { generateUUID } from '../utils';
-import type { SendMessageOptions, MessageResponse } from '../agent-manager';
+import type { SendMessageOptions, MessageResponse } from './agent-manager';
 import type { Task, Message as A2AMessage, Part } from '../a2a';
 
 export class A2AAgent extends BaseAgent {

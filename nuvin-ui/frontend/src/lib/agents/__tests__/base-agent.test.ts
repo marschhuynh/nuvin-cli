@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BaseAgent } from '../base-agent';
 import type { AgentSettings, Message } from '@/types';
-import type { SendMessageOptions, MessageResponse } from '../../agent-manager';
+import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 
 // Mock concrete implementation for testing
 class TestAgent extends BaseAgent {
