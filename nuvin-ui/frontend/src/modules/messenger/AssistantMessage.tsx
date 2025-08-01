@@ -90,6 +90,7 @@ export function AssistantMessage({
               <MarkdownRenderer
                 content={cleanContent}
                 className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                isStreaming={isStreaming}
               />
 
               {isStreaming && (

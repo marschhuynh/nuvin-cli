@@ -9,6 +9,8 @@ import { unwrapMarkdownBlocks } from '@/utils/markdown-utils';
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  isStreaming?: boolean;
+  depth?: number;
 }
 
 interface CodeBlockProps {
@@ -17,6 +19,7 @@ interface CodeBlockProps {
   language?: string;
   content: string;
   depth?: number;
+  isStreaming?: boolean;
 }
 
 function CodeBlock({
@@ -24,6 +27,7 @@ function CodeBlock({
   className,
   language,
   content,
+  isStreaming,
   depth = 0,
 }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
@@ -40,33 +44,45 @@ function CodeBlock({
 
   // Handle special language types
   if (language === 'mermaid') {
-    return <MermaidDiagram chart={content} />;
+    // During streaming, show mermaid as a code block instead of rendering the diagram
+    if (isStreaming) {
+      // Fall through to regular code block rendering
+    } else {
+      return <MermaidDiagram chart={content} />;
+    }
   }
 
   if (language === 'markdown') {
-    return (
-      <div className="nested-markdown border border-border bg-muted/20 p-4 rounded-lg overflow-hidden">
-        <div className="text-foreground text-sm font-medium mb-2 flex items-center justify-between">
-          <span>Markdown Content:</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="h-6 w-6 p-0 hover:bg-muted"
-          >
-            {copied ? (
-              <Check className="h-3 w-3" />
-            ) : (
-              <Copy className="h-3 w-3" />
-            )}
-          </Button>
+    // Prevent infinite recursion by limiting nesting depth
+    if (depth >= 3) {
+      // Fall through to regular code block rendering
+    } else {
+      return (
+        <div className="nested-markdown border border-border bg-muted/20 p-4 rounded-lg overflow-hidden">
+          <div className="text-foreground text-sm font-medium mb-2 flex items-center justify-between">
+            <span>Markdown Content:</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+              className="h-6 w-6 p-0 hover:bg-muted"
+            >
+              {copied ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
+          <MarkdownRenderer
+            content={content}
+            className="nested-markdown-content"
+            isStreaming={isStreaming}
+            depth={depth + 1}
+          />
         </div>
-        <MarkdownRenderer
-          content={content}
-          className="nested-markdown-content"
-        />
-      </div>
-    );
+      );
+    }
   }
 
   // For inline code (no className means it's inline)
@@ -102,6 +118,8 @@ function CodeBlock({
 export function MarkdownRenderer({
   content,
   className = '',
+  isStreaming = false,
+  depth = 0,
 }: MarkdownRendererProps) {
   // Memoize content processing for performance
   const processedContent = useMemo(() => {
@@ -122,6 +140,8 @@ export function MarkdownRenderer({
             className={className}
             language={language}
             content={content}
+            isStreaming={isStreaming}
+            depth={depth}
             {...props}
           >
             {children}
@@ -235,7 +255,7 @@ export function MarkdownRenderer({
         <em className="italic text-foreground/90">{children}</em>
       ),
     }),
-    [],
+    [isStreaming, depth],
   );
 
   return (

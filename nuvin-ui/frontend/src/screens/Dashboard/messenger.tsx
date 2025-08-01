@@ -507,8 +507,8 @@ export default function Messenger() {
             messages={messages}
             isLoading={isLoading}
             streamingMessageId={streamingMessageId}
-            initialLoadCount={7}
-            loadMoreCount={7}
+            initialLoadCount={15}
+            loadMoreCount={15}
             conversationId={activeConversationId ?? undefined}
           />
 

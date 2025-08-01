@@ -209,11 +209,6 @@ export function MermaidDiagram({ chart }: MermaidProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -227,6 +222,11 @@ export function MermaidDiagram({ chart }: MermaidProps) {
         }
 
         let cleanChart = trimmedChart;
+        
+        // Convert newer flowchart syntax to older graph syntax for better compatibility
+        if (cleanChart.startsWith('flowchart ')) {
+          cleanChart = cleanChart.replace(/^flowchart\s+/, 'graph ');
+        }
 
         // Theme-aware configuration
         const isDark = resolvedTheme === 'dark';
@@ -239,6 +239,8 @@ export function MermaidDiagram({ chart }: MermaidProps) {
           fontFamily: 'Inter, system-ui, sans-serif',
           fontSize: 16,
           logLevel: 'fatal', // Suppress console warnings
+          // Explicitly enable diagram types
+          deterministicIds: true,
           themeVariables: isDark
             ? {
                 // Dark theme variables - Enhanced for better readability
@@ -381,22 +383,19 @@ export function MermaidDiagram({ chart }: MermaidProps) {
 
         try {
           // Render the diagram with cleaned chart
-          const isValid = await mermaid.parse(cleanChart, {
-            suppressErrors: true,
-          });
-          if (!isValid) {
-            setError('Invalid Mermaid chart syntax');
-            return;
-          }
           const { svg: renderedSvg } = await mermaid.render(id, cleanChart);
           setSvg(renderedSvg);
           setError('');
+        } catch (err) {
+          console.error('Mermaid rendering error:', err);
+          setError('Rendering failed');
         } finally {
           // Restore console methods
           console.error = originalError;
           console.warn = originalWarn;
         }
       } catch (err) {
+        console.error('Mermaid rendering error:', err);
         setError('Rendering failed');
         setSvg('');
       }
@@ -416,44 +415,6 @@ export function MermaidDiagram({ chart }: MermaidProps) {
   const handleCloseFullscreen = useCallback(() => {
     setIsFullscreen(false);
   }, []);
-
-  // const handleMouseDown = useCallback((e: React.MouseEvent) => {
-  //   if (e.button === 0) { // Left mouse button
-  //     setIsDragging(true);
-  //     setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
-  //   }
-  // }, [panX, panY]);
-
-  // const handleMouseMove = useCallback((e: React.MouseEvent) => {
-  //   if (isDragging) {
-  //     setPanX(e.clientX - dragStart.x);
-  //     setPanY(e.clientY - dragStart.y);
-  //   }
-  // }, [isDragging, dragStart]);
-
-  // const handleMouseUp = useCallback(() => {
-  //   setIsDragging(false);
-  // }, []);
-
-  // const handleWheel = useCallback((e: React.WheelEvent) => {
-  //   e.preventDefault();
-  //   const delta = e.deltaY > 0 ? 0.9 : 1.1;
-  //   setZoom(prev => Math.min(Math.max(prev * delta, 0.3), 3));
-  // }, []);
-
-  // Update SVG transform when zoom or pan changes
-  useEffect(() => {
-    if (ref.current && svg) {
-      const svgElement = ref.current.querySelector('svg');
-      if (svgElement) {
-        svgElement.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-        svgElement.style.transformOrigin = 'center center';
-        svgElement.style.transition = isDragging
-          ? 'none'
-          : 'transform 0.1s ease-out';
-      }
-    }
-  }, [zoom, panX, panY, svg, isDragging]);
 
   if (error) {
     return (
@@ -496,21 +457,10 @@ export function MermaidDiagram({ chart }: MermaidProps) {
               resolvedTheme === 'dark'
                 ? 'linear-gradient(to bottom, #1a202c 0%, #2d3748 100%)'
                 : 'linear-gradient(to bottom, #ffffff 0%, #f7fafc 100%)',
-            cursor: isDragging ? 'grabbing' : 'grab',
           }}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
           dangerouslySetInnerHTML={{ __html: svg }}
         />
-
-        {/* Instructions - Only show in fullscreen mode */}
-        {isFullscreen && (
-          <div className="absolute bottom-4 left-4 text-xs text-muted-foreground bg-background/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-border/20 shadow-sm">
-            <div className="flex items-center gap-4">
-              <span>🖱️ Drag to pan</span>
-              <span>🔍 Scroll to zoom</span>
-              <span>📐 {Math.round(zoom * 100)}% zoom</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Fullscreen Modal using Portal */}
