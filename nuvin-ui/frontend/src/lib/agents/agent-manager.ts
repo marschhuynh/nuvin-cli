@@ -1,4 +1,5 @@
 import type { AgentSettings, ProviderConfig, Message } from '@/types';
+import { useTodoStore } from '@/store/useTodoStore';
 import { generateUUID } from '../utils';
 import {
   a2aService,
@@ -9,12 +10,12 @@ import {
 } from '../a2a';
 import { type BaseAgent, LocalAgent, A2AAgent } from '.';
 import { PROVIDER_TYPES } from '../providers/provider-utils';
+import { reminderGenerator } from './reminder-generator';
 
 export interface SendMessageOptions {
   conversationId?: string;
   contextId?: string;
   taskId?: string;
-  callId?: string; // Added for self-call tracking
   userId?: string; // Added for tool context
   stream?: boolean;
   onChunk?: (chunk: string) => void;
@@ -24,7 +25,14 @@ export interface SendMessageOptions {
   timeout?: number;
   enableRetry?: boolean;
   maxRetries?: number;
-  isSelfCall?: boolean; // Flag to indicate this is a self-initiated call
+  // System reminder options
+  includeSystemReminders?: boolean; // Default true
+  skipReminderTypes?: (
+    | 'instruction'
+    | 'todo-status'
+    | 'security'
+    | 'behavioral'
+  )[];
 }
 
 export interface MessageResponse {
@@ -56,10 +64,7 @@ export interface MessageResponse {
     estimatedCost?: number;
     responseTime?: number;
     taskId?: string;
-    callId?: string; // Added for self-call tracking
     toolCalls?: number; // Added to track tool usage
-    isSelfCall?: boolean; // Flag to indicate this response came from a self-call
-    selfCallDepth?: number; // Track recursion depth for self-calls
   };
 }
 
@@ -85,10 +90,6 @@ export class AgentManager {
   private activeAgent: AgentSettings | null = null;
   private activeProvider: ProviderConfig | null = null;
   private conversationHistory: Map<string, Message[]> = new Map();
-
-  // Self-call tracking to prevent infinite recursion
-  private selfCallDepths: Map<string, number> = new Map();
-  private readonly MAX_SELF_CALL_DEPTH = 5;
 
   // Agent metrics tracking
   private agentMetrics: Map<
@@ -183,28 +184,6 @@ export class AgentManager {
       throw new Error('No active agent selected');
     }
 
-    // Handle self-call depth tracking
-    const conversationId = options.conversationId || 'default';
-    const isSelfCall = options.isSelfCall || options.userId === 'self-call';
-    let currentDepth = 0;
-
-    if (isSelfCall) {
-      currentDepth = this.selfCallDepths.get(conversationId) || 0;
-
-      // Check if we've exceeded maximum depth
-      if (currentDepth >= this.MAX_SELF_CALL_DEPTH) {
-        throw new Error(
-          `Maximum self-call depth exceeded (${this.MAX_SELF_CALL_DEPTH}). This prevents infinite recursion.`,
-        );
-      }
-
-      // Increment depth for this call
-      this.selfCallDepths.set(conversationId, currentDepth + 1);
-      console.log(
-        `Self-call depth for conversation ${conversationId}: ${currentDepth + 1}`,
-      );
-    }
-
     try {
       if (!this.agentInstance) {
         this.updateAgentInstance();
@@ -214,14 +193,21 @@ export class AgentManager {
         throw new Error('Agent instance not configured');
       }
 
-      const response = await this.agentInstance.sendMessage(content, options);
-
-      // Add self-call metadata to response
-      if (isSelfCall && response.metadata) {
-        response.metadata.isSelfCall = true;
-        response.metadata.selfCallDepth = currentDepth + 1;
-        response.metadata.callId = options.callId;
+      // Enhance message with system reminders if enabled (default true)
+      let enhancedContent = [content];
+      if (options.includeSystemReminders !== false) {
+        const enhancedString = this.enhanceMessageWithReminders(
+          content,
+          options,
+        );
+        enhancedContent = enhancedString;
+        console.log(`Enhanced content with reminders:`, enhancedContent);
       }
+
+      const response = await this.agentInstance.sendMessage(
+        enhancedContent,
+        options,
+      );
 
       return response;
     } catch (error) {
@@ -235,16 +221,37 @@ export class AgentManager {
       }
 
       throw error;
-    } finally {
-      // Decrement depth when call completes (whether success or failure)
-      if (isSelfCall) {
-        const newDepth = Math.max(0, currentDepth);
-        if (newDepth === 0) {
-          this.selfCallDepths.delete(conversationId);
-        } else {
-          this.selfCallDepths.set(conversationId, newDepth);
-        }
-      }
+    }
+  }
+
+  /**
+   * Enhance message content with system reminders
+   */
+  private enhanceMessageWithReminders(
+    content: string,
+    options: SendMessageOptions,
+  ): string[] {
+    try {
+      // Get current todo state
+      const todoStore = useTodoStore.getState();
+      const todoState = todoStore.getTodoStateForReminders(
+        options.conversationId,
+      );
+
+      // Get conversation history
+      const messageHistory = options.conversationId
+        ? this.getConversationHistory(options.conversationId)
+        : [];
+
+      return reminderGenerator.enhanceMessageWithReminders(content, {
+        conversationId: options.conversationId,
+        messageHistory,
+        includeReminders: true,
+        todoState,
+      });
+    } catch (error) {
+      console.warn('Failed to enhance message with reminders:', error);
+      return [content];
     }
   }
 
@@ -280,17 +287,6 @@ export class AgentManager {
    */
   getConversationHistory(conversationId: string): Message[] {
     return this.conversationHistory.get(conversationId) || [];
-  }
-
-  /**
-   * Add messages to conversation history
-   */
-  private addToConversationHistory(
-    conversationId: string,
-    messages: Message[],
-  ): void {
-    const existing = this.conversationHistory.get(conversationId) || [];
-    this.conversationHistory.set(conversationId, [...existing, ...messages]);
   }
 
   /**
@@ -447,8 +443,8 @@ export class AgentManager {
     let messageCount = 0;
 
     messages.forEach((message) => {
-      if (message.role === 'assistant' && (message as any).metadata) {
-        const metadata = (message as any).metadata;
+      if (message.role === 'assistant' && message.metadata) {
+        const metadata = message.metadata;
         totalTokens += metadata.totalTokens || 0;
         totalCost += metadata.estimatedCost || 0;
         messageCount++; // Only count assistant messages with metadata
@@ -493,27 +489,12 @@ export class AgentManager {
   }
 
   /**
-   * Get self-call depth for a conversation
-   */
-  getSelfCallDepth(conversationId: string): number {
-    return this.selfCallDepths.get(conversationId) || 0;
-  }
-
-  /**
-   * Clear self-call depth for a conversation
-   */
-  clearSelfCallDepth(conversationId: string): void {
-    this.selfCallDepths.delete(conversationId);
-  }
-
-  /**
    * Reset the manager state
    */
   reset(): void {
     this.activeAgent = null;
     this.activeProvider = null;
     this.conversationHistory.clear();
-    this.selfCallDepths.clear();
     // Clear A2A service state
     a2aService.clear();
   }

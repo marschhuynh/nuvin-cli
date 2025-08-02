@@ -1,15 +1,15 @@
-import { AgentSettings, Message } from '@/types';
-import { a2aService, A2AAuthConfig, A2AMessageOptions, A2AError } from '../a2a';
-import { BaseAgent } from './base-agent';
+import {
+  a2aService,
+  type A2AAuthConfig,
+  type A2AMessageOptions,
+  A2AError,
+} from '../a2a';
 import { generateUUID } from '../utils';
-import type { SendMessageOptions, MessageResponse } from './agent-manager';
 import type { Task, Message as A2AMessage, Part } from '../a2a';
+import type { SendMessageOptions, MessageResponse } from './agent-manager';
+import { BaseAgent } from './base-agent';
 
 export class A2AAgent extends BaseAgent {
-  constructor(settings: AgentSettings, history: Map<string, Message[]>) {
-    super(settings, history);
-  }
-
   private createAuthConfig(): A2AAuthConfig | undefined {
     if (!this.agentSettings.auth) return undefined;
     return {
@@ -22,12 +22,14 @@ export class A2AAgent extends BaseAgent {
   }
 
   async sendMessage(
-    content: string,
+    contents: string[],
     options: SendMessageOptions = {},
   ): Promise<MessageResponse> {
     if (!this.agentSettings.url) {
       throw new Error('No URL configured for remote agent');
     }
+
+    const content = contents.join('\n');
 
     const startTime = Date.now();
     const messageId = generateUUID();

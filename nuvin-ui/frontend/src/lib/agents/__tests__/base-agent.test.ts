@@ -6,7 +6,7 @@ import type { SendMessageOptions, MessageResponse } from '../agent-manager';
 // Mock concrete implementation for testing
 class TestAgent extends BaseAgent {
   async sendMessage(
-    content: string,
+    content: string[],
     options?: SendMessageOptions,
   ): Promise<MessageResponse> {
     throw new Error('Method not implemented.');
@@ -56,10 +56,9 @@ describe('BaseAgent buildContext', () => {
     // Add messages to history
     (agent as any).addToHistory(conversationId, messages);
 
-    const context = agent.buildContext(
-      conversationId,
+    const context = agent.buildContext(conversationId, [
       'What can you help me with?',
-    );
+    ]);
 
     expect(context).toEqual([
       { role: 'system', content: 'You are a helpful assistant.' },
@@ -104,7 +103,9 @@ describe('BaseAgent buildContext', () => {
     // Add messages to history
     (agent as any).addToHistory(conversationId, messageWithToolCalls);
 
-    const context = agent.buildContext(conversationId, 'Generate more numbers');
+    const context = agent.buildContext(conversationId, [
+      'Generate more numbers',
+    ]);
 
     expect(context).toEqual([
       { role: 'system', content: 'You are a helpful assistant.' },
@@ -177,7 +178,7 @@ describe('BaseAgent buildContext', () => {
     // Add messages to history
     (agent as any).addToHistory(conversationId, messageWithMultipleToolCalls);
 
-    const context = agent.buildContext(conversationId, 'Thanks!');
+    const context = agent.buildContext(conversationId, ['Thanks!']);
 
     expect(context).toEqual([
       { role: 'system', content: 'You are a helpful assistant.' },
@@ -244,7 +245,7 @@ describe('BaseAgent buildContext', () => {
     // Add messages to history
     (agent as any).addToHistory(conversationId, messageWithToolCallsNoResults);
 
-    const context = agent.buildContext(conversationId, 'What happened?');
+    const context = agent.buildContext(conversationId, ['What happened?']);
 
     expect(context).toEqual([
       { role: 'system', content: 'You are a helpful assistant.' },

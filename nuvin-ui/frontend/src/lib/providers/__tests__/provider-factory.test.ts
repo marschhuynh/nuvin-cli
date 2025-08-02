@@ -4,6 +4,8 @@ import { OpenRouterProvider } from '../openrouter-provider';
 import { OpenAIProvider } from '../openai-provider';
 import { AnthropicProvider } from '../anthropic-provider';
 import { GithubCopilotProvider } from '../github-provider';
+import { OpenAICompatibleProvider } from '../openai-compatible-provider';
+import { DeepInfraProvider } from '../deepinfra-provider';
 
 describe('ProviderFactory', () => {
   it('should create OpenRouter provider', () => {
@@ -42,6 +44,25 @@ describe('ProviderFactory', () => {
     expect(provider).toBeInstanceOf(GithubCopilotProvider);
   });
 
+  it('should create OpenAI-Compatible provider', () => {
+    const provider = ProviderFactory.createProvider({
+      type: 'openai-compatible',
+      apiKey: 'test-key',
+      apiUrl: 'https://api.example.com',
+    });
+
+    expect(provider).toBeInstanceOf(OpenAICompatibleProvider);
+  });
+
+  it('should create DeepInfra provider', () => {
+    const provider = ProviderFactory.createProvider({
+      type: 'deepinfra',
+      apiKey: 'test-key',
+    });
+
+    expect(provider).toBeInstanceOf(DeepInfraProvider);
+  });
+
   it('should throw error for unsupported provider type', () => {
     expect(() => {
       ProviderFactory.createProvider({
@@ -53,7 +74,14 @@ describe('ProviderFactory', () => {
 
   it('should return correct provider types', () => {
     const types = ProviderFactory.getProviderTypes();
-    expect(types).toEqual(['openrouter', 'openai', 'anthropic', 'github']);
+    expect(types).toEqual([
+      'openrouter',
+      'openai',
+      'anthropic',
+      'github',
+      'openai-compatible',
+      'deepinfra',
+    ]);
   });
 
   it('should return correct display names', () => {
@@ -66,6 +94,12 @@ describe('ProviderFactory', () => {
     );
     expect(ProviderFactory.getProviderDisplayName('github')).toBe(
       'GitHub Copilot',
+    );
+    expect(ProviderFactory.getProviderDisplayName('openai-compatible')).toBe(
+      'OpenAI-Compatible API',
+    );
+    expect(ProviderFactory.getProviderDisplayName('deepinfra')).toBe(
+      'DeepInfra',
     );
   });
 

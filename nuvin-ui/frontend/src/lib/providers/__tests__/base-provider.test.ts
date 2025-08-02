@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { BaseLLMProvider } from '../base-provider';
+import { extractValue } from '../utils';
 import type { ModelInfo } from '../types/base';
 
 class TestProvider extends BaseLLMProvider {
@@ -98,28 +99,27 @@ describe('BaseLLMProvider', () => {
 
     const result = (provider as any).createCompletionResult(data);
 
-    expect(result).toEqual({
-      content: 'Hello world',
-      tool_calls: [
-        {
-          id: 'call_1',
-          type: 'function',
-          function: {
-            name: 'test_function',
-            arguments: '{"test": true}',
-          },
+    expect(result.content).toBe('Hello world');
+    expect(result.tool_calls).toEqual([
+      {
+        id: 'call_1',
+        type: 'function',
+        function: {
+          name: 'test_function',
+          arguments: '{"test": true}',
         },
-      ],
-      usage: {
-        prompt_tokens: 10,
-        completion_tokens: 5,
-        total_tokens: 15,
       },
+    ]);
+    expect(result.usage).toEqual({
+      prompt_tokens: 10,
+      completion_tokens: 5,
+      total_tokens: 15,
     });
+    expect(result._metadata).toBeDefined();
+    expect(result._metadata.provider).toBe('Test');
   });
 
   it('should extract nested values correctly', () => {
-    const provider = new TestProvider();
     const data = {
       choices: [
         {
@@ -130,10 +130,7 @@ describe('BaseLLMProvider', () => {
       ],
     };
 
-    const value = (provider as any).extractValue(
-      data,
-      'choices.0.delta.content',
-    );
+    const value = extractValue(data, 'choices.0.delta.content');
     expect(value).toBe('test content');
   });
 
@@ -151,46 +148,16 @@ describe('BaseLLMProvider', () => {
     expect(sorted[2].id).toBe('gpt-4o');
   });
 
-  it('should transform messages for different providers', () => {
+  it('should calculate cost correctly', () => {
     const provider = new TestProvider();
-    const messages = [
-      { role: 'system', content: 'You are a helpful assistant' },
-      { role: 'user', content: 'Hello' },
-    ];
+    const usage = {
+      prompt_tokens: 10,
+      completion_tokens: 5,
+      total_tokens: 15,
+    };
 
-    const transformed = (provider as any).transformMessagesForProvider(
-      messages,
-      'Anthropic',
-    );
-    expect(transformed).toEqual([
-      { role: 'system', content: 'You are a helpful assistant' },
-      { role: 'user', content: 'Hello' },
-    ]);
-  });
-
-  it('should transform tools for different providers', () => {
-    const provider = new TestProvider();
-    const tools = [
-      {
-        type: 'function',
-        function: {
-          name: 'test_function',
-          description: 'A test function',
-          parameters: { type: 'object' },
-        },
-      },
-    ];
-
-    const transformed = (provider as any).transformToolsForProvider(
-      tools,
-      'Anthropic',
-    );
-    expect(transformed).toEqual([
-      {
-        name: 'test_function',
-        description: 'A test function',
-        parameters: { type: 'object' },
-      },
-    ]);
+    // The base provider returns undefined by default
+    const cost = (provider as any).calculateCost(usage, 'test-model');
+    expect(cost).toBeUndefined();
   });
 });

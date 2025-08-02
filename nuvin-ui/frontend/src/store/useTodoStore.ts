@@ -6,6 +6,7 @@ interface TodoState {
   // Store todos grouped by conversation ID
   todos: Record<string, TodoItem[]>; // conversationId -> TodoItem[]
   globalTodos: TodoItem[]; // Todos not associated with any conversation
+  lastModified: Record<string, string>; // Track last modification per conversation
 
   // Actions
   addTodo: (todo: Omit<TodoItem, 'id' | 'createdAt' | 'updatedAt'>) => string;
@@ -22,6 +23,15 @@ interface TodoState {
   getTodoById: (todoId: string) => TodoItem | null;
   getTodoStats: (conversationId?: string) => TodoStats;
   getAllTodos: () => TodoItem[];
+
+  // System reminder methods
+  getTodoStateForReminders: (conversationId?: string) => {
+    todos: TodoItem[];
+    isEmpty: boolean;
+    hasInProgress: boolean;
+    recentChanges: boolean;
+  };
+  hasRecentChanges: (conversationId?: string) => boolean;
 
   // Utility methods
   markAsInProgress: (todoId: string) => void;
@@ -52,6 +62,7 @@ export const useTodoStore = create<TodoState>()(
     (set, get) => ({
       todos: {},
       globalTodos: [],
+      lastModified: {},
 
       addTodo: (todoData) => {
         const id = generateId();
@@ -74,11 +85,19 @@ export const useTodoStore = create<TodoState>()(
                   newTodo,
                 ],
               },
+              lastModified: {
+                ...state.lastModified,
+                [todoData.conversationId]: now,
+              },
             };
           } else {
             return {
               ...state,
               globalTodos: [...state.globalTodos, newTodo],
+              lastModified: {
+                ...state.lastModified,
+                global: now,
+              },
             };
           }
         });
@@ -325,10 +344,36 @@ export const useTodoStore = create<TodoState>()(
         get().updateTodo(todoId, { status: 'pending' });
       },
 
+      getTodoStateForReminders: (conversationId) => {
+        const state = get();
+        const todos = conversationId
+          ? state.todos[conversationId] || []
+          : state.globalTodos;
+
+        return {
+          todos,
+          isEmpty: todos.length === 0,
+          hasInProgress: todos.some((t) => t.status === 'in_progress'),
+          recentChanges: get().hasRecentChanges(conversationId),
+        };
+      },
+
+      hasRecentChanges: (conversationId) => {
+        const state = get();
+        const key = conversationId || 'global';
+        const lastModified = state.lastModified[key];
+
+        if (!lastModified) return false;
+
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+        return new Date(lastModified).getTime() > fiveMinutesAgo;
+      },
+
       reset: () => {
         set({
           todos: {},
           globalTodos: [],
+          lastModified: {},
         });
       },
     }),

@@ -30,7 +30,28 @@ describe('todoWriteTool integration', () => {
 
     expect(result.success).toBe(true);
     expect(result.data).toBeDefined();
-    expect(result.data.todos).toEqual(validParams.todos);
+
+    // Check that the todos contain the expected core properties
+    expect(result.data.todos).toHaveLength(3);
+    expect(result.data.todos[0]).toMatchObject({
+      id: '1',
+      content: 'Implement new feature',
+      status: 'pending',
+      priority: 'high',
+    });
+    expect(result.data.todos[1]).toMatchObject({
+      id: '2',
+      content: 'Write unit tests',
+      status: 'in_progress',
+      priority: 'medium',
+    });
+    expect(result.data.todos[2]).toMatchObject({
+      id: '3',
+      content: 'Update documentation',
+      status: 'completed',
+      priority: 'low',
+    });
+
     expect(result.data.summary).toBeDefined();
     expect(result.data.summary.message).toContain('3 items');
     expect(result.data.summary.message).toContain('1 completed');

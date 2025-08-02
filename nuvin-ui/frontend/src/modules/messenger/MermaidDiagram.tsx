@@ -222,7 +222,7 @@ export function MermaidDiagram({ chart }: MermaidProps) {
         }
 
         let cleanChart = trimmedChart;
-        
+
         // Convert newer flowchart syntax to older graph syntax for better compatibility
         if (cleanChart.startsWith('flowchart ')) {
           cleanChart = cleanChart.replace(/^flowchart\s+/, 'graph ');

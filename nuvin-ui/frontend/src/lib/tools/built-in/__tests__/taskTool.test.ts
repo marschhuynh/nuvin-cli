@@ -5,7 +5,7 @@ import type { MessageResponse } from '@/lib/agents/agent-manager';
 import type { AgentSettings } from '@/types';
 
 // Mock the agent manager
-vi.mock('@/lib/agent-manager', () => ({
+vi.mock('@/lib/agents/agent-manager', () => ({
   agentManager: {
     getActiveAgent: vi.fn(),
     sendMessage: vi.fn(),
@@ -22,6 +22,14 @@ describe('taskTool', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock implementations
+    mockAgentManager.getActiveAgent.mockReturnValue(null);
+    mockAgentManager.sendMessage.mockResolvedValue({
+      id: 'test-id',
+      content: 'test content',
+      role: 'assistant',
+      timestamp: new Date().toISOString(),
+    });
   });
 
   afterEach(() => {

@@ -13,14 +13,14 @@ export abstract class BaseAgent {
   }
 
   abstract sendMessage(
-    content: string,
+    content: string[],
     options?: SendMessageOptions,
   ): Promise<MessageResponse>;
 
   abstract cancel(): void;
 
   async streamMessage(
-    content: string,
+    content: string[],
     options?: SendMessageOptions,
   ): Promise<MessageResponse> {
     return this.sendMessage(content, options);
@@ -36,7 +36,7 @@ export abstract class BaseAgent {
     this.conversationHistory.set(conversationId, [...existing, ...messages]);
   }
 
-  buildContext(conversationId: string, content: string): ChatMessage[] {
+  buildContext(conversationId: string, content: string[]): ChatMessage[] {
     const history = this.retrieveMemory(conversationId);
     const transformedHistory: ChatMessage[] = [];
 
@@ -80,10 +80,22 @@ export abstract class BaseAgent {
       }
     }
 
+    const userMessage: ChatMessage[] = Array.isArray(content)
+      ? content.map((msg) => ({
+          role: 'user',
+          content: msg,
+        }))
+      : [
+          {
+            role: 'user',
+            content,
+          },
+        ];
+
     return [
       { role: 'system', content: this.agentSettings.systemPrompt },
       ...transformedHistory,
-      { role: 'user', content },
+      ...userMessage,
     ];
   }
 }

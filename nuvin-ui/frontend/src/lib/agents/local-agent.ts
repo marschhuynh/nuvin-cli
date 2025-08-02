@@ -20,7 +20,7 @@ export class LocalAgent extends BaseAgent {
   }
 
   async sendMessage(
-    content: string,
+    content: string[],
     options: SendMessageOptions = {},
   ): Promise<MessageResponse> {
     this.abortController = new AbortController();
@@ -33,7 +33,7 @@ export class LocalAgent extends BaseAgent {
     const messages: ChatMessage[] = this.buildContext(convoId, content);
 
     console.log(
-      `[LocalAgent] Sending message with content: "${content}" to provider: ${this.providerConfig.type}`,
+      `[LocalAgent] Sending message to provider: ${this.providerConfig.type}`,
       options,
     );
 
@@ -118,8 +118,24 @@ export class LocalAgent extends BaseAgent {
           },
         };
 
+        const userMessage: Message[] = Array.isArray(content)
+          ? content.map((msg) => ({
+              id: generateUUID(),
+              role: 'user',
+              content: msg,
+              timestamp,
+            }))
+          : [
+              {
+                id: generateUUID(),
+                role: 'user',
+                content,
+                timestamp,
+              },
+            ];
+
         this.addToHistory(convoId, [
-          { id: generateUUID(), role: 'user', content, timestamp },
+          ...userMessage,
           {
             id: generateUUID(),
             role: 'assistant',
@@ -245,9 +261,21 @@ export class LocalAgent extends BaseAgent {
     };
 
     // Build messages to add to history
-    const messagesToAdd: Message[] = [
-      { id: generateUUID(), role: 'user', content, timestamp },
-    ];
+    const messagesToAdd: Message[] = Array.isArray(content)
+      ? content.map((msg) => ({
+          id: generateUUID(),
+          role: 'user',
+          content: msg,
+          timestamp,
+        }))
+      : [
+          {
+            id: generateUUID(),
+            role: 'user',
+            content,
+            timestamp,
+          },
+        ];
 
     // Add tool call messages if tools were executed (for internal history)
     if (
@@ -302,7 +330,7 @@ export class LocalAgent extends BaseAgent {
     options: SendMessageOptions,
     messageId: string,
     convoId: string,
-    content: string,
+    content: string[],
     startTime: number,
   ): Promise<MessageResponse> {
     const provider = createProvider(this.providerConfig);
@@ -479,9 +507,14 @@ export class LocalAgent extends BaseAgent {
     };
 
     // Build messages to add to history
-    const messagesToAddStreaming: Message[] = [
-      { id: generateUUID(), role: 'user', content, timestamp },
-    ];
+    const messagesToAddStreaming: Message[] = Array.isArray(content)
+      ? content.map((msg) => ({
+          id: generateUUID(),
+          role: 'user',
+          content: msg,
+          timestamp,
+        }))
+      : [];
 
     // Add tool call messages if tools were executed during streaming
     if (processedToolResults.length > 0) {
