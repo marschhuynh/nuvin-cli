@@ -56,7 +56,6 @@ NEVER proactively create documentation files (*.md) or README files. Only create
       SystemReminderGenerator.CORE_INSTRUCTIONS,
     ];
 
-    console.log('Generating reminders for context:', context);
     // Todo list status reminders
     if (context.todoListState) {
       const todoReminder = this.generateTodoStatusReminder(

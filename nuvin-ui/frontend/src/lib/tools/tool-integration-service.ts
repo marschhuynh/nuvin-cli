@@ -13,6 +13,7 @@ import type {
   ToolContext,
 } from '@/types/tools';
 import { toolRegistry } from './tool-registry';
+import { reminderGenerator } from '../agents/reminder-generator';
 
 export class ToolIntegrationService {
   /**
@@ -105,23 +106,10 @@ export class ToolIntegrationService {
     // Check if tools are enabled for this agent (only explicitly enabled tools)
     const enabledToolNames = new Set(agentToolConfig?.enabledTools || []);
 
-    // Only include MCP tools that are explicitly enabled
-    // const mcpTools = toolRegistry.getAllMCPTools();
-    // const explicitlyEnabledMCPTools = mcpTools.filter(
-    //   (mcpTool) =>
-    //     enabledToolNames.has(mcpTool.definition.name) && mcpTool.isAvailable(),
-    // );
-
     // Filter tool calls to only include enabled tools
     const allowedToolCalls = result.tool_calls.filter((call) => {
-      const isEnabled = enabledToolNames.has(call.function.name);
-      console.log(`[DEBUG] Tool ${call.function.name} enabled: ${isEnabled}`);
-      return isEnabled;
+      return enabledToolNames.has(call.function.name);
     });
-
-    console.log(
-      `[DEBUG] Filtered tool calls: ${allowedToolCalls.length}/${result.tool_calls.length}`,
-    );
 
     if (allowedToolCalls.length === 0) {
       console.log('[DEBUG] No allowed tool calls, returning error message');
@@ -222,6 +210,46 @@ export class ToolIntegrationService {
   }
 
   /**
+   * Enhance tool result messages with system reminders for LLM
+   */
+  private enhanceToolMessagesWithReminders(
+    toolMessages: ChatMessage[],
+    conversationId?: string,
+  ): ChatMessage[] {
+    try {
+      // Generate reminders based on tool execution context
+      const enhancedContent = reminderGenerator.enhanceMessageWithReminders(
+        'Tool execution completed',
+        {
+          conversationId,
+          messageHistory: [], // Tool context doesn't need full history
+          includeReminders: true,
+        },
+      );
+
+      // If reminders were generated, inject them as a system message
+      if (enhancedContent.length > 1) {
+        const reminderContent = enhancedContent
+          .filter((content) => content !== 'Tool execution completed')
+          .join('\n');
+
+        // Insert reminder as first message after tool results
+        const systemReminderMessage: ChatMessage = {
+          role: 'user',
+          content: reminderContent,
+        };
+
+        return [...toolMessages, systemReminderMessage];
+      }
+
+      return toolMessages;
+    } catch (error) {
+      console.warn('Failed to enhance tool messages with reminders:', error);
+      return toolMessages;
+    }
+  }
+
+  /**
    * Complete tool calling flow - execute tools and get final response
    */
   async completeToolCallingFlow(
@@ -229,6 +257,7 @@ export class ToolIntegrationService {
     firstResult: CompletionResult,
     toolResults: ToolCallResult[],
     llmProvider: LLMProvider, // LLMProvider instance
+    context?: ToolContext,
   ): Promise<CompletionResult> {
     if (!firstResult.tool_calls) {
       return firstResult;
@@ -240,10 +269,16 @@ export class ToolIntegrationService {
       toolResults,
     );
 
+    // Enhance tool result messages with reminders for the LLM
+    const enhancedToolMessages = this.enhanceToolMessagesWithReminders(
+      toolMessages,
+      context?.sessionId,
+    );
+
     // Create follow-up completion with tool results
     const followUpParams: CompletionParams = {
       ...originalParams,
-      messages: [...originalParams.messages, ...toolMessages],
+      messages: [...originalParams.messages, ...enhancedToolMessages],
       // Don't include tools in follow-up to prevent infinite loops
       tools: undefined,
       tool_choice: undefined,
@@ -252,14 +287,6 @@ export class ToolIntegrationService {
     console.log('followUpParams', followUpParams);
 
     const finalResult = await llmProvider.generateCompletion(followUpParams);
-
-    // For multi-message flow, just return the final LLM response
-    // The local agent handles the separation of original content, tool calls, and final response
-    console.log('[DEBUG] Tool calling flow - final response:', {
-      originalContent: firstResult.content || '',
-      finalContent: finalResult.content || '',
-      toolCallsCount: firstResult.tool_calls?.length || 0,
-    });
 
     return {
       ...finalResult,

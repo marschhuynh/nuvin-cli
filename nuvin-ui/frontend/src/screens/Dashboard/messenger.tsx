@@ -241,15 +241,6 @@ export default function Messenger() {
 
         // Log metadata for debugging and update agent metrics
         if (response.metadata) {
-          console.log('Response metadata:', {
-            model: response.metadata.model,
-            provider: response.metadata.provider,
-            agentType: response.metadata.agentType,
-            responseTime: response.metadata.responseTime,
-            totalTokens: response.metadata.totalTokens,
-            estimatedCost: response.metadata.estimatedCost,
-          });
-
           // Update the message with metadata after streaming is complete
           if (conversationId && streamingId) {
             // Get the current message to preserve content

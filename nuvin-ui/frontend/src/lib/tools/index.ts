@@ -31,7 +31,6 @@ export async function initializeMCPTools() {
     try {
       await mcpIntegration.initialize();
       mcpInitialized = true;
-      console.log('MCP tools initialized successfully');
     } catch (error) {
       console.error('Failed to initialize MCP tools:', error);
     }

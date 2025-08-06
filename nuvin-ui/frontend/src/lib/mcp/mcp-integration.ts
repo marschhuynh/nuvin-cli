@@ -25,17 +25,12 @@ export class MCPIntegrationService {
     const mcpConfigs =
       useUserPreferenceStore.getState().preferences.mcpServers || [];
 
-    console.log(
-      `Initializing MCP integration with ${mcpConfigs.length} servers`,
-    );
-
     // Initialize MCP servers
     try {
       // Stop any existing servers first to prevent "already running" conflicts
       await mcpManager.stopAllServers();
 
       await mcpManager.initializeServers(mcpConfigs);
-      console.log('MCP servers initialized successfully');
     } catch (error) {
       console.error('Failed to initialize MCP servers:', error);
     }

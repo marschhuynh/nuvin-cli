@@ -32,11 +32,6 @@ export class LocalAgent extends BaseAgent {
     const convoId = options.conversationId || 'default';
     const messages: ChatMessage[] = this.buildContext(convoId, content);
 
-    console.log(
-      `[LocalAgent] Sending message to provider: ${this.providerConfig.type}`,
-      options,
-    );
-
     const toolContext: ToolContext = {
       userId: options.userId,
       sessionId: convoId,
@@ -152,11 +147,6 @@ export class LocalAgent extends BaseAgent {
     // Get initial completion (potentially with tool calls)
     const result = await provider.generateCompletion(enhancedParams, signal);
 
-    // Process any tool calls
-    console.log(
-      `[LocalAgent] Processing completion result. Has tool_calls:`,
-      !!result.tool_calls,
-    );
     if (result.tool_calls) {
       console.log(
         `[LocalAgent] Tool calls detected:`,
@@ -225,6 +215,7 @@ export class LocalAgent extends BaseAgent {
         result,
         processed.toolCalls,
         provider,
+        toolContext,
       );
       console.log(
         `[LocalAgent] Final result after tool execution:`,

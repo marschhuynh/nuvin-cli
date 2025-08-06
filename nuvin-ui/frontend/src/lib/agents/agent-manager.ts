@@ -178,8 +178,6 @@ export class AgentManager {
     content: string,
     options: SendMessageOptions = {},
   ): Promise<MessageResponse> {
-    console.log(`Sending message with content: "${content}"`, options);
-
     if (!this.activeAgent) {
       throw new Error('No active agent selected');
     }

@@ -764,13 +764,13 @@ type CommandRequest struct {
 
 // CommandResponse represents the response from command execution
 type CommandResponse struct {
-	Success    bool   `json:"success"`
-	ExitCode   int    `json:"exitCode"`
-	Stdout     string `json:"stdout"`
-	Stderr     string `json:"stderr"`
-	Error      string `json:"error,omitempty"`
-	Duration   int64  `json:"duration"` // duration in milliseconds
-	Truncated  bool   `json:"truncated,omitempty"`
+	Success   bool   `json:"success"`
+	ExitCode  int    `json:"exitCode"`
+	Stdout    string `json:"stdout"`
+	Stderr    string `json:"stderr"`
+	Error     string `json:"error,omitempty"`
+	Duration  int64  `json:"duration"` // duration in milliseconds
+	Truncated bool   `json:"truncated,omitempty"`
 }
 
 // ExecuteCommand executes a shell command and returns the result

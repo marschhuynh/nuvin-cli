@@ -215,9 +215,22 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
         data: {
           todos: todoItems,
           summary: {
-            message: `Todo list updated successfully with ${stats.total} items (${stats.completed} completed, ${stats.inProgress} in progress, ${stats.pending} pending)`,
+            message: `Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable.
+
+Current state: ${stats.total} items (${stats.completed} completed, ${stats.inProgress} in progress, ${stats.pending} pending)`,
             progress: `${progressPercentage}% complete`,
             stats: stats,
+            todoState: {
+              todos: todoItems.map(item => ({
+                id: item.id,
+                content: item.content,
+                status: item.status,
+                priority: item.priority
+              })),
+              isEmpty: stats.total === 0,
+              hasInProgress: stats.inProgress > 0,
+              recentChanges: true
+            },
             currentTask:
               inProgressTasks.length > 0 ? inProgressTasks[0].content : null,
             nextTask:

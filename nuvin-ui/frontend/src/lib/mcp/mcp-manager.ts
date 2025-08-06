@@ -21,8 +21,6 @@ export class MCPManager {
    * Initialize MCP servers from configurations
    */
   async initializeServers(mcpConfigs: MCPConfig[]): Promise<void> {
-    console.log(`Initializing ${mcpConfigs.length} MCP servers`);
-
     // Initialize each enabled server
     for (const config of mcpConfigs) {
       if (config.enabled) {
