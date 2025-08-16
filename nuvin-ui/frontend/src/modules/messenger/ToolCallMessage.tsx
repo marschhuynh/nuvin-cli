@@ -5,12 +5,18 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
+  Edit,
+  Trash2,
+  Save,
+  X,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime';
 import { Copy, Check } from 'lucide-react';
+import { useConversationStore } from '@/store/useConversationStore';
 
 interface ToolCallMessageProps {
+  id: string;
   toolName: string;
   arguments: any;
   result?: {
@@ -24,6 +30,7 @@ interface ToolCallMessageProps {
 }
 
 export function ToolCallMessage({
+  id,
   toolName,
   arguments: args,
   result,
@@ -31,6 +38,11 @@ export function ToolCallMessage({
 }: ToolCallMessageProps) {
   const [copied, setCopied] = useState(false);
   const [showToolDetail, setShowToolDetail] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editArgs, setEditArgs] = useState(JSON.stringify(args, null, 2));
+
+  const { updateMessage, deleteMessage, activeConversationId } =
+    useConversationStore();
 
   const handleCopy = useCallback(async () => {
     try {
@@ -57,6 +69,58 @@ export function ToolCallMessage({
       return String(data);
     }
   }, []);
+
+  const handleEdit = useCallback(() => {
+    setIsEditing(true);
+    setEditArgs(JSON.stringify(args, null, 2));
+  }, [args]);
+
+  const handleSaveEdit = useCallback(() => {
+    try {
+      const newArgs = JSON.parse(editArgs);
+      if (activeConversationId) {
+        // Update the message with new tool arguments
+        updateMessage(activeConversationId, {
+          id,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date().toISOString(),
+          toolCall: {
+            name: toolName,
+            id: id,
+            arguments: newArgs,
+            result,
+            isExecuting,
+          },
+        });
+      }
+      setIsEditing(false);
+    } catch (error) {
+      alert('Invalid JSON format. Please check your syntax.');
+    }
+  }, [
+    activeConversationId,
+    id,
+    editArgs,
+    toolName,
+    result,
+    isExecuting,
+    updateMessage,
+  ]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditArgs(JSON.stringify(args, null, 2));
+  }, [args]);
+
+  const handleDelete = useCallback(() => {
+    if (
+      activeConversationId &&
+      confirm('Are you sure you want to delete this tool call?')
+    ) {
+      deleteMessage(activeConversationId, id);
+    }
+  }, [activeConversationId, id, deleteMessage]);
 
   const getStatusIcon = () => {
     if (isExecuting) {
@@ -87,8 +151,10 @@ export function ToolCallMessage({
       </div>
 
       {/* Tool call card - compact linear layout */}
-      <div className="relative w-[70%] max-w-[70%]">
-        <div className="rounded-lg bg-card border-border hover:shadow-xs hover:border-border/80 shadow-xxs border transition-all duration-300">
+      <div
+        className={`relative ${isEditing ? 'w-full min-w-[600px]' : 'w-[70%] max-w-[70%]'} transition-all duration-300`}
+      >
+        <div className="rounded-lg bg-card border-border hover:shadow-xs hover:border-border/80 shadow-xxs border transition-all duration-300 overflow-visible relative">
           {!showToolDetail ? (
             /* Compact linear view: icon > name > status > collapse */
             <div className="px-3 py-2.5">
@@ -179,33 +245,89 @@ export function ToolCallMessage({
                   </div>
 
                   <div className="mt-2 p-3 bg-muted/50 rounded border border-border">
-                    <pre className="text-xs text-foreground overflow-auto leading-relaxed font-mono">
-                      {formatJSON(args)}
-                    </pre>
+                    {isEditing ? (
+                      <textarea
+                        value={editArgs}
+                        onChange={(e) => setEditArgs(e.target.value)}
+                        className="w-full min-h-[120px] bg-transparent text-foreground placeholder-muted-foreground border border-border rounded-md p-2 text-xs font-mono resize-y leading-relaxed"
+                        placeholder="Edit tool arguments (JSON format)..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            e.preventDefault();
+                            handleSaveEdit();
+                          } else if (e.key === 'Escape') {
+                            handleCancelEdit();
+                          }
+                        }}
+                      />
+                    ) : (
+                      <pre className="text-xs text-foreground overflow-auto leading-relaxed font-mono">
+                        {formatJSON(args)}
+                      </pre>
+                    )}
                   </div>
                 </div>
               </div>
             </>
           )}
-        </div>
-      </div>
 
-      {/* Copy button */}
-      <div className="flex flex-col self-end gap-1 z-10 opacity-1 group-hover:opacity-100 transition-all duration-200">
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={`p-1.5 rounded-md transition-all duration-200 hover:bg-muted text-muted-foreground backdrop-blur-sm border border-border/50 shadow-sm bg-background/80 ${
-            copied ? 'scale-110 bg-green-100/80 text-green-600' : ''
-          }`}
-          title="Copy tool call"
-        >
-          {copied ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </button>
+          {/* Control buttons positioned absolutely inside the tool card */}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+            {isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Save changes"
+                >
+                  <Save className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Cancel editing"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-red-500/20 text-foreground/80 hover:text-red-500 backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Delete tool call"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Edit tool arguments"
+                >
+                  <Edit className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10 ${
+                    copied ? 'scale-110 bg-green-500/20 text-green-500' : ''
+                  }`}
+                  title="Copy tool call"
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

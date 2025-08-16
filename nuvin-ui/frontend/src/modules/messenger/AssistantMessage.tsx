@@ -1,10 +1,21 @@
-import { Cpu, Copy, Check, FileText } from 'lucide-react';
+import {
+  Cpu,
+  Copy,
+  Check,
+  FileText,
+  Edit,
+  Trash2,
+  Save,
+  X,
+} from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { useConversationStore } from '@/store/useConversationStore';
 import type { MessageMetadata } from '@/types';
 
 interface AssistantMessageProps {
+  id: string;
   content: string;
   isStreaming?: boolean;
   messageMode: 'normal' | 'transparent';
@@ -12,12 +23,18 @@ interface AssistantMessageProps {
 }
 
 export function AssistantMessage({
+  id,
   content,
   isStreaming = false,
   messageMode,
 }: AssistantMessageProps) {
   const [copied, setCopied] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(content);
+
+  const { updateMessage, deleteMessage, activeConversationId } =
+    useConversationStore();
 
   // Always strip all tool call markup from the content
   const cleanContent = useMemo(() => {
@@ -45,6 +62,37 @@ export function AssistantMessage({
     setShowRaw((prev) => !prev);
   }, []);
 
+  const handleEdit = useCallback(() => {
+    setIsEditing(true);
+    setEditContent(content);
+  }, [content]);
+
+  const handleSaveEdit = useCallback(() => {
+    if (activeConversationId && editContent.trim() !== content) {
+      updateMessage(activeConversationId, {
+        id,
+        role: 'assistant',
+        content: editContent.trim(),
+        timestamp: new Date().toISOString(),
+      });
+    }
+    setIsEditing(false);
+  }, [activeConversationId, id, editContent, content, updateMessage]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditContent(content);
+  }, [content]);
+
+  const handleDelete = useCallback(() => {
+    if (
+      activeConversationId &&
+      confirm('Are you sure you want to delete this message?')
+    ) {
+      deleteMessage(activeConversationId, id);
+    }
+  }, [activeConversationId, id, deleteMessage]);
+
   if (cleanContent.length === 0) return null;
 
   return (
@@ -65,10 +113,12 @@ export function AssistantMessage({
       </div>
 
       {/* Message bubble container with metadata */}
-      <div className="relative max-w-[70%]">
+      <div
+        className={`relative ${isEditing ? 'w-full min-w-[600px]' : 'max-w-[70%]'} transition-all duration-300`}
+      >
         {/* Message bubble */}
         <div
-          className={`rounded-lg overflow-auto transition-all duration-300 p-4 relative ${
+          className={`rounded-lg overflow-visible transition-all duration-300 p-4 relative ${
             messageMode === 'transparent'
               ? 'text-foreground'
               : isStreaming
@@ -78,7 +128,24 @@ export function AssistantMessage({
         >
           {/* Metadata positioned absolutely inside the message */}
 
-          {showRaw ? (
+          {isEditing ? (
+            // Edit mode
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full min-h-[120px] bg-transparent text-foreground placeholder-muted-foreground border border-border rounded-md p-3 text-sm font-sans resize-y leading-relaxed"
+              placeholder="Edit assistant message..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  e.preventDefault();
+                  handleSaveEdit();
+                } else if (e.key === 'Escape') {
+                  handleCancelEdit();
+                }
+              }}
+            />
+          ) : showRaw ? (
             // Raw view
             <pre className="text-sm whitespace-pre-wrap font-sans">
               {content.trim()}
@@ -102,45 +169,72 @@ export function AssistantMessage({
               )}
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Controls for assistant messages */}
-      <div className="flex flex-col self-end gap-1 z-10 opacity-1 group-hover:opacity-100 transition-all duration-200">
-        {/* {metadata && (
-          <button
-            type="button"
-            onClick={toggleMetadataView}
-            className={`p-1.5 rounded-md transition-all duration-200 hover:bg-muted text-muted-foreground backdrop-blur-sm border border-border/50 shadow-sm ${
-              showMetadata ? 'bg-muted/80' : 'bg-background/80'
-            }`}
-            title={showMetadata ? 'Hide metadata' : 'Show metadata'}
-          >
-            <Info className="h-4 w-4" />
-          </button>
-        )} */}
-        <button
-          type="button"
-          onClick={toggleRawView}
-          className={`p-1.5 rounded-md transition-all duration-200 hover:bg-muted text-muted-foreground backdrop-blur-sm border border-border/50 shadow-sm ${
-            showRaw ? 'bg-muted/80' : 'bg-background/80'
-          }`}
-          title={showRaw ? 'Show rendered content' : 'Show raw content'}
-        >
-          <FileText className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={`p-1.5 rounded-md transition-all duration-200 hover:bg-muted text-muted-foreground backdrop-blur-sm border border-border/50 shadow-sm bg-background/80 ${copied ? 'scale-110 bg-green-100/80 text-green-600' : ''}`}
-          title="Copy message"
-        >
-          {copied ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </button>
+          {/* Controls positioned absolutely inside the message bubble */}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+            {isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Save changes"
+                >
+                  <Save className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Cancel editing"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-red-500/20 text-foreground/80 hover:text-red-500 backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Delete message"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
+                  title="Edit message"
+                >
+                  <Edit className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleRawView}
+                  className={`p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm ${
+                    showRaw ? 'bg-foreground/20' : 'bg-foreground/10'
+                  }`}
+                  title={showRaw ? 'Show rendered content' : 'Show raw content'}
+                >
+                  <FileText className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10 ${copied ? 'scale-110 bg-green-500/20 text-green-500' : ''}`}
+                  title="Copy message"
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

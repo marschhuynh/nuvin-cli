@@ -89,7 +89,6 @@ export class ToolIntegrationService {
     tool_results?: ToolCallResult[];
     requiresFollowUp: boolean;
   }> {
-
     // If no tool calls, return as-is
     if (!result.tool_calls || result.tool_calls.length === 0) {
       return {
@@ -150,7 +149,7 @@ export class ToolIntegrationService {
       maxConcurrent,
     );
 
-    console.log('DEBUG:processCompletionResult', toolResults)
+    console.log('DEBUG:processCompletionResult', toolResults);
 
     return {
       result,
@@ -210,9 +209,15 @@ export class ToolIntegrationService {
     conversationId?: string,
   ): ChatMessage[] {
     try {
-      const hasRecentChangesOnTodoList = toolResults.some((result) => result.result.status === 'success' && result.name === 'TodoWrite');
+      const hasRecentChangesOnTodoList = toolResults.some(
+        (result) =>
+          result.result.status === 'success' && result.name === 'TodoWrite',
+      );
 
-      console.log('DEBUG:hasRecentChangesOnTodoList', hasRecentChangesOnTodoList);
+      console.log(
+        'DEBUG:hasRecentChangesOnTodoList',
+        hasRecentChangesOnTodoList,
+      );
 
       // Generate reminders based on tool execution context
       const enhancedContent = reminderGenerator.enhanceMessageWithReminders(
@@ -223,8 +228,8 @@ export class ToolIntegrationService {
           messageHistory: [], // Tool context doesn't need full history
           includeReminders: true,
           todoState: {
-            recentChanges: hasRecentChangesOnTodoList
-          }
+            recentChanges: hasRecentChangesOnTodoList,
+          },
         },
       );
 

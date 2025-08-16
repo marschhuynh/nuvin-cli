@@ -40,7 +40,7 @@ export class ReminderGeneratorService {
       conversationId: options.conversationId,
       messageContent,
       messageHistory: options.messageHistory || [],
-      todoListState: todoState
+      todoListState: todoState,
     };
 
     const reminders = this.generator.generateReminders(context);
@@ -64,19 +64,23 @@ export class ReminderGeneratorService {
   ): string[] {
     // Sort reminders by priority
     const priorityOrder = { high: 1, medium: 2, low: 3 };
-    const sortedReminders = [...reminders].sort((a, b) =>
-      priorityOrder[a.priority] - priorityOrder[b.priority]
+    const sortedReminders = [...reminders].sort(
+      (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
     );
 
     // Separate high priority from others
-    const highPriorityReminders = sortedReminders.filter(r => r.priority === 'high');
-    const otherReminders = sortedReminders.filter(r => r.priority !== 'high');
+    const highPriorityReminders = sortedReminders.filter(
+      (r) => r.priority === 'high',
+    );
+    const otherReminders = sortedReminders.filter((r) => r.priority !== 'high');
 
     const result: string[] = [];
 
     // Add high priority reminders first
     if (highPriorityReminders.length > 0) {
-      const highPriorityBlocks = this.generator.formatRemindersForInjection(highPriorityReminders);
+      const highPriorityBlocks = this.generator.formatRemindersForInjection(
+        highPriorityReminders,
+      );
       result.push(highPriorityBlocks);
     }
 
@@ -85,7 +89,8 @@ export class ReminderGeneratorService {
 
     // Add other reminders last
     if (otherReminders.length > 0) {
-      const otherBlocks = this.generator.formatRemindersForInjection(otherReminders);
+      const otherBlocks =
+        this.generator.formatRemindersForInjection(otherReminders);
       result.push(otherBlocks);
     }
 

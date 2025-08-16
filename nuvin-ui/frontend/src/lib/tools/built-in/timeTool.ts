@@ -83,7 +83,8 @@ export const timeTool: Tool = {
             return {
               status: 'error',
               type: 'text',
-              result: 'customFormat parameter is required when format is "custom"',
+              result:
+                'customFormat parameter is required when format is "custom"',
             };
           }
           // Basic custom formatting (simplified)

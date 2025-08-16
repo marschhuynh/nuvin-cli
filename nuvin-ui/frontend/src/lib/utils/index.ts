@@ -34,10 +34,10 @@ export function generateUUID(): string {
  */
 export function formatErrorMessage(error: Error | string): string {
   const errorMessage = typeof error === 'string' ? error : error.message;
-  
+
   // Try to parse and format structured error data
   let errorDetails = errorMessage;
-  
+
   // Check if the error message contains JSON data that we can format
   const jsonMatch = errorMessage.match(/(\{.*\})/);
   if (jsonMatch) {
@@ -49,7 +49,7 @@ export function formatErrorMessage(error: Error | string): string {
       errorDetails = errorMessage;
     }
   }
-  
+
   // Simple error message followed by details in code block
   return `Something went wrong with the request.
 

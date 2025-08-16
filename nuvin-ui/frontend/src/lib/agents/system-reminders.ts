@@ -54,7 +54,9 @@ export class SystemReminderGenerator {
 
   generateReminders(context: MessageContext): SystemReminder[] {
     const reminders: SystemReminder[] = [
-      context.messageType === 'user' ? SystemReminderGenerator.CORE_INSTRUCTIONS : null,
+      context.messageType === 'user'
+        ? SystemReminderGenerator.CORE_INSTRUCTIONS
+        : null,
     ].filter(Boolean) as SystemReminder[];
 
     // Todo list status reminders
@@ -70,14 +72,18 @@ export class SystemReminderGenerator {
     return reminders;
   }
 
-  private generateTodoStatusReminder(todoState: TodoStateForReminders): SystemReminder[] | null {
+  private generateTodoStatusReminder(
+    todoState: TodoStateForReminders,
+  ): SystemReminder[] | null {
     if (todoState.isEmpty) {
-      return [{
-        id: 'todo-empty',
-        type: 'todo-status',
-        content: `This is a reminder that your todo list is currently empty. DO NOT mention this to the user explicitly because they are already aware. If you are working on tasks that would benefit from a todo list please use the TodoWrite tool to create one. If not, please feel free to ignore. Again do not mention this message to the user`,
-        priority: 'medium',
-      }];
+      return [
+        {
+          id: 'todo-empty',
+          type: 'todo-status',
+          content: `This is a reminder that your todo list is currently empty. DO NOT mention this to the user explicitly because they are already aware. If you are working on tasks that would benefit from a todo list please use the TodoWrite tool to create one. If not, please feel free to ignore. Again do not mention this message to the user`,
+          priority: 'medium',
+        },
+      ];
     }
 
     //     if (todoState.recentChanges && todoState?.todos?.length) {
@@ -101,12 +107,14 @@ export class SystemReminderGenerator {
 
     // Only include status if there are items and they're relevant
     if (Number(todoState?.todos?.length) > 0 && todoState?.hasInProgress) {
-      return [{
-        id: 'todo-status',
-        type: 'todo-status',
-        content: `Current todo list status: ${todoState?.todos?.length} items (${todoState?.todos?.filter((t: any) => t.status === 'in_progress').length} in progress). Continue working on active tasks.`,
-        priority: 'low',
-      }];
+      return [
+        {
+          id: 'todo-status',
+          type: 'todo-status',
+          content: `Current todo list status: ${todoState?.todos?.length} items (${todoState?.todos?.filter((t: any) => t.status === 'in_progress').length} in progress). Continue working on active tasks.`,
+          priority: 'low',
+        },
+      ];
     }
 
     return null;

@@ -104,7 +104,7 @@ export class AgentManager {
   > = new Map();
 
   private agentInstance: BaseAgent | null = null;
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): AgentManager {
     if (!AgentManager.instance) {
@@ -198,10 +198,7 @@ export class AgentManager {
         console.log(`Enhanced content with reminders:`, _content);
       }
 
-      const response = await this.agentInstance.sendMessage(
-        _content,
-        options,
-      );
+      const response = await this.agentInstance.sendMessage(_content, options);
 
       return response;
     } catch (error) {

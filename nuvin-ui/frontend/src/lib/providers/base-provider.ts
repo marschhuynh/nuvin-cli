@@ -99,7 +99,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      
+
       // Try to parse as JSON for structured error data
       let errorData: any;
       try {
@@ -107,15 +107,15 @@ export abstract class BaseLLMProvider implements LLMProvider {
       } catch {
         errorData = text;
       }
-      
+
       // Create error with structured information
       const errorInfo = {
         provider: this.type,
         status: response.status,
         statusText: response.statusText,
-        error: errorData
+        error: errorData,
       };
-      
+
       const errorMessage = `${this.type} API error: ${response.status} - ${JSON.stringify(errorInfo)}`;
       throw new Error(errorMessage);
     }

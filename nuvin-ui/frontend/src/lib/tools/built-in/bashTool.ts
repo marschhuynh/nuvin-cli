@@ -121,13 +121,15 @@ export const bashTool: Tool = {
 
       // Check if command failed
       if (!response.success) {
-        let errorMessage = response.error || `Command failed with exit code ${response.exitCode}`;
-        
+        let errorMessage =
+          response.error ||
+          `Command failed with exit code ${response.exitCode}`;
+
         // Include stderr in error if available
         if (response.stderr) {
           errorMessage += `\nStderr: ${response.stderr}`;
         }
-        
+
         return {
           status: 'error',
           type: 'text',
@@ -145,7 +147,7 @@ export const bashTool: Tool = {
         if (output) output += '\n';
         output += `[stderr] ${response.stderr}`;
       }
-      
+
       return {
         status: 'success',
         type: 'text',

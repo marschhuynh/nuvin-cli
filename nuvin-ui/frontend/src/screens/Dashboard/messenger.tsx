@@ -223,7 +223,7 @@ export default function Messenger() {
           onError: (error) => {
             console.error('Message sending failed (onError callback):', error);
             errorHandledByCallback = true;
-            
+
             // Add error message to conversation (using addMessage since the message doesn't exist yet)
             if (conversationId) {
               const errorMessage: Message = {
@@ -232,18 +232,18 @@ export default function Messenger() {
                 content: `❌ ${formatErrorMessage(error instanceof Error ? error : String(error))}`,
                 timestamp: new Date().toISOString(),
               };
-              
+
               // Use addMessage to ensure the error message is added to the store
               addMessage(conversationId, errorMessage);
             }
-            
+
             // Clear streaming state for this conversation
             setStreamingStates((prev) => {
               const newState = { ...prev };
               delete newState[conversationId];
               return newState;
             });
-            
+
             setIsLoading(false);
           },
         });
@@ -303,10 +303,10 @@ export default function Messenger() {
             content: `❌ ${formatErrorMessage(error instanceof Error ? error : String(error))}`,
             timestamp: new Date().toISOString(),
           };
-          
+
           // Use addMessage to ensure the error message is added to the store
           addMessage(conversationId, errorMessage);
-          
+
           // Clear streaming state for this conversation
           setStreamingStates((prev) => {
             const newState = { ...prev };
@@ -332,7 +332,7 @@ export default function Messenger() {
       updateMessage,
       summarizeConversation,
     ],
-  );;;
+  );
 
   const handleStopGeneration = useCallback(async () => {
     if (isLoading) {

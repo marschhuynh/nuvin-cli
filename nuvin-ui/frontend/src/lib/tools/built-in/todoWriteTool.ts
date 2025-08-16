@@ -218,13 +218,17 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
         stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
       // Format todo list for system reminder
-      const todoListForReminder = todoItems.map((item, index) => {
-        const statusLabel = item.status === 'completed' ? '[completed]' :
-          item.status === 'in_progress' ? '[in_progress]' :
-            '[pending]';
-        return `${index + 1}. ${statusLabel} ${item.content}`;
-      }).join('\n');
-
+      const todoListForReminder = todoItems
+        .map((item, index) => {
+          const statusLabel =
+            item.status === 'completed'
+              ? '[completed]'
+              : item.status === 'in_progress'
+                ? '[in_progress]'
+                : '[pending]';
+          return `${index + 1}. ${statusLabel} ${item.content}`;
+        })
+        .join('\n');
 
       // "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable\n\n<system-reminder>\nYour todo list has changed. DO NOT mention this explicitly to the user. Here are the latest contents of your todo list:\n\n[{\"content\":\"Set up Vite project with TypeScript\",\"status\":\"pending\",\"priority\":\"high\",\"id\":\"setup-vite\"},{\"content\":\"Install and configure Tailwind CSS\",\"status\":\"pending\",\"priority\":\"high\",\"id\":\"setup-tailwind\"},{\"content\":\"Install and configure shadcn/ui\",\"status\":\"pending\",\"priority\":\"high\",\"id\":\"setup-shadcn\"},{\"content\":\"Create todo data structures and types\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"todo-types\"},{\"content\":\"Implement todo list component\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"todo-list\"},{\"content\":\"Implement todo item component\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"todo-item\"},{\"content\":\"Implement add todo functionality\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"add-todo\"},{\"content\":\"Implement edit todo functionality\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"edit-todo\"},{\"content\":\"Implement delete todo functionality\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"delete-todo\"},{\"content\":\"Implement mark complete functionality\",\"status\":\"pending\",\"priority\":\"medium\",\"id\":\"mark-complete\"},{\"content\":\"Add filtering and sorting\",\"status\":\"pending\",\"priority\":\"low\",\"id\":\"filter-sort\"},{\"content\":\"Add local storage persistence\",\"status\":\"pending\",\"priority\":\"low\",\"id\":\"local-storage\"}]. Continue on with the tasks at hand if applicable.\n</system-reminder>"
 
@@ -234,14 +238,17 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
 
 <system-reminder>
 Your todo list has changed. DO NOT mention this explicitly to the user. Here are the latest contents of your todo list:
-[${todoListForReminder.split('\n').map(line => {
-        const match = line.match(/^(\d+)\. \[([^\]]+)\] (.+)$/);
-        if (match) {
-          const [, num, status, content] = match;
-          return `{"content":"${content}","status":"${status}","id":"${todoItems[parseInt(num) - 1]?.id || ''}"}`;
-        }
-        return line;
-      }).join(',')}]. Continue on with the tasks at hand if applicable.
+[${todoListForReminder
+        .split('\n')
+        .map((line) => {
+          const match = line.match(/^(\d+)\. \[([^\]]+)\] (.+)$/);
+          if (match) {
+            const [, num, status, content] = match;
+            return `{"content":"${content}","status":"${status}","id":"${todoItems[parseInt(num) - 1]?.id || ''}"}`;
+          }
+          return line;
+        })
+        .join(',')}]. Continue on with the tasks at hand if applicable.
 </system-reminder>`;
 
       return {
@@ -254,15 +261,15 @@ Your todo list has changed. DO NOT mention this explicitly to the user. Here are
           progress: `${progressPercentage}% complete`,
           stats: stats,
           todoState: {
-            todos: todoItems.map(item => ({
+            todos: todoItems.map((item) => ({
               id: item.id,
               content: item.content,
               status: item.status,
-              priority: item.priority
+              priority: item.priority,
             })),
             isEmpty: stats.total === 0,
             hasInProgress: stats.inProgress > 0,
-            recentChanges: true
+            recentChanges: true,
           },
           currentTask:
             inProgressTasks.length > 0 ? inProgressTasks[0].content : null,
@@ -335,4 +342,4 @@ Your todo list has changed. DO NOT mention this explicitly to the user. Here are
   category: 'productivity',
   version: '1.0.0',
   author: 'system',
-};;;;
+};

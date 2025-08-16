@@ -112,11 +112,14 @@ export const randomTool: Tool = {
       }
 
       const finalResult = count === 1 ? results[0] : results;
-      
+
       return {
         status: 'success',
         type: 'text',
-        result: typeof finalResult === 'string' ? finalResult : JSON.stringify(finalResult),
+        result:
+          typeof finalResult === 'string'
+            ? finalResult
+            : JSON.stringify(finalResult),
         additionalResult: {
           type,
           count,

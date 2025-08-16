@@ -27,6 +27,7 @@ interface MessageProps {
 }
 
 export function Message({
+  id,
   role,
   content,
   isStreaming = false,
@@ -46,12 +47,14 @@ export function Message({
     >
       {role === 'user' ? (
         <UserMessage
+          id={id}
           content={content}
           isStreaming={isStreaming}
           messageMode={preferences.messageMode}
         />
       ) : toolCall ? (
         <ToolCallMessage
+          id={id}
           toolName={toolCall.name}
           arguments={toolCall.arguments}
           result={toolCall.result}
@@ -59,6 +62,7 @@ export function Message({
         />
       ) : (
         <AssistantMessage
+          id={id}
           content={content}
           isStreaming={isStreaming}
           messageMode={preferences.messageMode}

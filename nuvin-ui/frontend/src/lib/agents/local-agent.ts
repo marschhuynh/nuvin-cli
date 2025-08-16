@@ -203,7 +203,7 @@ export class LocalAgent extends BaseAgent {
               id: generateUUID(),
               content: processed.result.content,
               role: 'assistant',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
           }
           options.onAdditionalMessage(toolMessageResponse);
@@ -211,13 +211,14 @@ export class LocalAgent extends BaseAgent {
       }
 
       // Execute tools and get follow-up response
-      resultWithToolResult = await toolIntegrationService.completeToolCallingFlow(
-        paramsWithTools,
-        result,
-        processed.tool_results,
-        provider,
-        toolContext,
-      );
+      resultWithToolResult =
+        await toolIntegrationService.completeToolCallingFlow(
+          paramsWithTools,
+          result,
+          processed.tool_results,
+          provider,
+          toolContext,
+        );
       console.log('DEBUG:completeToolCallingFlow:result', resultWithToolResult);
     } else {
       console.log(`[LocalAgent] No follow-up required, using original result`);
@@ -300,7 +301,7 @@ export class LocalAgent extends BaseAgent {
             id: generateUUID(),
             content: processed.result.content,
             role: 'assistant',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         }
         messagesToAdd.push(toolMessage);
@@ -555,7 +556,6 @@ export class LocalAgent extends BaseAgent {
     options.onComplete?.(accumulated);
     return response;
   }
-
 
   /**
    * Cancel the current request
