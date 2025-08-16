@@ -19,7 +19,8 @@
       "mcp__serena__replace_symbol_body",
       "mcp__serena__check_onboarding_performed",
       "mcp__serena__insert_after_symbol",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__serena__find_file"
     ],
     "deny": []
   }
