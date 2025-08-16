@@ -211,13 +211,21 @@ export class AgentManager {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      console.error('AgentManager sendMessage error:', error);
 
+      // Always call onError if provided to ensure UI gets notified
       if (options.onError) {
-        options.onError(
-          error instanceof Error ? error : new Error(errorMessage),
-        );
+        try {
+          options.onError(
+            error instanceof Error ? error : new Error(errorMessage),
+          );
+        } catch (callbackError) {
+          console.error('Error in onError callback:', callbackError);
+        }
       }
 
+      // Still throw the error so upstream handlers know an error occurred
       throw error;
     }
   }

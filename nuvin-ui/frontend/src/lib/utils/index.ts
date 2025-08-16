@@ -21,3 +21,39 @@ export function generateUUID(): string {
     return v.toString(16);
   });
 }
+
+/**
+ * Format error messages to be more user-friendly
+ * Extracts meaningful information from provider errors and API responses
+ */
+/**
+ * Format error messages to show a simple message followed by error details in a code block
+ */
+/**
+ * Format error messages to show a simple message followed by error details in a code block
+ */
+export function formatErrorMessage(error: Error | string): string {
+  const errorMessage = typeof error === 'string' ? error : error.message;
+  
+  // Try to parse and format structured error data
+  let errorDetails = errorMessage;
+  
+  // Check if the error message contains JSON data that we can format
+  const jsonMatch = errorMessage.match(/(\{.*\})/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]);
+      errorDetails = JSON.stringify(parsed, null, 2);
+    } catch {
+      // If parsing fails, use the original message
+      errorDetails = errorMessage;
+    }
+  }
+  
+  // Simple error message followed by details in code block
+  return `Something went wrong with the request.
+
+\`\`\`json
+${errorDetails}
+\`\`\``;
+}

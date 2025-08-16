@@ -99,7 +99,25 @@ export abstract class BaseLLMProvider implements LLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`${this.type} API error: ${response.status} - ${text}`);
+      
+      // Try to parse as JSON for structured error data
+      let errorData: any;
+      try {
+        errorData = JSON.parse(text);
+      } catch {
+        errorData = text;
+      }
+      
+      // Create error with structured information
+      const errorInfo = {
+        provider: this.type,
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      };
+      
+      const errorMessage = `${this.type} API error: ${response.status} - ${JSON.stringify(errorInfo)}`;
+      throw new Error(errorMessage);
     }
 
     return response;

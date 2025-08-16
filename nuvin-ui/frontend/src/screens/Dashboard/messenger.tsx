@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useAgentManager } from '@/hooks';
-import { generateUUID } from '@/lib/utils';
+import { generateUUID, formatErrorMessage } from '@/lib/utils';
 import { useConversationStore } from '@/store';
 import type { Message } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -148,6 +148,9 @@ export default function Messenger() {
       // the correct conversation even if the user switches views
       const conversationId = activeConversationId?.toString() || 'default';
 
+      // Track if error was already handled by onError callback
+      let errorHandledByCallback = false;
+
       try {
         // Send message using AgentManager with streaming
         const response = await sendMessage(content, {
@@ -218,23 +221,29 @@ export default function Messenger() {
             }
           },
           onError: (error) => {
-            console.error('Message sending failed:', error);
-            // Replace streaming message with error message
+            console.error('Message sending failed (onError callback):', error);
+            errorHandledByCallback = true;
+            
+            // Add error message to conversation (using addMessage since the message doesn't exist yet)
             if (conversationId) {
               const errorMessage: Message = {
                 id: streamingId,
                 role: 'assistant',
-                content: `❌ Error: ${error.message}. Please check your agent configuration and try again.`,
+                content: `❌ ${formatErrorMessage(error)}`,
                 timestamp: new Date().toISOString(),
               };
-              updateMessage(conversationId, errorMessage);
+              
+              // Use addMessage to ensure the error message is added to the store
+              addMessage(conversationId, errorMessage);
             }
+            
             // Clear streaming state for this conversation
             setStreamingStates((prev) => {
               const newState = { ...prev };
               delete newState[conversationId];
               return newState;
             });
+            
             setIsLoading(false);
           },
         });
@@ -284,37 +293,27 @@ export default function Messenger() {
           }
         }
       } catch (error) {
-        console.error('Failed to send message:', error);
+        console.error('Failed to send message (catch block):', error);
 
-        // Replace streaming message with error message
-        if (conversationId && streamingId) {
+        // Only handle the error here if it wasn't already handled by the onError callback
+        if (!errorHandledByCallback && conversationId && streamingId) {
           const errorMessage: Message = {
             id: streamingId,
             role: 'assistant',
-            content: `${
-              error instanceof Error &&
-              error.message === 'Request cancelled by user'
-                ? 'Message cancelled. Feel free to try sending another message.'
-                : `Something went wrong sending your message. ${
-                    !activeAgent
-                      ? 'Please select an agent first.'
-                      : !activeProvider && agentType === 'local'
-                        ? 'Please configure a provider for your local agent.'
-                        : activeAgent.agentType === 'remote' && !activeAgent.url
-                          ? 'Please add a URL for your remote agent.'
-                          : 'Please check your settings and try again.'
-                  }`
-            }`,
+            content: `❌ ${formatErrorMessage(error)}`,
             timestamp: new Date().toISOString(),
           };
-          updateMessage(conversationId, errorMessage);
+          
+          // Use addMessage to ensure the error message is added to the store
+          addMessage(conversationId, errorMessage);
+          
+          // Clear streaming state for this conversation
+          setStreamingStates((prev) => {
+            const newState = { ...prev };
+            delete newState[conversationId];
+            return newState;
+          });
         }
-        // Clear streaming state for this conversation
-        setStreamingStates((prev) => {
-          const newState = { ...prev };
-          delete newState[conversationId];
-          return newState;
-        });
       } finally {
         setIsLoading(false);
         timeoutRef.current = null;
@@ -330,10 +329,10 @@ export default function Messenger() {
       getConversationMessages,
       isReady,
       streamingStates,
-      updateMessage, // Trigger background summarization
+      updateMessage,
       summarizeConversation,
     ],
-  );
+  );;;
 
   const handleStopGeneration = useCallback(async () => {
     if (isLoading) {
