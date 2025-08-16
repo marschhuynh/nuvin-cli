@@ -5,6 +5,7 @@ import {
   type SystemReminder,
   type TodoStateForReminders,
 } from './system-reminders';
+import { ToolCallResult } from '../tools';
 
 export class ReminderGeneratorService {
   private generator: SystemReminderGenerator;
@@ -16,6 +17,7 @@ export class ReminderGeneratorService {
   enhanceMessageWithReminders(
     messageContent: string,
     options: {
+      messageType?: 'user' | 'tool';
       conversationId?: string;
       messageHistory?: Message[];
       includeReminders?: boolean;
@@ -26,24 +28,25 @@ export class ReminderGeneratorService {
       return [messageContent];
     }
 
-    const fileOps =
-      SystemReminderGenerator.detectFileOperations(messageContent);
-    const todoState =
-      options.todoState ||
-      SystemReminderGenerator.getTodoStateForContext(options.conversationId);
+    const todoState = Object.assign(
+      {},
+      SystemReminderGenerator.getTodoStateForContext(options.conversationId),
+      options.todoState,
+    );
+
+    console.log('DEBUG:todoState', todoState);
 
     const context: MessageContext = {
+      messageType: options.messageType || 'tool',
       conversationId: options.conversationId,
       messageContent,
       messageHistory: options.messageHistory || [],
-      todoListState: todoState,
-      hasFileReads: fileOps.hasFileReads,
-      hasFileWrites: fileOps.hasFileWrites,
-      hasCreateOperations: fileOps.hasCreateOperations,
-      fileOperations: fileOps.fileOperations,
+      todoListState: todoState
     };
 
     const reminders = this.generator.generateReminders(context);
+
+    console.log('DEBUG:reminders', reminders);
 
     if (reminders.length === 0) {
       return [messageContent];
@@ -62,31 +65,31 @@ export class ReminderGeneratorService {
   ): string[] {
     // Sort reminders by priority
     const priorityOrder = { high: 1, medium: 2, low: 3 };
-    const sortedReminders = [...reminders].sort((a, b) => 
+    const sortedReminders = [...reminders].sort((a, b) =>
       priorityOrder[a.priority] - priorityOrder[b.priority]
     );
-    
+
     // Separate high priority from others
     const highPriorityReminders = sortedReminders.filter(r => r.priority === 'high');
     const otherReminders = sortedReminders.filter(r => r.priority !== 'high');
-    
+
     const result: string[] = [];
-    
+
     // Add high priority reminders first
     if (highPriorityReminders.length > 0) {
       const highPriorityBlocks = this.generator.formatRemindersForInjection(highPriorityReminders);
       result.push(highPriorityBlocks);
     }
-    
+
     // Add user message
     result.push(messageContent);
-    
+
     // Add other reminders last
     if (otherReminders.length > 0) {
       const otherBlocks = this.generator.formatRemindersForInjection(otherReminders);
       result.push(otherBlocks);
     }
-    
+
     return result;
   }
 

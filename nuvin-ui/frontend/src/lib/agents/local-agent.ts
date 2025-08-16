@@ -7,6 +7,8 @@ import type { SendMessageOptions, MessageResponse } from './agent-manager';
 import { toolIntegrationService } from '../tools';
 import type { UsageData } from '../providers/types/base';
 import { BaseAgent } from './base-agent';
+import { useTodoStore } from '@/store/useTodoStore';
+import { reminderGenerator } from './reminder-generator';
 
 export class LocalAgent extends BaseAgent {
   private abortController: AbortController | null = null;
@@ -32,16 +34,6 @@ export class LocalAgent extends BaseAgent {
     const convoId = options.conversationId || 'default';
     const messages: ChatMessage[] = this.buildContext(convoId, content);
 
-    const toolContext: ToolContext = {
-      userId: options.userId,
-      sessionId: convoId,
-      metadata: {
-        agentId: this.agentSettings.id,
-        provider: this.providerConfig.type,
-        model: this.providerConfig.activeModel.model,
-      },
-    };
-
     const baseParams = {
       messages,
       model: this.providerConfig.activeModel.model,
@@ -50,15 +42,17 @@ export class LocalAgent extends BaseAgent {
       topP: this.agentSettings.topP,
     };
 
-    const enhancedParams = toolIntegrationService.enhanceCompletionParams(
+    const paramsWithTools = toolIntegrationService.enhanceCompletionParams(
       baseParams,
       this.agentSettings.toolConfig,
     );
 
+    console.log('DEBUG:paramsWithTools', paramsWithTools);
+
     if (options.stream) {
       if (provider.generateCompletionStreamWithTools) {
         return this.handleStreamingWithTools(
-          enhancedParams,
+          paramsWithTools,
           signal,
           options,
           messageId,
@@ -71,7 +65,7 @@ export class LocalAgent extends BaseAgent {
       if (provider.generateCompletionStream) {
         let accumulated = '';
         const stream = provider.generateCompletionStream(
-          enhancedParams,
+          paramsWithTools,
           signal,
         );
 
@@ -115,19 +109,19 @@ export class LocalAgent extends BaseAgent {
 
         const userMessage: Message[] = Array.isArray(content)
           ? content.map((msg) => ({
+            id: generateUUID(),
+            role: 'user',
+            content: msg,
+            timestamp,
+          }))
+          : [
+            {
               id: generateUUID(),
               role: 'user',
-              content: msg,
+              content,
               timestamp,
-            }))
-          : [
-              {
-                id: generateUUID(),
-                role: 'user',
-                content,
-                timestamp,
-              },
-            ];
+            },
+          ];
 
         this.addToHistory(convoId, [
           ...userMessage,
@@ -145,40 +139,36 @@ export class LocalAgent extends BaseAgent {
     }
 
     // Get initial completion (potentially with tool calls)
-    const result = await provider.generateCompletion(enhancedParams, signal);
+    const result = await provider.generateCompletion(paramsWithTools, signal);
+    console.log('DEBUG:generateCompletion:result', result);
 
-    if (result.tool_calls) {
-      console.log(
-        `[LocalAgent] Tool calls detected:`,
-        result.tool_calls.map((tc: any) => tc.function.name),
-      );
-    }
-
+    const toolContext: ToolContext = {
+      userId: options.userId,
+      sessionId: convoId,
+      metadata: {
+        agentId: this.agentSettings.id,
+        provider: this.providerConfig.type,
+        model: this.providerConfig.activeModel.model,
+      },
+    };
     const processed = await toolIntegrationService.processCompletionResult(
       result,
       toolContext,
       this.agentSettings.toolConfig,
     );
 
-    console.log(
-      `[LocalAgent] Processed result. RequiresFollowUp:`,
-      processed.requiresFollowUp,
-      'ToolCalls:',
-      processed.toolCalls?.length || 0,
-    );
+    console.log('DEBUG:tool_call:processed', processed);
 
-    let finalResult = result;
+    let resultWithToolResult = result;
 
     // If tools were called, emit tool messages first, then get the final response
-    if (processed.requiresFollowUp && processed.toolCalls) {
-      console.log(`[LocalAgent] Executing tool calling flow...`);
-
+    if (processed.requiresFollowUp && processed.tool_results) {
       // Emit tool call messages immediately via onAdditionalMessage callback
       if (options.onAdditionalMessage && result.tool_calls) {
         const timestamp = new Date().toISOString();
         const model = this.providerConfig.activeModel.model;
 
-        for (const toolCallResult of processed.toolCalls) {
+        for (const toolCallResult of processed.tool_results) {
           // Find the original tool call to get parameters
           const originalToolCall = result.tool_calls.find(
             (tc) => tc.id === toolCallResult.id,
@@ -210,31 +200,29 @@ export class LocalAgent extends BaseAgent {
         }
       }
 
-      finalResult = await toolIntegrationService.completeToolCallingFlow(
-        enhancedParams,
+      // Execute tools and get follow-up response
+      resultWithToolResult = await toolIntegrationService.completeToolCallingFlow(
+        paramsWithTools,
         result,
-        processed.toolCalls,
+        processed.tool_results,
         provider,
         toolContext,
       );
-      console.log(
-        `[LocalAgent] Final result after tool execution:`,
-        finalResult.content?.substring(0, 200),
-      );
+      console.log('DEBUG:completeToolCallingFlow:result', resultWithToolResult);
     } else {
       console.log(`[LocalAgent] No follow-up required, using original result`);
     }
 
     const timestamp = new Date().toISOString();
     const model = this.providerConfig.activeModel.model;
-    const promptTokens = finalResult.usage?.prompt_tokens || 0;
-    const completionTokens = finalResult.usage?.completion_tokens || 0;
-    const totalTokens = finalResult.usage?.total_tokens || 0;
+    const promptTokens = resultWithToolResult.usage?.prompt_tokens || 0;
+    const completionTokens = resultWithToolResult.usage?.completion_tokens || 0;
+    const totalTokens = resultWithToolResult.usage?.total_tokens || 0;
     const estimatedCost = calculateCost(model, promptTokens, completionTokens);
 
     const response: MessageResponse = {
       id: messageId,
-      content: finalResult.content,
+      content: resultWithToolResult.content,
       role: 'assistant',
       timestamp,
       metadata: {
@@ -243,7 +231,7 @@ export class LocalAgent extends BaseAgent {
         provider: this.providerConfig.type,
         model,
         responseTime: Date.now() - startTime,
-        toolCalls: processed.toolCalls?.length || 0,
+        toolCalls: processed.tool_results?.length || 0,
         promptTokens,
         completionTokens,
         totalTokens,
@@ -254,27 +242,27 @@ export class LocalAgent extends BaseAgent {
     // Build messages to add to history
     const messagesToAdd: Message[] = Array.isArray(content)
       ? content.map((msg) => ({
+        id: generateUUID(),
+        role: 'user',
+        content: msg,
+        timestamp,
+      }))
+      : [
+        {
           id: generateUUID(),
           role: 'user',
-          content: msg,
+          content,
           timestamp,
-        }))
-      : [
-          {
-            id: generateUUID(),
-            role: 'user',
-            content,
-            timestamp,
-          },
-        ];
+        },
+      ];
 
     // Add tool call messages if tools were executed (for internal history)
     if (
       processed.requiresFollowUp &&
-      processed.toolCalls &&
+      processed.tool_results &&
       result.tool_calls
     ) {
-      for (const toolCallResult of processed.toolCalls) {
+      for (const toolCallResult of processed.tool_results) {
         // Find the original tool call to get parameters
         const originalToolCall = result.tool_calls.find(
           (tc) => tc.id === toolCallResult.id,
@@ -305,13 +293,13 @@ export class LocalAgent extends BaseAgent {
     messagesToAdd.push({
       id: generateUUID(),
       role: 'assistant',
-      content: finalResult.content,
+      content: resultWithToolResult.content,
       timestamp,
     });
 
     this.addToHistory(convoId, messagesToAdd);
 
-    options.onComplete?.(finalResult.content);
+    options.onComplete?.(resultWithToolResult.content);
     return response;
   }
 
@@ -362,7 +350,6 @@ export class LocalAgent extends BaseAgent {
 
         if (chunk.content) {
           accumulated += chunk.content;
-          console.log('[DEBUG] Accumulated content:', accumulated);
           options.onChunk?.(chunk.content);
         }
 
@@ -387,15 +374,15 @@ export class LocalAgent extends BaseAgent {
                 this.agentSettings.toolConfig,
               );
 
-            if (processed.requiresFollowUp && processed.toolCalls) {
+            if (processed.requiresFollowUp && processed.tool_results) {
               // Store processed tool results for history
-              processedToolResults = processed.toolCalls;
+              processedToolResults = processed.tool_results;
 
               // Emit separate messages for each tool call
               if (options.onAdditionalMessage) {
                 for (let i = 0; i < currentToolCalls.length; i++) {
                   const toolCall = currentToolCalls[i];
-                  const result = processed.toolCalls.find(
+                  const result = processed.tool_results.find(
                     (r) => r.id === toolCall.id,
                   );
 
@@ -410,11 +397,11 @@ export class LocalAgent extends BaseAgent {
                       arguments: JSON.parse(toolCall.function.arguments),
                       result: result
                         ? {
-                            success: result.result.success,
-                            data: result.result.data,
-                            error: result.result.error,
-                            metadata: result.result.metadata,
-                          }
+                          success: result.result.success,
+                          data: result.result.data,
+                          error: result.result.error,
+                          metadata: result.result.metadata,
+                        }
                         : undefined,
                       isExecuting: false,
                     },
@@ -434,7 +421,7 @@ export class LocalAgent extends BaseAgent {
                 await toolIntegrationService.completeToolCallingFlow(
                   enhancedParams,
                   { content: accumulated, tool_calls: currentToolCalls },
-                  processed.toolCalls,
+                  processed.tool_results,
                   provider,
                 );
 
@@ -477,7 +464,6 @@ export class LocalAgent extends BaseAgent {
       finalMetadata?.estimatedCost ||
       calculateCost(model, promptTokens, completionTokens);
 
-    console.log('[DEBUG] Final response accumulated content:', accumulated);
     const response: MessageResponse = {
       id: messageId,
       content: accumulated,
@@ -500,11 +486,11 @@ export class LocalAgent extends BaseAgent {
     // Build messages to add to history
     const messagesToAddStreaming: Message[] = Array.isArray(content)
       ? content.map((msg) => ({
-          id: generateUUID(),
-          role: 'user',
-          content: msg,
-          timestamp,
-        }))
+        id: generateUUID(),
+        role: 'user',
+        content: msg,
+        timestamp,
+      }))
       : [];
 
     // Add tool call messages if tools were executed during streaming

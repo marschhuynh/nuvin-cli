@@ -43,29 +43,17 @@ export class OpenRouterProvider extends BaseLLMProvider {
       requestBody.tool_choice = params.tool_choice;
     }
 
-    console.log('OpenRouter non-streaming request body:', requestBody);
-
     const response = await this.makeRequest('/api/v1/chat/completions', {
       body: requestBody,
       signal,
     });
 
     const data: ChatCompletionResponse = await response.json();
-    console.log('OpenRouter response:', data);
-
-    // Debug tool calls specifically
-    if (data.choices?.[0]?.message?.tool_calls) {
-      console.log(
-        'OpenRouter tool calls found:',
-        data.choices[0].message.tool_calls,
-      );
-    }
 
     const result = this.createCompletionResult<ChatCompletionResponse>(
       data,
       startTime,
     );
-    console.log('Created completion result:', result);
 
     return result;
   }
@@ -93,8 +81,6 @@ export class OpenRouterProvider extends BaseLLMProvider {
       requestBody.tool_choice = params.tool_choice;
     }
 
-    console.log('OpenRouter streaming request body:', requestBody);
-
     const response = await this.makeRequest('/api/v1/chat/completions', {
       body: requestBody,
       signal,
@@ -118,7 +104,6 @@ export class OpenRouterProvider extends BaseLLMProvider {
     params: CompletionParams,
     signal?: AbortSignal,
   ): AsyncGenerator<StreamChunk> {
-    console.log('Starting OpenRouter streaming with tools:', params);
     const startTime = Date.now();
 
     const requestBody: any = {
@@ -140,8 +125,6 @@ export class OpenRouterProvider extends BaseLLMProvider {
       requestBody.tool_choice = params.tool_choice;
     }
 
-    console.log('OpenRouter streaming with tools request body:', requestBody);
-
     const response = await this.makeRequest('/api/v1/chat/completions', {
       body: requestBody,
       signal,
@@ -159,7 +142,6 @@ export class OpenRouterProvider extends BaseLLMProvider {
       signal,
       startTime,
     )) {
-      console.log('OpenRouter streaming chunk:', chunk);
       yield chunk;
     }
   }

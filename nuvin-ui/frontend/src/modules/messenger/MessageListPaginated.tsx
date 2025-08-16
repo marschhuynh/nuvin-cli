@@ -130,7 +130,6 @@ export function MessageListPaginated({
 
   useLayoutEffect(() => {
     if (conversationId) {
-      console.log('conversationId', conversationId);
       setTimeout(() => {
         scrollToBottom(true);
       }, 100); // Delay to ensure DOM updates

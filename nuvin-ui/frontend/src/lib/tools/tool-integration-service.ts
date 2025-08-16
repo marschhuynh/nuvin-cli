@@ -86,17 +86,12 @@ export class ToolIntegrationService {
     agentToolConfig?: AgentToolConfig,
   ): Promise<{
     result: CompletionResult;
-    toolCalls?: ToolCallResult[];
+    tool_results?: ToolCallResult[];
     requiresFollowUp: boolean;
   }> {
-    console.log('[DEBUG] processCompletionResult called with:', {
-      result,
-      enabledTools: agentToolConfig?.enabledTools,
-    });
 
     // If no tool calls, return as-is
     if (!result.tool_calls || result.tool_calls.length === 0) {
-      console.log('[DEBUG] No tool calls found in result');
       return {
         result,
         requiresFollowUp: false,
@@ -112,7 +107,6 @@ export class ToolIntegrationService {
     });
 
     if (allowedToolCalls.length === 0) {
-      console.log('[DEBUG] No allowed tool calls, returning error message');
       return {
         result: {
           content:
@@ -148,11 +142,6 @@ export class ToolIntegrationService {
       }
     });
 
-    console.log(
-      `[ToolIntegrationService] Processing ${toolCalls.length} tool calls:`,
-      toolCalls.map((c) => c.name),
-    );
-
     // Execute tool calls
     const maxConcurrent = agentToolConfig?.maxConcurrentCalls || 3;
     const toolResults = await toolRegistry.executeToolCalls(
@@ -161,14 +150,11 @@ export class ToolIntegrationService {
       maxConcurrent,
     );
 
-    console.log(
-      `[ToolIntegrationService] Tool execution results:`,
-      toolResults,
-    );
+    console.log('DEBUG:processCompletionResult', toolResults)
 
     return {
       result,
-      toolCalls: toolResults,
+      tool_results: toolResults,
       requiresFollowUp: true,
     };
   }
@@ -214,18 +200,29 @@ export class ToolIntegrationService {
    */
   private enhanceToolMessagesWithReminders(
     toolMessages: ChatMessage[],
+    toolResults: ToolCallResult[],
     conversationId?: string,
   ): ChatMessage[] {
     try {
+      const hasRecentChangesOnTodoList = toolResults.some((result) => result.result.success && result.name === 'TodoWrite');
+
+      console.log('DEBUG:hasRecentChangesOnTodoList', hasRecentChangesOnTodoList);
+
       // Generate reminders based on tool execution context
       const enhancedContent = reminderGenerator.enhanceMessageWithReminders(
         'Tool execution completed',
         {
+          messageType: 'tool',
           conversationId,
           messageHistory: [], // Tool context doesn't need full history
           includeReminders: true,
+          todoState: {
+            recentChanges: hasRecentChangesOnTodoList
+          }
         },
       );
+
+      console.log('DEBUG:enhancedContent', enhancedContent);
 
       // If reminders were generated, inject them as a system message
       if (enhancedContent.length > 1) {
@@ -269,11 +266,16 @@ export class ToolIntegrationService {
       toolResults,
     );
 
+    console.log('DEBUG:toolMessages', { toolMessages, toolResults });
+
     // Enhance tool result messages with reminders for the LLM
     const enhancedToolMessages = this.enhanceToolMessagesWithReminders(
       toolMessages,
+      toolResults,
       context?.sessionId,
     );
+
+    console.log('DEBUG:enhancedToolMessages', enhancedToolMessages);
 
     // Create follow-up completion with tool results
     const followUpParams: CompletionParams = {
@@ -284,9 +286,10 @@ export class ToolIntegrationService {
       tool_choice: undefined,
     };
 
-    console.log('followUpParams', followUpParams);
-
+    console.log('DEBUG:followUpParams', followUpParams);
     const finalResult = await llmProvider.generateCompletion(followUpParams);
+
+    console.log('DEBUG:finalResult', finalResult);
 
     return {
       ...finalResult,

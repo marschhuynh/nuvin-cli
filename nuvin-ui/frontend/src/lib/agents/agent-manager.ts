@@ -102,11 +102,8 @@ export class AgentManager {
     }
   > = new Map();
 
-  // Use centralized UUID generator for message IDs
-  private generateMessageId = generateUUID;
-
   private agentInstance: BaseAgent | null = null;
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): AgentManager {
     if (!AgentManager.instance) {
@@ -117,13 +114,11 @@ export class AgentManager {
 
   setActiveAgent(agent: AgentSettings): void {
     this.activeAgent = agent;
-    console.log(`Active agent set to: ${agent.name} (${agent.agentType})`);
     this.updateAgentInstance();
   }
 
   setActiveProvider(provider: ProviderConfig): void {
     this.activeProvider = provider;
-    console.log(`Active provider set to: ${provider.name} (${provider.type})`);
     this.updateAgentInstance();
   }
 
@@ -192,18 +187,18 @@ export class AgentManager {
       }
 
       // Enhance message with system reminders if enabled (default true)
-      let enhancedContent = [content];
+      let _content = [content];
       if (options.includeSystemReminders !== false) {
         const enhancedString = this.enhanceMessageWithReminders(
           content,
           options,
         );
-        enhancedContent = enhancedString;
-        console.log(`Enhanced content with reminders:`, enhancedContent);
+        _content = enhancedString;
+        console.log(`Enhanced content with reminders:`, _content);
       }
 
       const response = await this.agentInstance.sendMessage(
-        enhancedContent,
+        _content,
         options,
       );
 
@@ -211,7 +206,7 @@ export class AgentManager {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       console.error('AgentManager sendMessage error:', error);
 
       // Always call onError if provided to ensure UI gets notified
@@ -250,6 +245,7 @@ export class AgentManager {
         : [];
 
       return reminderGenerator.enhanceMessageWithReminders(content, {
+        messageType: 'user',
         conversationId: options.conversationId,
         messageHistory,
         includeReminders: true,

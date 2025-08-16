@@ -27,16 +27,6 @@ export function registerBuiltInTools(): void {
     toolRegistry.registerTool(todoWriteTool);
     toolRegistry.registerTool(todoReadTool);
     toolRegistry.registerTool(taskTool);
-
-    console.log('Built-in tools registered successfully:', {
-      calculator: calculatorTool.definition.name,
-      time: timeTool.definition.name,
-      random: randomTool.definition.name,
-      bash: bashTool.definition.name,
-      todoWrite: todoWriteTool.definition.name,
-      todoRead: todoReadTool.definition.name,
-      task: taskTool.definition.name,
-    });
   } catch (error) {
     console.error('Failed to register built-in tools:', error);
   }

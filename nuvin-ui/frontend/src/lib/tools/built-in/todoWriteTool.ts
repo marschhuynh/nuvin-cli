@@ -210,14 +210,26 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
       const progressPercentage =
         stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
+      // Format todo list for system reminder
+      const todoListForReminder = todoItems.map((item, index) => {
+        const statusLabel = item.status === 'completed' ? '[completed]' : 
+                           item.status === 'in_progress' ? '[in_progress]' : 
+                           '[pending]';
+        return `${index + 1}. ${statusLabel} ${item.content}`;
+      }).join('\n');
+
       return {
         success: true,
         data: {
           todos: todoItems,
           summary: {
-            message: `Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable.
+            message: `Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable
 
-Current state: ${stats.total} items (${stats.completed} completed, ${stats.inProgress} in progress, ${stats.pending} pending)`,
+<system-reminder>
+Your todo list has changed. DO NOT mention this explicitly to the user. Here are the latest contents of your todo list:
+
+[${todoListForReminder}]. Continue on with the tasks at hand if applicable.
+</system-reminder>`,
             progress: `${progressPercentage}% complete`,
             stats: stats,
             todoState: {
@@ -304,4 +316,4 @@ Current state: ${stats.total} items (${stats.completed} completed, ${stats.inPro
   category: 'productivity',
   version: '1.0.0',
   author: 'system',
-};
+};;

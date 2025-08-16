@@ -305,11 +305,11 @@ async function handleMessageWithTools(
   );
 
   // 4. Get final response if tools were called
-  if (processed.requiresFollowUp && processed.toolCalls) {
+  if (processed.requiresFollowUp && processed.tool_results) {
     const finalResult = await toolIntegrationService.completeToolCallingFlow(
       params,
       result,
-      processed.toolCalls,
+      processed.tool_results,
       llmProvider,
       context,
       agent.toolConfig
