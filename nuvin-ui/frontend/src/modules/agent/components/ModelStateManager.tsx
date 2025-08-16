@@ -24,13 +24,14 @@ export function ModelStateManager() {
   const { activeProviderId, providers } = useProviderStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [modalityFilter, setModalityFilter] = useState<string | null>(null);
+  const [showEnabledOnly, setShowEnabledOnly] = useState(false);
 
   const isLoading = useModelsStore((state) => state.loading[activeProviderId]);
 
   // Get the active provider configuration
   const activeProvider = providers.find((p) => p.id === activeProviderId);
 
-  // Filter models based on search query and modality filter
+  // Filter models based on search query, modality filter, and enabled filter
   const filteredModels = useMemo(() => {
     let models = availableModels;
 
@@ -55,8 +56,13 @@ export function ModelStateManager() {
       });
     }
 
+    // Apply enabled filter
+    if (showEnabledOnly) {
+      models = models.filter((model) => model.enabled);
+    }
+
     return models;
-  }, [availableModels, searchQuery, modalityFilter]);
+  }, [availableModels, searchQuery, modalityFilter, showEnabledOnly]);
 
   const handleReloadModels = async () => {
     if (!activeProvider || !activeProviderId || isLoading) {
@@ -136,7 +142,7 @@ export function ModelStateManager() {
           </Button>
         </div>
         <span className="text-xs text-muted-foreground flex-shrink-1 ml-2">
-          {searchQuery || modalityFilter
+          {searchQuery || modalityFilter || showEnabledOnly
             ? `${filteredEnabledCount}/${filteredTotalCount}`
             : `${enabledCount}/${totalCount}`}
         </span>
@@ -218,6 +224,16 @@ export function ModelStateManager() {
                 className="h-6 text-[10px] px-2"
               >
                 <FileText className="w-3 h-3 mr-1" />
+              </Button>
+              {/* Enabled Filter Button */}
+              <Button
+                variant={showEnabledOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowEnabledOnly(!showEnabledOnly)}
+                className="h-6 text-[10px] px-2"
+                title="Show enabled models only"
+              >
+                <Eye className="w-3 h-3" />
               </Button>
             </div>
           </div>
