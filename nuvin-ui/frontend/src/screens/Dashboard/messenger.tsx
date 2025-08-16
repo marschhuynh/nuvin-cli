@@ -229,7 +229,7 @@ export default function Messenger() {
               const errorMessage: Message = {
                 id: streamingId,
                 role: 'assistant',
-                content: `❌ ${formatErrorMessage(error)}`,
+                content: `❌ ${formatErrorMessage(error instanceof Error ? error : String(error))}`,
                 timestamp: new Date().toISOString(),
               };
               
@@ -300,7 +300,7 @@ export default function Messenger() {
           const errorMessage: Message = {
             id: streamingId,
             role: 'assistant',
-            content: `❌ ${formatErrorMessage(error)}`,
+            content: `❌ ${formatErrorMessage(error instanceof Error ? error : String(error))}`,
             timestamp: new Date().toISOString(),
           };
           
