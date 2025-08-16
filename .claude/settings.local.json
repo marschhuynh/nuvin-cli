@@ -8,7 +8,15 @@
       "Bash(pnpm run test:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm exec tsc:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "mcp__serena__search_for_pattern",
+      "mcp__serena__list_dir",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_symbol",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__think_about_task_adherence",
+      "mcp__serena__replace_symbol_body"
     ],
     "deny": []
   }
