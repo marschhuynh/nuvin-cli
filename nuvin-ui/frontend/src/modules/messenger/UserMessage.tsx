@@ -2,6 +2,7 @@ import { User, Copy, Check, Edit, Trash2, Save, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { ClipboardSetText } from '../../../wailsjs/runtime/runtime';
 import { useConversationStore } from '@/store/useConversationStore';
+import { Textarea } from '@/components';
 
 interface UserMessageProps {
   id: string;
@@ -70,14 +71,14 @@ export function UserMessage({ id, content, messageMode }: UserMessageProps) {
     <>
       {/* Message bubble */}
       <div
-        className={`relative ${isEditing ? 'w-full min-w-[600px]' : 'max-w-[70%]'} overflow-visible transition-all duration-300 ${
+        className={`relative ${isEditing ? 'w-full' : 'max-w-[70%]'} overflow-visible transition-all duration-300 ${
           messageMode === 'transparent'
             ? 'text-foreground'
             : 'rounded-lg p-4 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-primary/20 shadow-primary/20 hover:shadow-sm shadow-xxs border'
         }`}
       >
         {isEditing ? (
-          <textarea
+          <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             className="w-full min-h-[80px] bg-transparent text-primary-foreground placeholder-primary-foreground/70 border-none outline-none resize-y text-sm font-sans leading-relaxed"
@@ -99,7 +100,7 @@ export function UserMessage({ id, content, messageMode }: UserMessageProps) {
         )}
 
         {/* Controls positioned absolutely inside the message bubble */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+        <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
           {isEditing ? (
             <>
               <button

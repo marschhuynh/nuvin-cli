@@ -13,6 +13,7 @@ import { ClipboardSetText } from '../../../wailsjs/runtime/runtime';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useConversationStore } from '@/store/useConversationStore';
 import type { MessageMetadata } from '@/types';
+import { Textarea } from '@/components';
 
 interface AssistantMessageProps {
   id: string;
@@ -130,10 +131,10 @@ export function AssistantMessage({
 
           {isEditing ? (
             // Edit mode
-            <textarea
+            <Textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full min-h-[120px] bg-transparent text-foreground placeholder-muted-foreground border border-border rounded-md p-3 text-sm font-sans resize-y leading-relaxed"
+              className="w-full min-h-[120px] bg-transparent text-foreground placeholder-muted-foreground rounded-md p-3 text-sm font-sans resize-y leading-relaxed"
               placeholder="Edit assistant message..."
               autoFocus
               onKeyDown={(e) => {
@@ -171,7 +172,7 @@ export function AssistantMessage({
           )}
 
           {/* Controls positioned absolutely inside the message bubble */}
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+          <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100">
             {isEditing ? (
               <>
                 <button
