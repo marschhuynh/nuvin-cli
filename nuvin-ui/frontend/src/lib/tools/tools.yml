@@ -1,9 +1,9 @@
 tools:
-  - name: Task
+  - name: task
     description: >-
       Launch a new agent that has access to the following tools: Bash, Glob,
       Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write, NotebookRead,
-      NotebookEdit, WebFetch, TodoWrite, WebSearch. When
+      NotebookEdit, WebFetch, todo_write, WebSearch. When
       you are searching for a keyword or file and are not confident that you
       will find the right match in the first few tries, use the Agent tool to
       perform the search for you.
@@ -97,7 +97,7 @@ tools:
         - You can specify an optional timeout in milliseconds (up to 600000ms / 10 minutes). If not specified, commands will timeout after 120000ms (2 minutes).
         - It is very helpful if you write a clear, concise description of what this command does in 5-10 words.
         - If the output exceeds 30000 characters, output will be truncated before being returned to you.
-        - VERY IMPORTANT: You MUST avoid using search commands like `find` and `grep`. Instead use Grep, Glob, or Task to search. You MUST avoid read tools like `cat`, `head`, `tail`, and `ls`, and use Read and LS to read files.
+        - VERY IMPORTANT: You MUST avoid using search commands like `find` and `grep`. Instead use Grep, Glob, or task to search. You MUST avoid read tools like `cat`, `head`, `tail`, and `ls`, and use Read and LS to read files.
        - If you _still_ need to run `grep`, STOP. ALWAYS USE ripgrep at `rg` first, which all ${PRODUCT_NAME} users have pre-installed.
         - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
         - Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it.
@@ -155,7 +155,7 @@ tools:
       - NEVER run additional commands to read or explore code, besides git bash
       commands
 
-      - NEVER use the TodoWrite or Task tools
+      - NEVER use the todo_write or task tools
 
       - DO NOT push to the remote repository unless the user explicitly asks you
       to do so
@@ -242,7 +242,7 @@ tools:
 
       - NEVER update the git config
 
-      - DO NOT use the TodoWrite or Task tools
+      - DO NOT use the todo_write or task tools
 
       - Return the PR URL when you're done, so the user can see it
 
@@ -328,7 +328,7 @@ tools:
         - Supports full regex syntax (e.g., "log.*Error", "function\s+\w+")
         - Filter files with glob parameter (e.g., "*.js", "**/*.tsx") or type parameter (e.g., "js", "py", "rust")
         - Output modes: "content" shows matching lines, "files_with_matches" shows only file paths (default), "count" shows match counts
-        - Use Task tool for open-ended searches requiring multiple rounds
+        - Use task tool for open-ended searches requiring multiple rounds
         - Pattern syntax: Uses ripgrep (not grep) - literal braces need escaping (use `interface\{\}` to find `interface{}` in Go code)
         - Multiline matching: By default patterns match within single lines only. For cross-line patterns like `struct \{[\s\S]*?field`, use `multiline: true`
     input_schema:
@@ -791,7 +791,7 @@ tools:
         - prompt
       additionalProperties: false
       $schema: http://json-schema.org/draft-07/schema#
-  - name: TodoWrite
+  - name: todo_write
     description: >
       Use this tool to create and manage a structured task list for your current
       coding session. This helps you track progress, organize complex tasks, and

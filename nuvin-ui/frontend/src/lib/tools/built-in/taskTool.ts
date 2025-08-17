@@ -4,10 +4,10 @@ import { generateUUID } from '@/lib/utils';
 
 export const taskTool: Tool = {
   definition: {
-    name: 'Task',
+    name: 'task',
     description: `Launch a new agent that has access to the following tools: Bash, Glob,
 Grep, LS, ExitPlanMode, Read, Edit, MultiEdit, Write, NotebookRead,
-NotebookEdit, WebFetch, TodoWrite, WebSearch. When
+NotebookEdit, WebFetch, todo_write, WebSearch. When
 you are searching for a keyword or file and are not confident that you
 will find the right match in the first few tries, use the Agent tool to
 perform the search for you.
@@ -148,7 +148,7 @@ of the user's intent`,
         return {
           status: 'error',
           type: 'text',
-          result: `Task execution failed: ${
+          result: `task execution failed: ${
             agentError instanceof Error ? agentError.message : 'Unknown error'
           }`,
           metadata: {
@@ -162,7 +162,7 @@ of the user's intent`,
       return {
         status: 'error',
         type: 'text',
-        result: `Task tool error: ${
+        result: `task tool error: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       };

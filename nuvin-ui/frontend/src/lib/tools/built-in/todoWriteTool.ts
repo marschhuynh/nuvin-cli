@@ -4,7 +4,7 @@ import type { TodoItem } from '@/types';
 
 export const todoWriteTool: Tool = {
   definition: {
-    name: 'TodoWrite',
+    name: 'todo_write',
     description: `Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
 It also helps the user understand the progress of the task and overall progress of their requests.
 
@@ -311,7 +311,7 @@ Your todo list has changed. DO NOT mention this explicitly to the user. Here are
       return {
         status: 'error',
         type: 'text',
-        result: `TodoWrite execution error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        result: `todo_write execution error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   },
