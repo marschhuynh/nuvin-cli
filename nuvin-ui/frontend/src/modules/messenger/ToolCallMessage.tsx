@@ -19,6 +19,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 interface ToolCallMessageProps {
   id: string;
   toolName: string;
+  description?: string;
   arguments: any;
   result?: {
     status: 'success' | 'error' | 'warning';
@@ -33,6 +34,7 @@ interface ToolCallMessageProps {
 export function ToolCallMessage({
   id,
   toolName,
+  description,
   arguments: args,
   result,
   isExecuting = false,
@@ -144,6 +146,22 @@ export function ToolCallMessage({
     return 'Pending';
   };
 
+  // Extract description from arguments if not provided directly
+  const getToolDescription = () => {
+    if (description) return description;
+    
+    // Try to extract description from arguments
+    if (args && typeof args === 'object') {
+      if (args.description && typeof args.description === 'string') {
+        return args.description;
+      }
+    }
+    
+    return null;
+  };
+
+  const toolDescription = getToolDescription();
+
   return (
     <>
       {/* Tool icon */}
@@ -157,20 +175,39 @@ export function ToolCallMessage({
       >
         <div className="rounded-lg bg-card border-border hover:shadow-xs hover:border-border/80 shadow-xxs border transition-all duration-300 overflow-visible relative">
           {!showToolDetail ? (
-            /* Compact linear view: icon > name > status > collapse */
+            /* Compact linear view: collapse icon > tool name > status text */
             <div className="px-3 py-2.5">
               <div className="flex items-center gap-3">
+                {/* Collapse controls - moved to leftmost */}
+                <button
+                  type="button"
+                  onClick={() => setShowToolDetail(!showToolDetail)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+
                 {/* Status icon */}
                 {getStatusIcon()}
 
-                {/* Tool name */}
-                <span className="font-medium text-foreground text-sm">
-                  {toolName}
-                </span>
+                {/* Tool name and description */}
+                <div className="flex items-center min-w-0 flex-1 gap-2">
+                  <span className="font-medium text-foreground text-sm flex-shrink-0">
+                    {toolName}
+                  </span>
+                  {toolDescription && (
+                    <>
+                      <span className="text-muted-foreground text-xs">-</span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {toolDescription}
+                      </span>
+                    </>
+                  )}
+                </div>
 
-                {/* Status badge */}
+                {/* Status text - moved to rightmost */}
                 <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ml-auto flex-shrink-0 ${
                     isExecuting
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
                       : result?.status === 'success'
@@ -182,17 +219,6 @@ export function ToolCallMessage({
                 >
                   {getStatusText()}
                 </span>
-
-                {/* Collapse controls */}
-                <div className="flex items-center gap-1 ml-auto">
-                  <button
-                    type="button"
-                    onClick={() => setShowToolDetail(!showToolDetail)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </div>
               </div>
             </div>
           ) : (
@@ -201,12 +227,36 @@ export function ToolCallMessage({
               {/* Header */}
               <div className="px-3 py-2.5 border-b border-border/50">
                 <div className="flex items-center gap-3">
+                  {/* Collapse controls - moved to leftmost */}
+                  <button
+                    type="button"
+                    onClick={() => setShowToolDetail(!showToolDetail)}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+
+                  {/* Status icon */}
                   {getStatusIcon()}
-                  <span className="font-medium text-foreground text-sm">
-                    {toolName}
-                  </span>
+
+                  {/* Tool name and description */}
+                  <div className="flex items-center min-w-0 flex-1 gap-2">
+                    <span className="font-medium text-foreground text-sm flex-shrink-0">
+                      {toolName}
+                    </span>
+                    {toolDescription && (
+                      <>
+                        <span className="text-muted-foreground text-xs">-</span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {toolDescription}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Status text - moved to rightmost */}
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ml-auto flex-shrink-0 ${
                       isExecuting
                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
                         : result?.status === 'success'
@@ -218,17 +268,6 @@ export function ToolCallMessage({
                   >
                     {getStatusText()}
                   </span>
-
-                  {/* Collapse controls */}
-                  <div className="flex items-center gap-1 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => setShowToolDetail(!showToolDetail)}
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -268,8 +307,8 @@ export function ToolCallMessage({
                     )}
                   </div>
                 </div>
-                 {/* Result Section */}
-                 {result && (
+                {/* Result Section */}
+                {result && (
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">
@@ -277,6 +316,8 @@ export function ToolCallMessage({
                       </span>
                       {result.status === 'success' ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : result.status === 'warning' ? (
+                        <XCircle className="h-4 w-4 text-yellow-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
                       )}
@@ -287,24 +328,60 @@ export function ToolCallMessage({
                         className={`p-3 rounded border text-sm ${
                           result.status === 'success'
                             ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-200'
-                            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-200'
+                            : result.status === 'warning'
+                              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50 text-yellow-800 dark:text-yellow-200'
+                              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-200'
                         }`}
                       >
-                        {result.status === 'success' ? (
-                          result.data ? (
-                            <pre className="overflow-auto leading-relaxed font-mono text-xs">
-                              {formatJSON(result.data)}
-                            </pre>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4" />
-                              <span>Operation completed successfully</span>
+                        {/* Display the actual result content */}
+                        {result.result ? (
+                          typeof result.result === 'string' ? (
+                            <div className="whitespace-pre-wrap text-xs leading-relaxed">
+                              {result.result}
                             </div>
+                          ) : (
+                            <pre className="overflow-auto leading-relaxed font-mono text-xs">
+                              {formatJSON(result.result)}
+                            </pre>
                           )
                         ) : (
                           <div className="flex items-center gap-2">
-                            <XCircle className="h-4 w-4" />
-                            <span>{result.status === 'error' || 'Operation failed'}</span>
+                            {result.status === 'success' ? (
+                              <>
+                                <CheckCircle className="h-4 w-4" />
+                                <span>Operation completed successfully</span>
+                              </>
+                            ) : result.status === 'warning' ? (
+                              <>
+                                <XCircle className="h-4 w-4" />
+                                <span>Operation completed with warnings</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4" />
+                                <span>Operation failed</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Show additional result if available */}
+                        {result.additionalResult && (
+                          <div className="mt-3 pt-3 border-t border-current/20">
+                            <div className="text-xs font-medium mb-2 opacity-80">Additional Information:</div>
+                            <pre className="overflow-auto leading-relaxed font-mono text-xs opacity-90">
+                              {formatJSON(result.additionalResult)}
+                            </pre>
+                          </div>
+                        )}
+                        
+                        {/* Show metadata if available */}
+                        {result.metadata && Object.keys(result.metadata).length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-current/20">
+                            <div className="text-xs font-medium mb-2 opacity-80">Metadata:</div>
+                            <pre className="overflow-auto leading-relaxed font-mono text-xs opacity-90">
+                              {formatJSON(result.metadata)}
+                            </pre>
                           </div>
                         )}
                       </div>

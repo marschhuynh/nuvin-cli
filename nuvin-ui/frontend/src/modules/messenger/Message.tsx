@@ -14,6 +14,7 @@ interface MessageProps {
   toolCall?: {
     name: string;
     id: string;
+    description?: string;
     arguments: Record<string, unknown>;
     result?: {
       status: 'success' | 'error' | 'warning';
@@ -56,6 +57,7 @@ export function Message({
         <ToolCallMessage
           id={id}
           toolName={toolCall.name}
+          description={toolCall.description}
           arguments={toolCall.arguments}
           result={toolCall.result}
           isExecuting={toolCall.isExecuting}
