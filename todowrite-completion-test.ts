@@ -1,8 +1,8 @@
-// Test for TodoWrite Tool Completion Messages
+// Test for todo_write Tool Completion Messages
 
 import { todoWriteTool } from './nuvin-ui/frontend/src/lib/tools/built-in/todoWriteTool';
 
-// Mock test scenarios for TodoWrite tool
+// Mock test scenarios for todo_write tool
 const testScenarios = [
   {
     name: 'Mixed Status Todos',
@@ -39,8 +39,8 @@ const testScenarios = [
   }
 ];
 
-async function testTodoWriteMessages() {
-  console.log('🧪 Testing TodoWrite Tool Completion Messages\n');
+async function test_todo_write_messages() {
+  console.log('🧪 Testing todo_write Tool Completion Messages\n');
 
   for (const [index, scenario] of testScenarios.entries()) {
     console.log(`Test ${index + 1}: ${scenario.name}`);
@@ -88,7 +88,7 @@ async function testTodoWriteMessages() {
 
 // Example message outputs
 console.log(`
-📋 TodoWrite Tool Message Examples:
+📋 todo_write Tool Message Examples:
 
 ## Regular Progress Message:
 "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
@@ -108,10 +108,10 @@ Your todo list has changed. DO NOT mention this explicitly to the user. Here are
 All todo items are now completed! You can celebrate this accomplishment with the user and ask if they'd like to work on new tasks...
 </system-reminder>
 
-The TodoWrite tool now provides contextual feedback based on completion status!
+The todo_write tool now provides contextual feedback based on completion status!
 `);
 
 // Run the test
-testTodoWriteMessages();
+test_todo_write_messages();
 
-export { testTodoWriteMessages };
+export { test_todo_write_messages };

@@ -211,7 +211,7 @@ export class ToolIntegrationService {
     try {
       const hasRecentChangesOnTodoList = toolResults.some(
         (result) =>
-          result.result.status === 'success' && result.name === 'TodoWrite',
+          result.result.status === 'success' && result.name === 'todo_write',
       );
 
       console.log(

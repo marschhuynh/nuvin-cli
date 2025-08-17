@@ -3,7 +3,7 @@ import { useTodoStore } from '@/store/useTodoStore';
 
 export const todoReadTool: Tool = {
   definition: {
-    name: 'TodoRead',
+    name: 'todo_read',
     description: `Read and retrieve todo items from the todo store. This tool allows you to query todos by conversation or globally.
 
 ## Usage Examples
@@ -131,7 +131,7 @@ Returns todos with their current status, priority, creation dates, and conversat
       return {
         status: 'error',
         type: 'text',
-        result: `TodoRead execution error: ${
+        result: `todo_read execution error: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`,
       };

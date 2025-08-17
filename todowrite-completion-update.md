@@ -1,8 +1,8 @@
-# TodoWrite Tool Completion Update
+# todo_write Tool Completion Update
 
 ## Overview
 
-Updated the TodoWrite tool to provide celebratory messages when all todo items are completed, creating a more engaging and rewarding user experience.
+Updated the todo_write tool to provide celebratory messages when all todo items are completed, creating a more engaging and rewarding user experience.
 
 ## Changes Made
 
@@ -82,7 +82,7 @@ additionalResult: {
 ```
 User marks last todo as completed
 ↓
-TodoWrite tool detects: allCompleted = true
+todo_write tool detects: allCompleted = true
 ↓
 Tool result: "🎉 Outstanding work! All 3 todo items completed successfully!"
 ↓
@@ -96,7 +96,7 @@ AI response: "Congratulations! You've successfully completed all your tasks..."
 ```
 User updates todo status (not all complete)
 ↓
-TodoWrite tool detects: allCompleted = false
+todo_write tool detects: allCompleted = false
 ↓
 Tool result: "Todos have been modified successfully. Ensure that you continue..."
 ↓
@@ -110,7 +110,7 @@ AI response: "I've updated your todo list. Let's continue with the next task..."
 ```
 User completes their only todo
 ↓
-TodoWrite tool detects: allCompleted = true, totalCount = 1
+todo_write tool detects: allCompleted = true, totalCount = 1
 ↓
 Tool result: "🎉 Outstanding work! All 1 todo item completed successfully!"
 ↓
@@ -123,7 +123,7 @@ AI response: "Excellent work completing that task! What would you like to work o
 
 ### 1. **Consistent Celebration Experience**
 
-- **TodoWrite tool** provides immediate celebration when marking final task complete
+- **todo_write tool** provides immediate celebration when marking final task complete
 - **System reminders** provide ongoing celebration context for subsequent messages
 - **AI responses** can naturally acknowledge the achievement
 
@@ -196,7 +196,7 @@ After:  "🎉 Outstanding work! All tasks completed!" (contextual celebration)
 
 ## Conclusion
 
-The TodoWrite tool now provides:
+The todo_write tool now provides:
 
 ✅ **Contextual celebration** when all tasks are complete
 ✅ **Appropriate guidance** for ongoing work
