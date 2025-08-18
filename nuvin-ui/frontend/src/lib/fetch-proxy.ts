@@ -285,12 +285,12 @@ export async function fetchProxy(
   try {
     const response: FetchResponse = useServer
       ? await (
-          await fetch(`${SERVER_BASE_URL}/fetch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fetchRequest),
-          })
-        ).json()
+        await fetch(`${SERVER_BASE_URL}/fetch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fetchRequest),
+        })
+      ).json()
       : await FetchProxy(fetchRequest);
 
     if (response.error) {
@@ -349,10 +349,10 @@ export async function smartFetch(
   input: RequestInfo | URL,
   init?: RequestInit & { stream?: boolean },
 ): Promise<Response> {
-  console.log('smartFetch', input, init);
   if (isWailsEnvironment()) {
     return fetchProxy(input, init);
   } else {
+    LogInfo('smartFetch: use server mode');
     return fetchProxy(input, init, true);
   }
 }

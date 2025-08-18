@@ -4,7 +4,6 @@
  */
 
 import { LogError, LogInfo } from './wails-runtime';
-// import { fetchProxy, smartFetch } from "./fetch-proxy";
 
 // A2A protocol types
 export interface AgentCard {
@@ -807,34 +806,28 @@ export class A2AError extends Error {
   getUserMessage(): string {
     switch (this.type) {
       case A2AErrorType.NETWORK_ERROR:
-        return `Unable to connect to the agent${
-          this.agentUrl ? ` at ${this.agentUrl}` : ''
-        }. Please check your internet connection and verify the agent URL is correct.`;
+        return `Unable to connect to the agent${this.agentUrl ? ` at ${this.agentUrl}` : ''
+          }. Please check your internet connection and verify the agent URL is correct.`;
 
       case A2AErrorType.TIMEOUT_ERROR:
-        return `The agent${
-          this.agentUrl ? ` at ${this.agentUrl}` : ''
-        } took too long to respond. Please try again or check if the agent is experiencing issues.`;
+        return `The agent${this.agentUrl ? ` at ${this.agentUrl}` : ''
+          } took too long to respond. Please try again or check if the agent is experiencing issues.`;
 
       case A2AErrorType.AUTHENTICATION_ERROR:
-        return `Authentication failed${
-          this.agentUrl ? ` for ${this.agentUrl}` : ''
-        }. Please verify your credentials and try again.`;
+        return `Authentication failed${this.agentUrl ? ` for ${this.agentUrl}` : ''
+          }. Please verify your credentials and try again.`;
 
       case A2AErrorType.AGENT_ERROR:
-        return `The agent${
-          this.agentUrl ? ` at ${this.agentUrl}` : ''
-        } encountered an error while processing your request. ${this.message}`;
+        return `The agent${this.agentUrl ? ` at ${this.agentUrl}` : ''
+          } encountered an error while processing your request. ${this.message}`;
 
       case A2AErrorType.PROTOCOL_ERROR:
-        return `There was a communication issue with the agent${
-          this.agentUrl ? ` at ${this.agentUrl}` : ''
-        }. The agent may not be compatible with the A2A protocol.`;
+        return `There was a communication issue with the agent${this.agentUrl ? ` at ${this.agentUrl}` : ''
+          }. The agent may not be compatible with the A2A protocol.`;
 
       default:
-        return `An unexpected error occurred${
-          this.agentUrl ? ` with ${this.agentUrl}` : ''
-        }. Please try again.`;
+        return `An unexpected error occurred${this.agentUrl ? ` with ${this.agentUrl}` : ''
+          }. Please try again.`;
     }
   }
 
@@ -885,7 +878,7 @@ export class A2AService {
     { lastSuccess: Date; failureCount: number }
   > = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): A2AService {
     if (!A2AService.instance) {
@@ -964,8 +957,7 @@ export class A2AService {
         // Calculate and wait for retry delay
         const delay = this.calculateRetryDelay(attempt, config);
         console.warn(
-          `A2A operation failed (attempt ${attempt}/${
-            config.maxRetries + 1
+          `A2A operation failed (attempt ${attempt}/${config.maxRetries + 1
           }), retrying in ${delay}ms:`,
           error,
         );
@@ -1293,8 +1285,7 @@ export class A2AService {
           }
         } catch (error) {
           LogError(
-            `Failed to load agent card: ${
-              error instanceof Error ? error.message : String(error)
+            `Failed to load agent card: ${error instanceof Error ? error.message : String(error)
             }`,
           );
           throw error;
