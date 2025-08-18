@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware';
 interface PermissionRequest {
   conversationId: string;
   toolName: string;
+  // Optional parameters of the current tool call for display
+  toolParams?: Record<string, unknown>;
   resolve: (decision: 'once' | 'conversation' | 'deny') => void;
 }
 
@@ -15,6 +17,7 @@ interface ToolPermissionState {
   askPermission: (
     conversationId: string,
     toolName: string,
+    toolParams?: Record<string, unknown>,
   ) => Promise<'once' | 'conversation' | 'deny'>;
   resolveRequest: (decision: 'once' | 'conversation' | 'deny') => void;
 }
@@ -39,9 +42,9 @@ export const useToolPermissionStore = create<ToolPermissionState>()(
             },
           };
         }),
-      askPermission: (conversationId, toolName) =>
+      askPermission: (conversationId, toolName, toolParams) =>
         new Promise<'once' | 'conversation' | 'deny'>((resolve) => {
-          set({ request: { conversationId, toolName, resolve } });
+          set({ request: { conversationId, toolName, toolParams, resolve } });
         }),
       resolveRequest: (decision) => {
         const req = get().request;
@@ -57,4 +60,3 @@ export const useToolPermissionStore = create<ToolPermissionState>()(
     },
   ),
 );
-
