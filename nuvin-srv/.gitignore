@@ -1,0 +1,6 @@
+.aider*
+node_modules/
+build/
+bin/
+.env.*
+.env
