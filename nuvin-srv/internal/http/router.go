@@ -34,6 +34,7 @@ func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *st
 
 	r.GET("/healthz", handlers.Health)
 	r.GET("/", handlers.Index(cfg))
+	r.POST("/fetch", handlers.FetchProxy)
 	r.GET("/auth/:provider", authHandler.Begin)
 	r.GET("/auth/:provider/callback", authHandler.Callback)
 	r.POST("/auth/refresh", authHandler.Refresh)
