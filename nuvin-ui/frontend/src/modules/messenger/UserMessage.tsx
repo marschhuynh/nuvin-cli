@@ -3,6 +3,14 @@ import { useState, useCallback } from 'react';
 import { ClipboardSetText } from '@/lib/wails-runtime';
 import { useConversationStore } from '@/store/useConversationStore';
 import { Textarea } from '@/components';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface UserMessageProps {
   id: string;
@@ -56,14 +64,24 @@ export function UserMessage({ id, content, messageMode }: UserMessageProps) {
     setEditContent(content);
   }, [content]);
 
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
   const handleDelete = useCallback(() => {
-    if (
-      activeConversationId &&
-      confirm('Are you sure you want to delete this message?')
-    ) {
+    if (activeConversationId) {
+      setIsDeleteOpen(true);
+    }
+  }, [activeConversationId]);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (activeConversationId) {
       deleteMessage(activeConversationId, id);
     }
+    setIsDeleteOpen(false);
   }, [activeConversationId, id, deleteMessage]);
+
+  const handleCancelDelete = useCallback(() => {
+    setIsDeleteOpen(false);
+  }, []);
 
   if (trimmedContent.length === 0) return null;
 
@@ -154,6 +172,36 @@ export function UserMessage({ id, content, messageMode }: UserMessageProps) {
           )}
         </div>
       </div>
+
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete message</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this message? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                className="px-3 py-1 rounded-md bg-muted/10 text-foreground hover:bg-muted/20"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="px-3 py-1 rounded-md bg-red-500 text-white hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* User avatar */}
       <div className="h-8 w-8 bg-gradient-to-br from-secondary to-secondary/80 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-shadow">
