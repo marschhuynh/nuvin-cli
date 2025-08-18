@@ -32,7 +32,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { MCPServerToolsList } from '@/components/mcp/MCPServerToolsList';
-import { ClipboardGetText } from '@wails/runtime';
+import { ClipboardGetText } from '@/lib/wails-runtime';
 import { useMCPServers } from '@/lib/mcp/hooks/useMCPServers';
 
 interface MCPClipboardConfig {

@@ -3,7 +3,7 @@
  * Custom implementation following the A2A protocol
  */
 
-import { LogError, LogInfo } from '@wails/runtime';
+import { LogError, LogInfo } from './wails-runtime';
 // import { fetchProxy, smartFetch } from "./fetch-proxy";
 
 // A2A protocol types

@@ -4,7 +4,22 @@
  */
 
 import { FetchProxy } from '../../wailsjs/go/main/App';
-import { LogInfo, LogError, EventsOn, EventsOff } from '@wails/runtime';
+import {
+  LogInfo,
+  LogError,
+  EventsOn,
+  EventsOff,
+  isWailsEnvironment,
+} from './wails-runtime';
+
+const SERVER_BASE_URL =
+  import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
+
+// Preserve a reference to the platform's original fetch implementation so we
+// can call it directly when proxying through the standalone Gin server. This
+// avoids infinite recursion if global fetch has been replaced with our
+// smartFetch helper.
+const nativeFetch = globalThis.fetch.bind(globalThis);
 
 // Types for the Go backend
 interface FetchRequest {
@@ -210,6 +225,7 @@ class ProxyResponse implements Response {
 export async function fetchProxy(
   input: RequestInfo | URL,
   init?: RequestInit & { stream?: boolean },
+  useServer = false,
 ): Promise<Response> {
   console.log('fetchProxy', input, init?.stream);
   // Convert input to URL string
@@ -273,16 +289,21 @@ export async function fetchProxy(
   LogInfo(`Fetch proxy: ${method.toUpperCase()} ${url}`);
 
   try {
-    // Call Go backend
-    const response: FetchResponse = await FetchProxy(fetchRequest);
+    const response: FetchResponse = useServer
+      ? await (
+          await nativeFetch(`${SERVER_BASE_URL}/fetch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fetchRequest),
+          })
+        ).json()
+      : await FetchProxy(fetchRequest);
 
-    // Handle Go backend errors
     if (response.error) {
       LogError(`Fetch proxy error: ${response.error}`);
       throw new Error(`Network error: ${response.error}`);
     }
 
-    // Create Response object
     console.log('FetchProxy response:', {
       status: response.status,
       hasStreamId: !!response.streamId,
@@ -314,7 +335,7 @@ export async function fetchProxy(
  */
 export function enableGlobalFetchProxy(): void {
   const globalObj = typeof window !== 'undefined' ? window : global;
-  (globalObj as any).fetch = fetchProxy;
+  (globalObj as any).fetch = smartFetch;
   LogInfo('Global fetch proxy enabled');
 }
 
@@ -328,17 +349,6 @@ export function disableGlobalFetchProxy(): void {
 }
 
 /**
- * Check if we're running in a Wails environment
- */
-export function isWailsEnvironment(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof (window as any).go !== 'undefined' &&
-    typeof (window as any).go.main !== 'undefined'
-  );
-}
-
-/**
  * Smart fetch that uses proxy in Wails environment, regular fetch otherwise
  */
 export async function smartFetch(
@@ -349,6 +359,6 @@ export async function smartFetch(
   if (isWailsEnvironment()) {
     return fetchProxy(input, init);
   } else {
-    return fetch(input, init);
+    return fetchProxy(input, init, true);
   }
 }

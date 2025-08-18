@@ -17,7 +17,7 @@ import { useState, useEffect } from 'react';
 import type { AgentSettings as AgentSettingsType } from '@/types';
 import type { AgentToolConfig } from '@/types/tools';
 import { a2aService, A2AError } from '@/lib';
-import { LogInfo } from '@wails/runtime';
+import { LogInfo } from '@/lib/wails-runtime';
 
 import { LocalAgentSettings } from './components/LocalAgentSettings';
 import { RemoteAgentSettings } from './components/RemoteAgentSettings';
