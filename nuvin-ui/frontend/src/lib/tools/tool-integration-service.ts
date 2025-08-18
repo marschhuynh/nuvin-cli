@@ -153,7 +153,11 @@ export class ToolIntegrationService {
         continue;
       }
 
-      const decision = await store.askPermission(convoId, call.name);
+      const decision = await store.askPermission(
+        convoId,
+        call.name,
+        call.parameters,
+      );
       if (decision === 'conversation') {
         store.allowForConversation(convoId, call.name);
         allowedCalls.push(call);
