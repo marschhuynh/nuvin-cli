@@ -1,11 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
-// import { enableGlobalFetchProxy } from '@/lib/fetch-proxy';
+import { enableGlobalFetchProxy } from '@/lib/fetch-proxy';
 import App from './App';
 import './style.css';
 
-// enableGlobalFetchProxy();
+enableGlobalFetchProxy();
 
 const container = document.getElementById('root');
 

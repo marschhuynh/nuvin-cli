@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -90,6 +92,18 @@ func fetchHandler(c *gin.Context) {
 
 func main() {
 	r := gin.Default()
+
+	// Configure CORS middleware
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"*"} // Replace with your allowed origins
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	config.ExposeHeaders = []string{"*"} // Optional: expose specific response headers
+	config.AllowCredentials = true
+	config.MaxAge = 300 // MaxAge for preflight requests
+
+	r.Use(cors.New(config))
+
 	r.POST("/fetch", fetchHandler)
 	r.GET("/health", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 	r.Run(":8080")

@@ -60,7 +60,6 @@ export {
   enableGlobalFetchProxy,
   disableGlobalFetchProxy,
   smartFetch,
-  isWailsEnvironment,
 } from './fetch-proxy';
 
 // Theme
