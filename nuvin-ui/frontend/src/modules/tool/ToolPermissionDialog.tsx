@@ -30,7 +30,7 @@ export function ToolPermissionDialog() {
           </DialogTitle>
         </DialogHeader>
         {request && (
-          <div className="space-y-3 py-1">
+          <div className="space-y-3 py-1 overflow-hidden">
             {/* Tool meta */}
             <div className="text-sm text-muted-foreground">
               {(() => {

@@ -90,6 +90,40 @@ export namespace main {
 	        this.streamId = source["streamId"];
 	    }
 	}
+	export class FileInfo {
+	    path: string;
+	    name: string;
+	    isDir: boolean;
+	    size: number;
+	    modTime: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.name = source["name"];
+	        this.isDir = source["isDir"];
+	        this.size = source["size"];
+	        this.modTime = source["modTime"];
+	    }
+	}
+	export class FileWriteRequest {
+	    path: string;
+	    content: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileWriteRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.content = source["content"];
+	    }
+	}
 	export class MCPMessage {
 	    jsonrpc: string;
 	    id?: any;

@@ -1,5 +1,5 @@
 import { Tool } from '@/types/tools';
-import { promises as fs } from 'fs';
+import { readFile, writeFile } from '@/lib/fs-bridge';
 
 function applyPatch(original: string, patch: string): string | null {
   const origLines = original.split('\n');
@@ -96,12 +96,12 @@ export const editFileTool: Tool = {
         };
       }
 
-      const original = await fs.readFile(path, 'utf-8');
+      const original = await readFile(path);
       const patched = applyPatch(original, patch);
       if (patched === null) {
         return { status: 'error', type: 'text', result: 'Failed to apply patch' };
       }
-      await fs.writeFile(path, patched, 'utf-8');
+      await writeFile(path, patched);
       return { status: 'success', type: 'text', result: 'File edited successfully' };
     } catch (err) {
       return {

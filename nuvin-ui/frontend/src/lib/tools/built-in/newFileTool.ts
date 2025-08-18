@@ -1,6 +1,5 @@
 import { Tool } from '@/types/tools';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { mkdirAll, pathExists, writeFile } from '@/lib/fs-bridge';
 
 export const newFileTool: Tool = {
   definition: {
@@ -34,15 +33,17 @@ export const newFileTool: Tool = {
         };
       }
 
-      try {
-        await fs.access(filePath);
+      if (await pathExists(filePath)) {
         return { status: 'error', type: 'text', result: 'File already exists' };
-      } catch {
-        // file does not exist
       }
 
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, content, 'utf-8');
+      // ensure parent directory exists (basic dirname implementation)
+      const sepIndex = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+      const dir = sepIndex > 0 ? filePath.slice(0, sepIndex) : '';
+      if (dir) {
+        await mkdirAll(dir);
+      }
+      await writeFile(filePath, content);
 
       return { status: 'success', type: 'text', result: 'File created' };
     } catch (err) {

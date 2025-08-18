@@ -26,6 +26,30 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function ListDir(arg1) {
+  return window['go']['main']['App']['ListDir'](arg1);
+}
+
+export function MkdirAll(arg1) {
+  return window['go']['main']['App']['MkdirAll'](arg1);
+}
+
+export function PathExists(arg1) {
+  return window['go']['main']['App']['PathExists'](arg1);
+}
+
+export function ReadFile(arg1) {
+  return window['go']['main']['App']['ReadFile'](arg1);
+}
+
+export function Remove(arg1, arg2) {
+  return window['go']['main']['App']['Remove'](arg1, arg2);
+}
+
+export function Rename(arg1, arg2) {
+  return window['go']['main']['App']['Rename'](arg1, arg2);
+}
+
 export function SendMCPMessage(arg1, arg2) {
   return window['go']['main']['App']['SendMCPMessage'](arg1, arg2);
 }
@@ -40,4 +64,8 @@ export function StopAllMCPServers() {
 
 export function StopMCPServer(arg1) {
   return window['go']['main']['App']['StopMCPServer'](arg1);
+}
+
+export function WriteFile(arg1) {
+  return window['go']['main']['App']['WriteFile'](arg1);
 }

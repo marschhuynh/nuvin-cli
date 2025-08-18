@@ -16,21 +16,4 @@ export async function fetchGithubCopilotKey(): Promise<string | null> {
   }
 }
 
-// Add type declaration for window.go
-declare global {
-  interface Window {
-    go: {
-      main: {
-        App: {
-          FetchGithubCopilotKey: () => Promise<string>;
-          Greet: (name: string) => Promise<string>;
-          StartMCPServer: (request: any) => Promise<any>;
-          StopMCPServer: (serverId: string) => Promise<any>;
-          StopAllMCPServers: () => Promise<any>;
-          SendMCPMessage: (serverId: string, message: any) => Promise<any>;
-          GetMCPServerStatus: () => Promise<Record<string, string>>;
-        };
-      };
-    };
-  }
-}
+// Types for window.go are declared in src/types/wails-fs.d.ts

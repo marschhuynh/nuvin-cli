@@ -1,5 +1,5 @@
 import { Tool } from '@/types/tools';
-import { promises as fs } from 'fs';
+import { readFile } from '@/lib/fs-bridge';
 
 export const readFileTool: Tool = {
   definition: {
@@ -39,7 +39,7 @@ export const readFileTool: Tool = {
         };
       }
 
-      const data = await fs.readFile(path, 'utf-8');
+      const data = await readFile(path);
       let result = data;
 
       if (start !== undefined || end !== undefined) {

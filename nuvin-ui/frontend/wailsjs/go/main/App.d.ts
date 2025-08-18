@@ -14,6 +14,18 @@ export function GetMCPServerStatus():Promise<Record<string, string>>;
 
 export function Greet(arg1:string):Promise<string>;
 
+export function ListDir(arg1:string):Promise<Array<main.FileInfo>>;
+
+export function MkdirAll(arg1:string):Promise<void>;
+
+export function PathExists(arg1:string):Promise<boolean>;
+
+export function ReadFile(arg1:string):Promise<string>;
+
+export function Remove(arg1:string,arg2:boolean):Promise<void>;
+
+export function Rename(arg1:string,arg2:string):Promise<void>;
+
 export function SendMCPMessage(arg1:string,arg2:main.MCPMessage):Promise<void>;
 
 export function StartMCPServer(arg1:main.MCPRequest):Promise<void>;
@@ -21,3 +33,5 @@ export function StartMCPServer(arg1:main.MCPRequest):Promise<void>;
 export function StopAllMCPServers():Promise<void>;
 
 export function StopMCPServer(arg1:string):Promise<void>;
+
+export function WriteFile(arg1:main.FileWriteRequest):Promise<void>;

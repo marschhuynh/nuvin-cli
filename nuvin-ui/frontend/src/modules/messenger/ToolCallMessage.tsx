@@ -393,27 +393,8 @@ export function ToolCallMessage({
           )}
 
           {/* Control buttons positioned absolutely inside the tool card */}
-          <div className="absolute top-2.5 right-26 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-            {isEditing ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleSaveEdit}
-                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
-                  title="Save changes"
-                >
-                  <Save className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
-                  title="Cancel editing"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </>
-            ) : (
+          <div className="absolute bottom-[-10px] right-2 flex gap-1 opacity-0 group-hover:opacity-100">
+            {(
               <>
                 <button
                   type="button"
@@ -422,14 +403,6 @@ export function ToolCallMessage({
                   title="Delete tool call"
                 >
                   <Trash2 className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  className="p-1 rounded-md transition-all duration-200 hover:bg-foreground/20 text-foreground/80 hover:text-foreground backdrop-blur-sm shadow-sm bg-foreground/10"
-                  title="Edit tool arguments"
-                >
-                  <Edit className="h-3 w-3" />
                 </button>
                 <button
                   type="button"
