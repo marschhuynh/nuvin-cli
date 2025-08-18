@@ -11,7 +11,7 @@ type User struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 	Provider       string    `json:"provider"`
 	ProviderUserID string    `json:"providerUserId"`
-	Email          *string   `gorm:"uniqueIndex" json:"email,omitempty"`
+	Email          *string   `gorm:"index" json:"email,omitempty"`
 	Name           string    `json:"name"`
 	AvatarURL      string    `json:"avatarUrl"`
 	CreatedAt      time.Time `json:"createdAt"`

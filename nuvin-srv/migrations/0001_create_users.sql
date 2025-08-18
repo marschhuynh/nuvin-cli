@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY,
     provider TEXT NOT NULL,
     provider_user_id TEXT NOT NULL,
-    email TEXT UNIQUE,
+    email TEXT,
     name TEXT,
     avatar_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -10,3 +10,4 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_provider_provider_user_id ON users (provider, provider_user_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
