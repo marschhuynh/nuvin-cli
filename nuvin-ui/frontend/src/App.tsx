@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter } from 'react-router';
 import { ThemeProvider } from '@/lib/theme';
 import { initializeTools, initializeMCPTools } from '@/lib/tools';
+import { ToolPermissionDialog } from '@/modules/tool/ToolPermissionDialog';
 import AppRoutes from './routes';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <div className="h-screen flex flex-col bg-background">
           <Navbar userName={user.name} />
           <AppRoutes />
+          <ToolPermissionDialog />
         </div>
       </BrowserRouter>
     </ThemeProvider>

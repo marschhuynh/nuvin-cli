@@ -14,6 +14,7 @@ import type {
 } from '@/types/tools';
 import { toolRegistry } from './tool-registry';
 import { reminderGenerator } from '../agents/reminder-generator';
+import { useToolPermissionStore } from '@/store';
 
 export class ToolIntegrationService {
   /**
@@ -141,13 +142,48 @@ export class ToolIntegrationService {
       }
     });
 
-    // Execute tool calls
+    const store = useToolPermissionStore.getState();
+    const convoId = context.sessionId || 'default';
+    const allowedCalls: ToolCall[] = [];
+    const deniedResults: ToolCallResult[] = [];
+
+    for (const call of toolCalls) {
+      if (store.isToolAllowed(convoId, call.name)) {
+        allowedCalls.push(call);
+        continue;
+      }
+
+      const decision = await store.askPermission(convoId, call.name);
+      if (decision === 'conversation') {
+        store.allowForConversation(convoId, call.name);
+        allowedCalls.push(call);
+      } else if (decision === 'once') {
+        allowedCalls.push(call);
+      } else {
+        deniedResults.push({
+          id: call.id,
+          name: call.name,
+          result: {
+            status: 'error',
+            type: 'text',
+            result: 'Tool execution denied by user',
+          },
+        });
+      }
+    }
+
+    // Execute allowed tool calls
     const maxConcurrent = agentToolConfig?.maxConcurrentCalls || 3;
-    const toolResults = await toolRegistry.executeToolCalls(
-      toolCalls,
-      context,
-      maxConcurrent,
-    );
+    const executedResults =
+      allowedCalls.length > 0
+        ? await toolRegistry.executeToolCalls(
+            allowedCalls,
+            context,
+            maxConcurrent,
+          )
+        : [];
+
+    const toolResults = [...executedResults, ...deniedResults];
 
     console.log('DEBUG:processCompletionResult', toolResults);
 
