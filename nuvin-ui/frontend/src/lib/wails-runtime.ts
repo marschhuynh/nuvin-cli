@@ -51,6 +51,7 @@ export async function ClipboardGetText(): Promise<string> {
     try {
       return await navigator.clipboard.readText();
     } catch {
+      console.warn('Failed to read clipboard contents', { hasRuntime });
       return '';
     }
   }

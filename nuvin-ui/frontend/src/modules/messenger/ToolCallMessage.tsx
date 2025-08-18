@@ -99,7 +99,11 @@ export function ToolCallMessage({
       }
       setIsEditing(false);
     } catch (error) {
-      alert('Invalid JSON format. Please check your syntax.');
+      setErrorDialog({
+        open: true,
+        title: 'Invalid JSON',
+        message: 'Please check your syntax and try again.',
+      });
     }
   }, [
     activeConversationId,
@@ -117,6 +121,13 @@ export function ToolCallMessage({
   }, [args]);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // Simple error dialog for invalid JSON
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+  }>({ open: false, title: '', message: '' });
 
   const handleDelete = useCallback(() => {
     if (activeConversationId) {
@@ -174,6 +185,26 @@ export function ToolCallMessage({
 
   return (
     <>
+      {/* Error dialog */}
+      <Dialog open={errorDialog.open} onOpenChange={(o) => setErrorDialog((d) => ({ ...d, open: o }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{errorDialog.title}</DialogTitle>
+            {errorDialog.message && (
+              <DialogDescription>{errorDialog.message}</DialogDescription>
+            )}
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm border bg-background hover:bg-muted/50"
+              onClick={() => setErrorDialog((d) => ({ ...d, open: false }))}
+            >
+              OK
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Tool icon */}
       <div className="h-8 w-8 bg-green-400 rounded-full flex items-center justify-center flex-shrink-0">
         <Wrench className="h-4 w-4 text-white" />
