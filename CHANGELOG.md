@@ -1,3 +1,12 @@
+# [1.2.0](https://github.com/marschhuynh/nuvin-space/compare/v1.1.0...v1.2.0) (2025-08-18)
+
+
+### Features
+
+* add basic file manipulation tools ([ee367a2](https://github.com/marschhuynh/nuvin-space/commit/ee367a2930a95efddfab1c821736e714167a6815))
+* add confirmation dialog for message deletion in AssistantMessage, ToolCallMessage, and UserMessage components ([6830991](https://github.com/marschhuynh/nuvin-space/commit/6830991ea7410ac0e3e657fbcd714a8a8f4de171))
+* add timeout parameter to FetchRequest and update related functions ([c63e4ec](https://github.com/marschhuynh/nuvin-space/commit/c63e4ec3384ddbf403919a3d77ef324ef9600c35))
+
 # [1.1.0](https://github.com/marschhuynh/nuvin-space/compare/v1.0.0...v1.1.0) (2025-08-18)
 
 
