@@ -4,7 +4,13 @@
  */
 
 import { FetchProxy } from '../../wailsjs/go/main/App';
-import { LogInfo, LogError, EventsOn, EventsOff } from '@wails/runtime';
+import {
+  LogInfo,
+  LogError,
+  EventsOn,
+  EventsOff,
+  isWailsEnvironment,
+} from './wails-runtime';
 
 const SERVER_BASE_URL =
   import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
@@ -334,17 +340,6 @@ export function disableGlobalFetchProxy(): void {
   // Note: This is a simplified implementation
   // In practice, you'd want to store the original fetch first
   LogInfo('Global fetch proxy disabled (original fetch not restored)');
-}
-
-/**
- * Check if we're running in a Wails environment
- */
-export function isWailsEnvironment(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof (window as any).go !== 'undefined' &&
-    typeof (window as any).go.main !== 'undefined'
-  );
 }
 
 /**
