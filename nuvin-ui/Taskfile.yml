@@ -1,0 +1,90 @@
+version: '3'
+
+# Wails v3 uses `wails3 task <name>` to invoke these tasks.
+vars:
+  DEV_URL: http://localhost:5173
+  APP_NAME: nuvin-space
+  VERSION:
+    sh: |
+      grep -o '"productVersion": "[^"]*"' wails.json | sed -E 's/.*"([^"]+)"/\1/'
+  GOOS:
+    sh: go env GOOS
+  GOARCH:
+    sh: go env GOARCH
+
+tasks:
+  frontend:install:
+    dir: frontend
+    cmds:
+      - pnpm install
+
+  frontend:build:
+    dir: frontend
+    cmds:
+      - pnpm build
+
+  frontend:dev:
+    dir: frontend
+    cmds:
+      - pnpm dev
+
+  dev:
+    desc: Run Vite + app in dev mode
+    deps: [frontend:install]
+    env:
+      FRONTEND_DEVSERVER_URL: "{{.DEV_URL}}"
+    cmds:
+      - |
+        (cd frontend && pnpm dev) &
+      - go run .
+
+  build:
+    desc: Build frontend then desktop binary
+    deps: [frontend:build]
+    cmds:
+      - mkdir -p build
+      - go build -o build/{{.APP_NAME}} .
+
+  package:prepare:
+    desc: Prepare dist directory and copy built binary with versioned name
+    deps: [build]
+    cmds:
+      - mkdir -p dist
+      - cp build/{{.APP_NAME}} dist/{{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}}{{if eq .GOOS "windows"}}.exe{{end}}
+
+  package:archive:
+    desc: Create a simple archive for the current platform (zip on macOS/Windows, tar.gz on Linux)
+    deps: [package:prepare]
+    cmds:
+      - |
+        if [ "{{.GOOS}}" = "linux" ]; then \
+          tar czf dist/{{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}}.tar.gz -C dist {{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}} ; \
+        else \
+          cd dist && zip -r {{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}}.zip {{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}}{{if eq .GOOS "windows"}}.exe{{end}} ; \
+        fi
+
+  package:mac:dmg:
+    desc: Create a minimal DMG containing the app binary (macOS only)
+    deps: [package:prepare]
+    cmds:
+      - |
+        if [ "{{.GOOS}}" != "darwin" ]; then echo "This task must be run on macOS" && exit 1; fi
+      - rm -rf dist/dmg && mkdir -p dist/dmg
+      - cp dist/{{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}} dist/dmg/{{.APP_NAME}}
+      - hdiutil create dist/{{.APP_NAME}}_{{.VERSION}}_macOS.dmg -volname "{{.APP_NAME}}" -srcfolder dist/dmg -ov -fs HFS+
+
+  package:win:zip:
+    desc: Zip the Windows executable (run on Windows build machine)
+    deps: [package:prepare]
+    cmds:
+      - |
+        if [ "{{.GOOS}}" != "windows" ]; then echo "This task should be run on Windows"; fi
+      - cd dist && zip -r {{.APP_NAME}}_{{.VERSION}}_windows-{{.GOARCH}}.zip {{.APP_NAME}}_{{.VERSION}}_windows-{{.GOARCH}}.exe
+
+  package:linux:tar:
+    desc: Tar/Gzip the Linux binary (run on Linux build machine)
+    deps: [package:prepare]
+    cmds:
+      - |
+        if [ "{{.GOOS}}" != "linux" ]; then echo "This task should be run on Linux"; fi
+      - tar czf dist/{{.APP_NAME}}_{{.VERSION}}_linux-{{.GOARCH}}.tar.gz -C dist {{.APP_NAME}}_{{.VERSION}}_linux-{{.GOARCH}}

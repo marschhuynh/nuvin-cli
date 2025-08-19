@@ -11,7 +11,7 @@ import (
     "strings"
     "time"
 
-    "github.com/wailsapp/wails/v2/pkg/runtime"
+    runtime "nuvin-ui/internal/v3compat"
 )
 
 // MCPProcess represents a running MCP server process
@@ -307,4 +307,3 @@ func (a *App) forwardMCPStderr(process *MCPProcess) {
         runtime.LogError(a.ctx, fmt.Sprintf("Error reading MCP %s stderr: %v", process.ID, err))
     }
 }
-

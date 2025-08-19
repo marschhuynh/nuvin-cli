@@ -3,7 +3,7 @@
  * This bypasses CORS restrictions and provides better error handling
  */
 
-import { FetchProxy } from '../../wailsjs/go/main/App';
+import { callApp } from './wails-call';
 import {
   LogInfo,
   LogError,
@@ -299,7 +299,7 @@ export async function fetchProxy(
             body: JSON.stringify(fetchRequest),
           })
         ).json()
-      : await FetchProxy(fetchRequest);
+      : await callApp<FetchResponse>('FetchProxy', fetchRequest);
 
     if (response.error) {
       LogError(`Fetch proxy error: ${response.error}`);

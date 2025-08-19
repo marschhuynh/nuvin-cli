@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+    wruntime "nuvin-ui/internal/v3compat"
 )
 
 const (

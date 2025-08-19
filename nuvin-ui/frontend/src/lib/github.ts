@@ -1,4 +1,4 @@
-import { FetchGithubCopilotKey } from '../../wailsjs/go/main/App';
+import { callApp } from './wails-call';
 
 export async function fetchGithubCopilotKey(): Promise<string | null> {
   try {
@@ -8,7 +8,7 @@ export async function fetchGithubCopilotKey(): Promise<string | null> {
       return null;
     }
 
-    const token = await FetchGithubCopilotKey();
+  const token = await callApp<string>('FetchGithubCopilotKey');
     return token || null;
   } catch (error) {
     console.error('Failed to fetch GitHub Copilot key:', error);

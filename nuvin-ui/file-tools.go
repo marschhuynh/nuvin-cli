@@ -6,7 +6,7 @@ import (
     "path/filepath"
     "time"
 
-    "github.com/wailsapp/wails/v2/pkg/runtime"
+    runtime "nuvin-ui/internal/v3compat"
 )
 
 // FileInfo represents basic file metadata for directory listings

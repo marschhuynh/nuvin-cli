@@ -24,7 +24,7 @@ import { useProviderStore } from '@/store/useProviderStore';
 import { useAgentStore } from '@/store/useAgentStore';
 import { useModelsStore } from '@/store/useModelsStore';
 import { useTheme } from '@/lib/theme';
-import { CheckForUpdates } from '../../../wailsjs/go/main/App';
+import { callApp } from '@/lib/wails-call';
 
 interface GeneralSettingsProps {
   settings: UserPreferences;
@@ -342,7 +342,7 @@ export function GeneralSettings({
         {/* Application Update Section */}
         <div className="flex items-center justify-between pt-4 border-t">
           <Label className="text-sm font-medium">Application Update</Label>
-          <Button type="button" onClick={() => CheckForUpdates()} disabled>
+          <Button type="button" onClick={() => void callApp('CheckForUpdates')}>
             Check for Updates
           </Button>
         </div>

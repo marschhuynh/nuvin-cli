@@ -16,7 +16,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/browser"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+    runtime "nuvin-ui/internal/v3compat"
 )
 
 // App struct

@@ -1,5 +1,5 @@
 import { Tool } from '@/types/tools';
-import * as App from '../../../../wailsjs/go/main/App';
+import { callApp } from '@/lib/wails-call';
 
 export const bashTool: Tool = {
   definition: {
@@ -95,7 +95,7 @@ export const bashTool: Tool = {
       );
 
       // Execute command via Wails backend
-      const response = await App.ExecuteCommand(commandRequest);
+      const response = await callApp<any>('ExecuteCommand', commandRequest);
 
       // Format response for tool result
       const additionalResult: Record<string, any> = {
