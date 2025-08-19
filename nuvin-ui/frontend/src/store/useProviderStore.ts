@@ -15,6 +15,8 @@ interface ProviderState {
   setActiveProvider: (id: string) => void;
   isNameUnique: (name: string, excludeId?: string) => boolean;
   reset: () => void;
+  hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
 }
 
 const defaultProviders: ProviderConfig[] = [];
@@ -86,9 +88,14 @@ export const useProviderStore = create<ProviderState>()(
       },
       reset: () =>
         set({ providers: defaultProviders, activeProviderId: 'default' }),
+      hasHydrated: false,
+      setHasHydrated: (state) => set({ hasHydrated: state }),
     })),
     {
       name: 'provider-storage',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

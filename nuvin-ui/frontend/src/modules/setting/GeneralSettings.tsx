@@ -308,14 +308,12 @@ export function GeneralSettings({
                 style={{ display: 'none' }}
                 id="settings-import"
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('settings-import')?.click()}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Import Settings
-              </Button>
+              <label htmlFor="settings-import">
+                <Button type="button" variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Settings
+                </Button>
+              </label>
             </div>
           </div>
           
