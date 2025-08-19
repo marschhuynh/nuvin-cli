@@ -96,28 +96,57 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+      
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install frontend dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: ./nuvin-ui/frontend
+        working-directory: ./nuvin-ui
+        run: task frontend:install
 
       - name: Download Go modules
         working-directory: ./nuvin-ui
         run: go mod download
 
-      - name: Prepare build folder and icon
+      - name: Build application
         working-directory: ./nuvin-ui
         run: |
-          mkdir -p build
-          cp icons/appicon.png build/
+          case "${{ matrix.build.platform }}" in
+            "darwin/universal")
+              task build
+              ;;
+            "linux/amd64")
+              GOOS=linux GOARCH=amd64 task build
+              ;;
+            "windows/amd64")
+              GOOS=windows GOARCH=amd64 task build
+              ;;
+            *)
+              task build
+              ;;
+          esac
 
-      - name: Build application
-        uses: ./.github/actions/dAppServer
-        with:
-          app-working-directory: ./nuvin-ui
-          build-name: ${{ matrix.build.name }}
-          build-platform: ${{ matrix.build.platform }}
+      - name: Package application
+        working-directory: ./nuvin-ui
+        run: |
+          case "${{ matrix.build.platform }}" in
+            "darwin/universal")
+              task package:mac:app
+              ;;
+            "linux/amd64")
+              GOOS=linux GOARCH=amd64 task package:archive
+              ;;
+            "windows/amd64")
+              GOOS=windows GOARCH=amd64 task package:archive
+              ;;
+            *)
+              task package:archive
+              ;;
+          esac
 
       - name: Sanitize artifact name
         id: sanitize
@@ -132,7 +161,8 @@ jobs:
         with:
           name: ${{ steps.sanitize.outputs.artifact_name }}
           path: |
-            nuvin-ui/build/bin/
+            nuvin-ui/build/
+            nuvin-ui/dist/
           retention-days: 90
 
   release:
