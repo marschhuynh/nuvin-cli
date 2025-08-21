@@ -155,9 +155,9 @@ export default function Messenger() {
           console.log('Error message already added, skipping duplicate');
           return;
         }
-        
+
         errorMessageAdded = true;
-        
+
         if (conversationId) {
           const errorMessage: Message = {
             id: streamingId,
@@ -184,7 +184,7 @@ export default function Messenger() {
         // Send message using AgentManager with streaming
         const response = await sendMessage(content, {
           conversationId: conversationId,
-          stream: false,
+          stream: true,
           onChunk: (chunk: string) => {
             // Update streaming content for this specific conversation
             setStreamingStates((prev) => ({
