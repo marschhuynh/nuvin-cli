@@ -458,9 +458,9 @@ class StreamingHandler {
       }
 
       // Update accumulated usage
-      usage.prompt_tokens += followUpUsage.prompt_tokens;
-      usage.completion_tokens += followUpUsage.completion_tokens;
-      usage.total_tokens += followUpUsage.total_tokens;
+      usage.prompt_tokens = (usage.prompt_tokens || 0) + (followUpUsage.prompt_tokens || 0);
+      usage.completion_tokens = (usage.completion_tokens || 0) + (followUpUsage.completion_tokens || 0);
+      usage.total_tokens = (usage.total_tokens || 0) + (followUpUsage.total_tokens || 0);
 
       currentResult = followUpResult;
     }

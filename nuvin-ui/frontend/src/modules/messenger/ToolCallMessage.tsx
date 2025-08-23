@@ -26,6 +26,13 @@ interface ToolCallMessageProps {
   isExecuting?: boolean;
 }
 
+// Helper function to remove system reminder tags from content
+const removeSystemReminderTags = (content: string): string => {
+  if (typeof content !== 'string') return content;
+  // Remove <system-reminder>...</system-reminder> blocks including the tags
+  return content.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
+};
+
 export function ToolCallMessage({
   id,
   toolName,
@@ -342,7 +349,9 @@ export function ToolCallMessage({
                         {/* Display the actual result content */}
                         {result.result ? (
                           typeof result.result === 'string' ? (
-                            <div className="whitespace-pre-wrap text-xs leading-relaxed">{result.result}</div>
+                            <div className="whitespace-pre-wrap text-xs leading-relaxed">
+                              {removeSystemReminderTags(result.result)}
+                            </div>
                           ) : (
                             <pre className="overflow-auto leading-relaxed font-mono text-xs">
                               {formatJSON(result.result)}
