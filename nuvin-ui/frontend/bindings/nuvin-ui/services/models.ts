@@ -5,101 +5,101 @@
  * CommandRequest represents a command execution request
  */
 export interface CommandRequest {
-  command: string;
-  args?: string[] | null;
-  workingDir?: string;
-  env?: { [_: string]: string } | null;
+    "command": string;
+    "args"?: string[] | null;
+    "workingDir"?: string;
+    "env"?: { [_: string]: string } | null;
 
-  /**
-   * timeout in seconds
-   */
-  timeout?: number;
-  description?: string;
+    /**
+     * timeout in seconds
+     */
+    "timeout"?: number;
+    "description"?: string;
 }
 
 /**
  * CommandResponse represents the response from command execution
  */
 export interface CommandResponse {
-  success: boolean;
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  error?: string;
+    "success": boolean;
+    "exitCode": number;
+    "stdout": string;
+    "stderr": string;
+    "error"?: string;
 
-  /**
-   * duration in milliseconds
-   */
-  duration: number;
-  truncated?: boolean;
+    /**
+     * duration in milliseconds
+     */
+    "duration": number;
+    "truncated"?: boolean;
 }
 
 /**
  * FetchRequest represents a fetch request from JavaScript
  */
 export interface FetchRequest {
-  url: string;
-  method: string;
-  headers: { [_: string]: string } | null;
-  body?: string;
-  stream?: boolean;
+    "url": string;
+    "method": string;
+    "headers": { [_: string]: string } | null;
+    "body"?: string;
+    "stream"?: boolean;
 
-  /**
-   * timeout in seconds (0 means default)
-   */
-  timeout?: number;
+    /**
+     * timeout in seconds (0 means default)
+     */
+    "timeout"?: number;
 }
 
 /**
  * FetchResponse represents the response to send back to JavaScript
  */
 export interface FetchResponse {
-  status: number;
-  statusText: string;
-  headers: { [_: string]: string } | null;
-  body: string;
-  ok: boolean;
-  error?: string;
-  streamId?: string;
+    "status": number;
+    "statusText": string;
+    "headers": { [_: string]: string } | null;
+    "body": string;
+    "ok": boolean;
+    "error"?: string;
+    "streamId"?: string;
 }
 
 /**
  * FileInfo represents basic file metadata for directory listings
  */
 export interface FileInfo {
-  path: string;
-  name: string;
-  isDir: boolean;
-  size: number;
-  modTime: string;
+    "path": string;
+    "name": string;
+    "isDir": boolean;
+    "size": number;
+    "modTime": string;
 }
 
 /**
  * FileWriteRequest represents a request to write file contents
  */
 export interface FileWriteRequest {
-  path: string;
-  content: string;
+    "path": string;
+    "content": string;
 }
 
 /**
  * MCPMessage represents a JSON-RPC message
  */
 export interface MCPMessage {
-  jsonrpc: string;
-  id?: any;
-  method?: string;
-  params?: any;
-  result?: any;
-  error?: any;
+    "jsonrpc": string;
+    "id"?: any;
+    "method"?: string;
+    "params"?: any;
+    "result"?: any;
+    "error"?: any;
 }
 
 /**
  * MCPRequest represents a request to start an MCP server
  */
 export interface MCPRequest {
-  id: string;
-  command: string;
-  args: string[] | null;
-  env: { [_: string]: string } | null;
+    "id": string;
+    "command": string;
+    "args": string[] | null;
+    "env": { [_: string]: string } | null;
 }

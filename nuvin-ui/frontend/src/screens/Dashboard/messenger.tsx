@@ -393,22 +393,7 @@ export default function Messenger() {
         <div className="max-w-2xl mx-auto flex flex-col items-center" style={{ gap: '2rem' }}>
           {/* Welcome Header */}
           <div className="flex flex-col items-center" style={{ gap: '1rem' }}>
-            <div
-              className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center shadow-sm"
-              style={{
-                width: '5rem',
-                height: '5rem',
-              }}
-            >
-              <MessageCircle
-                className="text-blue-600"
-                style={{
-                  width: '2.5rem',
-                  height: '2.5rem',
-                }}
-              />
-            </div>
-            <div className="flex flex-col" style={{ gap: '0.5rem' }}>
+            <div className="mt-20 flex flex-col" style={{ gap: '0.5rem' }}>
               <h3
                 className="font-semibold text-gray-900"
                 style={{
@@ -553,23 +538,6 @@ export default function Messenger() {
               <Plus className="w-4 h-4" />
               {isReady ? 'Start Your First Conversation' : 'Complete Setup First'}
             </Button>
-
-            {!isReady && (
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-sm text-gray-500">Complete the steps above to get started</p>
-                {/* Quick setup shortcuts */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/settings?tab=providers')}
-                    className="h-7 px-2 text-xs"
-                  >
-                    Quick Setup
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Help Text */}

@@ -146,6 +146,37 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
     });
   }, [enabledModels, getModalityIcons]);
 
+  // Auto-select first enabled model if no model is currently selected or current model is not available
+  useEffect(() => {
+    const currentModel = activeProvider?.activeModel?.model;
+    const isCurrentModelAvailable = enabledModels.some((model) => model.id === currentModel);
+
+    // Debug logging
+    console.log('Auto-selection check:', {
+      hasActiveProvider: !!activeProvider,
+      enabledModelsCount: enabledModels.length,
+      currentModel,
+      isCurrentModelAvailable,
+      isLoadingModels,
+      modelsError,
+      firstModel: enabledModels[0]?.id,
+    });
+
+    if (
+      activeProvider &&
+      enabledModels.length > 0 &&
+      (!currentModel || currentModel === '' || !isCurrentModelAvailable) &&
+      !isLoadingModels &&
+      !modelsError
+    ) {
+      const firstModel = enabledModels[0];
+      if (firstModel) {
+        console.log('Auto-selecting first model (current not available):', firstModel.id);
+        handleModelChange(firstModel.id);
+      }
+    }
+  }, [activeProvider, enabledModels, isLoadingModels, modelsError, handleModelChange]);
+
   return (
     <div className="min-w-[200px] w-full max-w-[300px] border-l border-border bg-card overflow-auto">
       <div className="p-3">
@@ -280,29 +311,38 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
                       </div>
                     </div>
                   ) : (
-                    <Combobox
-                      options={modelOptions}
-                      value={activeProvider.activeModel?.model || ''}
-                      onValueChange={handleModelChange}
-                      placeholder="Select model..."
-                      searchPlaceholder="Search models..."
-                      emptyMessage="No models found"
-                      className="w-full"
-                      renderValue={(option) => {
-                        const model = option.data;
-                        const modalityIcons = getModalityIcons(model);
-                        const costInfo = `$${model?.inputCost?.toFixed(2)}/$${model?.outputCost?.toFixed(2)} / 1M`;
-                        return (
-                          <div className="flex flex-col gap-0.5 text-left py-0 w-full min-w-0">
-                            <div className="font-medium text-sm truncate min-w-0">{option.value}</div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">{modalityIcons}</div>
-                              <div className="text-xs font-mono text-green-600 ml-auto flex-shrink-0">{costInfo}</div>
+                    <>
+                      {/* Debug current model value */}
+                      {console.log(
+                        'Combobox render - current model value:',
+                        activeProvider.activeModel?.model,
+                        'options:',
+                        modelOptions.length,
+                      )}
+                      <Combobox
+                        options={modelOptions}
+                        value={activeProvider.activeModel?.model || ''}
+                        onValueChange={handleModelChange}
+                        placeholder="Select model..."
+                        searchPlaceholder="Search models..."
+                        emptyMessage="No models found"
+                        className="w-full"
+                        renderValue={(option) => {
+                          const model = option.data;
+                          const modalityIcons = getModalityIcons(model);
+                          const costInfo = `$${model?.inputCost?.toFixed(2)}/$${model?.outputCost?.toFixed(2)} / 1M`;
+                          return (
+                            <div className="flex flex-col gap-0.5 text-left py-0 w-full min-w-0">
+                              <div className="font-medium text-sm truncate min-w-0">{option.value}</div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1">{modalityIcons}</div>
+                                <div className="text-xs font-mono text-green-600 ml-auto flex-shrink-0">{costInfo}</div>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      }}
-                    />
+                          );
+                        }}
+                      />
+                    </>
                   )}
                 </div>
               )}
