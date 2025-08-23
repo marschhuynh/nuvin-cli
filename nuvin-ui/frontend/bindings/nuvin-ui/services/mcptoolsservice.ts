@@ -8,50 +8,50 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
+import { Call as $Call, type CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as $models from "./models.js";
+import type * as $models from './models.js';
 
 /**
  * GetMCPServerStatus returns the status of all MCP servers
  */
 export function GetMCPServerStatus(): $CancellablePromise<{ [_: string]: string } | null> {
-    return $Call.ByID(784215150);
+  return $Call.ByID(784215150);
 }
 
 /**
  * OnStartup initializes the MCP tools service
  */
 export function OnStartup(): $CancellablePromise<void> {
-    return $Call.ByID(2414610023);
+  return $Call.ByID(2414610023);
 }
 
 /**
  * SendMCPMessage sends a JSON-RPC message to an MCP server
  */
 export function SendMCPMessage(serverID: string, message: $models.MCPMessage): $CancellablePromise<void> {
-    return $Call.ByID(3794123022, serverID, message);
+  return $Call.ByID(3794123022, serverID, message);
 }
 
 /**
  * StartMCPServer starts an MCP server process
  */
 export function StartMCPServer(mcpReq: $models.MCPRequest): $CancellablePromise<void> {
-    return $Call.ByID(3170262200, mcpReq);
+  return $Call.ByID(3170262200, mcpReq);
 }
 
 /**
  * StopAllMCPServers stops all running MCP server processes
  */
 export function StopAllMCPServers(): $CancellablePromise<void> {
-    return $Call.ByID(1630449350);
+  return $Call.ByID(1630449350);
 }
 
 /**
  * StopMCPServer stops an MCP server process
  */
 export function StopMCPServer(serverID: string): $CancellablePromise<void> {
-    return $Call.ByID(349263210, serverID);
+  return $Call.ByID(349263210, serverID);
 }

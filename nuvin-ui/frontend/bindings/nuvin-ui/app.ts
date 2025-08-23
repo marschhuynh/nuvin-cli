@@ -8,11 +8,11 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
+import { Call as $Call, type CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
 
 /**
  * CheckForUpdates fetches latest release info and prompts the user to update.
  */
 export function CheckForUpdates(): $CancellablePromise<void> {
-    return $Call.ByID(2675659504);
+  return $Call.ByID(2675659504);
 }

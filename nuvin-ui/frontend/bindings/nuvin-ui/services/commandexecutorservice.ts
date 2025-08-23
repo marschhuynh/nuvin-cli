@@ -8,22 +8,22 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
+import { Call as $Call, type CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as $models from "./models.js";
+import type * as $models from './models.js';
 
 /**
  * ExecuteCommand executes a shell command and returns the result
  */
 export function ExecuteCommand(cmdReq: $models.CommandRequest): $CancellablePromise<$models.CommandResponse> {
-    return $Call.ByID(2713956722, cmdReq);
+  return $Call.ByID(2713956722, cmdReq);
 }
 
 /**
  * OnStartup initializes the command executor service
  */
 export function OnStartup(): $CancellablePromise<void> {
-    return $Call.ByID(4200292448);
+  return $Call.ByID(4200292448);
 }

@@ -8,22 +8,22 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
+import { Call as $Call, type CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as $models from "./models.js";
+import type * as $models from './models.js';
 
 /**
  * FetchProxy handles HTTP requests from JavaScript, bypassing CORS and browser restrictions
  */
 export function FetchProxy(fetchReq: $models.FetchRequest): $CancellablePromise<$models.FetchResponse> {
-    return $Call.ByID(1094590646, fetchReq);
+  return $Call.ByID(1094590646, fetchReq);
 }
 
 /**
  * OnStartup initializes the HTTP proxy service
  */
 export function OnStartup(): $CancellablePromise<void> {
-    return $Call.ByID(2038031856);
+  return $Call.ByID(2038031856);
 }

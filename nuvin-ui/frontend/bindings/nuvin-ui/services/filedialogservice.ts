@@ -8,36 +8,36 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
+import { Call as $Call, type CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as v3compat$0 from "../internal/v3compat/models.js";
+import type * as v3compat$0 from '../internal/v3compat/models.js';
 
 /**
  * OnStartup initializes the file dialog service
  */
 export function OnStartup(): $CancellablePromise<void> {
-    return $Call.ByID(1299580772);
+  return $Call.ByID(1299580772);
 }
 
 /**
  * OpenFileDialog opens a file picker dialog and returns the selected file path
  */
 export function OpenFileDialog(options: v3compat$0.OpenDialogOptions): $CancellablePromise<string> {
-    return $Call.ByID(1534127444, options);
+  return $Call.ByID(1534127444, options);
 }
 
 /**
  * OpenFileDialogAndRead opens a file picker dialog and reads the file content
  */
 export function OpenFileDialogAndRead(options: v3compat$0.OpenDialogOptions): $CancellablePromise<string> {
-    return $Call.ByID(1214589813, options);
+  return $Call.ByID(1214589813, options);
 }
 
 /**
  * SaveFileDialog opens a save file dialog and returns the selected file path
  */
 export function SaveFileDialog(options: v3compat$0.SaveDialogOptions): $CancellablePromise<string> {
-    return $Call.ByID(3815016941, options);
+  return $Call.ByID(3815016941, options);
 }
