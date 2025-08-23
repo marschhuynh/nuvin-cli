@@ -692,9 +692,15 @@ class ToolExecutor {
           agentId: context.toolContext.metadata?.agentId || 'unknown',
           provider: context.toolContext.metadata?.provider || 'unknown',
           model,
+          // Add token usage information - these individual tool messages don't consume tokens themselves
+          // but we'll show 0 to be explicit (tokens are tracked in the main assistant response)
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          estimatedCost: 0,
+          responseTime: Date.now() - context.startTime,
         },
       };
-
       onToolMessage(toolMessageResponse);
     }
   }

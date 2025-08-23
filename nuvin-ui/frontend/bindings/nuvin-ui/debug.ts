@@ -8,11 +8,11 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
+import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
 
 /**
  * LogRandomTest logs a simple debug message with a random value and returns it.
  */
 export function LogRandomTest(): $CancellablePromise<string> {
-  return $Call.ByID(154956394);
+    return $Call.ByID(154956394);
 }

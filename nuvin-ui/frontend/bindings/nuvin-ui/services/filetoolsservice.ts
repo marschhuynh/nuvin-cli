@@ -8,64 +8,64 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
+import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as $models from './models.js';
+import * as $models from "./models.js";
 
 /**
  * ListDir lists entries in a directory with basic metadata
  */
 export function ListDir(dir: string): $CancellablePromise<$models.FileInfo[] | null> {
-  return $Call.ByID(1459129170, dir);
+    return $Call.ByID(1459129170, dir);
 }
 
 /**
  * MkdirAll creates a directory and all parents as needed
  */
 export function MkdirAll(dir: string): $CancellablePromise<void> {
-  return $Call.ByID(1230943425, dir);
+    return $Call.ByID(1230943425, dir);
 }
 
 /**
  * OnStartup initializes the file tools service
  */
 export function OnStartup(): $CancellablePromise<void> {
-  return $Call.ByID(3831680699);
+    return $Call.ByID(3831680699);
 }
 
 /**
  * PathExists checks if a path exists on disk
  */
 export function PathExists(path: string): $CancellablePromise<boolean> {
-  return $Call.ByID(3060452268, path);
+    return $Call.ByID(3060452268, path);
 }
 
 /**
  * ReadFile reads a file from disk and returns its contents as UTF-8 string
  */
 export function ReadFile(path: string): $CancellablePromise<string> {
-  return $Call.ByID(2871983729, path);
+    return $Call.ByID(2871983729, path);
 }
 
 /**
  * Remove removes a file or directory. If recursive is true, removes directories recursively.
  */
 export function Remove(path: string, recursive: boolean): $CancellablePromise<void> {
-  return $Call.ByID(675255063, path, recursive);
+    return $Call.ByID(675255063, path, recursive);
 }
 
 /**
  * Rename moves or renames a file or directory to a new path, creating parents as needed
  */
 export function Rename(oldPath: string, newPath: string): $CancellablePromise<void> {
-  return $Call.ByID(4138979201, oldPath, newPath);
+    return $Call.ByID(4138979201, oldPath, newPath);
 }
 
 /**
  * WriteFile writes content to the specified path, creating parent directories as needed
  */
 export function WriteFile(req: $models.FileWriteRequest): $CancellablePromise<void> {
-  return $Call.ByID(1599682392, req);
+    return $Call.ByID(1599682392, req);
 }
