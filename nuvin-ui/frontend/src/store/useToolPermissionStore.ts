@@ -12,6 +12,7 @@ interface PermissionRequest {
 interface ToolPermissionState {
   permissions: Record<string, string[]>; // conversationId -> allowed tool names
   request: PermissionRequest | null;
+  requestQueue: PermissionRequest[];
   isToolAllowed: (conversationId: string, toolName: string) => boolean;
   allowForConversation: (conversationId: string, toolName: string) => void;
   askPermission: (
@@ -27,6 +28,7 @@ export const useToolPermissionStore = create<ToolPermissionState>()(
     (set, get) => ({
       permissions: {},
       request: null,
+      requestQueue: [],
       isToolAllowed: (conversationId, toolName) => {
         const allowed = get().permissions[conversationId] || [];
         return allowed.includes(toolName);
@@ -44,14 +46,42 @@ export const useToolPermissionStore = create<ToolPermissionState>()(
         }),
       askPermission: (conversationId, toolName, toolParams) =>
         new Promise<'once' | 'conversation' | 'deny'>((resolve) => {
-          set({ request: { conversationId, toolName, toolParams, resolve } });
+          const newRequest = { conversationId, toolName, toolParams, resolve };
+          
+          set((state) => {
+            // If no current request, show this one immediately
+            if (!state.request) {
+              return { 
+                ...state,
+                request: newRequest,
+                requestQueue: [...state.requestQueue]
+              };
+            } else {
+              // Otherwise, queue it
+              return {
+                ...state,
+                requestQueue: [...state.requestQueue, newRequest]
+              };
+            }
+          });
         }),
       resolveRequest: (decision) => {
         const req = get().request;
         if (req) {
           req.resolve(decision);
         }
-        set({ request: null });
+        
+        set((state) => {
+          // Process next request in queue if any
+          const nextRequest = state.requestQueue[0];
+          const remainingQueue = state.requestQueue.slice(1);
+          
+          return {
+            ...state,
+            request: nextRequest || null,
+            requestQueue: remainingQueue
+          };
+        });
       },
     }),
     {
@@ -59,4 +89,4 @@ export const useToolPermissionStore = create<ToolPermissionState>()(
       partialize: (state) => ({ permissions: state.permissions }),
     },
   ),
-);
+);;
