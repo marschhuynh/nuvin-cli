@@ -390,9 +390,54 @@ class StreamingHandler {
         messages: currentMessages,
       };
 
-      // Get next completion (non-streaming for follow-ups to maintain consistency)
+      // Get next completion with STREAMING to maintain consistency
       recursionDepth++;
-      const followUpResult = await provider.generateCompletion(followUpParams, signal);
+      let followUpContent = '';
+      let followUpToolCalls: ToolCall[] = [];
+      let followUpUsage: UsageData = {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+
+      // Stream the follow-up response as well
+      const followUpStream = provider.generateCompletionStreamWithTools(followUpParams, signal);
+      
+      try {
+        for await (const chunk of followUpStream) {
+          if (signal?.aborted) {
+            throw new Error('Request cancelled');
+          }
+
+          if (chunk.content) {
+            followUpContent += chunk.content;
+            // Emit streaming content if there is any
+            if (chunk.content.trim()) {
+              context.options.onChunk?.(chunk.content);
+            }
+          }
+
+          if (chunk.usage) {
+            followUpUsage = chunk.usage;
+          }
+
+          if (chunk.tool_calls) {
+            followUpToolCalls = chunk.tool_calls;
+          }
+        }
+      } catch (error) {
+        if (signal?.aborted) {
+          throw new Error('Request cancelled by user');
+        }
+        throw error;
+      }
+
+      // Build the follow-up result
+      const followUpResult: CompletionResult = {
+        content: followUpContent,
+        tool_calls: followUpToolCalls.length > 0 ? followUpToolCalls : undefined,
+        usage: followUpUsage,
+      };
 
       // If this follow-up has content, emit it as an additional message
       if (followUpResult.content.trim() && context.options.onAdditionalMessage) {
@@ -411,6 +456,11 @@ class StreamingHandler {
         };
         context.options.onAdditionalMessage(followUpMessage);
       }
+
+      // Update accumulated usage
+      usage.prompt_tokens += followUpUsage.prompt_tokens;
+      usage.completion_tokens += followUpUsage.completion_tokens;
+      usage.total_tokens += followUpUsage.total_tokens;
 
       currentResult = followUpResult;
     }
