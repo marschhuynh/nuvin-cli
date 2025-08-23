@@ -285,8 +285,6 @@ export default function Messenger() {
     [
       addMessage,
       activeConversationId,
-      agentType,
-      activeProvider,
       sendMessage,
       activeAgent,
       getConversationMessages,

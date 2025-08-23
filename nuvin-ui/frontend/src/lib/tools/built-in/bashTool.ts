@@ -107,8 +107,7 @@ export const bashTool: Tool = {
 
       // Add truncation warning if needed
       if (response.truncated) {
-        additionalResult.warning =
-          (additionalResult.warning ? additionalResult.warning + '. ' : '') + 'Output was truncated due to size limits';
+        additionalResult.warning = `${additionalResult.warning ? `${additionalResult.warning}. ` : ''}Output was truncated due to size limits`;
       }
 
       // Check if command failed

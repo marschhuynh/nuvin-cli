@@ -1,9 +1,9 @@
 import { readFileTool } from '../readFileTool';
 import { newFileTool } from '../newFileTool';
 import { editFileTool } from '../editFileTool';
-import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
-import path from 'path';
+import { promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 describe('file tools', () => {
   it('should create, read and edit files', async () => {

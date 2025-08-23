@@ -1,4 +1,4 @@
-import { Conversation } from '@/types';
+import type { Conversation } from '@/types';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatRelativeTime } from '@/lib/timestamp';

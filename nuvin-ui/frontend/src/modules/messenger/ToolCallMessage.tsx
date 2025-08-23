@@ -94,7 +94,7 @@ export function ToolCallMessage({
         });
       }
       setIsEditing(false);
-    } catch (error) {
+    } catch (_error) {
       setErrorDialog({
         open: true,
         title: 'Invalid JSON',

@@ -61,10 +61,10 @@ export class LocalAgent extends BaseAgent {
   private async handleRegularMessage(context: ExecutionContext, provider: LLMProvider): Promise<MessageResponse> {
     // 1. Get initial completion
     let currentResult = await provider.generateCompletion(context.params, this.abortController?.signal);
-    let allToolResults: ToolCallResult[] = [];
+    const allToolResults: ToolCallResult[] = [];
     let recursionDepth = 0;
     const maxRecursionDepth = 50;
-    let currentMessages = [...context.params.messages]; // Track message history properly
+    const currentMessages = [...context.params.messages]; // Track message history properly
 
     // 2. Handle recursive tool calls at agent level
     while (currentResult.tool_calls && currentResult.tool_calls.length > 0 && recursionDepth < maxRecursionDepth) {
@@ -307,8 +307,8 @@ class StreamingHandler {
     }
 
     const messageBuilder = new MessageBuilder();
-    let allToolResults: ToolCallResult[] = [];
-    let currentMessages = [...context.params.messages]; // Track message history properly
+    const allToolResults: ToolCallResult[] = [];
+    const currentMessages = [...context.params.messages]; // Track message history properly
     let recursionDepth = 0;
     const maxRecursionDepth = 50;
 

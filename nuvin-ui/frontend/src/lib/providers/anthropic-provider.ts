@@ -149,7 +149,7 @@ export class AnthropicProvider extends BaseLLMProvider {
     return nameMap[modelId] || modelId;
   }
 
-  private getContextLength(modelId: string): number {
+  private getContextLength(_modelId: string): number {
     // All current Claude models have 200k context
     return 200000;
   }
@@ -182,15 +182,15 @@ export class AnthropicProvider extends BaseLLMProvider {
     return costMap[modelId] || 15;
   }
 
-  private getModality(modelId: string): string {
+  private getModality(_modelId: string): string {
     return 'text';
   }
 
-  private getInputModalities(modelId: string): string[] {
+  private getInputModalities(_modelId: string): string[] {
     return ['text'];
   }
 
-  private getOutputModalities(modelId: string): string[] {
+  private getOutputModalities(_modelId: string): string[] {
     return ['text'];
   }
 

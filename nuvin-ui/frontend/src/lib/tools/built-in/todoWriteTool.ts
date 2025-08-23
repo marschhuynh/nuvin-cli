@@ -1,4 +1,4 @@
-import { Tool } from '@/types/tools';
+import type { Tool } from '@/types/tools';
 import { useTodoStore } from '@/store/useTodoStore';
 import type { TodoItem } from '@/types';
 

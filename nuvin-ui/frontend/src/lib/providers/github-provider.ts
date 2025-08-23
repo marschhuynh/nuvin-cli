@@ -233,7 +233,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
     return ['text'];
   }
 
-  private getOutputModalities(modelId: string): string[] {
+  private getOutputModalities(_modelId: string): string[] {
     return ['text'];
   }
 

@@ -1,4 +1,4 @@
-import { Tool } from '@/types/tools';
+import type { Tool } from '@/types/tools';
 
 export const calculatorTool: Tool = {
   definition: {
@@ -60,7 +60,7 @@ export const calculatorTool: Tool = {
         Object.entries(mathContext).forEach(([name, func]) => {
           if (typeof func === 'function') {
             const regex = new RegExp(`\\b${name}\\s*\\(([^)]+)\\)`, 'g');
-            processedExpr = processedExpr.replace(regex, (match, args) => {
+            processedExpr = processedExpr.replace(regex, (_match, args) => {
               const argValues = args.split(',').map((arg: string) => evaluateExpression(arg.trim()));
               return (func as any).apply(null, argValues).toString();
             });
@@ -70,12 +70,12 @@ export const calculatorTool: Tool = {
         });
 
         // Use Function constructor for safe evaluation
-        return new Function('return ' + processedExpr)();
+        return new Function(`return ${processedExpr}`)();
       };
 
       const result = evaluateExpression(safeExpression);
 
-      if (isNaN(result)) {
+      if (Number.isNaN(result)) {
         return {
           status: 'error',
           type: 'text',

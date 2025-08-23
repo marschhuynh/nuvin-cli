@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { Pause, Play, Plus, Settings, Trash2 } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
 import type { MCPConfig } from '@/types/mcp';
 import { ClipboardGetText } from '@/lib/wails-runtime';
 import { useMCPServers } from '@/lib/mcp/hooks/useMCPServers';
 
 import {
-  Input,
   Button,
-  Textarea,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -16,10 +14,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components';
-import { MCPServerToolsList } from '@/components/mcp/MCPServerToolsList';
-import { Label } from '@radix-ui/react-label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@radix-ui/react-select';
-import { Switch } from '@radix-ui/react-switch';
 
 import { MCPServerHeader } from './components/MCPServerHeader';
 import { MCPServersSidebar } from './components/MCPServersSidebar';
@@ -72,7 +66,7 @@ export function MCPSettings() {
 
   const parseClipboardMCPConfig = (clipboardText: string): Partial<MCPConfig> | null => {
     try {
-      console.log('Attempting to parse JSON:', clipboardText.substring(0, 200) + '...');
+      console.log('Attempting to parse JSON:', `${clipboardText.substring(0, 200)}...`);
       const parsed = JSON.parse(clipboardText) as MCPClipboardConfig;
       console.log('Parsed JSON structure:', parsed);
 

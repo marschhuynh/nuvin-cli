@@ -1,10 +1,10 @@
-import { Tool } from '@/types/tools';
+import type { Tool } from '@/types/tools';
 import { readFile, writeFile } from '@/lib/fs-bridge';
 
 function applyPatch(original: string, patch: string): string | null {
   const origLines = original.split('\n');
   const patchLines = patch.split('\n');
-  let result: string[] = [];
+  const result: string[] = [];
   let linePtr = 0;
 
   for (let i = 0; i < patchLines.length; i++) {

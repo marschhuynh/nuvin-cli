@@ -22,21 +22,33 @@ export default function Dashboard() {
 
     // Add new conversation (automatically becomes active)
     addConversation(newConversation);
-  }, []);
+  }, [
+    // Add new conversation (automatically becomes active)
+    addConversation,
+  ]);
 
-  const handleConversationSelect = useCallback((conversationId: string) => {
-    // Set the selected conversation as active
-    setActiveConversation(conversationId);
-  }, []);
+  const handleConversationSelect = useCallback(
+    (conversationId: string) => {
+      // Set the selected conversation as active
+      setActiveConversation(conversationId);
+    },
+    [
+      // Set the selected conversation as active
+      setActiveConversation,
+    ],
+  );
 
-  const handleConversationDelete = useCallback((conversationId: string) => {
-    startTransition(() => {
-      if (conversationId === activeConversationId) {
-        setActiveConversation('');
-      }
-      deleteConversation(conversationId);
-    });
-  }, []);
+  const handleConversationDelete = useCallback(
+    (conversationId: string) => {
+      startTransition(() => {
+        if (conversationId === activeConversationId) {
+          setActiveConversation('');
+        }
+        deleteConversation(conversationId);
+      });
+    },
+    [activeConversationId, deleteConversation, setActiveConversation],
+  );
 
   return (
     <div className="flex flex-1 overflow-hidden">

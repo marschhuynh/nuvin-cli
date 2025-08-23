@@ -1,4 +1,4 @@
-import { Tool } from '@/types/tools';
+import type { Tool } from '@/types/tools';
 import { readFile } from '@/lib/fs-bridge';
 
 export const readFileTool: Tool = {

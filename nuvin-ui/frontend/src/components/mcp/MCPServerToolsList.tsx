@@ -44,7 +44,7 @@ export function MCPServerToolsList({
 
   const serverTools = useMemo(() => {
     return toolRegistry.getMCPToolsForServer(server.id);
-  }, [server.id, toolsRefreshKey]);
+  }, [server.id]);
 
   const filteredTools = useMemo(() => {
     if (!searchTerm) return serverTools;

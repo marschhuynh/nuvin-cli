@@ -340,7 +340,7 @@ export class MCPManager {
         console.error(`MCP server '${serverId}' error:`, event.error);
         break;
 
-      case 'toolsChanged':
+      case 'toolsChanged': {
         config.toolCount = event.tools.length;
         const client = this.clients.get(serverId);
         if (client) {
@@ -349,6 +349,7 @@ export class MCPManager {
         }
         console.log(`MCP server '${serverId}' tools updated: ${config.toolCount} tools`);
         break;
+      }
 
       case 'resourcesChanged':
         config.resourceCount = event.resources.length;

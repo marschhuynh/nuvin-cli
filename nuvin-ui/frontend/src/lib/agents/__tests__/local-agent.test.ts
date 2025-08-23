@@ -5,7 +5,7 @@ import { toolIntegrationService } from '../../tools';
 import { generateUUID } from '../../utils';
 import { calculateCost } from '../../utils/cost-calculator';
 import type { ProviderConfig, AgentSettings, Message } from '@/types';
-import type { CompletionResult, LLMProvider, ToolCall } from '../../providers/types/base';
+import type { CompletionResult, LLMProvider } from '../../providers/types/base';
 import type { ToolCallResult } from '@/types/tools';
 import { PROVIDER_TYPES } from '@/lib/providers/provider-utils';
 
@@ -179,10 +179,10 @@ describe('LocalAgent - Non-Streaming Messages', () => {
       const history = mockHistory.get('test-conv');
       expect(history).toBeDefined();
       expect(history).toHaveLength(2); // User message + Assistant response
-      expect(history![0].role).toBe('user');
-      expect(history![0].content).toBe('Test message');
-      expect(history![1].role).toBe('assistant');
-      expect(history![1].content).toBe('Response content');
+      expect(history?.[0].role).toBe('user');
+      expect(history?.[0].content).toBe('Test message');
+      expect(history?.[1].role).toBe('assistant');
+      expect(history?.[1].content).toBe('Response content');
     });
   });
 
@@ -624,12 +624,12 @@ describe('LocalAgent - Non-Streaming Messages', () => {
       // Assert
       const history = mockHistory.get('test-conv');
       expect(history).toHaveLength(3); // 2 user messages + 1 assistant response
-      expect(history![0].role).toBe('user');
-      expect(history![0].content).toBe('First message');
-      expect(history![1].role).toBe('user');
-      expect(history![1].content).toBe('Second message');
-      expect(history![2].role).toBe('assistant');
-      expect(history![2].content).toBe('Processed multiple messages');
+      expect(history?.[0].role).toBe('user');
+      expect(history?.[0].content).toBe('First message');
+      expect(history?.[1].role).toBe('user');
+      expect(history?.[1].content).toBe('Second message');
+      expect(history?.[2].role).toBe('assistant');
+      expect(history?.[2].content).toBe('Processed multiple messages');
     });
 
     it('should include tool results in history', async () => {
@@ -691,11 +691,11 @@ describe('LocalAgent - Non-Streaming Messages', () => {
       // Assert
       const history = mockHistory.get('test-conv');
       expect(history).toHaveLength(3); // User message + Tool message + Assistant response
-      expect(history![0].role).toBe('user');
-      expect(history![1].role).toBe('tool');
-      expect(history![1].content).toBe('Executed tool: testTool');
-      expect(history![1].toolCall?.name).toBe('testTool');
-      expect(history![2].role).toBe('assistant');
+      expect(history?.[0].role).toBe('user');
+      expect(history?.[1].role).toBe('tool');
+      expect(history?.[1].content).toBe('Executed tool: testTool');
+      expect(history?.[1].toolCall?.name).toBe('testTool');
+      expect(history?.[2].role).toBe('assistant');
     });
   });
 });

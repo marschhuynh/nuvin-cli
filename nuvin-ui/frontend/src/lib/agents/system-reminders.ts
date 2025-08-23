@@ -1,6 +1,6 @@
 import type { Message } from '@/types';
 import { useTodoStore } from '@/store/useTodoStore';
-import { ToolCallResult } from '../tools';
+import type { ToolCallResult } from '../tools';
 
 export interface SystemReminder {
   id: string;

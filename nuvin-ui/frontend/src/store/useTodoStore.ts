@@ -239,7 +239,7 @@ export const useTodoStore = create<TodoState>()(
           };
 
           // Remove from source
-          let newState = { ...state };
+          const newState = { ...state };
           if (sourceIsGlobal) {
             newState.globalTodos = state.globalTodos.filter((t) => t.id !== todoId);
           } else if (sourceConversationId) {

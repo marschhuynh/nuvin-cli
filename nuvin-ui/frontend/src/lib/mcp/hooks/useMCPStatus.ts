@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { mcpIntegration } from '../mcp-integration';
-import { ExtendedMCPConfig, MCPClientEvent } from '@/types/mcp';
+import type { ExtendedMCPConfig, MCPClientEvent } from '@/types/mcp';
 
 /**
  * React hook for MCP status monitoring
@@ -32,7 +32,7 @@ export function useMCPStatus() {
     updateStatus();
 
     // Set up event listener for MCP events
-    const handleMCPEvent = (event: MCPClientEvent) => {
+    const handleMCPEvent = (_event: MCPClientEvent) => {
       updateStatus();
     };
 
@@ -53,7 +53,7 @@ export function useMCPStatus() {
       clearInterval(checkInitialization);
       manager.offEvent(handleMCPEvent);
     };
-  }, [isInitialized]);
+  }, [isInitialized, updateStatus]);
 
   return {
     isInitialized,

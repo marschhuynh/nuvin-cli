@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from 'react';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
-import { themes, themeNames, ThemeName } from '@/themes';
+import { themes, themeNames, type ThemeName } from '@/themes';
 
 type Theme = ThemeName | 'system';
 

@@ -1,4 +1,4 @@
-import { Tool } from '@/types/tools';
+import type { Tool } from '@/types/tools';
 
 export const timeTool: Tool = {
   definition: {
@@ -32,7 +32,7 @@ export const timeTool: Tool = {
 
       // Get time in specified timezone
       let timeString: string;
-      let timeData: any = {
+      const timeData: any = {
         timestamp: now.getTime(),
         iso: now.toISOString(),
       };
@@ -52,7 +52,7 @@ export const timeTool: Tool = {
 
           timeData.timezone = timezone;
           timeData.localized = new Intl.DateTimeFormat('en-US', options).format(now);
-        } catch (error) {
+        } catch (_error) {
           return {
             status: 'error',
             type: 'text',

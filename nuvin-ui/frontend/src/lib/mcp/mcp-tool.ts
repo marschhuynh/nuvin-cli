@@ -1,6 +1,6 @@
-import { Tool, ToolDefinition, ToolExecutionResult, ToolContext } from '@/types/tools';
-import { MCPToolSchema, MCPToolCall, MCPToolResult, MCPContent } from '@/types/mcp';
-import { MCPClient } from './mcp-client';
+import type { Tool, ToolDefinition, ToolExecutionResult, ToolContext } from '@/types/tools';
+import type { MCPToolSchema, MCPToolCall, MCPToolResult, MCPContent } from '@/types/mcp';
+import type { MCPClient } from './mcp-client';
 
 /**
  * Wrapper class that adapts MCP tools to the internal Tool interface
@@ -28,7 +28,7 @@ export class MCPTool implements Tool {
   /**
    * Execute the MCP tool
    */
-  async execute(parameters: Record<string, any>, context?: ToolContext): Promise<ToolExecutionResult> {
+  async execute(parameters: Record<string, any>, _context?: ToolContext): Promise<ToolExecutionResult> {
     try {
       // Validate that the MCP client is connected
       if (!this.mcpClient.isConnected()) {

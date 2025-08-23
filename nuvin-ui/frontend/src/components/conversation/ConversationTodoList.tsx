@@ -41,7 +41,6 @@ export function ConversationTodoList({ className }: ConversationTodoListProps) {
         return <CheckCircle2 className="h-3 w-3 text-green-500" />;
       case 'in_progress':
         return <Clock className="h-3 w-3 text-blue-500" />;
-      case 'pending':
       default:
         return <Circle className="h-3 w-3 text-muted-foreground" />;
     }

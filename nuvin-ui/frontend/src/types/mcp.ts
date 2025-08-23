@@ -153,9 +153,7 @@ export type MCPClientEvent =
   | { type: 'toolsChanged'; serverId: string; tools: MCPToolSchema[] }
   | { type: 'resourcesChanged'; serverId: string; resources: MCPResource[] };
 
-export interface MCPClientEventHandler {
-  (event: MCPClientEvent): void;
-}
+export type MCPClientEventHandler = (event: MCPClientEvent) => void;
 
 // MCP initialization
 export interface MCPInitializeParams {

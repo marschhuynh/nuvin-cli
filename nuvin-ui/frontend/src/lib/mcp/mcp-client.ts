@@ -379,7 +379,7 @@ export class MCPClient {
 
     try {
       // Cancel all pending requests
-      for (const [id, { reject, timeout }] of this.pendingRequests) {
+      for (const [_id, { reject, timeout }] of this.pendingRequests) {
         clearTimeout(timeout);
         reject(new Error('Connection closed'));
       }
@@ -710,7 +710,7 @@ export class MCPClient {
 
       this.pendingRequests.set(id, { resolve, reject, timeout });
 
-      this.connection!.send(request).catch((error) => {
+      this.connection?.send(request).catch((error) => {
         this.pendingRequests.delete(id);
         clearTimeout(timeout);
         reject(error);

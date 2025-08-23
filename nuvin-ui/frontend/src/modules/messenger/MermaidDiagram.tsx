@@ -363,7 +363,7 @@ export function MermaidDiagram({ chart }: MermaidProps) {
         const originalWarn = console.warn;
 
         console.error = (msg: any) => {
-          if (msg && msg.toString().includes('debug:')) {
+          if (msg?.toString().includes('debug:')) {
             originalError(msg);
           }
         };

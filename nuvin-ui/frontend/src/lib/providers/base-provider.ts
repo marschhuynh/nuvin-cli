@@ -8,7 +8,6 @@ import type {
   StreamingRequestBody,
   UsageData,
   ToolCall,
-  ChatMessage,
 } from './types/base';
 import type { ChatCompletionResponse } from './types/openrouter';
 
@@ -240,7 +239,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
     };
   }
 
-  protected calculateCost(usage: UsageData, model?: string): number | undefined {
+  protected calculateCost(_usage: UsageData, _model?: string): number | undefined {
     // This is a basic cost calculation - providers can override this
     // For now, return undefined as costs are provider-specific
     return undefined;

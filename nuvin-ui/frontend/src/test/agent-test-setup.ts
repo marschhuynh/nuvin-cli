@@ -6,7 +6,7 @@ import type { ToolCall } from '@/lib/providers/types/base';
 vi.mock('@wails/runtime', () => ({
   LogInfo: vi.fn((message: string) => console.log('[MOCK] LogInfo:', message)),
   LogError: vi.fn((message: string) => console.error('[MOCK] LogError:', message)),
-  EventsOn: vi.fn((eventName: string, callback: (...args: any[]) => void) => {
+  EventsOn: vi.fn((eventName: string, _callback: (...args: any[]) => void) => {
     console.log('[MOCK] EventsOn:', eventName);
     return () => {}; // Return unsubscribe function
   }),

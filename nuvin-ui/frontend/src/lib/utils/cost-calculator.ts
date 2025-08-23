@@ -63,7 +63,7 @@ export function hasPricingInfo(model: string): boolean {
  */
 export function formatCost(cost: number): string {
   // Handle edge cases
-  if (!isFinite(cost) || isNaN(cost)) return '$0.00';
+  if (!Number.isFinite(cost) || Number.isNaN(cost)) return '$0.00';
 
   const isNegative = cost < 0;
   const absoluteCost = Math.abs(cost);

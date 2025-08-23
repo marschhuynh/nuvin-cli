@@ -149,7 +149,7 @@ export class OpenAIProvider extends BaseLLMProvider {
     return ['text'];
   }
 
-  protected getOutputModalities(modelId: string): string[] {
+  protected getOutputModalities(_modelId: string): string[] {
     return ['text'];
   }
 

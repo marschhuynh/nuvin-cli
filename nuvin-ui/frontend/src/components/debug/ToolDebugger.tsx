@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ export function ToolDebugger() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const { activeAgentId, agents } = useAgentStore();
 
-  const refreshDebugInfo = () => {
+  const refreshDebugInfo = useCallback(() => {
     const selectedAgent = agents.find((a) => a.id === activeAgentId);
 
     const info = {
@@ -36,11 +36,11 @@ export function ToolDebugger() {
     };
 
     setDebugInfo(info);
-  };
+  }, [activeAgentId, agents.find]);
 
   useEffect(() => {
     refreshDebugInfo();
-  }, [activeAgentId, agents]);
+  }, [refreshDebugInfo]);
 
   if (!debugInfo) {
     return (

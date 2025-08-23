@@ -91,7 +91,7 @@ export class ReminderGeneratorService {
    * Check if message content warrants system reminders
    */
   shouldIncludeReminders(messageContent: string): boolean {
-    const content = messageContent.toLowerCase();
+    const _content = messageContent.toLowerCase();
 
     // Always include core instructions
     return true;

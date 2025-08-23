@@ -6,7 +6,7 @@ import { generateUUID } from '../../utils';
 import { calculateCost } from '../../utils/cost-calculator';
 import type { ProviderConfig, AgentSettings, Message } from '@/types';
 import { PROVIDER_TYPES } from '@/lib/providers/provider-utils';
-import type { CompletionResult, LLMProvider, ToolCall } from '../../providers/types/base';
+import type { CompletionResult, LLMProvider } from '../../providers/types/base';
 import type { ToolCallResult } from '@/types/tools';
 import { createMockToolCall, createMockToolResult, createMockCompletionResult } from '@/test/agent-test-setup';
 

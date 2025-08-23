@@ -24,7 +24,7 @@ export class ToolRegistry {
       if (!this.categories.has(tool.category)) {
         this.categories.set(tool.category, []);
       }
-      this.categories.get(tool.category)!.push(tool.definition.name);
+      this.categories.get(tool.category)?.push(tool.definition.name);
     }
   }
 
@@ -76,7 +76,7 @@ export class ToolRegistry {
       return enabledTools
         .map((name) => this.tools.get(name))
         .filter((tool) => tool !== undefined)
-        .map((tool) => tool!.definition);
+        .map((tool) => tool?.definition);
     }
     return Array.from(this.tools.values()).map((tool) => tool.definition);
   }
@@ -237,7 +237,7 @@ export class ToolRegistry {
         if (!this.categories.has(mcpTool.category)) {
           this.categories.set(mcpTool.category, []);
         }
-        this.categories.get(mcpTool.category)!.push(toolName);
+        this.categories.get(mcpTool.category)?.push(toolName);
       }
     }
   }

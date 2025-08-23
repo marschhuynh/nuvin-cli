@@ -60,15 +60,15 @@ export function AgentStatusBar({ activeConversationId }: AgentStatusBarProps) {
 
   // Format numbers for display
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
 
   const formatCost = (cost: number) => {
     if (cost === 0) return '$0.00';
     if (cost < 0.01) return '<$0.01';
-    return '$' + cost.toFixed(2);
+    return `$${cost.toFixed(2)}`;
   };
 
   return (

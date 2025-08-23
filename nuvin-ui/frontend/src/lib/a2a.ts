@@ -381,7 +381,7 @@ export class A2AClient {
           }
         } else if (event.kind === 'artifact-update') {
           // Handle individual artifact updates (incremental text)
-          if (event.artifact && event.artifact.parts) {
+          if (event.artifact?.parts) {
             const textContent = this.extractTextFromParts(event.artifact.parts);
             if (textContent) {
               // For artifact updates, we usually get incremental text
@@ -671,7 +671,7 @@ export class A2AClient {
                 // Direct event format (fallback)
                 yield event;
               }
-            } catch (e) {
+            } catch (_e) {
               console.warn('Failed to parse SSE event:', data);
             }
           }
@@ -877,7 +877,7 @@ export class A2AService {
    * Calculate retry delay with exponential backoff
    */
   private calculateRetryDelay(attempt: number, config: RetryConfig): number {
-    const delay = config.initialDelay * Math.pow(config.backoffFactor, attempt - 1);
+    const delay = config.initialDelay * config.backoffFactor ** (attempt - 1);
     return Math.min(delay, config.maxDelay);
   }
 
@@ -1052,7 +1052,7 @@ export class A2AService {
       switch (authConfig.type) {
         case 'bearer':
           if (authConfig.token) {
-            headers['Authorization'] = `Bearer ${authConfig.token}`;
+            headers.Authorization = `Bearer ${authConfig.token}`;
           }
           break;
 
@@ -1067,7 +1067,7 @@ export class A2AService {
         case 'basic':
           if (authConfig.username && authConfig.password) {
             const credentials = btoa(`${authConfig.username}:${authConfig.password}`);
-            headers['Authorization'] = `Basic ${credentials}`;
+            headers.Authorization = `Basic ${credentials}`;
           }
           break;
       }
@@ -1080,7 +1080,7 @@ export class A2AService {
   /**
    * Apply authentication by patching the global object temporarily
    */
-  private patchClientAuth(authConfig: A2AAuthConfig): () => void {
+  private patchClientAuth(_authConfig: A2AAuthConfig): () => void {
     const globalObj = this.getGlobalObject();
     const originalFetch = globalObj.fetch;
 
@@ -1122,7 +1122,7 @@ export class A2AService {
     // Validate URL format
     try {
       new URL(agentBaseUrl);
-    } catch (urlError) {
+    } catch (_urlError) {
       LogInfo(`Invalid agent URL format: ${agentBaseUrl}. Please provide a valid HTTP/HTTPS URL.`);
       throw new A2AError(
         `Invalid agent URL format: ${agentBaseUrl}. Please provide a valid HTTP/HTTPS URL.`,
@@ -1721,7 +1721,7 @@ export class A2AService {
   getAllConnectionHealth(): Record<string, { isHealthy: boolean; lastSuccess: Date; failureCount: number }> {
     const result: Record<string, { isHealthy: boolean; lastSuccess: Date; failureCount: number }> = {};
 
-    for (const [url, health] of this.connectionHealth.entries()) {
+    for (const [url, _health] of this.connectionHealth.entries()) {
       result[url] = this.getConnectionHealth(url);
     }
 

@@ -169,7 +169,7 @@ export function GeneralSettings({ settings, onSettingsChange }: GeneralSettingsP
     }
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type === 'application/json' || file.name.endsWith('.json')) {

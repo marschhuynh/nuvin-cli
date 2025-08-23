@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { enableGlobalFetchProxy } from '@/lib/fetch-proxy';
 import App from './App';
 import * as WailsBinding from '@wails/binding';
 import './style.css';

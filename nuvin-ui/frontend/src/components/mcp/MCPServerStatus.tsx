@@ -1,4 +1,4 @@
-import { ExtendedMCPConfig } from '@/types/mcp';
+import type { ExtendedMCPConfig } from '@/types/mcp';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Play, Square, RotateCcw, AlertCircle, CheckCircle, Clock, Loader2 } from 'lucide-react';

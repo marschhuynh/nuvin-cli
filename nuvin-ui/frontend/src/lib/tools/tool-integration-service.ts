@@ -276,7 +276,7 @@ export class ToolIntegrationService {
       );
       return {
         ...firstResult,
-        content: firstResult.content + '\n\n[Tool calling stopped due to maximum recursion depth]',
+        content: `${firstResult.content}\n\n[Tool calling stopped due to maximum recursion depth]`,
       };
     }
 

@@ -1,4 +1,4 @@
-import { Tool } from '@/types/tools';
+import type { Tool } from '@/types/tools';
 import { mkdirAll, pathExists, writeFile } from '@/lib/fs-bridge';
 
 export const newFileTool: Tool = {

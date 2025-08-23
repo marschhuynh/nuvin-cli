@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { BaseLLMProvider } from '../base-provider';
 import { extractValue } from '../utils';
 import type { ModelInfo } from '../types/base';
@@ -42,9 +42,9 @@ describe('BaseLLMProvider', () => {
   it('should create provider with correct config', () => {
     const provider = new TestProvider();
 
-    expect(provider['type']).toBe('Test');
-    expect(provider['apiKey']).toBe('test-key');
-    expect(provider['apiUrl']).toBe('https://test.api');
+    expect(provider.type).toBe('Test');
+    expect(provider.apiKey).toBe('test-key');
+    expect(provider.apiUrl).toBe('https://test.api');
   });
 
   it('should format model info correctly', () => {

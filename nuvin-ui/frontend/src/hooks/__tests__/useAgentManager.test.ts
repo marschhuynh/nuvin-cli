@@ -205,7 +205,7 @@ describe.skip('useAgentManager', () => {
       expect(result.current.isLoading).toBe(true);
 
       await act(async () => {
-        resolvePromise!({
+        resolvePromise?.({
           id: 'response-1',
           content: 'Test response',
           role: 'assistant',
@@ -242,7 +242,7 @@ describe.skip('useAgentManager', () => {
       await act(async () => {
         try {
           await result.current.sendMessage('Hello, agent!');
-        } catch (error) {
+        } catch (_error) {
           // Error is expected
         }
       });
@@ -260,7 +260,7 @@ describe.skip('useAgentManager', () => {
       await act(async () => {
         try {
           await result.current.sendMessage('Error message');
-        } catch (error) {
+        } catch (_error) {
           // Expected
         }
       });
@@ -320,7 +320,7 @@ describe.skip('useAgentManager', () => {
       await act(async () => {
         try {
           await result.current.sendMessage('Error message');
-        } catch (error) {
+        } catch (_error) {
           // Expected
         }
       });
@@ -381,11 +381,11 @@ describe.skip('useAgentManager', () => {
       const chunks: string[] = [];
       const onChunk = vi.fn((chunk: string) => chunks.push(chunk));
 
-      mockAgentManager.sendMessage.mockImplementation((message, options) => {
+      mockAgentManager.sendMessage.mockImplementation((_message, options) => {
         // Simulate streaming chunks
         if (options?.onChunk) {
-          setTimeout(() => options.onChunk!('chunk1'), 10);
-          setTimeout(() => options.onChunk!('chunk2'), 20);
+          setTimeout(() => options.onChunk?.('chunk1'), 10);
+          setTimeout(() => options.onChunk?.('chunk2'), 20);
         }
 
         return Promise.resolve({
