@@ -7,7 +7,7 @@ import { mcpManager } from '@/lib/mcp/mcp-manager';
 import { toolIntegrationService } from '@/lib/tools/tool-integration-service';
 import { useAgentStore } from '@/store/useAgentStore';
 import { RefreshCw, Bug } from 'lucide-react';
-import { isWailsEnvironment } from '@/lib/wails-runtime';
+import { isWailsEnvironment } from '@/lib/browser-runtime';
 
 export function ToolDebugger() {
   const [debugInfo, setDebugInfo] = useState<any>(null);

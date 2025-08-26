@@ -168,7 +168,6 @@ export class GithubCopilotProvider extends BaseLLMProvider {
             outputModalities: this.getOutputModalities(model.id),
           });
         })
-        .sort((a: ModelInfo, b: ModelInfo) => this.sortModelsByPriority(a, b));
 
       return transformedModels;
     } catch (error) {
@@ -235,35 +234,5 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
   private getOutputModalities(_modelId: string): string[] {
     return ['text'];
-  }
-
-  private sortModelsByPriority(a: ModelInfo, b: ModelInfo): number {
-    // Sort by model priority (GPT-4.1 > o4-mini > o3 > o1 > GPT-4o > Jamba > Cohere)
-    const getModelPriority = (id: string): number => {
-      if (id.includes('gpt-4.1') && !id.includes('mini') && !id.includes('nano')) return 100;
-      if (id.includes('gpt-4.1-mini')) return 95;
-      if (id.includes('gpt-4.1-nano')) return 90;
-      if (id.includes('o4-mini')) return 85;
-      if (id.includes('o3') && !id.includes('mini')) return 80;
-      if (id.includes('o3-mini')) return 75;
-      if (id.includes('o1') && !id.includes('mini') && !id.includes('preview')) return 70;
-      if (id.includes('o1-preview')) return 65;
-      if (id.includes('o1-mini')) return 60;
-      if (id.includes('gpt-4o') && !id.includes('mini')) return 55;
-      if (id.includes('gpt-4o-mini')) return 50;
-      if (id.includes('jamba-1.5-large')) return 45;
-      if (id.includes('jamba-1.5-mini')) return 40;
-      if (id.includes('cohere')) return 35;
-      return 0;
-    };
-
-    const priorityA = getModelPriority(a.id);
-    const priorityB = getModelPriority(b.id);
-
-    if (priorityA !== priorityB) {
-      return priorityB - priorityA; // Higher priority first
-    }
-
-    return a.name.localeCompare(b.name);
   }
 }

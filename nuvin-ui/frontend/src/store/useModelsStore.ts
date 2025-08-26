@@ -51,6 +51,7 @@ export const useModelsStore = create<ModelsState>()(
             ...state.models,
             [providerId]: models.map((model) => ({
               ...model,
+              providerId: providerId,
               enabled: true, // Enable all models by default
             })),
           },
@@ -62,7 +63,8 @@ export const useModelsStore = create<ModelsState>()(
             ...state.errors,
             [providerId]: null,
           },
-        })),
+        })
+        ),
 
       fetchModels: async (provider) => {
         // Set loading state immediately
@@ -103,6 +105,7 @@ export const useModelsStore = create<ModelsState>()(
                 ...currentState.models,
                 [provider.id]: models.map((model) => ({
                   ...model,
+                  providerId: provider.id,
                   enabled: existingEnabledStates[model.id] ?? true, // Preserve existing state or default to true
                 })),
               },

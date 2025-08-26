@@ -1,9 +1,10 @@
+import './style.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import * as WailsBinding from '@wails/binding';
 
 import App from './App';
-import * as WailsBinding from '@wails/binding';
-import './style.css';
+// import { enableGlobalFetchProxy } from './lib';
 
 // enableGlobalFetchProxy();
 

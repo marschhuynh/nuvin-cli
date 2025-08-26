@@ -8,7 +8,7 @@ import type {
 } from '@/types/mcp';
 import { MCPClient } from './mcp-client';
 import * as MCPToolsService from '@wails/services/mcptoolsservice';
-import { isWailsEnvironment } from '@/lib/wails-runtime';
+import { isWailsEnvironment } from '@/lib/browser-runtime';
 import { type MCPTool, createMCPTools } from './mcp-tool';
 
 /**
@@ -76,16 +76,16 @@ export class MCPManager {
       const transportOptions: MCPTransportOptions =
         config.type === 'http'
           ? {
-              type: 'http',
-              url: config.url,
-              headers: config.env, // Use env field for HTTP headers
-            }
+            type: 'http',
+            url: config.url,
+            headers: config.env, // Use env field for HTTP headers
+          }
           : {
-              type: 'stdio',
-              command: config.command,
-              args: config.args,
-              env: config.env,
-            };
+            type: 'stdio',
+            command: config.command,
+            args: config.args,
+            env: config.env,
+          };
 
       const client = new MCPClient(serverId, transportOptions);
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Settings } from 'lucide-react';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
 import type { MCPConfig } from '@/types/mcp';
-import { ClipboardGetText } from '@/lib/wails-runtime';
+import { ClipboardGetText } from '@/lib/browser-runtime';
 import { useMCPServers } from '@/lib/mcp/hooks/useMCPServers';
 
 import {

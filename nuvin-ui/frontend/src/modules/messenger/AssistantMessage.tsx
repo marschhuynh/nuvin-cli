@@ -1,6 +1,6 @@
 import { Cpu, Copy, Check, FileText, Edit, Trash2, Save, X } from 'lucide-react';
 import { useState, useCallback, useMemo, useRef } from 'react';
-import { ClipboardSetText } from '@/lib/wails-runtime';
+import { ClipboardSetText } from '@/lib/browser-runtime';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { useConversationStore } from '@/store/useConversationStore';
 import type { MessageMetadata } from '@/types';

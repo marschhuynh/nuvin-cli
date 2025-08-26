@@ -6,7 +6,6 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@wails/runtime": ["./wailsjs/runtime/runtime.d.ts"],
       "@wails/binding": ["./bindings/nuvin-ui"],
       "@wails/services/*": ["./bindings/nuvin-ui/services/*"]
     }

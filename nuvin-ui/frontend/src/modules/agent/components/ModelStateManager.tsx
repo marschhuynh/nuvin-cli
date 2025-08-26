@@ -9,12 +9,14 @@ import { ModelsList } from './ModelsList';
 
 export function ModelStateManager() {
   const { availableModels, error } = useActiveModel();
-  const { fetchModels, enableAllModels, disableAllModels } = useModelsStore();
+  const { fetchModels, enableAllModels, disableAllModels, models } = useModelsStore();
 
   const { activeProviderId, providers } = useProviderStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [modalityFilter, setModalityFilter] = useState<string | null>(null);
   const [showEnabledOnly, setShowEnabledOnly] = useState(false);
+
+  console.log('models', models[activeProviderId]);
 
   const isLoading = useModelsStore((state) => state.loading[activeProviderId]);
 

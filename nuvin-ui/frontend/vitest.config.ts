@@ -18,7 +18,6 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       '@wails/runtime': resolve(__dirname, './src/test/mocks/wails-runtime.ts'),
-      '../../wailsjs/go/main/App': resolve(__dirname, './src/test/mocks/wails-app.ts'),
     },
   },
 });

@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useProviderStore } from '@/store/useProviderStore';
 import { useModelsStore, type ModelInfoWithState } from '@/store/useModelsStore';
 import type { ModelConfig } from '@/types';
+import { ModelInfo } from '@/lib';
 
 export interface ActiveModelInfo {
   // Current model configuration from provider
@@ -108,16 +109,7 @@ export function useActiveModelActions() {
   );
 
   const setProviderModels = useCallback(
-    (
-      models: Array<{
-        id: string;
-        name: string;
-        description?: string;
-        contextLength?: number;
-        inputCost?: number;
-        outputCost?: number;
-      }>,
-    ) => {
+    (models: Array<ModelInfo>) => {
       if (activeProviderId) {
         setModels(activeProviderId, models);
       }

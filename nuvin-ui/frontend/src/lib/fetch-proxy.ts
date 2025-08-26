@@ -4,7 +4,7 @@
  */
 
 import { FetchProxy as HTTPProxyFetchProxy } from '@wails/services/httpproxyservice';
-import { LogInfo, LogError, EventsOn, EventsOff, isWailsEnvironment } from './wails-runtime';
+import { LogInfo, LogError, EventsOn, EventsOff, isWailsEnvironment } from './browser-runtime';
 
 const SERVER_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
 
@@ -264,12 +264,12 @@ export async function fetchProxy(
   try {
     const response: FetchResponse = useServer
       ? await (
-          await nativeFetch(`${SERVER_BASE_URL}/fetch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fetchRequest),
-          })
-        ).json()
+        await nativeFetch(`${SERVER_BASE_URL}/fetch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fetchRequest),
+        })
+      ).json()
       : await HTTPProxyFetchProxy(fetchRequest);
 
     if (response.error) {

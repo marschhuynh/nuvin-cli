@@ -1,6 +1,6 @@
 import { User, Copy, Check, Edit, Trash2, Save, X } from 'lucide-react';
 import { useState, useCallback, useRef } from 'react';
-import { ClipboardSetText } from '@/lib/wails-runtime';
+import { ClipboardSetText } from '@/lib/browser-runtime';
 import { useConversationStore } from '@/store/useConversationStore';
 import { Textarea } from '@/components';
 import {

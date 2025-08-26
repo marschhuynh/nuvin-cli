@@ -5,7 +5,7 @@ import type {
   JSONRPCNotification,
   MCPTransportOptions,
 } from '@/types/mcp';
-import { EventsOn, EventsOff, isWailsEnvironment } from '../wails-runtime';
+import { EventsOn, EventsOff, isWailsEnvironment } from '../browser-runtime';
 import * as MCPToolsService from '@wails/services/mcptoolsservice';
 declare global {
   interface Window {

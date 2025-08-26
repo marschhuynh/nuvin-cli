@@ -8,7 +8,7 @@ vi.mock('@wails/runtime', () => ({
   LogError: vi.fn((message: string) => console.error('[MOCK] LogError:', message)),
   EventsOn: vi.fn((eventName: string, _callback: (...args: any[]) => void) => {
     console.log('[MOCK] EventsOn:', eventName);
-    return () => {}; // Return unsubscribe function
+    return () => { }; // Return unsubscribe function
   }),
   EventsOff: vi.fn((eventName: string) => console.log('[MOCK] EventsOff:', eventName)),
 }));

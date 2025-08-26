@@ -78,6 +78,7 @@ export interface StreamChunk {
 
 export interface ModelInfo {
   id: string;
+  providerId: string;
   name: string;
   description?: string;
   contextLength?: number;

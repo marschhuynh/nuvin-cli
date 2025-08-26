@@ -25,10 +25,9 @@ export function EventsOff(event: string): void {
 }
 
 export async function ClipboardGetText(): Promise<string> {
-  if (Clipboard.Text) {
+  if (isWailsEnvironment()) {
     return Clipboard.Text();
-  }
-  if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
+  } else if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
     try {
       return await navigator.clipboard.readText();
     } catch {
@@ -42,7 +41,7 @@ export async function ClipboardGetText(): Promise<string> {
 }
 
 export async function ClipboardSetText(text: string): Promise<void> {
-  if (Clipboard?.SetText) {
+  if (isWailsEnvironment()) {
     await Clipboard.SetText(text);
   } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);

@@ -316,10 +316,10 @@ export abstract class BaseLLMProvider implements LLMProvider {
         finished: true,
         usage: usage
           ? {
-              prompt_tokens: usage.prompt_tokens || usage.input_tokens || 0,
-              completion_tokens: usage.completion_tokens || usage.output_tokens || 0,
-              total_tokens: usage.total_tokens || (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0) || 0,
-            }
+            prompt_tokens: usage.prompt_tokens || usage.input_tokens || 0,
+            completion_tokens: usage.completion_tokens || usage.output_tokens || 0,
+            total_tokens: usage.total_tokens || (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0) || 0,
+          }
           : undefined,
         _metadata: this.createStreamMetadata(lastData, startTime, usage),
       };
