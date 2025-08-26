@@ -8,6 +8,7 @@ import * as GitHubOAuthService from "./githuboauthservice.js";
 import * as HTTPProxyService from "./httpproxyservice.js";
 import * as MCPToolsService from "./mcptoolsservice.js";
 import * as StreamingService from "./streamingservice.js";
+import * as UpdateService from "./updateservice.js";
 export {
     CommandExecutorService,
     FileDialogService,
@@ -15,7 +16,8 @@ export {
     GitHubOAuthService,
     HTTPProxyService,
     MCPToolsService,
-    StreamingService
+    StreamingService,
+    UpdateService
 };
 
 export type {

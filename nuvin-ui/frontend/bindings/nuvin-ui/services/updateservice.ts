@@ -14,12 +14,12 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
  * CheckForUpdates fetches latest release info and prompts the user to update.
  */
 export function CheckForUpdates(): $CancellablePromise<void> {
-    return $Call.ByID(670986527);
+    return $Call.ByID(1579577512);
 }
 
 /**
  * OnStartup captures Wails context for dialogs/logging.
  */
 export function OnStartup(): $CancellablePromise<void> {
-    return $Call.ByID(600007742);
+    return $Call.ByID(1669108113);
 }

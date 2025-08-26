@@ -126,8 +126,8 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
       const modalityIcons = getModalityIcons(model);
 
       return {
-        value: model.id,
-        label: model.name,
+        value: `${model.providerId}:${model.id}`,
+        label: model.id,
         searchContent: `${model.name} ${provider} ${modelName} ${contextInfo} ${costInfo}`,
         data: model,
         content: (
@@ -311,38 +311,29 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
                       </div>
                     </div>
                   ) : (
-                    <>
-                      {/* Debug current model value */}
-                      {console.log(
-                        'Combobox render - current model value:',
-                        activeProvider.activeModel?.model,
-                        'options:',
-                        modelOptions.length,
-                      )}
-                      <Combobox
-                        options={modelOptions}
-                        value={activeProvider.activeModel?.model || ''}
-                        onValueChange={handleModelChange}
-                        placeholder="Select model..."
-                        searchPlaceholder="Search models..."
-                        emptyMessage="No models found"
-                        className="w-full"
-                        renderValue={(option) => {
-                          const model = option.data;
-                          const modalityIcons = getModalityIcons(model);
-                          const costInfo = `$${model?.inputCost?.toFixed(2)}/$${model?.outputCost?.toFixed(2)} / 1M`;
-                          return (
-                            <div className="flex flex-col gap-0.5 text-left py-0 w-full min-w-0">
-                              <div className="font-medium text-sm truncate min-w-0">{option.value}</div>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1">{modalityIcons}</div>
-                                <div className="text-xs font-mono text-green-600 ml-auto flex-shrink-0">{costInfo}</div>
-                              </div>
+                    <Combobox
+                      options={modelOptions}
+                      value={`${activeProvider.id}:${activeProvider.activeModel?.model}`}
+                      onValueChange={handleModelChange}
+                      placeholder="Select model..."
+                      searchPlaceholder="Search models..."
+                      emptyMessage="No models found"
+                      className="w-full"
+                      renderValue={(option) => {
+                        const model = option.data;
+                        const modalityIcons = getModalityIcons(model);
+                        const costInfo = `$${model?.inputCost?.toFixed(2)}/$${model?.outputCost?.toFixed(2)} / 1M`;
+                        return (
+                          <div className="flex flex-col gap-0.5 text-left py-0 w-full min-w-0">
+                            <div className="font-medium text-sm truncate min-w-0">{option.label}</div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">{modalityIcons}</div>
+                              <div className="text-xs font-mono text-green-600 ml-auto flex-shrink-0">{costInfo}</div>
                             </div>
-                          );
-                        }}
-                      />
-                    </>
+                          </div>
+                        );
+                      }}
+                    />
                   )}
                 </div>
               )}

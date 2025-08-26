@@ -29,7 +29,7 @@ export const useAgentStore = create<AgentState>()(
           agents: state.agents.filter((a) => a.id !== id),
         })),
       setActiveAgent: (id) => set(() => ({ activeAgentId: id })),
-      reset: () => set({ agents: defaultAgents, activeAgentId: defaultAgents[0].id }),
+      reset: () => set({ agents: defaultAgents, activeAgentId: defaultAgents?.[0]?.id }),
     })),
     {
       name: 'agent-storage',
