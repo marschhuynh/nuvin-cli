@@ -36,7 +36,7 @@ type FetchResponse struct {
 
 // HTTPProxyService handles HTTP requests from JavaScript, bypassing CORS and browser restrictions
 type HTTPProxyService struct {
-	ctx             context.Context
+	ctx              context.Context
 	streamingService *StreamingService
 }
 

@@ -66,16 +66,6 @@ tasks:
           cd dist && zip -r {{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}}.zip {{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}}{{if eq .GOOS "windows"}}.exe{{end}} ; \
         fi
 
-  package:mac:dmg:
-    desc: Create a minimal DMG containing the app binary (macOS only)
-    deps: [package:prepare]
-    cmds:
-      - |
-        if [ "{{.GOOS}}" != "darwin" ]; then echo "This task must be run on macOS" && exit 1; fi
-      - rm -rf dist/dmg && mkdir -p dist/dmg
-      - cp dist/{{.APP_NAME}}_{{.VERSION}}_{{.GOOS}}-{{.GOARCH}} dist/dmg/{{.APP_NAME}}
-      - hdiutil create dist/{{.APP_NAME}}_{{.VERSION}}_macOS.dmg -volname "{{.APP_NAME}}" -srcfolder dist/dmg -ov -fs HFS+
-
   package:mac:app:
     desc: Build a proper macOS .app bundle (no Terminal)
     deps: [build]

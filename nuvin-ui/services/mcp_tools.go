@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -97,11 +99,22 @@ func (s *MCPToolsService) StartMCPServer(mcpReq MCPRequest) error {
 		cmdArgs = parts[1:]
 	}
 
+	// Resolve command path if it's not already a full path
+	originalCmd := cmdName
+	if !filepath.IsAbs(cmdName) {
+		if resolvedPath := s.resolveCommandPath(cmdName); resolvedPath != "" {
+			cmdName = resolvedPath
+			runtime.LogInfo(s.ctx, fmt.Sprintf("Resolved command '%s' to '%s'", originalCmd, cmdName))
+		} else {
+			runtime.LogWarning(s.ctx, fmt.Sprintf("Command '%s' not found in PATH or common locations", originalCmd))
+		}
+	}
+
 	runtime.LogInfo(s.ctx, fmt.Sprintf("Executing command: %s with args: %v", cmdName, cmdArgs))
 	cmd := exec.CommandContext(ctx, cmdName, cmdArgs...)
 
-	// Set environment variables
-	cmd.Env = os.Environ()
+	// Set environment variables with enhanced PATH
+	cmd.Env = s.buildEnhancedEnvironment()
 	for key, value := range mcpReq.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
@@ -290,11 +303,11 @@ func (s *MCPToolsService) forwardMCPStdout(process *MCPProcess) {
 	reader := bufio.NewReader(process.Stdout)
 
 	runtime.LogInfo(s.ctx, fmt.Sprintf("Starting stdout forwarding for MCP server %s", process.ID))
-	
+
 	// Test event emission to verify Wails3 event system
 	runtime.EventsEmit(s.ctx, "test-event", map[string]interface{}{
-		"message": "Test event from MCP stdout forwarding",
-		"serverId": process.ID,
+		"message":   "Test event from MCP stdout forwarding",
+		"serverId":  process.ID,
 		"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
 	})
 
@@ -338,7 +351,6 @@ func (s *MCPToolsService) forwardMCPStdout(process *MCPProcess) {
 	}
 }
 
-
 // forwardMCPStderr forwards stderr from MCP server to frontend
 func (s *MCPToolsService) forwardMCPStderr(process *MCPProcess) {
 	scanner := bufio.NewScanner(process.Stderr)
@@ -353,4 +365,187 @@ func (s *MCPToolsService) forwardMCPStderr(process *MCPProcess) {
 	if err := scanner.Err(); err != nil {
 		runtime.LogError(s.ctx, fmt.Sprintf("Error reading MCP %s stderr: %v", process.ID, err))
 	}
+}
+
+// resolveCommandPath attempts to find the full path to a command
+func (s *MCPToolsService) resolveCommandPath(cmdName string) string {
+	// First try exec.LookPath with enhanced environment
+	env := s.buildEnhancedEnvironment()
+
+	// Create a temporary PATH for lookup
+	var enhancedPath string
+	for _, envVar := range env {
+		if strings.HasPrefix(envVar, "PATH=") {
+			enhancedPath = strings.TrimPrefix(envVar, "PATH=")
+			break
+		}
+	}
+
+	// Save current PATH and set enhanced PATH temporarily
+	originalPath := os.Getenv("PATH")
+	if enhancedPath != "" {
+		os.Setenv("PATH", enhancedPath)
+		defer os.Setenv("PATH", originalPath)
+	}
+
+	if path, err := exec.LookPath(cmdName); err == nil {
+		return path
+	}
+
+	// Fallback: check common installation directories
+	commonPaths := s.getCommonBinaryPaths()
+	for _, dir := range commonPaths {
+		fullPath := filepath.Join(dir, cmdName)
+		if s.isExecutable(fullPath) {
+			return fullPath
+		}
+	}
+
+	return ""
+}
+
+// buildEnhancedEnvironment creates an environment with enhanced PATH
+func (s *MCPToolsService) buildEnhancedEnvironment() []string {
+	env := os.Environ()
+
+	// Get current PATH
+	currentPath := os.Getenv("PATH")
+
+	// Get enhanced PATH from user's shell
+	shellPath := s.getShellPath()
+
+	// Get common binary paths
+	commonPaths := s.getCommonBinaryPaths()
+
+	// Combine all paths, removing duplicates
+	pathMap := make(map[string]bool)
+	var enhancedPathParts []string
+
+	// Add current PATH first
+	for _, part := range strings.Split(currentPath, ":") {
+		if part != "" && !pathMap[part] {
+			pathMap[part] = true
+			enhancedPathParts = append(enhancedPathParts, part)
+		}
+	}
+
+	// Add shell PATH
+	for _, part := range strings.Split(shellPath, ":") {
+		if part != "" && !pathMap[part] {
+			pathMap[part] = true
+			enhancedPathParts = append(enhancedPathParts, part)
+		}
+	}
+
+	// Add common paths
+	for _, part := range commonPaths {
+		if part != "" && !pathMap[part] {
+			pathMap[part] = true
+			enhancedPathParts = append(enhancedPathParts, part)
+		}
+	}
+
+	enhancedPath := strings.Join(enhancedPathParts, ":")
+	runtime.LogInfo(s.ctx, fmt.Sprintf("Enhanced PATH: %s", enhancedPath))
+
+	// Replace PATH in environment
+	var newEnv []string
+	pathSet := false
+	for _, envVar := range env {
+		if strings.HasPrefix(envVar, "PATH=") {
+			newEnv = append(newEnv, "PATH="+enhancedPath)
+			pathSet = true
+		} else {
+			newEnv = append(newEnv, envVar)
+		}
+	}
+
+	// Add PATH if it wasn't in the original environment
+	if !pathSet {
+		newEnv = append(newEnv, "PATH="+enhancedPath)
+	}
+
+	return newEnv
+}
+
+// getShellPath gets the PATH from the user's shell environment
+func (s *MCPToolsService) getShellPath() string {
+	// Get current user
+	currentUser, err := user.Current()
+	if err != nil {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Could not get current user: %v", err))
+		return ""
+	}
+
+	// Try to get PATH from user's shell
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "/bin/bash" // default fallback
+	}
+
+	// Use login shell to get full environment
+	cmd := exec.Command(shell, "-l", "-c", "echo $PATH")
+	cmd.Dir = currentUser.HomeDir
+
+	if output, err := cmd.Output(); err == nil {
+		path := strings.TrimSpace(string(output))
+		if path != "" {
+			runtime.LogInfo(s.ctx, fmt.Sprintf("Got PATH from shell (%s): %s", shell, path))
+			return path
+		}
+	} else {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Could not get PATH from shell %s: %v", shell, err))
+	}
+
+	return ""
+}
+
+// getCommonBinaryPaths returns common directories where binaries are installed
+func (s *MCPToolsService) getCommonBinaryPaths() []string {
+	currentUser, err := user.Current()
+	if err != nil {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Could not get current user for common paths: %v", err))
+		return []string{"/usr/local/bin", "/usr/bin", "/bin"}
+	}
+
+	homeDir := currentUser.HomeDir
+
+	return []string{
+		// System paths
+		"/usr/local/bin",
+		"/usr/bin",
+		"/bin",
+		"/opt/homebrew/bin",       // Homebrew on Apple Silicon
+		"/usr/local/homebrew/bin", // Homebrew on Intel Mac
+
+		// User-specific paths
+		filepath.Join(homeDir, ".local", "bin"),      // pip --user, uv, etc.
+		filepath.Join(homeDir, "bin"),                // User binaries
+		filepath.Join(homeDir, ".cargo", "bin"),      // Rust/cargo binaries
+		filepath.Join(homeDir, "go", "bin"),          // Go binaries
+		filepath.Join(homeDir, ".npm-global", "bin"), // npm global binaries
+		filepath.Join(homeDir, ".yarn", "bin"),       // Yarn binaries
+
+		// Node version managers
+		filepath.Join(homeDir, ".nvm", "current", "bin"),
+		filepath.Join(homeDir, ".fnm", "current", "bin"),
+
+		// Python version managers
+		filepath.Join(homeDir, ".pyenv", "shims"),
+
+		// Ruby version managers
+		filepath.Join(homeDir, ".rbenv", "shims"),
+		filepath.Join(homeDir, ".rvm", "bin"),
+	}
+}
+
+// isExecutable checks if a file exists and is executable
+func (s *MCPToolsService) isExecutable(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	// Check if it's a regular file and has execute permission
+	return info.Mode().IsRegular() && (info.Mode()&0111) != 0
 }

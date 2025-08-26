@@ -17,9 +17,10 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed icons/AppIcons/Assets.xcassets/AppIcon.appiconset/32.png
+var iconFS embed.FS
+
 func main() {
-	// Create application options
-	// Create our service instances
 	svc := NewApp()
 	debugSvc := NewDebug()
 
@@ -64,7 +65,7 @@ func main() {
 		MinWidth:         1224,
 		MinHeight:        768,
 		BackgroundColour: application.NewRGB(27, 38, 54),
-		// DevToolsEnabled defaults to true in non-production
+		DevToolsEnabled:  false,
 	})
 
 	// Initialise v3 compat helpers
