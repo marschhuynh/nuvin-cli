@@ -7,7 +7,8 @@
     "build": "pnpm --filter frontend build",
     "format": "pnpm --filter frontend format",
     "test": "pnpm --filter frontend test:run",
-    "preview": "pnpm --filter frontend preview"
+    "preview": "pnpm --filter frontend preview",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.2",
