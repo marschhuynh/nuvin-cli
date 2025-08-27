@@ -94,7 +94,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
       const text = await response.text();
 
       // Try to parse as JSON for structured error data
-      let errorData: any;
+      let errorData: unknown;
       try {
         errorData = JSON.parse(text);
       } catch {

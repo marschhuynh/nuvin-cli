@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'node:path';
+import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
@@ -16,8 +16,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@wails/runtime': resolve(__dirname, './src/test/mocks/wails-runtime.ts'),
+      '@': path.resolve(__dirname, './src'),
+      '@wails/binding': path.resolve(__dirname, './bindings/nuvin-ui'),
+      '@wails/services': path.resolve(__dirname, './bindings/nuvin-ui/services'),
     },
   },
 });

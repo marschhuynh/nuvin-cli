@@ -25,10 +25,12 @@ export interface ChatCompletionResponse {
       }>;
     };
   }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-    prompt_tokens_details: null;
-  };
+  usage: ChatCompletionUsage;
+}
+
+export interface ChatCompletionUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  prompt_tokens_details: null;
 }

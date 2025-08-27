@@ -1,15 +1,41 @@
 import { GetCopilotToken } from '@wails/services/githuboauthservice';
-import { BaseLLMProvider } from './base-provider';
-import type { ProviderConfig } from '@/types';
+import type { ProviderConfig, GithubProviderConfig } from '@/types';
 import { useProviderStore } from '@/store/useProviderStore';
-import type { CompletionParams, CompletionResult, StreamChunk, ModelInfo } from './types/base';
-import type { ChatCompletionResponse } from './types/openrouter'; // GitHub uses similar response format
-import { extractValue } from './utils';
 import { validateAndCleanGitHubToken } from '../github';
 import { smartFetch } from '../fetch-proxy';
+import type { ChatCompletionResponse, ChatCompletionUsage } from './types/openrouter';
+import type {
+  CompletionParams,
+  CompletionResult,
+  StreamChunk,
+  ModelInfo,
+  ToolDefinition,
+  ChatMessage,
+} from './types/base';
+import { BaseLLMProvider } from './base-provider';
+import { extractValue } from './utils';
+
+// Define a specific type for the request body
+type RequestBody = {
+  model: string;
+  messages: ChatMessage[];
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  stream?: boolean;
+  tools?: ToolDefinition[];
+  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+};
+
+// Define a specific type for the model object from the GitHub API
+interface GitHubModel {
+  id: string;
+  supported_parameters?: string[];
+  [key: string]: unknown; // Allow other properties
+}
 
 export class GithubCopilotProvider extends BaseLLMProvider {
-  private providerConfig: ProviderConfig;
+  private providerConfig: GithubProviderConfig;
 
   constructor(providerConfig: ProviderConfig) {
     const cleanApiKey = validateAndCleanGitHubToken(providerConfig.apiKey);
@@ -34,7 +60,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
     endpoint: string,
     options: {
       method?: string;
-      body?: any;
+      body?: RequestBody;
       signal?: AbortSignal;
       headers?: Record<string, string>;
     } = {},
@@ -60,16 +86,14 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
-      if (response.status === 401 && !isRetry) {
+      if (response.status === 401 && !isRetry && this.providerConfig.accessToken) {
         console.log('Token expired, trying to get a new token');
         const newToken = await GetCopilotToken(this.providerConfig.accessToken);
         this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
-        // Update the provider store with the new token
         useProviderStore.getState().updateProvider({
           ...this.providerConfig,
           apiKey: newToken.apiKey,
         });
-        // Retry the request with the new token
         return this.makeRequest(endpoint, options, true);
       }
       if (response.status === 403) {
@@ -85,7 +109,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
   async generateCompletion(params: CompletionParams, signal?: AbortSignal): Promise<CompletionResult> {
     const startTime = Date.now();
-    const requestBody: any = {
+    const requestBody: RequestBody = {
       model: params.model,
       messages: params.messages,
       temperature: params.temperature,
@@ -117,7 +141,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
   }
 
   async *generateCompletionStream(params: CompletionParams, signal?: AbortSignal): AsyncGenerator<string> {
-    const requestBody: any = {
+    const requestBody: RequestBody = {
       model: params.model,
       messages: params.messages,
       temperature: params.temperature,
@@ -161,7 +185,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
   ): AsyncGenerator<StreamChunk> {
     const startTime = Date.now();
 
-    const requestBody: any = {
+    const requestBody: RequestBody = {
       model: params.model,
       messages: params.messages,
       temperature: params.temperature,
@@ -202,9 +226,9 @@ export class GithubCopilotProvider extends BaseLLMProvider {
     });
 
     const data = await response.json();
-    const models = data.data || [];
+    const models = (data.data || []) as GitHubModel[];
 
-    const transformedModels = models.map((model: any): ModelInfo => {
+    const transformedModels = models.map((model): ModelInfo => {
       return this.formatModelInfo(model, {
         contextLength: this.getContextLength(model.id),
         inputCost: 0, // GitHub Copilot subscription covers usage
@@ -259,7 +283,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
     return ['text'];
   }
 
-  protected calculateCost(usage: any, model?: string): number | undefined {
+  protected calculateCost(usage: ChatCompletionUsage, model?: string): number | undefined {
     if (!usage || !model) return undefined;
 
     // GitHub Copilot subscription covers usage - treat as zero cost

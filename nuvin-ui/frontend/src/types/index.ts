@@ -1,4 +1,3 @@
-// Import tool configuration from tools module
 import type { PROVIDER_TYPES } from '@/lib/providers/provider-utils';
 import type { AgentToolConfig } from './tools';
 
@@ -99,7 +98,11 @@ export interface ProviderConfig {
   apiKey: string;
   apiUrl?: string;
   activeModel: ModelConfig;
-  accessToken?: string; // For providers like GitHub that need both access token and API key
+  accessToken?: string;
+}
+
+export interface GithubProviderConfig extends ProviderConfig {
+  accessToken?: string;
 }
 
 export interface AgentSettings {
