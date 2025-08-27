@@ -121,7 +121,7 @@ export function ProviderModal({ open, onOpenChange, provider = null, mode }: Pro
       });
     } else {
       const newProviderId = Date.now().toString();
-      const newProvider = {
+      const newProvider: ProviderConfig = {
         id: newProviderId,
         name: providerName.trim(),
         type: providerType as PROVIDER_TYPES,
@@ -138,21 +138,6 @@ export function ProviderModal({ open, onOpenChange, provider = null, mode }: Pro
 
       if (providerKey) {
         fetchModels(newProvider);
-
-        // try {
-        //   const fetchedModels = await fetchProviderModels({
-        //     type: providerType as ProviderType,
-        //     apiKey: providerKey,
-        //     name: providerName.trim(),
-        //     apiUrl:
-        //       providerType === PROVIDER_TYPES.OpenAICompatible
-        //         ? providerApiUrl
-        //         : undefined,
-        //   });
-        //   setModels(newProviderId, fetchedModels);
-        // } catch (error) {
-        //   console.error('Failed to fetch models for new provider:', error);
-        // }
       }
     }
 
@@ -173,7 +158,7 @@ export function ProviderModal({ open, onOpenChange, provider = null, mode }: Pro
 
       if (providerType === PROVIDER_TYPES.GitHub && validateName(providerName) && mode === 'add') {
         const newProviderId = Date.now().toString();
-        const newProvider = {
+        const newProvider: ProviderConfig = {
           id: newProviderId,
           name: providerName.trim(),
           type: PROVIDER_TYPES.GitHub,
@@ -189,11 +174,7 @@ export function ProviderModal({ open, onOpenChange, provider = null, mode }: Pro
         setActiveProvider(newProviderId);
 
         try {
-          const fetchedModels = await fetchProviderModels({
-            type: PROVIDER_TYPES.GitHub,
-            apiKey: tokens.apiKey,
-            name: providerName.trim(),
-          });
+          const fetchedModels = await fetchProviderModels(newProvider);
           setModels(newProviderId, fetchedModels);
         } catch (error) {
           console.error('Failed to fetch models for new GitHub provider:', error);
@@ -246,10 +227,15 @@ export function ProviderModal({ open, onOpenChange, provider = null, mode }: Pro
     try {
       // Test connection by fetching models
       const testModels = await fetchProviderModels({
+        id: 'test',
+        name: providerName || 'Test',
         type: providerType as ProviderType,
         apiKey: providerKey,
-        name: providerName || 'Test',
         apiUrl: providerType === PROVIDER_TYPES.OpenAICompatible ? providerApiUrl : undefined,
+        activeModel: {
+          model: 'test',
+          maxTokens: 2048,
+        },
       });
 
       if (testModels && testModels.length > 0) {

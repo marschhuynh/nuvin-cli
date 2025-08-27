@@ -51,6 +51,46 @@ func (s *GitHubOAuthService) OnStartup(ctx context.Context) {
 	s.ctx = ctx
 }
 
+// GetCopilotToken handles GitHub authentication and returns access token and API key
+func (s *GitHubOAuthService) GetCopilotToken(accessToken string) GitHubTokenResponse {
+	// Step 5: Try to get Copilot token (this may fail, but we'll handle it gracefully)
+	runtime.LogInfo(s.ctx, "Attempting to get Copilot token...")
+	client := &http.Client{}
+	copilotReq, err := http.NewRequest("GET", "https://api.github.com/copilot_internal/v2/token", nil)
+	runtime.LogInfo(s.ctx, fmt.Sprintf("Copilot request: %v", copilotReq))
+
+	if err != nil {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Failed to create Copilot request: %v", err))
+		return s.handleCopilotFallback(accessToken)
+	}
+
+	copilotReq.Header.Set("Authorization", "Bearer "+accessToken)
+	copilotReq.Header.Set("user-agent", "GithubCopilot/1.330.0")
+
+	copilotResp, err := client.Do(copilotReq)
+	if err != nil {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Failed to get Copilot token: %v", err))
+		return s.handleCopilotFallback(accessToken)
+	}
+	defer copilotResp.Body.Close()
+
+	if copilotResp.StatusCode != http.StatusOK {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Copilot token request failed: %d - %s - %v", copilotResp.StatusCode, accessToken, copilotResp))
+		return s.handleCopilotFallback(accessToken)
+	}
+
+	var copilotData CopilotTokenResponse
+	if err := json.NewDecoder(copilotResp.Body).Decode(&copilotData); err != nil {
+		runtime.LogWarning(s.ctx, fmt.Sprintf("Failed to decode Copilot response: %v", err))
+		return s.handleCopilotFallback(accessToken)
+	}
+
+	return GitHubTokenResponse{
+		AccessToken: accessToken,
+		ApiKey:      copilotData.Token,
+	}
+}
+
 // FetchGithubCopilotKey handles GitHub authentication and returns access token and API key
 func (s *GitHubOAuthService) FetchGithubCopilotKey() GitHubTokenResponse {
 	const CLIENT_ID = "Iv1.b507a08c87ecfe98" // GitHub Copilot client id
@@ -182,42 +222,7 @@ func (s *GitHubOAuthService) FetchGithubCopilotKey() GitHubTokenResponse {
 				return GitHubTokenResponse{}
 			}
 
-			// Step 5: Try to get Copilot token (this may fail, but we'll handle it gracefully)
-			runtime.LogInfo(s.ctx, "Attempting to get Copilot token...")
-
-			copilotReq, err := http.NewRequest("GET", "https://api.github.com/copilot_internal/v2/token", nil)
-			runtime.LogInfo(s.ctx, fmt.Sprintf("Copilot request: %v", copilotReq))
-
-			if err != nil {
-				runtime.LogWarning(s.ctx, fmt.Sprintf("Failed to create Copilot request: %v", err))
-				return s.handleCopilotFallback(tokenData.AccessToken)
-			}
-
-			copilotReq.Header.Set("Authorization", "Bearer "+tokenData.AccessToken)
-			copilotReq.Header.Set("user-agent", "GithubCopilot/1.330.0")
-
-			copilotResp, err := client.Do(copilotReq)
-			if err != nil {
-				runtime.LogWarning(s.ctx, fmt.Sprintf("Failed to get Copilot token: %v", err))
-				return s.handleCopilotFallback(tokenData.AccessToken)
-			}
-			defer copilotResp.Body.Close()
-
-			if copilotResp.StatusCode != http.StatusOK {
-				runtime.LogWarning(s.ctx, fmt.Sprintf("Copilot token request failed: %d - %s - %v", copilotResp.StatusCode, tokenData.AccessToken, copilotResp))
-				return s.handleCopilotFallback(tokenData.AccessToken)
-			}
-
-			var copilotData CopilotTokenResponse
-			if err := json.NewDecoder(copilotResp.Body).Decode(&copilotData); err != nil {
-				runtime.LogWarning(s.ctx, fmt.Sprintf("Failed to decode Copilot response: %v", err))
-				return s.handleCopilotFallback(tokenData.AccessToken)
-			}
-
-			return GitHubTokenResponse{
-				AccessToken: tokenData.AccessToken,
-				ApiKey:      copilotData.Token,
-			}
+			return s.GetCopilotToken(tokenData.AccessToken)
 		}
 	}
 }

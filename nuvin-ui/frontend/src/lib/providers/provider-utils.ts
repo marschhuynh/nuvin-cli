@@ -5,6 +5,7 @@ import { OpenRouterProvider } from './openrouter-provider';
 import { GithubCopilotProvider } from './github-provider';
 import { OpenAICompatibleProvider } from './openai-compatible-provider';
 import { DeepInfraProvider } from './deepinfra-provider';
+import type { ProviderConfig } from '@/types';
 
 export enum PROVIDER_TYPES {
   OpenAI = 'openai',
@@ -19,14 +20,7 @@ export type ProviderType = PROVIDER_TYPES;
 
 export type { ModelInfo } from './types/base';
 
-export interface LLMProviderConfig {
-  type: PROVIDER_TYPES;
-  apiKey: string;
-  name?: string;
-  apiUrl?: string;
-}
-
-export function createProvider(config: LLMProviderConfig): LLMProvider {
+export function createProvider(config: ProviderConfig): LLMProvider {
   switch (config.type) {
     case PROVIDER_TYPES.OpenAI:
       return new OpenAIProvider(config.apiKey);
@@ -35,7 +29,7 @@ export function createProvider(config: LLMProviderConfig): LLMProvider {
     case PROVIDER_TYPES.OpenRouter:
       return new OpenRouterProvider(config.apiKey);
     case PROVIDER_TYPES.GitHub:
-      return new GithubCopilotProvider(config.apiKey);
+      return new GithubCopilotProvider(config);
     case PROVIDER_TYPES.OpenAICompatible:
       return new OpenAICompatibleProvider(config.apiKey, config.apiUrl);
     case PROVIDER_TYPES.DeepInfra:
@@ -45,7 +39,7 @@ export function createProvider(config: LLMProviderConfig): LLMProvider {
   }
 }
 
-export async function fetchProviderModels(config: LLMProviderConfig): Promise<ModelInfo[]> {
+export async function fetchProviderModels(config: ProviderConfig): Promise<ModelInfo[]> {
   try {
     const provider = createProvider(config);
     return await provider.getModels();
@@ -55,7 +49,7 @@ export async function fetchProviderModels(config: LLMProviderConfig): Promise<Mo
   }
 }
 
-export async function fetchAllProviderModels(configs: LLMProviderConfig[]): Promise<Record<string, ModelInfo[]>> {
+export async function fetchAllProviderModels(configs: ProviderConfig[]): Promise<Record<string, ModelInfo[]>> {
   const results: Record<string, ModelInfo[]> = {};
 
   const promises = configs.map(async (config) => {
@@ -100,7 +94,7 @@ export function formatModelCost(inputCost?: number, outputCost?: number): string
     return 'Free with subscription';
   }
 
-  return `$${inputCost.toFixed(2)}/$${outputCost.toFixed(2)} per 1M tokens`;
+  return `${inputCost.toFixed(2)}/${outputCost.toFixed(2)} per 1M tokens`;
 }
 
 export function formatContextLength(contextLength?: number): string {

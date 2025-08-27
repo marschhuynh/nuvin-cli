@@ -1,7 +1,6 @@
 export {
   useActiveProvider,
   useActiveProviderConfig,
-  useActiveProviderLLMConfig,
   useHasValidActiveProvider,
 } from './useActiveProvider';
 

@@ -80,12 +80,7 @@ export const useModelsStore = create<ModelsState>()(
         }));
 
         try {
-          const models = await fetchProviderModels({
-            type: provider.type as ProviderType,
-            apiKey: provider.apiKey,
-            name: provider.name,
-            apiUrl: provider.apiUrl,
-          });
+          const models = await fetchProviderModels(provider);
 
           // Update models and clear loading state
           set((currentState) => {

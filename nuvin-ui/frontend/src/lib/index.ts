@@ -40,7 +40,6 @@ export type {
   ChatMessage,
   ModelInfo,
   ProviderType,
-  LLMProviderConfig,
 } from './providers';
 export {
   createProvider,

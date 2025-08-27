@@ -147,7 +147,9 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false,
       ),
 
       // Enhanced paragraphs
-      p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 leading-relaxed text-foreground">{children}</p>,
+      p: ({ children }: { children?: React.ReactNode }) => (
+        <p className="mb-4 leading-relaxed text-foreground">{children}</p>
+      ),
 
       // Improved lists with theme-aware styling
       ul: ({ children }: { children?: React.ReactNode }) => (
@@ -156,7 +158,9 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false,
       ol: ({ children }: { children?: React.ReactNode }) => (
         <ol className="mb-4 space-y-1 pl-6 list-decimal marker:text-muted-foreground">{children}</ol>
       ),
-      li: ({ children }: { children?: React.ReactNode }) => <li className="leading-relaxed text-foreground">{children}</li>,
+      li: ({ children }: { children?: React.ReactNode }) => (
+        <li className="leading-relaxed text-foreground">{children}</li>
+      ),
 
       // Theme-aware blockquotes
       blockquote: ({ children }: { children?: React.ReactNode }) => (
@@ -172,14 +176,20 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false,
         </div>
       ),
       thead: ({ children }: { children?: React.ReactNode }) => <thead className="bg-muted/30">{children}</thead>,
-      tbody: ({ children }: { children?: React.ReactNode }) => <tbody className="divide-y divide-border">{children}</tbody>,
-      tr: ({ children }: { children?: React.ReactNode }) => <tr className="hover:bg-muted/10 transition-colors">{children}</tr>,
+      tbody: ({ children }: { children?: React.ReactNode }) => (
+        <tbody className="divide-y divide-border">{children}</tbody>
+      ),
+      tr: ({ children }: { children?: React.ReactNode }) => (
+        <tr className="hover:bg-muted/10 transition-colors">{children}</tr>
+      ),
       th: ({ children }: { children?: React.ReactNode }) => (
         <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
           {children}
         </th>
       ),
-      td: ({ children }: { children?: React.ReactNode }) => <td className="px-4 py-3 text-sm text-foreground">{children}</td>,
+      td: ({ children }: { children?: React.ReactNode }) => (
+        <td className="px-4 py-3 text-sm text-foreground">{children}</td>
+      ),
 
       // Enhanced links with better hover states
       a: ({ href, children }: React.ComponentPropsWithoutRef<'a'>) => (
@@ -197,7 +207,9 @@ export function MarkdownRenderer({ content, className = '', isStreaming = false,
       hr: () => <hr className="my-8 border-border" />,
 
       // Enhanced emphasis
-      strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-foreground">{children}</strong>,
+      strong: ({ children }: { children?: React.ReactNode }) => (
+        <strong className="font-semibold text-foreground">{children}</strong>
+      ),
       em: ({ children }: { children?: React.ReactNode }) => <em className="italic text-foreground/90">{children}</em>,
     }),
     [isStreaming, depth],

@@ -5,15 +5,8 @@ import { GithubCopilotProvider } from './github-provider';
 import { OpenAICompatibleProvider } from './openai-compatible-provider';
 import { DeepInfraProvider } from './deepinfra-provider';
 import type { LLMProvider } from './types/base';
-
-export type ProviderType = 'openrouter' | 'openai' | 'anthropic' | 'github' | 'openai-compatible' | 'deepinfra';
-
-export interface ProviderConfig {
-  type: ProviderType;
-  apiKey: string;
-  apiUrl?: string;
-  customHeaders?: Record<string, string>;
-}
+import type { ProviderConfig } from '@/types';
+import { PROVIDER_TYPES } from './provider-utils';
 
 export class ProviderFactory {
   constructor() {
@@ -21,47 +14,54 @@ export class ProviderFactory {
   }
   static createProvider(config: ProviderConfig): LLMProvider {
     switch (config.type) {
-      case 'openrouter':
+      case PROVIDER_TYPES.OpenRouter:
         return new OpenRouterProvider(config.apiKey);
-      case 'openai':
+      case PROVIDER_TYPES.OpenAI:
         return new OpenAIProvider(config.apiKey);
-      case 'anthropic':
+      case PROVIDER_TYPES.Anthropic:
         return new AnthropicProvider(config.apiKey);
-      case 'github':
-        return new GithubCopilotProvider(config.apiKey);
-      case 'openai-compatible':
+      case PROVIDER_TYPES.GitHub:
+        return new GithubCopilotProvider(config);
+      case PROVIDER_TYPES.OpenAICompatible:
         return new OpenAICompatibleProvider(config.apiKey, config.apiUrl);
-      case 'deepinfra':
+      case PROVIDER_TYPES.DeepInfra:
         return new DeepInfraProvider(config.apiKey);
       default:
         throw new Error(`Unsupported provider type: ${config.type}`);
     }
   }
 
-  static getProviderTypes(): ProviderType[] {
-    return ['openrouter', 'openai', 'anthropic', 'github', 'openai-compatible', 'deepinfra'];
+  static getProviderTypes(): PROVIDER_TYPES[] {
+    return [
+      PROVIDER_TYPES.OpenRouter,
+      PROVIDER_TYPES.OpenAI,
+      PROVIDER_TYPES.Anthropic,
+      PROVIDER_TYPES.GitHub,
+      PROVIDER_TYPES.OpenAICompatible,
+      PROVIDER_TYPES.DeepInfra,
+    ];
   }
 
-  static getProviderDisplayName(type: ProviderType): string {
-    const displayNames: Record<ProviderType, string> = {
-      openrouter: 'OpenRouter',
-      openai: 'OpenAI',
-      anthropic: 'Anthropic',
-      github: 'GitHub Copilot',
-      'openai-compatible': 'OpenAI-Compatible API',
-      deepinfra: 'DeepInfra',
+  static getProviderDisplayName(type: PROVIDER_TYPES): string {
+    const displayNames: Record<PROVIDER_TYPES, string> = {
+      [PROVIDER_TYPES.OpenRouter]: 'OpenRouter',
+      [PROVIDER_TYPES.OpenAI]: 'OpenAI',
+      [PROVIDER_TYPES.Anthropic]: 'Anthropic',
+      [PROVIDER_TYPES.GitHub]: 'GitHub Copilot',
+      [PROVIDER_TYPES.OpenAICompatible]: 'OpenAI-Compatible API',
+      [PROVIDER_TYPES.DeepInfra]: 'DeepInfra',
     };
     return displayNames[type];
   }
 
-  static getProviderDescription(type: ProviderType): string {
-    const descriptions: Record<ProviderType, string> = {
-      openrouter: 'Access to 100+ models from various providers through OpenRouter',
-      openai: 'Direct access to OpenAI models including GPT-4, GPT-4o, and o1',
-      anthropic: 'Access to Claude models by Anthropic',
-      github: 'GitHub Copilot models for developers',
-      'openai-compatible': 'Compatible with any OpenAI-compatible API endpoint',
-      deepinfra: 'Access to LLMs with fast inference and competitive pricing',
+  static getProviderDescription(type: PROVIDER_TYPES): string {
+    const descriptions: Record<PROVIDER_TYPES, string> = {
+      [PROVIDER_TYPES.OpenRouter]: 'Access to 100+ models from various providers through OpenRouter',
+      [PROVIDER_TYPES.OpenAI]: 'Direct access to OpenAI models including GPT-4, GPT-4o, and o1',
+      [PROVIDER_TYPES.Anthropic]: 'Access to Claude models by Anthropic',
+      [PROVIDER_TYPES.GitHub]: 'GitHub Copilot models for developers',
+      [PROVIDER_TYPES.OpenAICompatible]: 'Compatible with any OpenAI-compatible API endpoint',
+      [PROVIDER_TYPES.DeepInfra]: 'Access to LLMs with fast inference and competitive pricing',
     };
     return descriptions[type];
   }

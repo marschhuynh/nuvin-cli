@@ -1,4 +1,7 @@
+import { GetCopilotToken } from '@wails/services/githuboauthservice';
 import { BaseLLMProvider } from './base-provider';
+import type { ProviderConfig } from '@/types';
+import { useProviderStore } from '@/store/useProviderStore';
 import type { CompletionParams, CompletionResult, StreamChunk, ModelInfo } from './types/base';
 import type { ChatCompletionResponse } from './types/openrouter'; // GitHub uses similar response format
 import { extractValue } from './utils';
@@ -6,13 +9,16 @@ import { validateAndCleanGitHubToken } from '../github';
 import { smartFetch } from '../fetch-proxy';
 
 export class GithubCopilotProvider extends BaseLLMProvider {
-  constructor(apiKey: string) {
-    const cleanApiKey = validateAndCleanGitHubToken(apiKey);
+  private providerConfig: ProviderConfig;
+
+  constructor(providerConfig: ProviderConfig) {
+    const cleanApiKey = validateAndCleanGitHubToken(providerConfig.apiKey);
     super({
       providerName: 'GitHub',
       apiKey: cleanApiKey,
       apiUrl: 'https://api.githubcopilot.com',
     });
+    this.providerConfig = providerConfig;
   }
 
   protected getCommonHeaders(): Record<string, string> {
@@ -32,6 +38,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       signal?: AbortSignal;
       headers?: Record<string, string>;
     } = {},
+    isRetry = false,
   ): Promise<Response> {
     const url = `${this.apiUrl}${endpoint}`;
     const headers = { ...this.getCommonHeaders(), ...options.headers } as Record<string, string>;
@@ -53,6 +60,18 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
     if (!response.ok) {
       const text = await response.text();
+      if (response.status === 401 && !isRetry) {
+        console.log('Token expired, trying to get a new token');
+        const newToken = await GetCopilotToken(this.providerConfig.accessToken);
+        this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
+        // Update the provider store with the new token
+        useProviderStore.getState().updateProvider({
+          ...this.providerConfig,
+          apiKey: newToken.apiKey,
+        });
+        // Retry the request with the new token
+        return this.makeRequest(endpoint, options, true);
+      }
       if (response.status === 403) {
         throw new Error(
           `GitHub Copilot API access denied. Please ensure you have a valid GitHub Copilot subscription and the correct authentication token. Status: ${response.status}`,

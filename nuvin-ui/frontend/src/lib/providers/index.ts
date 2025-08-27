@@ -1,7 +1,6 @@
 export { BaseLLMProvider } from './base-provider';
 export type { BaseProviderConfig } from './base-provider';
 export { ProviderFactory } from './provider-factory';
-export type { ProviderConfig, ProviderType } from './provider-factory';
 export { OpenRouterProvider } from './openrouter-provider';
 export { OpenAIProvider } from './openai-provider';
 export { AnthropicProvider } from './anthropic-provider';
@@ -27,5 +26,6 @@ export {
   getDefaultModel,
   formatModelCost,
   formatContextLength,
+  PROVIDER_TYPES,
+  type ProviderType,
 } from './provider-utils';
-export type { LLMProviderConfig } from './provider-utils';
