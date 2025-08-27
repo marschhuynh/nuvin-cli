@@ -3,6 +3,7 @@ import type { CompletionParams, CompletionResult, StreamChunk, ModelInfo } from 
 import type { ChatCompletionResponse } from './types/openrouter'; // GitHub uses similar response format
 import { extractValue } from './utils';
 import { validateAndCleanGitHubToken } from '../github';
+import { smartFetch } from '../fetch-proxy';
 
 export class GithubCopilotProvider extends BaseLLMProvider {
   constructor(apiKey: string) {
@@ -21,6 +22,46 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       'editor-plugin-version': 'GitHub.copilot/1.330.0',
       'user-agent': 'GithubCopilot/1.330.0',
     };
+  }
+
+  protected async makeRequest(
+    endpoint: string,
+    options: {
+      method?: string;
+      body?: any;
+      signal?: AbortSignal;
+      headers?: Record<string, string>;
+    } = {},
+  ): Promise<Response> {
+    const url = `${this.apiUrl}${endpoint}`;
+    const headers = { ...this.getCommonHeaders(), ...options.headers } as Record<string, string>;
+
+    // If this is a streaming request, prefer SSE accept header and mark init as streaming
+    const isStreaming = Boolean(options.body && options.body.stream === true);
+    if (isStreaming) {
+      headers.accept = 'text/event-stream';
+    }
+
+    const response = await smartFetch(url, {
+      method: options.method || 'POST',
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: options.signal,
+      // Hint to our proxy that this request expects streaming semantics
+      ...(isStreaming ? { stream: true } : {}),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      if (response.status === 403) {
+        throw new Error(
+          `GitHub Copilot API access denied. Please ensure you have a valid GitHub Copilot subscription and the correct authentication token. Status: ${response.status}`,
+        );
+      }
+      throw new Error(`GitHub Copilot API error: ${response.status} - ${text}`);
+    }
+
+    return response;
   }
 
   async generateCompletion(params: CompletionParams, signal?: AbortSignal): Promise<CompletionResult> {

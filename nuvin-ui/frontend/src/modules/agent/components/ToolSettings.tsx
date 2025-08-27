@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { toolRegistry } from '@/lib/tools';
+import { isMCPTool } from '@/lib/mcp/mcp-tool';
 import type { AgentToolConfig } from '@/types/tools';
 
 interface ToolSettingsProps {
@@ -130,7 +131,7 @@ export function ToolSettings({ toolConfig, isEditing, onToolConfigChange }: Tool
                           htmlFor={`tool-${tool.definition.name}`}
                           className="text-sm font-medium cursor-pointer truncate"
                         >
-                          {tool.category === 'mcp' ? (tool as any).mcpSchema.name : tool.definition.name}
+                          {isMCPTool(tool) ? tool.getMCPSchema().name : tool.definition.name}
                         </label>
                         <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded shrink-0">
                           {tool.category || 'utility'}

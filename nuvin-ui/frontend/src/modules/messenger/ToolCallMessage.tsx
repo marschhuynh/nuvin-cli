@@ -1,17 +1,4 @@
-import {
-  Wrench,
-  CheckCircle,
-  XCircle,
-  Clock,
-  ChevronDown,
-  ChevronRight,
-  Trash2,
-  Check,
-  Copy,
-  Edit,
-  Save,
-  X,
-} from 'lucide-react';
+import { Wrench, CheckCircle, XCircle, Clock, ChevronDown, ChevronRight, Trash2, Check, Copy } from 'lucide-react';
 import { useState, useCallback, useRef } from 'react';
 import { ClipboardSetText } from '@/lib/browser-runtime';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -28,13 +15,13 @@ interface ToolCallMessageProps {
   id: string;
   toolName: string;
   description?: string;
-  arguments: any;
+  arguments: Record<string, unknown>;
   result?: {
     status: 'success' | 'error' | 'warning';
     type: 'text' | 'json';
     result: string | object;
-    additionalResult?: Record<string, any>;
-    metadata?: Record<string, any>;
+    additionalResult?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
   };
   isExecuting?: boolean;
   messageMode?: 'normal' | 'transparent';
@@ -84,7 +71,7 @@ export function ToolCallMessage({
     }
   }, [toolName, args, result]);
 
-  const formatJSON = useCallback((data: any) => {
+  const formatJSON = useCallback((data: unknown) => {
     try {
       return JSON.stringify(data, null, 2);
     } catch {

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-export interface ComboboxOption<T = any> {
+export interface ComboboxOption<T = unknown> {
   value: string;
   label: string;
   data?: T;
@@ -16,7 +16,7 @@ export interface ComboboxOption<T = any> {
   searchContent?: string;
 }
 
-export interface ComboboxProps<T = any> {
+export interface ComboboxProps<T = unknown> {
   options: ComboboxOption<T>[];
   value?: string;
   onValueChange?: (value: string, option?: ComboboxOption<T>) => void;
@@ -32,7 +32,7 @@ export interface ComboboxProps<T = any> {
   renderValue?: (option: ComboboxOption<T>) => React.ReactNode;
 }
 
-export function Combobox<T = any>({
+export function Combobox<T = unknown>({
   options,
   value: controlledValue,
   onValueChange,

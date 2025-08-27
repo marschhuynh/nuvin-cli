@@ -1,6 +1,5 @@
 import { FetchGithubCopilotKey as GitHubOAuthFetchGithubCopilotKey } from '@wails/services/githuboauthservice';
 import type { GitHubTokenResponse } from '@wails/services/models';
-import type { ProviderConfig } from '@/types';
 
 export async function fetchGithubCopilotKey(): Promise<GitHubTokenResponse | null> {
   try {
@@ -15,14 +14,14 @@ export async function fetchGithubCopilotKey(): Promise<GitHubTokenResponse | nul
 /**
  * Helper function to check if a GitHub provider has both required tokens
  */
-export function hasCompleteGitHubTokens(provider: ProviderConfig): boolean {
+export function hasCompleteGitHubTokens(provider: GitHubTokenResponse): boolean {
   return !!(provider.apiKey && provider.accessToken);
 }
 
 /**
  * Helper function to get the access token from a provider, with fallback
  */
-export function getGitHubAccessToken(provider: ProviderConfig): string | null {
+export function getGitHubAccessToken(provider: GitHubTokenResponse): string | null {
   const token = provider.accessToken || provider.apiKey || null;
   return token ? token.trim() : null;
 }

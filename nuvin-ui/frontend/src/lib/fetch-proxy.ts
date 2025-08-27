@@ -117,15 +117,25 @@ class ProxyResponse implements Response {
 
           if (chunk.data) {
             buffer += chunk.data;
-            controller.enqueue(new TextEncoder().encode(chunk.data));
-            console.log(
-              `[${streamId.substring(0, 8)}] Enqueued ${chunk.data.length} bytes, total buffer: ${buffer.length} bytes`,
-            );
+            try {
+              controller.enqueue(new TextEncoder().encode(chunk.data));
+              console.log(
+                `[${streamId.substring(0, 8)}] Enqueued ${chunk.data.length} bytes, total buffer: ${buffer.length} bytes`,
+              );
+            } catch (error) {
+              console.warn(`[${streamId.substring(0, 8)}] Failed to enqueue chunk (stream may be closed):`, error);
+              // Stream might be closed, but we still need to process the data
+              // The data is already added to buffer above
+            }
           }
 
           if (chunk.done) {
             console.log(`[${streamId.substring(0, 8)}] Stream completed, total: ${buffer.length} bytes`);
-            controller.close();
+            try {
+              controller.close();
+            } catch (error) {
+              console.warn(`[${streamId.substring(0, 8)}] Failed to close stream (may already be closed):`, error);
+            }
             EventsOff(eventName);
           }
         };

@@ -42,10 +42,10 @@ export function ToolPermissionDialog() {
             </div>
 
             {/* Description */}
-            {(request.toolParams as any).description && (
+            {typeof request.toolParams?.description === 'string' && (
               <div className="text-sm">
                 <span className="font-medium">What it does: </span>
-                <span className="text-muted-foreground">{(request.toolParams as any).description}</span>
+                <span className="text-muted-foreground">{request.toolParams.description}</span>
               </div>
             )}
 

@@ -8,11 +8,11 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
+import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
 
 /**
  * OnStartup initializes the streaming service
  */
 export function OnStartup(): $CancellablePromise<void> {
-  return $Call.ByID(1025963888);
+    return $Call.ByID(1025963888);
 }

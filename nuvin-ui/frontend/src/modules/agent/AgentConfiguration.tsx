@@ -7,6 +7,8 @@ import { useProviderStore } from '@/store/useProviderStore';
 import { useModelsStore } from '@/store/useModelsStore';
 import type { AgentConfig } from '@/types';
 import { AlertCircle, Bot, Globe, Home, Loader2, Settings, Type, Eye, Mic, Image } from 'lucide-react';
+import type { ModelInfo } from '@/lib/providers/types/base';
+import type { ModelInfoWithState } from '@/store/useModelsStore';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { formatContextLength } from '@/lib/providers/provider-utils';
@@ -86,7 +88,7 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
   const modelsError = errors[activeProviderId || ''] || null;
 
   // Helper function to get modality icons
-  const getModalityIcons = useCallback((model: any) => {
+  const getModalityIcons = useCallback((model: ModelInfo | ModelInfoWithState) => {
     const icons = [];
     const modalities = model.inputModalities || [];
 
@@ -310,6 +312,7 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
                       className="w-full"
                       renderValue={(option) => {
                         const model = option.data;
+                        if (!model) return <div>{option.label}</div>;
                         const modalityIcons = getModalityIcons(model);
                         const costInfo = `$${model?.inputCost?.toFixed(2)}/$${model?.outputCost?.toFixed(2)} / 1M`;
                         return (

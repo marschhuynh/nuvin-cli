@@ -1,13 +1,14 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.1.1/schema.json",
   "vcs": {
-    "enabled": false,
+    "enabled": true,
     "clientKind": "git",
-    "useIgnoreFile": false
+    "useIgnoreFile": true
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["nuvin-ui/frontend/**/*.{ts,tsx}"]
+    "includes": ["nuvin-ui/frontend/**/*.{ts,tsx}", "!nuvin-ui/frontend/bindings"],
+    "experimentalScannerIgnores": ["lodash", "dist", "RedisCommander.d.ts"]
   },
   "formatter": {
     "enabled": true,
@@ -18,7 +19,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
     }
   },
   "javascript": {

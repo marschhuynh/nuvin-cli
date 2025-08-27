@@ -20,7 +20,7 @@ interface MessageProps {
       status: 'success' | 'error' | 'warning';
       type: 'text' | 'json';
       result: string | object;
-      additionalResult?: Record<string, any>;
+      additionalResult?: Record<string, unknown>;
       metadata?: Record<string, unknown>;
     };
     isExecuting?: boolean;

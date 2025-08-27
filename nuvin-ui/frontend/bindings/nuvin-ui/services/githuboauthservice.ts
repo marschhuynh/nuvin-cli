@@ -8,22 +8,22 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Call as $Call, CancellablePromise as $CancellablePromise } from '@wailsio/runtime';
+import { Call as $Call, type CancellablePromise as $CancellablePromise } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as $models from './models.js';
+import type * as $models from "./models.js";
 
 /**
  * FetchGithubCopilotKey handles GitHub authentication and returns access token and API key
  */
 export function FetchGithubCopilotKey(): $CancellablePromise<$models.GitHubTokenResponse> {
-  return $Call.ByID(1930712992);
+    return $Call.ByID(1930712992);
 }
 
 /**
  * OnStartup initializes the GitHub OAuth service
  */
 export function OnStartup(): $CancellablePromise<void> {
-  return $Call.ByID(3589567810);
+    return $Call.ByID(3589567810);
 }

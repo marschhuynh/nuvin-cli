@@ -140,10 +140,30 @@ export function GeneralSettings({ settings, onSettingsChange }: GeneralSettingsP
       if (importData.enabledModels) {
         // Reset models store and set imported model states
         modelsStore.reset();
-        for (const [providerId, models] of Object.entries(importData.enabledModels)) {
+        for (const [providerId, models] of Object.entries(importData.enabledModels as Record<string, unknown>)) {
           if (Array.isArray(models)) {
             try {
-              modelsStore.setModels(providerId, models as any);
+              // Strip to ModelInfo shape before setting; enabled flags are managed separately
+              const baseModels = (models as Array<Record<string, unknown>>).map((m) => ({
+                id: String(m.id),
+                providerId: String(m.providerId),
+                name: String(m.name),
+                description: typeof m.description === 'string' ? m.description : undefined,
+                contextLength: typeof m.contextLength === 'number' ? m.contextLength : undefined,
+                inputCost: typeof m.inputCost === 'number' ? m.inputCost : undefined,
+                outputCost: typeof m.outputCost === 'number' ? m.outputCost : undefined,
+                modality: typeof m.modality === 'string' ? m.modality : undefined,
+                inputModalities: Array.isArray(m.inputModalities)
+                  ? (m.inputModalities as unknown[]).filter((x): x is string => typeof x === 'string')
+                  : undefined,
+                outputModalities: Array.isArray(m.outputModalities)
+                  ? (m.outputModalities as unknown[]).filter((x): x is string => typeof x === 'string')
+                  : undefined,
+                supportedParameters: Array.isArray(m.supportedParameters)
+                  ? (m.supportedParameters as unknown[]).filter((x): x is string => typeof x === 'string')
+                  : undefined,
+              }));
+              modelsStore.setModels(providerId, baseModels);
             } catch (error) {
               console.warn('Failed to import models for provider:', providerId, error);
             }

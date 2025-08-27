@@ -208,12 +208,12 @@ export function ProviderModal({ open, onOpenChange, provider = null, mode }: Pro
     }
   };
 
-  const parseErrorMessage = (error: any): string => {
+  const parseErrorMessage = (error: unknown): string => {
     if (typeof error === 'string') return error;
 
     // Handle OpenAI API errors
-    if (error?.message) {
-      const message = error.message;
+    if (typeof error === 'object' && error && 'message' in error) {
+      const message = String((error as { message?: string }).message || '');
       if (message.includes('401')) {
         return 'Invalid API key. Please check your API key and try again.';
       }

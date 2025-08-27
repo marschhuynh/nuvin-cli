@@ -9,8 +9,45 @@ import { useAgentStore } from '@/store/useAgentStore';
 import { RefreshCw, Bug } from 'lucide-react';
 import { isWailsEnvironment } from '@/lib/browser-runtime';
 
+interface DebugInfo {
+  timestamp: string;
+  selectedAgent: string;
+  runtime: {
+    wailsGoAvailable: boolean;
+    wailsRuntimeAvailable: boolean;
+    mcpDebug: boolean;
+  };
+  toolRegistry: {
+    totalTools: number;
+    builtInTools: string[];
+    mcpTools: Array<{
+      name: string;
+      serverId?: string;
+      available: boolean;
+      schema: unknown;
+    }>;
+    mcpServers: string[];
+  };
+  mcp: {
+    stats: unknown;
+    servers: Array<{
+      id: string;
+      name: string;
+      type: string;
+      status: string;
+      lastError: string | null;
+      toolCount: number;
+      resourceCount: number;
+    }>;
+  };
+  agentTools: {
+    configuredTools: string[];
+    availableToAgent: string[];
+  };
+}
+
 export function ToolDebugger() {
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const { activeAgentId, agents } = useAgentStore();
 
   const refreshDebugInfo = useCallback(() => {
@@ -24,8 +61,7 @@ export function ToolDebugger() {
         wailsRuntimeAvailable: isWailsEnvironment(),
         mcpDebug: (() => {
           try {
-            // @ts-ignore
-            if ((window as any).__MCP_DEBUG__) return true;
+            if ((window as unknown as { __MCP_DEBUG__?: boolean }).__MCP_DEBUG__) return true;
             return localStorage.getItem('MCP_DEBUG') === '1';
           } catch {
             return false;
@@ -164,7 +200,7 @@ export function ToolDebugger() {
         <div>
           <h4 className="font-medium text-sm mb-2">MCP Tools ({debugInfo.toolRegistry.mcpTools.length})</h4>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-            {debugInfo.toolRegistry.mcpTools.map((tool: any) => (
+            {debugInfo.toolRegistry.mcpTools.map((tool) => (
               <div key={tool.name} className="border rounded p-2 bg-gray-50 dark:bg-gray-800">
                 <div className="flex items-center space-x-2 mb-1">
                   <Badge variant={tool.available ? 'default' : 'secondary'} className="text-xs">
@@ -194,7 +230,7 @@ export function ToolDebugger() {
         <div>
           <h4 className="font-medium text-sm mb-2">MCP Servers ({debugInfo.mcp.servers.length})</h4>
           <div className="space-y-1 max-h-40 overflow-y-auto pr-2">
-            {debugInfo.mcp.servers.map((s: any) => (
+            {debugInfo.mcp.servers.map((s) => (
               <div key={s.id} className="flex items-center gap-2 text-xs">
                 <Badge variant="outline">{s.name}</Badge>
                 <span className="text-gray-500">{s.type}</span>
