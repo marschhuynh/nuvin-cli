@@ -75,7 +75,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       headers.accept = 'text/event-stream';
     }
 
-    const response = await smartFetch(url, {
+    const response = await fetch(url, {
       method: options.method || 'POST',
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,

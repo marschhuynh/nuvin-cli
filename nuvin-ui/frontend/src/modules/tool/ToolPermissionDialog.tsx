@@ -2,9 +2,44 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { useToolPermissionStore } from '@/store';
 import { toolRegistry } from '@/lib/tools/tool-registry';
+import { mcpManager } from '@/lib/mcp/mcp-manager';
+import { isMCPTool } from '@/lib/mcp/mcp-tool';
 
 export function ToolPermissionDialog() {
   const { request, resolveRequest, allowForConversation } = useToolPermissionStore();
+
+  // Helper to get display tool name (prefer MCP schema name if available)
+  const getDisplayToolName = (toolName: string): string => {
+    const tool = toolRegistry.getTool(toolName);
+    if (tool && isMCPTool(tool)) {
+      return tool.getMCPSchema().name;
+    }
+    return toolName;
+  };
+
+  // Helper to get MCP server friendly name
+  const getMCPServerName = (serverId: string): string => {
+    const serverConfig = mcpManager.getServerConfig(serverId);
+    return serverConfig?.name || serverId;
+  };
+
+  // Helper to get tool description
+  const getToolDescription = (toolName: string, toolParams?: Record<string, unknown>): string | null => {
+    const tool = toolRegistry.getTool(toolName);
+    if (tool) {
+      if (isMCPTool(tool)) {
+        return tool.getMCPSchema().description || null;
+      }
+      return tool.definition.description || null;
+    }
+    
+    // Fallback to description from parameters
+    if (toolParams?.description && typeof toolParams.description === 'string') {
+      return toolParams.description;
+    }
+    
+    return null;
+  };
 
   const handleAllowOnce = () => {
     resolveRequest('once');
@@ -25,7 +60,7 @@ export function ToolPermissionDialog() {
     <Dialog open={!!request} onOpenChange={() => resolveRequest('deny')}>
       <DialogContent className="max-w-lg" onInteractOutside={(event) => event.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Allow tool "{request?.toolName}" to run?</DialogTitle>
+          <DialogTitle>Allow tool "{request ? getDisplayToolName(request.toolName) : ''}" to run?</DialogTitle>
         </DialogHeader>
         {request && (
           <div className="space-y-3 py-1 overflow-hidden">
@@ -35,19 +70,23 @@ export function ToolPermissionDialog() {
                 const isMCP = toolRegistry.isMCPTool(request.toolName);
                 if (isMCP) {
                   const serverId = toolRegistry.getMCPServerIdForTool(request.toolName);
-                  return <span>Source: MCP server{serverId ? ` (${serverId})` : ''}</span>;
+                  const serverName = serverId ? getMCPServerName(serverId) : 'Unknown';
+                  return <span>Source: MCP server ({serverName})</span>;
                 }
                 return <span>Source: built-in tool</span>;
               })()}
             </div>
 
             {/* Description */}
-            {typeof request.toolParams?.description === 'string' && (
-              <div className="text-sm">
-                <span className="font-medium">What it does: </span>
-                <span className="text-muted-foreground">{request.toolParams.description}</span>
-              </div>
-            )}
+            {(() => {
+              const description = getToolDescription(request.toolName, request.toolParams);
+              return description ? (
+                <div className="text-sm">
+                  <span className="font-medium">What it does: </span>
+                  <span className="text-muted-foreground">{description}</span>
+                </div>
+              ) : null;
+            })()}
 
             {/* Parameters preview */}
             {request.toolParams && Object.keys(request.toolParams).length > 0 && (

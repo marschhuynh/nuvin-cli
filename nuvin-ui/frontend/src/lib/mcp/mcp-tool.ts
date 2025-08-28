@@ -29,7 +29,7 @@ export class MCPTool implements Tool {
   /**
    * Execute the MCP tool
    */
-  async execute(parameters: Record<string, any>, _context?: ToolContext): Promise<ToolExecutionResult> {
+  async execute(parameters: Record<string, any>, context?: ToolContext): Promise<ToolExecutionResult> {
     try {
       // Validate that the MCP client is connected
       if (!this.mcpClient.isConnected()) {
@@ -52,8 +52,9 @@ export class MCPTool implements Tool {
         arguments: filteredParameters,
       };
 
-      // Execute the tool via MCP client
-      const mcpResult: MCPToolResult = await this.mcpClient.executeTool(toolCall);
+      // Execute the tool via MCP client with timeout from context
+      const timeoutMs = context?.agentToolConfig?.timeoutMs;
+      const mcpResult: MCPToolResult = await this.mcpClient.executeTool(toolCall, timeoutMs);
 
       // Convert MCP result to internal format
       const result = this.convertMCPResultToToolResult(mcpResult);

@@ -28,6 +28,7 @@ export interface ToolContext {
   userId?: string;
   sessionId?: string;
   metadata?: Record<string, any>;
+  agentToolConfig?: AgentToolConfig;
 }
 
 // Standardized tool result format

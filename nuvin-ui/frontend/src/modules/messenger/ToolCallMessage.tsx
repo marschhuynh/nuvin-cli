@@ -180,7 +180,7 @@ export function ToolCallMessage({
   // Helper to get MCP server name from metadata
   const getMcpServerName = () => {
     if (result?.metadata?.serverId) {
-      const serverId = result.metadata.serverId;
+      const serverId = (result.metadata.serverId as string) ?? 'Unknown';
       const serverConfig = mcpManager.getServerConfig(serverId);
       return serverConfig?.name || 'MCP';
     }
@@ -188,8 +188,8 @@ export function ToolCallMessage({
   };
 
   // Helper to get display tool name (prefer mcpToolName if available)
-  const getDisplayToolName = () => {
-    return result?.metadata?.mcpToolName || toolName;
+  const getDisplayToolName = (): string => {
+    return (result?.metadata?.mcpToolName as string) || toolName;
   };
 
   // Helper to get result preview for second line

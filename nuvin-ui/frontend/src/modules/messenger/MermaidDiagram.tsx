@@ -375,7 +375,7 @@ export function MermaidDiagram({ chart }: MermaidProps) {
           setSvg(renderedSvg);
           setError('');
         } catch (err) {
-          console.error('Mermaid rendering error:', err);
+          console.warn('Mermaid rendering error:', err);
           setError('Rendering failed');
         } finally {
           // Restore console methods
@@ -383,7 +383,7 @@ export function MermaidDiagram({ chart }: MermaidProps) {
           console.warn = originalWarn;
         }
       } catch (err) {
-        console.error('Mermaid rendering error:', err);
+        console.warn('Mermaid rendering error:', err);
         setError('Rendering failed');
         setSvg('');
       }

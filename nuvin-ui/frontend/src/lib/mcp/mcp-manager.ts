@@ -396,6 +396,7 @@ export class MCPManager {
       totalResources: configs.reduce((sum, c) => sum + c.resourceCount, 0),
     };
   }
+
 }
 
 // Singleton instance

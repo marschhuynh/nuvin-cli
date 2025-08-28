@@ -355,7 +355,7 @@ export class MCPClient {
   private initialized = false;
   private serverInfo: any = null;
 
-  constructor(serverId: string, transportOptions: MCPTransportOptions) {
+  constructor(serverId: string, transportOptions: MCPTransportOptions, private timeoutMs: number = 30000) {
     this.serverId = serverId;
     this.transportOptions = transportOptions;
     mcpDebug('MCPClient constructed', { serverId, transport: transportOptions.type });
@@ -456,7 +456,7 @@ export class MCPClient {
   /**
    * Execute a tool call
    */
-  async executeTool(toolCall: MCPToolCall): Promise<MCPToolResult> {
+  async executeTool(toolCall: MCPToolCall, timeoutMs?: number): Promise<MCPToolResult> {
     if (!this.isConnected()) {
       throw new Error('Not connected to MCP server');
     }
@@ -476,7 +476,7 @@ export class MCPClient {
       const response = await this.sendRequest('tools/call', {
         name: toolCall.name,
         arguments: processedArguments,
-      });
+      }, timeoutMs);
 
       return response as MCPToolResult;
     } catch (error) {
@@ -574,6 +574,7 @@ export class MCPClient {
   getResourceTemplates(): MCPResourceTemplate[] {
     return Array.from(this.resourceTemplates.values());
   }
+
 
   /**
    * Add event handler
@@ -802,7 +803,7 @@ export class MCPClient {
   /**
    * Send a JSON-RPC request
    */
-  private async sendRequest(method: string, params?: any): Promise<any> {
+  private async sendRequest(method: string, params?: any, timeoutMs?: number): Promise<any> {
     if (!this.connection) {
       throw new Error('Not connected');
     }
@@ -819,7 +820,7 @@ export class MCPClient {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
         reject(new Error(`Request timeout for method: ${method}`));
-      }, 30000); // 30 second timeout
+      }, timeoutMs ?? this.timeoutMs);
 
       this.pendingRequests.set(id, { resolve, reject, timeout });
 
