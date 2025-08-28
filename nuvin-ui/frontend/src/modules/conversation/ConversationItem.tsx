@@ -29,7 +29,7 @@ export function ConversationItem({ conversation, onClick, onDelete }: Conversati
       }`}
     >
       <div className="flex items-start gap-2 relative">
-        <div className="flex-1 min-w-0 pr-8">
+        <div className="flex-1 min-w-0 group-hover:pr-8">
           <div
             className={`font-medium text-sm truncate transition-colors duration-200 ${
               conversation.active ? 'text-foreground' : 'text-foreground'
@@ -49,7 +49,7 @@ export function ConversationItem({ conversation, onClick, onDelete }: Conversati
           <Button
             variant="ghost"
             size="icon"
-            className={`h-7 w-7 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-destructive/20 ${
+            className={`z-10 h-7 w-7 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-destructive/20 ${
               conversation.active
                 ? 'text-muted-foreground hover:text-destructive'
                 : 'text-muted-foreground hover:text-destructive'

@@ -1,0 +1,1 @@
+User reports read_file tool cannot find files. Investigating implementation and file existence handling for errors.

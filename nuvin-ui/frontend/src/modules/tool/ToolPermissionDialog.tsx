@@ -26,16 +26,16 @@ export function ToolPermissionDialog() {
   // Helper to get tool description
   const getToolDescription = (toolName: string, toolParams?: Record<string, unknown>): string | null => {
     const tool = toolRegistry.getTool(toolName);
+
+    if (toolParams?.description && typeof toolParams.description === 'string') {
+      return toolParams.description;
+    }
+
     if (tool) {
       if (isMCPTool(tool)) {
         return tool.getMCPSchema().description || null;
       }
       return tool.definition.description || null;
-    }
-
-    // Fallback to description from parameters
-    if (toolParams?.description && typeof toolParams.description === 'string') {
-      return toolParams.description;
     }
 
     return null;

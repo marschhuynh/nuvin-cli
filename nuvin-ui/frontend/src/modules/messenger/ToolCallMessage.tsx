@@ -155,14 +155,6 @@ export function ToolCallMessage({
     return <Wrench className="h-4 w-4 text-gray-400" />;
   };
 
-  const getStatusText = () => {
-    if (isExecuting) return 'Executing...';
-    if (result?.status === 'success') return 'Completed';
-    if (result?.status === 'error') return 'Failed';
-    if (result?.status === 'warning') return 'Warning';
-    return 'Pending';
-  };
-
   // Extract description from arguments if not provided directly
   const getToolDescription = () => {
     if (description) return description;
@@ -422,14 +414,14 @@ export function ToolCallMessage({
                         )}
 
                         {/* Show metadata if available */}
-                        {result.metadata && Object.keys(result.metadata).length > 0 && (
+                        {/* {result.metadata && Object.keys(result.metadata).length > 0 && (
                           <div className="mt-3 pt-3 border-t border-current/20">
                             <div className="text-xs font-medium mb-2 opacity-80">Metadata:</div>
                             <pre className="overflow-auto leading-relaxed font-mono text-xs opacity-90">
                               {formatJSON(result.metadata)}
                             </pre>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>
