@@ -5,6 +5,9 @@ BINARY=server
 dev:
 	go run ./cmd/server
 
+dev-db:
+	docker compose up db -d
+
 build:
 	go build -o bin/$(BINARY) ./cmd/server
 

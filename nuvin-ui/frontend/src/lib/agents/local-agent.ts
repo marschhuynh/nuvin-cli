@@ -84,7 +84,7 @@ export class LocalAgent extends BaseAgent {
       // Add assistant message with tool calls to conversation
       currentMessages.push({
         role: 'assistant' as const,
-        content: currentResult.content,
+        content: currentResult.content || null,
         tool_calls: currentResult.tool_calls,
       });
 
@@ -330,7 +330,7 @@ class StreamingHandler {
           throw new Error('Request cancelled');
         }
 
-        if (chunk.content) {
+        if (chunk.content !== null && chunk.content !== undefined) {
           streamedContent += chunk.content;
           context.options.onChunk?.(chunk.content);
         }
@@ -377,7 +377,7 @@ class StreamingHandler {
       // Add assistant message with tool calls to conversation
       currentMessages.push({
         role: 'assistant' as const,
-        content: currentResult.content,
+        content: currentResult.content || null,
         tool_calls: currentResult.tool_calls,
       });
 
@@ -409,7 +409,7 @@ class StreamingHandler {
             throw new Error('Request cancelled');
           }
 
-          if (chunk.content) {
+          if (chunk.content !== null && chunk.content !== undefined) {
             followUpContent += chunk.content;
             // Emit streaming content if there is any
             if (chunk.content.trim()) {

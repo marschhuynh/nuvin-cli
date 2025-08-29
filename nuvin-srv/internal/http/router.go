@@ -41,5 +41,10 @@ func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *st
 	r.POST("/logout", authMw, authHandler.Logout)
 	r.GET("/me", authMw, userHandler.Me)
 
+	// GitHub Copilot device flow endpoints
+	r.POST("/github/device-flow/start", handlers.DeviceFlowStart)
+	r.GET("/github/device-flow/poll/:deviceCode", handlers.DeviceFlowPoll)
+	r.POST("/github/copilot-token", handlers.CopilotTokenExchange)
+
 	return r
 }

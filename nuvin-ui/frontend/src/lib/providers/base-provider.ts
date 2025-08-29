@@ -259,17 +259,16 @@ export abstract class BaseLLMProvider implements LLMProvider {
     for await (const data of this.parseStream(reader, options, signal)) {
       lastData = data;
 
-      // Handle usage data - OpenRouter sends this in a separate chunk
+      // Handle usage data - some providers send this in a separate chunk, others include it with content
       const currentUsage: UsageData | undefined = extractValue(data, options.usagePath || 'usage');
       if (currentUsage) {
         usage = currentUsage;
-        // Don't yield content for usage-only chunks, just store the usage
-        continue;
+        // Continue processing the same chunk for content and tool calls
       }
 
       // Handle text content
       const content = extractValue(data, options.contentPath || 'choices.0.delta.content');
-      if (content) {
+      if (content !== null && content !== undefined) {
         yield { content };
       }
 

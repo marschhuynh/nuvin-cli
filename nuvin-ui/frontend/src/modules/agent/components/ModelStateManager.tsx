@@ -16,8 +16,6 @@ export function ModelStateManager() {
   const [modalityFilter, setModalityFilter] = useState<string | null>(null);
   const [showEnabledOnly, setShowEnabledOnly] = useState(false);
 
-  console.log('models', models[activeProviderId]);
-
   const isLoading = useModelsStore((state) => state.loading[activeProviderId]);
 
   // Get the active provider configuration

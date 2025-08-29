@@ -27,8 +27,6 @@ interface ModelsListProps {
 export function ModelsList({ models, isLoading, searchQuery }: ModelsListProps) {
   const { toggleModelEnabled } = useActiveModelActions();
 
-  console.log('models', models);
-
   const listRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: models.length,

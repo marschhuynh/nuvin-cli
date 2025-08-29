@@ -3,6 +3,7 @@ import type { ProviderConfig, GithubProviderConfig } from '@/types';
 import { useProviderStore } from '@/store/useProviderStore';
 import { validateAndCleanGitHubToken } from '../github';
 import { smartFetch } from '../fetch-proxy';
+import { isWailsEnvironment } from '../browser-runtime';
 import type { ChatCompletionResponse, ChatCompletionUsage } from './types/openrouter';
 import type {
   CompletionParams,
@@ -34,8 +35,34 @@ interface GitHubModel {
   [key: string]: unknown; // Allow other properties
 }
 
+// Browser-compatible GitHub API types
+interface DeviceFlowStartResponse {
+  deviceCode: string;
+  userCode: string;
+  verificationUri: string;
+  interval: number;
+  expiresIn: number;
+}
+
+interface DeviceFlowPollResponse {
+  accessToken?: string;
+  status: 'pending' | 'complete' | 'error';
+  error?: string;
+}
+
+interface CopilotTokenResponse {
+  accessToken: string;
+  apiKey: string;
+}
+
+interface GitHubTokenResponse {
+  accessToken: string;
+  apiKey: string;
+}
+
 export class GithubCopilotProvider extends BaseLLMProvider {
   private providerConfig: GithubProviderConfig;
+  private serverBaseUrl: string = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
 
   constructor(providerConfig: ProviderConfig) {
     const cleanApiKey = validateAndCleanGitHubToken(providerConfig.apiKey);
@@ -45,6 +72,97 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       apiUrl: 'https://api.githubcopilot.com',
     });
     this.providerConfig = providerConfig;
+  }
+
+  /**
+   * Browser-compatible GitHub Copilot token exchange
+   * Uses the server proxy to bypass CORS
+   */
+  private async getCopilotTokenBrowser(accessToken: string): Promise<GitHubTokenResponse> {
+    const response = await fetch(`${this.serverBaseUrl}/github/copilot-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ accessToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get Copilot token: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Browser-compatible GitHub device flow authentication
+   * Uses server endpoints to handle the OAuth flow
+   */
+  private async fetchGithubCopilotKeyBrowser(): Promise<GitHubTokenResponse> {
+    // Step 1: Start device flow
+    const startResponse = await fetch(`${this.serverBaseUrl}/github/device-flow/start`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!startResponse.ok) {
+      throw new Error(`Failed to start device flow: ${startResponse.status}`);
+    }
+
+    const deviceFlow: DeviceFlowStartResponse = await startResponse.json();
+
+    // Step 2: Open browser tab and show user code
+    window.open(deviceFlow.verificationUri, '_blank');
+
+    // Show user code to user (you might want to show this in a modal/dialog)
+    alert(`Please enter this code in the GitHub authorization page: ${deviceFlow.userCode}`);
+
+    // Step 3: Poll for completion
+    const pollInterval = (deviceFlow.interval || 5) * 1000; // Convert to milliseconds
+    const maxAttempts = Math.floor((deviceFlow.expiresIn || 900) / (deviceFlow.interval || 5));
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+
+      const pollResponse = await fetch(`${this.serverBaseUrl}/github/device-flow/poll/${deviceFlow.deviceCode}`, {
+        method: 'GET',
+      });
+
+      if (!pollResponse.ok) {
+        throw new Error(`Failed to poll device flow: ${pollResponse.status}`);
+      }
+
+      const pollResult: DeviceFlowPollResponse = await pollResponse.json();
+
+      if (pollResult.status === 'complete' && pollResult.accessToken) {
+        // Success! Now get the Copilot token
+        return this.getCopilotTokenBrowser(pollResult.accessToken);
+      } else if (pollResult.status === 'error') {
+        throw new Error(`GitHub authentication failed: ${pollResult.error}`);
+      }
+      // If status is 'pending', continue polling
+    }
+
+    throw new Error('GitHub authentication timed out');
+  }
+
+  /**
+   * Get Copilot token - works in both Wails and browser environments
+   */
+  private async getCopilotToken(accessToken: string): Promise<GitHubTokenResponse> {
+    if (isWailsEnvironment()) {
+      // Use Wails service in desktop app
+      const result = await GetCopilotToken(accessToken);
+      return {
+        accessToken: result.accessToken,
+        apiKey: result.apiKey,
+      };
+    } else {
+      // Use server endpoint in browser
+      return this.getCopilotTokenBrowser(accessToken);
+    }
   }
 
   protected getCommonHeaders(): Record<string, string> {
@@ -88,7 +206,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       const text = await response.text();
       if (response.status === 401 && !isRetry && this.providerConfig.accessToken) {
         console.log('Token expired, trying to get a new token');
-        const newToken = await GetCopilotToken(this.providerConfig.accessToken);
+        const newToken = await this.getCopilotToken(this.providerConfig.accessToken);
         this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
         useProviderStore.getState().updateProvider({
           ...this.providerConfig,
@@ -288,5 +406,33 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
     // GitHub Copilot subscription covers usage - treat as zero cost
     return 0;
+  }
+
+  /**
+   * Authenticate with GitHub Copilot (browser environments)
+   * This method handles the complete device flow authentication
+   */
+  async authenticateGitHubCopilot(): Promise<void> {
+    if (isWailsEnvironment()) {
+      // In Wails, authentication is handled by the desktop app
+      throw new Error('Use the desktop app authentication dialog for GitHub Copilot');
+    }
+
+    try {
+      const result = await this.fetchGithubCopilotKeyBrowser();
+
+      // Update the provider configuration
+      this.apiKey = validateAndCleanGitHubToken(result.apiKey);
+      useProviderStore.getState().updateProvider({
+        ...this.providerConfig,
+        apiKey: result.apiKey,
+        accessToken: result.accessToken,
+      });
+
+      console.log('GitHub Copilot authentication successful');
+    } catch (error) {
+      console.error('GitHub Copilot authentication failed:', error);
+      throw error;
+    }
   }
 }
