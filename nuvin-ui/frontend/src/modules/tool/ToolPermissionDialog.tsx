@@ -31,12 +31,12 @@ export function ToolPermissionDialog() {
       return toolParams.description;
     }
 
-    if (tool) {
-      if (isMCPTool(tool)) {
-        return tool.getMCPSchema().description || null;
-      }
-      return tool.definition.description || null;
-    }
+    // if (tool) {
+    //   if (isMCPTool(tool)) {
+    //     return tool.getMCPSchema().description || null;
+    //   }
+    //   return tool.definition.description || null;
+    // }
 
     return null;
   };

@@ -229,7 +229,7 @@ export function GeneralSettings({ settings, onSettingsChange }: GeneralSettingsP
                     <div className="flex items-center gap-2">
                       {settings.theme === 'light' && <Sun className="h-4 w-4" />}
                       {settings.theme === 'dark' && <Moon className="h-4 w-4" />}
-                      {settings.theme === 'ocean' && <Droplet className="h-4 w-4" />}
+                      {/* {settings.theme === 'ocean' && <Droplet className="h-4 w-4" />} */}
                       {settings.theme === 'liquid-glass' && <GlassWater className="h-4 w-4" />}
                       {settings.theme === 'system' && <Monitor className="h-4 w-4" />}
                       <span className="capitalize">{settings.theme}</span>
@@ -252,12 +252,12 @@ export function GeneralSettings({ settings, onSettingsChange }: GeneralSettingsP
                       <span>Dark</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="ocean">
+                  {/* <SelectItem value="ocean">
                     <div className="flex items-center gap-2">
                       <Droplet className="h-4 w-4" />
                       <span>Ocean</span>
                     </div>
-                  </SelectItem>
+                  </SelectItem> */}
                   <SelectItem value="liquid-glass">
                     <div className="flex items-center gap-2">
                       <GlassWater className="h-4 w-4" />

@@ -142,17 +142,6 @@ export function AgentConfiguration({ onConfigChange }: AgentConfigurationProps) 
     const currentModel = activeProvider?.activeModel?.model;
     const isCurrentModelAvailable = enabledModels.some((model) => model.id === currentModel);
 
-    // Debug logging
-    console.log('Auto-selection check:', {
-      hasActiveProvider: !!activeProvider,
-      enabledModelsCount: enabledModels.length,
-      currentModel,
-      isCurrentModelAvailable,
-      isLoadingModels,
-      modelsError,
-      firstModel: enabledModels[0]?.id,
-    });
-
     if (
       activeProvider &&
       enabledModels.length > 0 &&
