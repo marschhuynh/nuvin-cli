@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: <explanation> */
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -102,7 +103,7 @@ export function MCPServerEditor({
               <Label className="text-sm font-medium">Arguments</Label>
               <div className="space-y-2">
                 {(mcpForm.args || []).map((arg, index) => (
-                  <div key={`arg-${index}-${arg}`} className="flex gap-2">
+                  <div key={`arg-${index}`} className="flex gap-2">
                     <Input
                       value={arg}
                       onChange={(e) => handleArgChange(index, e.target.value)}

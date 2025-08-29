@@ -55,10 +55,10 @@ export { BaseAgent, LocalAgent, A2AAgent } from './agents';
 
 // Export fetch proxy utilities
 export {
-  fetchProxy,
   enableGlobalFetchProxy,
   disableGlobalFetchProxy,
   smartFetch,
+  createProxyFetch,
 } from './fetch-proxy';
 
 // Theme

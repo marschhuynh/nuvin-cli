@@ -1,5 +1,35 @@
 import type { Tool } from '@/types/tools';
 import { ExecuteCommand as CommandExecutorExecuteCommand } from '@wails/services/commandexecutorservice';
+import { isWailsEnvironment } from '@/lib/browser-runtime';
+
+const SERVER_BASE_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
+
+// Browser-compatible command execution
+async function executeCommandBrowser(commandRequest: any) {
+  try {
+    // Use native fetch directly to avoid Window.fetch issues
+    const response = await fetch(`${SERVER_BASE_URL}/execute-command`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(commandRequest),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    // Check if this is a network error (server not running)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(`Cannot connect to server at ${SERVER_BASE_URL}. Make sure nuvin-srv is running on port 8080.`);
+    }
+    throw new Error(`Command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
 export const bashTool: Tool = {
   definition: {
@@ -89,8 +119,14 @@ export const bashTool: Tool = {
 
       console.log(`Executing bash command: "${command}" (timeout: ${timeoutSeconds}s)`);
 
-      // Execute command via Wails backend
-      const response = await CommandExecutorExecuteCommand(commandRequest);
+      let response;
+      if (isWailsEnvironment()) {
+        // Execute command via Wails backend
+        response = await CommandExecutorExecuteCommand(commandRequest);
+      } else {
+        // Execute command via HTTP server for browser environment
+        response = await executeCommandBrowser(commandRequest);
+      }
 
       // Format response for tool result
       const additionalResult: Record<string, any> = {

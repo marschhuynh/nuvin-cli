@@ -52,6 +52,8 @@ export function MCPSettings() {
     description: '',
   });
 
+  console.log('mcpForm', mcpForm);
+
   const selectedMCP = (preferences?.mcpServers || []).find((mcp) => mcp.id === selectedMCPId);
 
   // Dialog state for user notifications

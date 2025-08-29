@@ -17,9 +17,13 @@ import (
 func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *store.TokenStore) *gin.Engine {
 	r := gin.Default()
 	corsCfg := cors.Config{
-		AllowOrigins:     cfg.CORSAllowOrigins,
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		AllowOrigins: cfg.CORSAllowOrigins,
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowHeaders: []string{
+			"Authorization", "Content-Type", "Accept", "Origin", "User-Agent", "Cache-Control",
+			"editor-version", "editor-plugin-version", "openai-organization", "openai-intent",
+			"x-request-id", "x-github-api-version",
+		},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
@@ -30,6 +34,7 @@ func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *st
 
 	authHandler := handlers.NewAuthHandler(db, cfg, jwt, ts)
 	userHandler := handlers.NewUserHandler(db)
+	proxyService := handlers.NewProxyService()
 	authMw := middleware.AuthRequired(jwt, ts)
 
 	r.GET("/healthz", handlers.Health)
@@ -45,6 +50,16 @@ func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *st
 	r.POST("/github/device-flow/start", handlers.DeviceFlowStart)
 	r.GET("/github/device-flow/poll/:deviceCode", handlers.DeviceFlowPoll)
 	r.POST("/github/copilot-token", handlers.CopilotTokenExchange)
+
+	// Command execution endpoint
+	r.POST("/execute-command", handlers.ExecuteCommand)
+
+	// Proxy configuration routes - use a different path to avoid wildcard conflicts
+	r.POST("/proxy-config", proxyService.ConfigureRoute)
+	r.GET("/proxy-config", proxyService.ListRoutes)
+
+	// Proxy routes - handle all HTTP methods for /proxy/*
+	r.Any("/proxy/*route", proxyService.ProxyHandler)
 
 	return r
 }

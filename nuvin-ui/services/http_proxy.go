@@ -38,12 +38,14 @@ type FetchResponse struct {
 type HTTPProxyService struct {
 	ctx              context.Context
 	streamingService *StreamingService
+	routeMap         map[string]string // Maps proxy routes to target servers
 }
 
 // NewHTTPProxyService creates a new HTTP proxy service
 func NewHTTPProxyService(streamingService *StreamingService) *HTTPProxyService {
 	return &HTTPProxyService{
 		streamingService: streamingService,
+		routeMap:         make(map[string]string),
 	}
 }
 
@@ -158,8 +160,8 @@ func (s *HTTPProxyService) FetchProxy(fetchReq FetchRequest) FetchResponse {
 		}
 		runtime.LogInfo(s.ctx, fmt.Sprintf("Starting %s stream [%s] for %s", streamType, streamID[:8], fetchReq.URL))
 
-    // Start streaming in a goroutine
-    go s.streamingService.streamResponse(streamID, resp.Body)
+		// Start streaming in a goroutine
+		go s.streamingService.streamResponse(streamID, resp.Body)
 
 		return FetchResponse{
 			Status:     resp.StatusCode,

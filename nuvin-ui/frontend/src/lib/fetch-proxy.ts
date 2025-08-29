@@ -219,7 +219,7 @@ class ProxyResponse implements Response {
 /**
  * Fetch implementation that uses the Go backend proxy
  */
-export async function fetchProxy(
+export async function fetchProxyWails(
   input: RequestInfo | URL,
   init?: RequestInit & { stream?: boolean; timeout?: number },
   useServer = false,
@@ -356,8 +356,29 @@ export async function smartFetch(
 ): Promise<Response> {
   console.log('smartFetch', input, init);
   if (isWailsEnvironment()) {
-    return fetchProxy(input, init);
+    return fetchProxyWails(input, init);
   } else {
-    return fetchProxy(input, init, true);
+    return fetchProxyWails(input, init, true);
   }
+}
+
+/**
+ * Creates a proxyFetch function bound to a specific base URL
+ * Useful for providers that always call the same API
+ */
+export function createProxyFetch(proxyServerUrl: string) {
+  return async function boundProxyFetch(
+    input: RequestInfo | URL,
+    init?: RequestInit & { stream?: boolean },
+  ): Promise<Response> {
+    const proxyServer = proxyServerUrl || SERVER_BASE_URL;
+
+    const originalUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const parsedUrl = new URL(originalUrl);
+    const route = parsedUrl.pathname.substring(1) + (parsedUrl.search || '');
+
+    const proxyUrl = `${proxyServer}/proxy/${route}`;
+
+    return fetch(proxyUrl, init);
+  };
 }

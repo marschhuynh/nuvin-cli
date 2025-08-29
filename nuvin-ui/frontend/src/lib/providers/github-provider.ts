@@ -2,9 +2,10 @@ import { GetCopilotToken } from '@wails/services/githuboauthservice';
 import type { ProviderConfig, GithubProviderConfig } from '@/types';
 import { useProviderStore } from '@/store/useProviderStore';
 import { validateAndCleanGitHubToken } from '../github';
-import { smartFetch } from '../fetch-proxy';
+import { smartFetch, createProxyFetch } from '../fetch-proxy';
 import { isWailsEnvironment } from '../browser-runtime';
 import type { ChatCompletionResponse, ChatCompletionUsage } from './types/openrouter';
+import { BaseLLMProvider } from './base-provider';
 import type {
   CompletionParams,
   CompletionResult,
@@ -13,10 +14,8 @@ import type {
   ToolDefinition,
   ChatMessage,
 } from './types/base';
-import { BaseLLMProvider } from './base-provider';
 import { extractValue } from './utils';
 
-// Define a specific type for the request body
 type RequestBody = {
   model: string;
   messages: ChatMessage[];
@@ -28,14 +27,12 @@ type RequestBody = {
   tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
 };
 
-// Define a specific type for the model object from the GitHub API
 interface GitHubModel {
   id: string;
   supported_parameters?: string[];
-  [key: string]: unknown; // Allow other properties
+  [key: string]: unknown;
 }
 
-// Browser-compatible GitHub API types
 interface DeviceFlowStartResponse {
   deviceCode: string;
   userCode: string;
@@ -50,11 +47,6 @@ interface DeviceFlowPollResponse {
   error?: string;
 }
 
-interface CopilotTokenResponse {
-  accessToken: string;
-  apiKey: string;
-}
-
 interface GitHubTokenResponse {
   accessToken: string;
   apiKey: string;
@@ -62,16 +54,21 @@ interface GitHubTokenResponse {
 
 export class GithubCopilotProvider extends BaseLLMProvider {
   private providerConfig: GithubProviderConfig;
-  private serverBaseUrl: string = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
+  private serverBaseUrl: string = import.meta.env.VITE_SERVER_URL;
+  private proxyFetch: typeof fetch;
 
   constructor(providerConfig: ProviderConfig) {
     const cleanApiKey = validateAndCleanGitHubToken(providerConfig.apiKey);
+
     super({
       providerName: 'GitHub',
       apiKey: cleanApiKey,
       apiUrl: 'https://api.githubcopilot.com',
     });
+
     this.providerConfig = providerConfig;
+
+    this.proxyFetch = createProxyFetch(this.serverBaseUrl);
   }
 
   /**
@@ -79,7 +76,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
    * Uses the server proxy to bypass CORS
    */
   private async getCopilotTokenBrowser(accessToken: string): Promise<GitHubTokenResponse> {
-    const response = await fetch(`${this.serverBaseUrl}/github/copilot-token`, {
+    const response = await smartFetch(`${this.serverBaseUrl}/github/copilot-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,7 +97,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
    */
   private async fetchGithubCopilotKeyBrowser(): Promise<GitHubTokenResponse> {
     // Step 1: Start device flow
-    const startResponse = await fetch(`${this.serverBaseUrl}/github/device-flow/start`, {
+    const startResponse = await smartFetch(`${this.serverBaseUrl}/github/device-flow/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -126,7 +123,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
 
-      const pollResponse = await fetch(`${this.serverBaseUrl}/github/device-flow/poll/${deviceFlow.deviceCode}`, {
+      const pollResponse = await smartFetch(`${this.serverBaseUrl}/github/device-flow/poll/${deviceFlow.deviceCode}`, {
         method: 'GET',
       });
 
@@ -184,7 +181,6 @@ export class GithubCopilotProvider extends BaseLLMProvider {
     } = {},
     isRetry = false,
   ): Promise<Response> {
-    const url = `${this.apiUrl}${endpoint}`;
     const headers = { ...this.getCommonHeaders(), ...options.headers } as Record<string, string>;
 
     // If this is a streaming request, prefer SSE accept header and mark init as streaming
@@ -193,20 +189,23 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       headers.accept = 'text/event-stream';
     }
 
-    const response = await fetch(url, {
+    const url = `${this.apiUrl}${endpoint}`;
+    const isDesktop = isWailsEnvironment();
+    const _fetch = isDesktop ? fetch : this.proxyFetch;
+
+    const response = await _fetch(url, {
       method: options.method || 'POST',
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
       signal: options.signal,
-      // Hint to our proxy that this request expects streaming semantics
       ...(isStreaming ? { stream: true } : {}),
     });
 
     if (!response.ok) {
       const text = await response.text();
       if (response.status === 401 && !isRetry && this.providerConfig.accessToken) {
-        console.log('Token expired, trying to get a new token');
         const newToken = await this.getCopilotToken(this.providerConfig.accessToken);
+        console.log('Token expired, trying to get a new token', newToken);
         this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
         useProviderStore.getState().updateProvider({
           ...this.providerConfig,
