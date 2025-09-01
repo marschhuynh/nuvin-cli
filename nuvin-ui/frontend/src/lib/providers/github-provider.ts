@@ -75,7 +75,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
    * Browser-compatible GitHub Copilot token exchange
    * Uses the server proxy to bypass CORS
    */
-  private async getCopilotTokenBrowser(accessToken: string): Promise<GitHubTokenResponse> {
+  private async _getCopilotTokenBrowser(accessToken: string): Promise<GitHubTokenResponse> {
     const response = await smartFetch(`${this.serverBaseUrl}/github/copilot-token`, {
       method: 'POST',
       headers: {
@@ -135,7 +135,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
       if (pollResult.status === 'complete' && pollResult.accessToken) {
         // Success! Now get the Copilot token
-        return this.getCopilotTokenBrowser(pollResult.accessToken);
+        return this._getCopilotTokenBrowser(pollResult.accessToken);
       } else if (pollResult.status === 'error') {
         throw new Error(`GitHub authentication failed: ${pollResult.error}`);
       }
@@ -158,7 +158,7 @@ export class GithubCopilotProvider extends BaseLLMProvider {
       };
     } else {
       // Use server endpoint in browser
-      return this.getCopilotTokenBrowser(accessToken);
+      return this._getCopilotTokenBrowser(accessToken);
     }
   }
 
