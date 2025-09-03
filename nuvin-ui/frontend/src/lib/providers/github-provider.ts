@@ -191,7 +191,8 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
     const url = `${this.apiUrl}${endpoint}`;
     const isDesktop = isWailsEnvironment();
-    const _fetch = isDesktop ? fetch : this.proxyFetch;
+    // const _fetch = isDesktop ? fetch : this.proxyFetch;
+    const _fetch = smartFetch;
 
     const response = await _fetch(url, {
       method: options.method || 'POST',

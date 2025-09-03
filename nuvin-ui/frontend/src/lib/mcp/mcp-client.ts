@@ -1,11 +1,21 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type {
-  MCPConnection,
+  CallToolRequest,
+  ListToolsRequest,
+  ListResourcesRequest,
+  ListResourceTemplatesRequest,
+  ReadResourceRequest,
+} from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolResultSchema,
+  ListToolsResultSchema,
+  ListResourcesResultSchema,
+  ListResourceTemplatesResultSchema,
+  ReadResourceResultSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import type {
   MCPTransportOptions,
-  JSONRPCRequest,
-  JSONRPCResponse,
-  JSONRPCNotification,
-  MCPInitializeParams,
-  MCPInitializeResult,
   MCPToolSchema,
   MCPToolCall,
   MCPToolResult,
@@ -14,9 +24,8 @@ import type {
   MCPResourceContents,
   MCPClientEvent,
   MCPClientEventHandler,
-  MCPCapabilities,
-  MCPClientInfo,
 } from '@/types/mcp';
+import { smartFetch } from '@/lib/fetch-proxy';
 
 // Lightweight debug toggle: set localStorage.MCP_DEBUG = '1' to enable
 function mcpDebugEnabled(): boolean {
@@ -31,322 +40,12 @@ function mcpDebug(...args: any[]) {
   if (mcpDebugEnabled()) console.debug('[MCP]', ...args);
 }
 
-/**
- * HTTP-based MCP connection implementation following Streamable HTTP transport spec
- */
-class HttpMCPConnection implements MCPConnection {
-  private url: string;
-  private headers: Record<string, string>;
-  private messageHandler?: (message: JSONRPCResponse | JSONRPCNotification) => void;
-  private errorHandler?: (error: Error) => void;
-  private closeHandler?: () => void;
-  private eventSource?: EventSource;
-  private isConnected = false;
-  private sessionId?: string;
-  private requestQueue: Array<{
-    request: JSONRPCRequest | JSONRPCNotification;
-    resolve: () => void;
-    reject: (error: Error) => void;
-  }> = [];
-
-  constructor(url: string, headers: Record<string, string> = {}) {
-    this.url = url;
-    this.headers = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json, text/event-stream',
-      'MCP-Protocol-Version': '2025-06-18',
-      ...headers,
-    };
-    mcpDebug('HttpMCPConnection: constructed with URL', url);
-  }
-
-  async connect(): Promise<void> {
-    if (this.isConnected) {
-      return;
-    }
-
-    return new Promise((resolve, reject) => {
-      try {
-        mcpDebug('HttpMCPConnection.connect: opening SSE stream to', this.url);
-        // Streamable HTTP transport: Use the MCP endpoint directly for SSE
-        // First, try to open a GET SSE stream for server-initiated messages
-        this.setupEventSource();
-
-        const timeout = setTimeout(() => {
-          this.eventSource?.close();
-          reject(new Error('Connection timeout'));
-        }, 10000);
-
-        if (this.eventSource) {
-          this.eventSource.onopen = () => {
-            clearTimeout(timeout);
-            this.isConnected = true;
-            // Process any queued requests
-            this.processRequestQueue();
-            mcpDebug('HttpMCPConnection.connect: SSE open');
-            resolve();
-          };
-
-          this.eventSource.onerror = (error) => {
-            console.error('SSE connection error:', error);
-            if (!this.isConnected) {
-              clearTimeout(timeout);
-              // Fallback: connection without SSE stream
-              this.isConnected = true;
-              this.processRequestQueue();
-              mcpDebug('HttpMCPConnection.connect: SSE failed, using POST-only');
-              resolve();
-            } else {
-              this.isConnected = false;
-              if (this.errorHandler) {
-                this.errorHandler(new Error('SSE connection error'));
-              }
-            }
-          };
-        } else {
-          // No SSE support, but we can still use POST-only mode
-          clearTimeout(timeout);
-          this.isConnected = true;
-          this.processRequestQueue();
-          mcpDebug('HttpMCPConnection.connect: no SSE, POST-only mode');
-          resolve();
-        }
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async send(message: JSONRPCRequest | JSONRPCNotification): Promise<void> {
-    if (!this.isConnected) {
-      // Queue the request until connected
-      return new Promise((resolve, reject) => {
-        this.requestQueue.push({ request: message, resolve, reject });
-      });
-    }
-
-    try {
-      mcpDebug('HTTP send ->', 'method' in message ? message.method : '(notification)');
-      const headers = { ...this.headers };
-
-      // Add session ID header if we have one
-      if (this.sessionId) {
-        headers['Mcp-Session-Id'] = this.sessionId;
-      }
-
-      const response = await fetch(this.url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(message),
-      });
-
-      // Handle session management
-      if (response.status === 404 && this.sessionId) {
-        // Session expired, clear it to trigger re-initialization
-        this.sessionId = undefined;
-        throw new Error('Session expired - server responded with 404');
-      }
-
-      if (!response.ok) {
-        if (response.status === 400) {
-          const errorText = await response.text();
-          throw new Error(`HTTP 400 Bad Request: ${errorText}`);
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      // Extract session ID from initialize response
-      if ('method' in message && message.method === 'initialize') {
-        const sessionIdHeader = response.headers.get('Mcp-Session-Id');
-        if (sessionIdHeader) {
-          this.sessionId = sessionIdHeader;
-        }
-      }
-
-      // Handle different response types based on content-type
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('text/event-stream')) {
-        // Server initiated SSE stream for this request
-        mcpDebug('HTTP response: streaming');
-        this.handleResponseStream(response);
-      } else if (contentType?.includes('application/json')) {
-        // Single JSON response
-        const jsonResponse = await response.json();
-        mcpDebug('HTTP response: json', jsonResponse?.id ?? '(no id)');
-        if (this.messageHandler) {
-          this.messageHandler(jsonResponse);
-        }
-      } else if (response.status === 202) {
-        // Notification accepted - no response expected
-        return;
-      }
-    } catch (error) {
-      mcpDebug('HTTP send error:', error);
-      throw error instanceof Error ? error : new Error(String(error));
-    }
-  }
-
-  async close(): Promise<void> {
-    this.isConnected = false;
-
-    // Terminate session if we have one
-    if (this.sessionId) {
-      try {
-        const headers = { ...this.headers };
-        headers['Mcp-Session-Id'] = this.sessionId;
-
-        await fetch(this.url, {
-          method: 'DELETE',
-          headers,
-        });
-      } catch (error) {
-        // Ignore errors during session termination
-        console.debug('Error terminating MCP session:', error);
-      }
-      this.sessionId = undefined;
-    }
-
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = undefined;
-    }
-
-    // Reject any queued requests
-    for (const item of this.requestQueue) {
-      item.reject(new Error('Connection closed'));
-    }
-    this.requestQueue = [];
-
-    if (this.closeHandler) {
-      this.closeHandler();
-    }
-  }
-
-  onMessage(handler: (message: JSONRPCResponse | JSONRPCNotification) => void): void {
-    this.messageHandler = handler;
-  }
-
-  onError(handler: (error: Error) => void): void {
-    this.errorHandler = handler;
-  }
-
-  onClose(handler: () => void): void {
-    this.closeHandler = handler;
-  }
-
-  /**
-   * Set up EventSource for server-initiated messages (optional GET SSE stream)
-   */
-  private setupEventSource(): void {
-    try {
-      const headers: Record<string, string> = {};
-      if (this.sessionId) {
-        headers['Mcp-Session-Id'] = this.sessionId;
-      }
-
-      // Note: EventSource doesn't support custom headers in standard browsers
-      // This is a limitation for session management in SSE streams
-      this.eventSource = new EventSource(this.url);
-
-      this.eventSource.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          mcpDebug('SSE <- message', message?.id ?? '(notify)');
-          if (this.messageHandler) {
-            this.messageHandler(message);
-          }
-        } catch (error) {
-          console.error('Failed to parse SSE message:', error);
-          if (this.errorHandler) {
-            this.errorHandler(error instanceof Error ? error : new Error(String(error)));
-          }
-        }
-      };
-    } catch (error) {
-      console.debug('EventSource not supported or failed to initialize:', error);
-      this.eventSource = undefined;
-    }
-  }
-
-  /**
-   * Handle streaming response from POST request
-   */
-  private handleResponseStream(response: Response): void {
-    if (!response.body) {
-      console.error('No response body for streaming response');
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    const processStream = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.trim() === '') continue;
-
-            // Parse SSE format: "data: {json}"
-            if (line.startsWith('data: ')) {
-              try {
-                const jsonData = line.substring(6);
-                const message = JSON.parse(jsonData);
-                mcpDebug('Stream <- message', message?.id ?? '(notify)');
-                if (this.messageHandler) {
-                  this.messageHandler(message);
-                }
-              } catch (error) {
-                console.error('Failed to parse streaming message:', error);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error reading stream:', error);
-        if (this.errorHandler) {
-          this.errorHandler(error instanceof Error ? error : new Error(String(error)));
-        }
-      }
-    };
-
-    processStream();
-  }
-
-  private async processRequestQueue(): Promise<void> {
-    while (this.requestQueue.length > 0 && this.isConnected) {
-      const item = this.requestQueue.shift();
-      if (item) {
-        try {
-          await this.send(item.request);
-          item.resolve();
-        } catch (error) {
-          item.reject(error instanceof Error ? error : new Error(String(error)));
-        }
-      }
-    }
-  }
-}
-
 export class MCPClient {
-  private connection: MCPConnection | null = null;
+  private client: Client | null = null;
+  private transport: StreamableHTTPClientTransport | null = null;
   private serverId: string;
   private transportOptions: MCPTransportOptions;
   private eventHandlers: MCPClientEventHandler[] = [];
-  private requestId = 0;
-  private pendingRequests = new Map<
-    string | number,
-    {
-      resolve: (value: any) => void;
-      reject: (error: Error) => void;
-      timeout: NodeJS.Timeout;
-    }
-  >();
 
   // Cached data
   private tools: Map<string, MCPToolSchema> = new Map();
@@ -366,20 +65,64 @@ export class MCPClient {
   }
 
   /**
-   * Connect to the MCP server and initialize the protocol
+   * Connect to the MCP server using streamable HTTP
    */
   async connect(): Promise<void> {
-    if (this.connection) {
+    if (this.client || this.transport) {
       throw new Error('Already connected');
     }
 
+    // Only support HTTP transport
+    if (this.transportOptions.type !== 'http') {
+      throw new Error('Only HTTP transport is supported. Use type: "http"');
+    }
+
     try {
-      mcpDebug('MCPClient.connect: creating connection');
-      this.connection = await this.createConnection();
-      this.setupEventHandlers();
-      mcpDebug('MCPClient.connect: initializing protocol');
-      await this.initialize();
+      mcpDebug('MCPClient.connect: creating streamable HTTP transport');
+
+      const { url, headers = {} } = this.transportOptions;
+      if (!url) {
+        throw new Error('URL is required for HTTP transport');
+      }
+
+      // Create streamable HTTP transport with proxy fetch
+      const urlObj = new URL(url);
+      this.transport = new StreamableHTTPClientTransport(urlObj, {
+        requestInit: {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json, text/event-stream',
+            // Explicitly set protocol version to match server's supported versions
+            ...headers,
+          },
+        },
+        // Use custom fetch to proxy through our server to avoid CORS
+        fetch: this.createProxyFetch(url),
+      });
+
+      // Create the official SDK client
+      this.client = new Client(
+        {
+          name: 'nuvin-agent',
+          version: '1.0.0',
+        },
+        {
+          capabilities: {
+            tools: {},
+            resources: { subscribe: true },
+            prompts: {},
+            logging: {},
+          },
+        },
+      );
+
+      // Connect using the official SDK client
+      await this.client.connect(this.transport);
+      mcpDebug(`this.transport ${this.transport.sessionId}`);
       this.initialized = true;
+
+      // Get server capabilities
+      this.serverInfo = this.client.getServerCapabilities();
 
       // Discover tools and resources
       await this.discoverTools();
@@ -390,7 +133,7 @@ export class MCPClient {
         serverId: this.serverId,
         serverInfo: this.serverInfo,
       });
-      mcpDebug('MCPClient.connect: connected');
+      mcpDebug('MCPClient.connect: connected via streamable HTTP');
     } catch (error) {
       mcpDebug('MCPClient.connect error:', error);
       this.emitEvent({
@@ -406,20 +149,21 @@ export class MCPClient {
    * Disconnect from the MCP server
    */
   async disconnect(): Promise<void> {
-    if (!this.connection) {
+    if (!this.client && !this.transport) {
       return;
     }
 
     try {
-      // Cancel all pending requests
-      for (const [_id, { reject, timeout }] of this.pendingRequests) {
-        clearTimeout(timeout);
-        reject(new Error('Connection closed'));
+      if (this.client) {
+        await this.client.close();
+        this.client = null;
       }
-      this.pendingRequests.clear();
 
-      await this.connection.close();
-      this.connection = null;
+      if (this.transport) {
+        await this.transport.close();
+        this.transport = null;
+      }
+
       this.initialized = false;
       this.tools.clear();
       this.resources.clear();
@@ -440,7 +184,7 @@ export class MCPClient {
    * Check if the client is connected and initialized
    */
   isConnected(): boolean {
-    return this.connection !== null && this.initialized;
+    return this.client !== null && this.initialized;
   }
 
   /**
@@ -461,7 +205,7 @@ export class MCPClient {
    * Execute a tool call
    */
   async executeTool(toolCall: MCPToolCall, timeoutMs?: number): Promise<MCPToolResult> {
-    if (!this.isConnected()) {
+    if (!this.isConnected() || !this.client) {
       throw new Error('Not connected to MCP server');
     }
 
@@ -477,16 +221,16 @@ export class MCPClient {
       const processedArguments = this.processToolArguments(toolCall.name, toolCall.arguments || {});
       console.log(`[DEBUG] Processed arguments:`, processedArguments);
 
-      const response = await this.sendRequest(
-        'tools/call',
-        {
+      const request: CallToolRequest = {
+        method: 'tools/call',
+        params: {
           name: toolCall.name,
           arguments: processedArguments,
         },
-        timeoutMs,
-      );
+      };
 
-      return response as MCPToolResult;
+      const response = await this.client.request(request, CallToolResultSchema);
+      return response as any; // Type compatibility with internal types
     } catch (error) {
       throw new Error(`Tool execution failed: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -564,13 +308,17 @@ export class MCPClient {
    * Get resource content
    */
   async getResource(uri: string): Promise<MCPResourceContents> {
-    if (!this.isConnected()) {
+    if (!this.isConnected() || !this.client) {
       throw new Error('Not connected to MCP server');
     }
 
     try {
-      const response = await this.sendRequest('resources/read', { uri });
-      return response as MCPResourceContents;
+      const request: ReadResourceRequest = {
+        method: 'resources/read',
+        params: { uri },
+      };
+      const response = await this.client.request(request, ReadResourceResultSchema);
+      return response as any; // Type compatibility with internal types
     } catch (error) {
       throw new Error(`Resource access failed: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -601,140 +349,27 @@ export class MCPClient {
   }
 
   /**
-   * Create connection based on transport options
-   */
-  private async createConnection(): Promise<MCPConnection> {
-    if (this.transportOptions.type === 'stdio') {
-      mcpDebug('createConnection: stdio');
-      return this.createStdioConnection();
-    } else if (this.transportOptions.type === 'http') {
-      mcpDebug('createConnection: http');
-      return this.createHttpConnection();
-    } else {
-      throw new Error(`Unsupported transport type: ${this.transportOptions.type}`);
-    }
-  }
-
-  /**
-   * Create stdio connection (spawns process via Wails)
-   */
-  private async createStdioConnection(): Promise<MCPConnection> {
-    const { command, args = [], env = {} } = this.transportOptions;
-
-    if (!command) {
-      throw new Error('Command is required for stdio transport');
-    }
-
-    // Import Wails transport dynamically to avoid issues if not available
-    try {
-      const { createWailsMCPConnection } = await import('./wails-transport');
-      mcpDebug('createStdioConnection: spawning via Wails', { command, args });
-      const connection = createWailsMCPConnection(this.serverId, this.transportOptions);
-      await connection.connect();
-      return connection;
-    } catch (error) {
-      mcpDebug('createStdioConnection error:', error);
-      throw new Error(
-        `Failed to create Wails stdio connection: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  /**
-   * Create HTTP connection
-   */
-  private async createHttpConnection(): Promise<MCPConnection> {
-    const { url, headers = {} } = this.transportOptions;
-
-    if (!url) {
-      throw new Error('URL is required for HTTP transport');
-    }
-
-    const connection = new HttpMCPConnection(url, headers);
-    await connection.connect();
-    return connection;
-  }
-
-  /**
-   * Setup connection event handlers
-   */
-  private setupEventHandlers(): void {
-    if (!this.connection) return;
-
-    this.connection.onMessage((message) => {
-      mcpDebug('onMessage <-', 'id' in message ? (message as any).id : (message as any).method);
-      if ('id' in message) {
-        // This is a response
-        this.handleResponse(message as JSONRPCResponse);
-      } else {
-        // This is a notification
-        this.handleNotification(message as JSONRPCNotification);
-      }
-    });
-
-    this.connection.onError((error) => {
-      mcpDebug('onError <-', error);
-      this.emitEvent({
-        type: 'error',
-        serverId: this.serverId,
-        error,
-      });
-    });
-
-    this.connection.onClose(() => {
-      mcpDebug('onClose');
-      this.emitEvent({
-        type: 'disconnected',
-        serverId: this.serverId,
-        reason: 'Connection closed',
-      });
-    });
-  }
-
-  /**
-   * Initialize the MCP protocol
-   */
-  private async initialize(): Promise<void> {
-    const capabilities: MCPCapabilities = {
-      tools: { listChanged: true },
-      resources: { subscribe: true, listChanged: true },
-      prompts: { listChanged: true },
-      logging: {},
-    };
-
-    const clientInfo: MCPClientInfo = {
-      name: 'nuvin-agent',
-      version: '1.0.0',
-    };
-
-    const params: MCPInitializeParams = {
-      protocolVersion: '2025-06-18',
-      capabilities,
-      clientInfo,
-    };
-
-    mcpDebug('initialize ->');
-    const result = await this.sendRequest('initialize', params);
-    this.serverInfo = (result as MCPInitializeResult).serverInfo;
-    mcpDebug('initialize <-', this.serverInfo?.name, this.serverInfo?.version);
-
-    // Send notifications/initialized notification as required by MCP protocol
-    await this.sendNotification('notifications/initialized', {});
-    mcpDebug('notifications/initialized ->');
-  }
-
-  /**
    * Discover available tools
    */
   private async discoverTools(): Promise<void> {
     try {
       mcpDebug('tools/list ->');
-      const response = await this.sendRequest('tools/list');
+
+      if (!this.client) {
+        throw new Error('Client not initialized');
+      }
+
+      const request: ListToolsRequest = {
+        method: 'tools/list',
+        params: {},
+      };
+
+      const response = await this.client.request(request, ListToolsResultSchema);
       const tools = response.tools || [];
 
       this.tools.clear();
       for (const tool of tools) {
-        this.tools.set(tool.name, tool);
+        this.tools.set(tool.name, tool as MCPToolSchema);
       }
 
       this.emitEvent({
@@ -756,16 +391,26 @@ export class MCPClient {
    */
   private async discoverResources(): Promise<void> {
     try {
+      if (!this.client) {
+        throw new Error('Client not initialized');
+      }
+
       // Get resource templates (optional method - not all servers support)
-      if (this.serverInfo?.capabilities?.resources?.templates) {
+      if (this.serverInfo?.capabilities?.resources?.templates || this.serverInfo?.resources?.templates) {
         try {
           mcpDebug('resources/templates/list ->');
-          const templatesResponse = await this.sendRequest('resources/templates/list');
+
+          const templatesRequest: ListResourceTemplatesRequest = {
+            method: 'resources/templates/list',
+            params: {},
+          };
+
+          const templatesResponse = await this.client.request(templatesRequest, ListResourceTemplatesResultSchema);
           const templates = templatesResponse.resourceTemplates || [];
 
           this.resourceTemplates.clear();
           for (const template of templates) {
-            this.resourceTemplates.set(template.uriTemplate, template);
+            this.resourceTemplates.set(template.uriTemplate, template as MCPResourceTemplate);
           }
         } catch (error: any) {
           // Ignore method not found errors for optional endpoints
@@ -782,16 +427,24 @@ export class MCPClient {
       // Get resources
       try {
         mcpDebug('resources/list ->');
-        const resourcesResponse = await this.sendRequest('resources/list');
+
+        const resourcesRequest: ListResourcesRequest = {
+          method: 'resources/list',
+          params: {},
+        };
+
+        const resourcesResponse = await this.client.request(resourcesRequest, ListResourcesResultSchema);
         const resources = resourcesResponse.resources || [];
 
         this.resources.clear();
         for (const resource of resources) {
-          this.resources.set(resource.uri, resource);
+          this.resources.set(resource.uri, resource as MCPResource);
         }
+
+        mcpDebug(`Found ${resources.length} resources`);
       } catch (error: any) {
         if (error.message?.includes('Method not found') || error.message?.includes('-32601')) {
-          console.debug(`Server ${this.serverId} does not support resources`);
+          mcpDebug(`Server ${this.serverId} does not support resources (this is normal)`);
         } else {
           console.warn(`Failed to discover resources for server ${this.serverId}:`, error);
         }
@@ -808,93 +461,37 @@ export class MCPClient {
   }
 
   /**
-   * Send a JSON-RPC request
+   * Create a custom fetch function that proxies requests through our server
+   * This avoids CORS issues by routing MCP requests through ${SERVER_BASE_URL}/fetch
    */
-  private async sendRequest(method: string, params?: any, timeoutMs?: number): Promise<any> {
-    if (!this.connection) {
-      throw new Error('Not connected');
-    }
-
-    const id = ++this.requestId;
-    const request: JSONRPCRequest = {
-      jsonrpc: '2.0',
-      id,
-      method,
-      params,
-    };
-
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(id);
-        reject(new Error(`Request timeout for method: ${method}`));
-      }, timeoutMs ?? this.timeoutMs);
-
-      this.pendingRequests.set(id, { resolve, reject, timeout });
-
-      mcpDebug('send ->', method, id);
-      this.connection?.send(request).catch((error) => {
-        this.pendingRequests.delete(id);
-        clearTimeout(timeout);
-        mcpDebug('send error <-', method, error);
-        reject(error);
+  private createProxyFetch(originalMcpUrl: string): typeof fetch {
+    return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      mcpDebug('MCP proxy fetch ->', url, {
+        method: init?.method || 'GET',
+        headers: init?.headers,
+        bodyPreview:
+          typeof init?.body === 'string' ? init.body.substring(0, 200) : init?.body ? '[non-string body]' : undefined,
       });
-    });
-  }
 
-  /**
-   * Handle JSON-RPC response
-   */
-  private handleResponse(response: JSONRPCResponse): void {
-    mcpDebug('response <-', response.id, response.error ? 'error' : 'ok');
-    const pending = this.pendingRequests.get(response.id);
-    if (!pending) {
-      console.warn(`Received response for unknown request ID: ${response.id}`);
-      return;
-    }
+      const response = await smartFetch(input, {
+        ...init,
+        stream: true, // Enable streaming for SSE support
+      });
 
-    this.pendingRequests.delete(response.id);
-    clearTimeout(pending.timeout);
+      // Log response details for debugging protocol issues
+      const responseClone = response.clone();
+      const responseText = await responseClone.text();
 
-    if (response.error) {
-      pending.reject(new Error(`${response.error.message} (${response.error.code})`));
-    } else {
-      pending.resolve(response.result);
-    }
-  }
+      mcpDebug('MCP proxy fetch response <-', response.status, response.statusText, {
+        headers: Object.fromEntries(response.headers.entries()),
+        bodyPreview: responseText.substring(0, 300) + (responseText.length > 300 ? '...' : ''),
+      });
 
-  /**
-   * Send a notification to the MCP server (no response expected)
-   */
-  private async sendNotification(method: string, params?: any): Promise<void> {
-    if (!this.connection) {
-      throw new Error('Not connected');
-    }
+      console.log('response', response);
 
-    const notification: JSONRPCNotification = {
-      jsonrpc: '2.0',
-      method,
-      params,
+      return response;
     };
-
-    mcpDebug('send notification ->', method);
-    await this.connection.send(notification);
-  }
-
-  /**
-   * Handle JSON-RPC notification
-   */
-  private handleNotification(notification: JSONRPCNotification): void {
-    switch (notification.method) {
-      case 'notifications/tools/list_changed':
-        this.discoverTools();
-        break;
-      case 'notifications/resources/list_changed':
-      case 'notifications/resources/updated':
-        this.discoverResources();
-        break;
-      default:
-        console.log(`Received notification: ${notification.method}`, notification.params);
-    }
   }
 
   /**

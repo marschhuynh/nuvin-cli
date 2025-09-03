@@ -22,7 +22,10 @@ func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *st
 		AllowHeaders: []string{
 			"Authorization", "Content-Type", "Accept", "Origin", "User-Agent", "Cache-Control",
 			"editor-version", "editor-plugin-version", "openai-organization", "openai-intent",
-			"x-request-id", "x-github-api-version",
+			"x-request-id", "x-github-api-version", "Connection",
+		},
+		ExposeHeaders: []string{
+			"Content-Type", "Cache-Control", "Connection", "Access-Control-Allow-Origin",
 		},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,

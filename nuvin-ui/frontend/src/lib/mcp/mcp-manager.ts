@@ -61,31 +61,22 @@ export class MCPManager {
     this.configs.set(serverId, extendedConfig);
 
     try {
-      // Guard: stdio transport requires Wails Go backend. Skip with clear status when unavailable.
-      if (config.type === 'stdio' && !isWailsEnvironment()) {
-        const reason =
-          'Wails Go backend not available. Run via `wails3 dev` or disable stdio MCP servers in browser dev.';
-        console.warn(`MCP server '${serverId}' cannot start (stdio) outside Wails runtime: ${reason}`);
+      // Guard: Only HTTP transport with SSE is now supported
+      if (config.type !== 'http') {
+        const reason = 'Only HTTP transport with SSE is supported. Please configure an HTTP MCP server.';
+        console.warn(`MCP server '${serverId}' cannot start: ${reason}`);
         extendedConfig.status = 'error';
         extendedConfig.lastError = reason;
         this.configs.set(serverId, extendedConfig);
         return;
       }
 
-      // Create MCP client with appropriate transport options
-      const transportOptions: MCPTransportOptions =
-        config.type === 'http'
-          ? {
-              type: 'http',
-              url: config.url,
-              headers: config.env, // Use env field for HTTP headers
-            }
-          : {
-              type: 'stdio',
-              command: config.command,
-              args: config.args,
-              env: config.env,
-            };
+      // Create MCP client with HTTP transport options (only supported type)
+      const transportOptions: MCPTransportOptions = {
+        type: 'http',
+        url: config.url,
+        headers: config.env, // Use env field for HTTP headers
+      };
 
       const client = new MCPClient(serverId, transportOptions);
 
@@ -181,14 +172,7 @@ export class MCPManager {
    * Stop all MCP servers
    */
   async stopAllServers(): Promise<void> {
-    try {
-      // Stop all backend processes first (Wails v3 bindings)
-      await MCPToolsService.StopAllMCPServers();
-    } catch (error) {
-      console.warn('Failed to stop backend MCP servers:', error);
-    }
-
-    // Clean up frontend state
+    // Clean up frontend state - only HTTP connections to close
     const serverIds = Array.from(this.clients.keys());
     await Promise.all(serverIds.map((serverId) => this.stopServer(serverId)));
   }

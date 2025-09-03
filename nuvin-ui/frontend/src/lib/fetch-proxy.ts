@@ -290,38 +290,64 @@ export async function fetchProxyWails(
   LogInfo(`Fetch proxy: ${method.toUpperCase()} ${url}`);
 
   try {
-    const response: FetchResponse = useServer
-      ? await (
-          await nativeFetch(`${SERVER_BASE_URL}/fetch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fetchRequest),
-          })
-        ).json()
-      : await HTTPProxyFetchProxy(fetchRequest);
+    if (useServer) {
+      // When using server, make direct request to /fetch endpoint
+      const serverResponse = await nativeFetch(`${SERVER_BASE_URL}/fetch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fetchRequest),
+      });
 
-    if (response.error) {
-      LogError(`Fetch proxy error: ${response.error}`);
-      throw new Error(`Network error: ${response.error}`);
-    }
+      // Check if this is a streaming response
+      const contentType = serverResponse.headers.get('Content-Type') || '';
+      const isStreaming = init?.stream && contentType.includes('text/event-stream');
 
-    console.log('FetchProxy response:', {
-      status: response.status,
-      hasStreamId: !!response.streamId,
-      streamId: response.streamId?.substring(0, 8),
-      bodyLength: response.body?.length || 0,
-    });
+      if (isStreaming) {
+        // For streaming responses, return the server response directly
+        console.log('FetchProxy streaming response:', {
+          status: serverResponse.status,
+          contentType,
+          hasBody: !!serverResponse.body,
+        });
+        return serverResponse;
+      } else {
+        // For non-streaming responses, the server now returns raw responses
+        // instead of the wrapped JSON format, so return the server response directly
+        console.log('FetchProxy regular response:', {
+          status: serverResponse.status,
+          contentType: serverResponse.headers.get('Content-Type'),
+          hasBody: !!serverResponse.body,
+        });
 
-    return new ProxyResponse(
-      response.body || '',
-      {
+        return serverResponse;
+      }
+    } else {
+      // When using Wails, use the existing HTTPProxyFetchProxy
+      const response: FetchResponse = await HTTPProxyFetchProxy(fetchRequest);
+
+      if (response.error) {
+        LogError(`Fetch proxy error: ${response.error}`);
+        throw new Error(`Network error: ${response.error}`);
+      }
+
+      console.log('FetchProxy Wails response:', {
         status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-        url,
-      },
-      response.streamId,
-    );
+        hasStreamId: !!response.streamId,
+        streamId: response.streamId?.substring(0, 8),
+        bodyLength: response.body?.length || 0,
+      });
+
+      return new ProxyResponse(
+        response.body || '',
+        {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          url,
+        },
+        response.streamId,
+      );
+    }
   } catch (error) {
     LogError(`Fetch proxy failed: ${error}`);
     throw new Error(`Fetch failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -354,10 +380,10 @@ export async function smartFetch(
   input: RequestInfo | URL,
   init?: RequestInit & { stream?: boolean },
 ): Promise<Response> {
-  console.log('smartFetch', input, init);
   if (isWailsEnvironment()) {
     return fetchProxyWails(input, init);
   } else {
+    console.log('smartFetch with server', input, init);
     return fetchProxyWails(input, init, true);
   }
 }
