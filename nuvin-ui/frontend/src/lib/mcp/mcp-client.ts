@@ -27,9 +27,14 @@ import type {
 } from '@/types/mcp';
 import { StreamableHTTPClientTransportWithProxy } from './transport/streamable-http';
 import { StdioBrowserTransport } from './transport/stdio-browser';
+import { StdioWailsTransport } from './transport/stdio-wails';
+import { isWailsEnvironment } from '@/lib/browser-runtime';
 
 // Type for MCP transport instances
-type MCPTransportInstance = StreamableHTTPClientTransportWithProxy | StdioBrowserTransport;
+type MCPTransportInstance =
+  | StreamableHTTPClientTransportWithProxy
+  | StdioBrowserTransport
+  | StdioWailsTransport;
 
 // Lightweight debug toggle: set localStorage.MCP_DEBUG = '1' to enable
 function mcpDebugEnabled(): boolean {
@@ -102,19 +107,29 @@ export class MCPClient {
         }
 
         case 'stdio': {
-          mcpDebug('MCPClient.connect: creating stdio browser transport');
-
           const { command, args, env } = this.transportOptions;
           if (!command) {
             throw new Error('Command is required for stdio transport');
           }
 
-          // Create stdio browser transport that uses nuvin-srv proxy
-          this.transport = new StdioBrowserTransport({
-            command,
-            args: args || [],
-            env: env || {},
-          });
+          if (isWailsEnvironment()) {
+            mcpDebug('MCPClient.connect: creating stdio Wails transport');
+            this.transport = new StdioWailsTransport({
+              command,
+              args: args || [],
+              env: env || {},
+              serverId: this.serverId,
+            });
+          } else {
+            mcpDebug('MCPClient.connect: creating stdio browser transport');
+            // Create stdio browser transport that uses nuvin-srv proxy
+            this.transport = new StdioBrowserTransport({
+              command,
+              args: args || [],
+              env: env || {},
+            });
+          }
+
           mcpDebug('MCPClient.connect: stdio transport created successfully');
           break;
         }
