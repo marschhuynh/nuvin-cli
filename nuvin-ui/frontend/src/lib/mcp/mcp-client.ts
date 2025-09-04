@@ -1,5 +1,4 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type {
   CallToolRequest,
   ListToolsRequest,
@@ -25,7 +24,7 @@ import type {
   MCPClientEvent,
   MCPClientEventHandler,
 } from '@/types/mcp';
-import { smartFetch } from '@/lib/fetch-proxy';
+import { StreamableHTTPClientTransportWithProxy } from './transport/streamable-http';
 
 // Lightweight debug toggle: set localStorage.MCP_DEBUG = '1' to enable
 function mcpDebugEnabled(): boolean {
@@ -42,7 +41,7 @@ function mcpDebug(...args: any[]) {
 
 export class MCPClient {
   private client: Client | null = null;
-  private transport: StreamableHTTPClientTransport | null = null;
+  private transport: StreamableHTTPClientTransportWithProxy | null = null;
   private serverId: string;
   private transportOptions: MCPTransportOptions;
   private eventHandlers: MCPClientEventHandler[] = [];
@@ -85,19 +84,22 @@ export class MCPClient {
         throw new Error('URL is required for HTTP transport');
       }
 
-      // Create streamable HTTP transport with proxy fetch
+      // Create streamable HTTP transport with built-in proxy support
       const urlObj = new URL(url);
-      this.transport = new StreamableHTTPClientTransport(urlObj, {
+
+      let transportClass
+
+      switch (this.transportOptions.type) {
+        case 'http':
+          transportClass = StreamableHTTPClientTransportWithProxy;
+          break;
+        default:
+          throw new Error(`Unsupported transport type: ${this.transportOptions.type}`);
+      }
+      this.transport = new transportClass(urlObj, {
         requestInit: {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json, text/event-stream',
-            // Explicitly set protocol version to match server's supported versions
-            ...headers,
-          },
+          headers,
         },
-        // Use custom fetch to proxy through our server to avoid CORS
-        fetch: this.createProxyFetch(url),
       });
 
       // Create the official SDK client
@@ -204,7 +206,7 @@ export class MCPClient {
   /**
    * Execute a tool call
    */
-  async executeTool(toolCall: MCPToolCall, timeoutMs?: number): Promise<MCPToolResult> {
+  async executeTool(toolCall: MCPToolCall): Promise<MCPToolResult> {
     if (!this.isConnected() || !this.client) {
       throw new Error('Not connected to MCP server');
     }
@@ -458,40 +460,6 @@ export class MCPClient {
     } catch (error) {
       console.warn(`Failed to discover resources for server ${this.serverId}:`, error);
     }
-  }
-
-  /**
-   * Create a custom fetch function that proxies requests through our server
-   * This avoids CORS issues by routing MCP requests through ${SERVER_BASE_URL}/fetch
-   */
-  private createProxyFetch(originalMcpUrl: string): typeof fetch {
-    return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-      mcpDebug('MCP proxy fetch ->', url, {
-        method: init?.method || 'GET',
-        headers: init?.headers,
-        bodyPreview:
-          typeof init?.body === 'string' ? init.body.substring(0, 200) : init?.body ? '[non-string body]' : undefined,
-      });
-
-      const response = await smartFetch(input, {
-        ...init,
-        stream: true, // Enable streaming for SSE support
-      });
-
-      // Log response details for debugging protocol issues
-      const responseClone = response.clone();
-      const responseText = await responseClone.text();
-
-      mcpDebug('MCP proxy fetch response <-', response.status, response.statusText, {
-        headers: Object.fromEntries(response.headers.entries()),
-        bodyPreview: responseText.substring(0, 300) + (responseText.length > 300 ? '...' : ''),
-      });
-
-      console.log('response', response);
-
-      return response;
-    };
   }
 
   /**

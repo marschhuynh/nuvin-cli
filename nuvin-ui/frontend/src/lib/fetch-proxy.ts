@@ -224,15 +224,11 @@ export async function fetchProxyWails(
   init?: RequestInit & { stream?: boolean; timeout?: number },
   useServer = false,
 ): Promise<Response> {
-  console.log('fetchProxy', input, init?.stream);
-  // Convert input to URL string
   const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
-  // Extract request details
   const method = init?.method || 'GET';
   const headers: Record<string, string> = {};
 
-  // Convert headers to simple object
   if (init?.headers) {
     if (init.headers instanceof Headers) {
       init.headers.forEach((value, key) => {
@@ -287,43 +283,23 @@ export async function fetchProxyWails(
     timeout: init?.timeout,
   };
 
-  LogInfo(`Fetch proxy: ${method.toUpperCase()} ${url}`);
-
   try {
     if (useServer) {
-      // When using server, make direct request to /fetch endpoint
       const serverResponse = await nativeFetch(`${SERVER_BASE_URL}/fetch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fetchRequest),
       });
 
-      // Check if this is a streaming response
-      const contentType = serverResponse.headers.get('Content-Type') || '';
-      const isStreaming = init?.stream && contentType.includes('text/event-stream');
-
-      if (isStreaming) {
-        // For streaming responses, return the server response directly
-        console.log('FetchProxy streaming response:', {
-          status: serverResponse.status,
-          contentType,
-          hasBody: !!serverResponse.body,
-        });
-        return serverResponse;
-      } else {
-        // For non-streaming responses, the server now returns raw responses
-        // instead of the wrapped JSON format, so return the server response directly
-        console.log('FetchProxy regular response:', {
-          status: serverResponse.status,
-          contentType: serverResponse.headers.get('Content-Type'),
-          hasBody: !!serverResponse.body,
-        });
-
-        return serverResponse;
+      if (!serverResponse.ok) {
+        throw new Error(`Server proxy failed: ${serverResponse.status} ${serverResponse.statusText}`);
       }
+
+      // Server proxy now works transparently - just return the response as-is
+      // The Go server relays the original response format (SSE, JSON, etc.) with CORS headers
+      return serverResponse;
     } else {
-      // When using Wails, use the existing HTTPProxyFetchProxy
-      const response: FetchResponse = await HTTPProxyFetchProxy(fetchRequest);
+      const response = await HTTPProxyFetchProxy(fetchRequest);
 
       if (response.error) {
         LogError(`Fetch proxy error: ${response.error}`);
@@ -342,7 +318,7 @@ export async function fetchProxyWails(
         {
           status: response.status,
           statusText: response.statusText,
-          headers: response.headers,
+          headers: response?.headers ?? undefined,
           url,
         },
         response.streamId,
@@ -383,7 +359,6 @@ export async function smartFetch(
   if (isWailsEnvironment()) {
     return fetchProxyWails(input, init);
   } else {
-    console.log('smartFetch with server', input, init);
     return fetchProxyWails(input, init, true);
   }
 }

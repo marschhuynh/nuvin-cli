@@ -154,7 +154,7 @@ func handleStreamingResponse(c *gin.Context, resp *http.Response) {
 	}
 }
 
-// handleRegularResponse handles non-streaming responses
+// handleRegularResponse handles non-streaming responses by relaying them transparently
 func handleRegularResponse(c *gin.Context, resp *http.Response) {
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -181,6 +181,6 @@ func handleRegularResponse(c *gin.Context, resp *http.Response) {
 	c.Header("Access-Control-Allow-Headers", "*")
 	c.Header("Access-Control-Expose-Headers", "*")
 
-	// Return the raw response with original status code and body
+	// Return the raw response with original status code and body (transparent proxy)
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), bodyBytes)
 }
