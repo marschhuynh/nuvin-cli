@@ -1,4 +1,5 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type {
   CallToolRequest,
   ListToolsRequest,
@@ -25,6 +26,10 @@ import type {
   MCPClientEventHandler,
 } from '@/types/mcp';
 import { StreamableHTTPClientTransportWithProxy } from './transport/streamable-http';
+import { StdioBrowserTransport } from './transport/stdio-browser';
+
+// Type for MCP transport instances
+type MCPTransportInstance = StreamableHTTPClientTransportWithProxy | StdioBrowserTransport;
 
 // Lightweight debug toggle: set localStorage.MCP_DEBUG = '1' to enable
 function mcpDebugEnabled(): boolean {
@@ -41,7 +46,7 @@ function mcpDebug(...args: any[]) {
 
 export class MCPClient {
   private client: Client | null = null;
-  private transport: StreamableHTTPClientTransportWithProxy | null = null;
+  private transport: MCPTransportInstance | null = null;
   private serverId: string;
   private transportOptions: MCPTransportOptions;
   private eventHandlers: MCPClientEventHandler[] = [];
@@ -71,36 +76,52 @@ export class MCPClient {
       throw new Error('Already connected');
     }
 
-    // Only support HTTP transport
-    if (this.transportOptions.type !== 'http') {
-      throw new Error('Only HTTP transport is supported. Use type: "http"');
+    // Support HTTP and stdio transports
+    if (this.transportOptions.type !== 'http' && this.transportOptions.type !== 'stdio') {
+      throw new Error('Only HTTP and stdio transports are supported. Use type: "http" or "stdio"');
     }
 
     try {
-      mcpDebug('MCPClient.connect: creating streamable HTTP transport');
-
-      const { url, headers = {} } = this.transportOptions;
-      if (!url) {
-        throw new Error('URL is required for HTTP transport');
-      }
-
-      // Create streamable HTTP transport with built-in proxy support
-      const urlObj = new URL(url);
-
-      let transportClass
-
       switch (this.transportOptions.type) {
-        case 'http':
-          transportClass = StreamableHTTPClientTransportWithProxy;
+        case 'http': {
+          mcpDebug('MCPClient.connect: creating streamable HTTP transport');
+
+          const { url, headers = {} } = this.transportOptions;
+          if (!url) {
+            throw new Error('URL is required for HTTP transport');
+          }
+
+          // Create streamable HTTP transport with built-in proxy support
+          const urlObj = new URL(url);
+          this.transport = new StreamableHTTPClientTransportWithProxy(urlObj, {
+            requestInit: {
+              headers,
+            },
+          });
           break;
+        }
+
+        case 'stdio': {
+          mcpDebug('MCPClient.connect: creating stdio browser transport');
+
+          const { command, args, env } = this.transportOptions;
+          if (!command) {
+            throw new Error('Command is required for stdio transport');
+          }
+
+          // Create stdio browser transport that uses nuvin-srv proxy
+          this.transport = new StdioBrowserTransport({
+            command,
+            args: args || [],
+            env: env || {},
+          });
+          mcpDebug('MCPClient.connect: stdio transport created successfully');
+          break;
+        }
+
         default:
           throw new Error(`Unsupported transport type: ${this.transportOptions.type}`);
       }
-      this.transport = new transportClass(urlObj, {
-        requestInit: {
-          headers,
-        },
-      });
 
       // Create the official SDK client
       this.client = new Client(
@@ -119,8 +140,24 @@ export class MCPClient {
       );
 
       // Connect using the official SDK client
-      await this.client.connect(this.transport);
-      mcpDebug(`this.transport ${this.transport.sessionId}`);
+      mcpDebug('MCPClient.connect: about to call client.connect with transport:', this.transport);
+
+      if (!this.transport) {
+        throw new Error('Transport is null or undefined');
+      }
+
+      // Connect with transport - our custom transports implement the official Transport interface
+      await this.client.connect(this.transport as Transport);
+
+      // Log connection info based on transport type
+      if (this.transportOptions.type === 'http' && 'sessionId' in this.transport) {
+        mcpDebug(
+          `HTTP transport connected with sessionId: ${(this.transport as StreamableHTTPClientTransportWithProxy).sessionId}`,
+        );
+      } else {
+        mcpDebug(`${this.transportOptions.type} transport connected`);
+      }
+
       this.initialized = true;
 
       // Get server capabilities
@@ -135,7 +172,15 @@ export class MCPClient {
         serverId: this.serverId,
         serverInfo: this.serverInfo,
       });
-      mcpDebug('MCPClient.connect: connected via streamable HTTP');
+
+      switch (this.transportOptions.type) {
+        case 'http':
+          mcpDebug('MCPClient.connect: connected via HTTP transport');
+          break;
+        case 'stdio':
+          mcpDebug('MCPClient.connect: connected via stdio transport');
+          break;
+      }
     } catch (error) {
       mcpDebug('MCPClient.connect error:', error);
       this.emitEvent({

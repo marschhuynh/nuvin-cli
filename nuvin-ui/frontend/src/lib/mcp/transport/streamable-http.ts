@@ -18,7 +18,6 @@ export class StreamableHTTPClientTransportWithProxy extends StreamableHTTPClient
 
   private static createProxyFetch(): typeof fetch {
     return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-
       const response = await smartFetch(input, {
         ...init,
         stream: true,

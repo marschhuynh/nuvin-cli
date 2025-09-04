@@ -191,38 +191,60 @@ export class GithubCopilotProvider extends BaseLLMProvider {
 
     const url = `${this.apiUrl}${endpoint}`;
     const isDesktop = isWailsEnvironment();
-    // const _fetch = isDesktop ? fetch : this.proxyFetch;
-    const _fetch = smartFetch;
+    const _fetch = isDesktop ? fetch : this.proxyFetch;
 
-    const response = await _fetch(url, {
-      method: options.method || 'POST',
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-      signal: options.signal,
-      ...(isStreaming ? { stream: true } : {}),
-    });
+    try {
+      const response = await _fetch(url, {
+        method: options.method || 'POST',
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: options.signal,
+        ...(isStreaming ? { stream: true } : {}),
+      });
 
-    if (!response.ok) {
-      const text = await response.text();
-      if (response.status === 401 && !isRetry && this.providerConfig.accessToken) {
-        const newToken = await this.getCopilotToken(this.providerConfig.accessToken);
-        console.log('Token expired, trying to get a new token', newToken);
-        this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
-        useProviderStore.getState().updateProvider({
-          ...this.providerConfig,
-          apiKey: newToken.apiKey,
-        });
-        return this.makeRequest(endpoint, options, true);
+      if (!response.ok) {
+        const text = await response.text();
+        if (response.status === 401 && !isRetry && this.providerConfig.accessToken) {
+          console.log('GitHub Copilot token expired, attempting refresh...');
+          const newToken = await this.getCopilotToken(this.providerConfig.accessToken);
+          console.log('Token refresh successful, retrying request...');
+          this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
+          useProviderStore.getState().updateProvider({
+            ...this.providerConfig,
+            apiKey: newToken.apiKey,
+          });
+          return this.makeRequest(endpoint, options, true);
+        }
+        if (response.status === 403) {
+          throw new Error(
+            `GitHub Copilot API access denied. Please ensure you have a valid GitHub Copilot subscription and the correct authentication token. Status: ${response.status}`,
+          );
+        }
+        throw new Error(`GitHub Copilot API error: ${response.status} - ${text}`);
       }
-      if (response.status === 403) {
-        throw new Error(
-          `GitHub Copilot API access denied. Please ensure you have a valid GitHub Copilot subscription and the correct authentication token. Status: ${response.status}`,
-        );
+
+      return response;
+    } catch (error) {
+      // If smartFetch throws an error, we might still want to check for 401 scenarios
+      // This handles cases where the proxy might throw errors for 401 responses
+      if (error instanceof Error && error.message.includes('401') && !isRetry && this.providerConfig.accessToken) {
+        console.log('GitHub Copilot token may be expired (caught in error), attempting refresh...');
+        try {
+          const newToken = await this.getCopilotToken(this.providerConfig.accessToken);
+          console.log('Token refresh successful, retrying request...');
+          this.apiKey = validateAndCleanGitHubToken(newToken.apiKey);
+          useProviderStore.getState().updateProvider({
+            ...this.providerConfig,
+            apiKey: newToken.apiKey,
+          });
+          return this.makeRequest(endpoint, options, true);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          throw error; // Re-throw original error if refresh fails
+        }
       }
-      throw new Error(`GitHub Copilot API error: ${response.status} - ${text}`);
+      throw error;
     }
-
-    return response;
   }
 
   async generateCompletion(params: CompletionParams, signal?: AbortSignal): Promise<CompletionResult> {

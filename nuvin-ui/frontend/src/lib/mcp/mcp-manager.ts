@@ -61,9 +61,9 @@ export class MCPManager {
     this.configs.set(serverId, extendedConfig);
 
     try {
-      // Guard: Only HTTP transport with SSE is now supported
-      if (config.type !== 'http') {
-        const reason = 'Only HTTP transport with SSE is supported. Please configure an HTTP MCP server.';
+      // Support both HTTP and stdio transports
+      if (config.type !== 'http' && config.type !== 'stdio') {
+        const reason = 'Only HTTP and stdio transports are supported. Please configure an HTTP or stdio MCP server.';
         console.warn(`MCP server '${serverId}' cannot start: ${reason}`);
         extendedConfig.status = 'error';
         extendedConfig.lastError = reason;
@@ -71,12 +71,30 @@ export class MCPManager {
         return;
       }
 
-      // Create MCP client with HTTP transport options (only supported type)
-      const transportOptions: MCPTransportOptions = {
-        type: 'http',
-        url: config.url,
-        headers: config.env, // Use env field for HTTP headers
-      };
+      // Create MCP client with transport options
+      let transportOptions: MCPTransportOptions;
+
+      switch (config.type) {
+        case 'http':
+          transportOptions = {
+            type: 'http',
+            url: config.url,
+            headers: config.env, // Use env field for HTTP headers
+          };
+          break;
+
+        case 'stdio':
+          transportOptions = {
+            type: 'stdio',
+            command: config.command,
+            args: config.args,
+            env: config.env,
+          };
+          break;
+
+        default:
+          throw new Error(`Unsupported transport type: ${config.type}`);
+      }
 
       const client = new MCPClient(serverId, transportOptions);
 

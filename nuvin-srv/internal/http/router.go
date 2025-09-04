@@ -57,6 +57,13 @@ func NewRouter(db *gorm.DB, cfg *config.Config, jwt *security.JWTManager, ts *st
 	// Command execution endpoint
 	r.POST("/execute-command", handlers.ExecuteCommand)
 
+	// MCP stdio transport endpoints
+	r.POST("/api/mcp/stdio/start", handlers.MCPStdioStart)
+	r.POST("/api/mcp/stdio/send", handlers.MCPStdioSend)
+	r.POST("/api/mcp/stdio/stop", handlers.MCPStdioStop)
+	r.GET("/api/mcp/stdio/events/:processId", handlers.MCPStdioEvents)
+	r.GET("/api/mcp/stdio/status", handlers.MCPStdioStatus)
+
 	// Proxy configuration routes - use a different path to avoid wildcard conflicts
 	r.POST("/proxy-config", proxyService.ConfigureRoute)
 	r.GET("/proxy-config", proxyService.ListRoutes)
