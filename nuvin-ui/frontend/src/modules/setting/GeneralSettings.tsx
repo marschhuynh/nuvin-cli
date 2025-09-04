@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+// Wails file dialog is only available in the desktop app; guard usage
+import { isWailsEnvironment } from '@/lib/browser-runtime';
+// Note: don't call these in browser; only used when isWailsEnvironment() is true
 import { OpenFileDialogAndRead } from '@wails/services/filedialogservice';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sun, Moon, Monitor, Droplet, GlassWater, MessageSquare, Eye, Upload } from 'lucide-react';
@@ -54,34 +57,74 @@ export function GeneralSettings({ settings, onSettingsChange }: GeneralSettingsP
   };
 
   const handleImportClick = async () => {
-    try {
-      const fileContent = await OpenFileDialogAndRead({
-        Title: 'Import Settings',
-        DefaultFilename: '',
-        DefaultDirectory: '',
-        Filters: [
-          {
-            DisplayName: 'JSON Files (*.json)',
-            Pattern: '*.json',
-          },
-        ],
-        ShowHiddenFiles: false,
-        CanCreateDirectories: false,
-        ResolvesAliases: true,
-      });
-
-      if (fileContent) {
-        // Create a File object from the content
-        const file = new File([fileContent], 'settings.json', {
-          type: 'application/json',
+    // In Wails desktop app: use native file dialog via Go bridge
+    if (isWailsEnvironment()) {
+      try {
+        const fileContent = await OpenFileDialogAndRead({
+          Title: 'Import Settings',
+          DefaultFilename: '',
+          DefaultDirectory: '',
+          Filters: [
+            {
+              DisplayName: 'JSON Files (*.json)',
+              Pattern: '*.json',
+            },
+          ],
+          ShowHiddenFiles: false,
+          CanCreateDirectories: false,
+          ResolvesAliases: true,
         });
-        importSettings(file);
+
+        if (fileContent) {
+          // Create a File object from the content
+          const file = new File([fileContent], 'settings.json', {
+            type: 'application/json',
+          });
+          importSettings(file);
+        }
+      } catch (error) {
+        console.error('Failed to open Wails file dialog:', error);
+        setImportStatus({
+          type: 'error',
+          message: 'Failed to open file dialog. Please try again.',
+        });
       }
+      return;
+    }
+
+    // In browser: fall back to an <input type="file"> picker
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json,.json';
+      input.style.display = 'none';
+
+      const onChange = async (event: Event) => {
+        const target = event.target as HTMLInputElement | null;
+        const file = target?.files?.[0];
+        if (file) {
+          if (file.type === 'application/json' || file.name.endsWith('.json')) {
+            await importSettings(file);
+          } else {
+            setImportStatus({
+              type: 'error',
+              message: 'Please select a valid JSON file',
+            });
+          }
+        }
+        // Clean up
+        input.removeEventListener('change', onChange);
+        if (input.parentNode) input.parentNode.removeChild(input);
+      };
+
+      input.addEventListener('change', onChange);
+      document.body.appendChild(input);
+      input.click();
     } catch (error) {
-      console.error('Failed to open file dialog:', error);
+      console.error('Failed to open browser file picker:', error);
       setImportStatus({
         type: 'error',
-        message: 'Failed to open file dialog. Please try again.',
+        message: 'Failed to open file picker. Please try again.',
       });
     }
   };
