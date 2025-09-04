@@ -186,4 +186,3 @@ export class StdioWailsTransport implements Transport {
 export function createStdioWailsTransport(options: StdioServerParameters & { serverId?: string }): Transport {
   return new StdioWailsTransport(options);
 }
-

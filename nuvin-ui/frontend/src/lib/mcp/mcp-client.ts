@@ -31,10 +31,7 @@ import { StdioWailsTransport } from './transport/stdio-wails';
 import { isWailsEnvironment } from '@/lib/browser-runtime';
 
 // Type for MCP transport instances
-type MCPTransportInstance =
-  | StreamableHTTPClientTransportWithProxy
-  | StdioBrowserTransport
-  | StdioWailsTransport;
+type MCPTransportInstance = StreamableHTTPClientTransportWithProxy | StdioBrowserTransport | StdioWailsTransport;
 
 // Lightweight debug toggle: set localStorage.MCP_DEBUG = '1' to enable
 function mcpDebugEnabled(): boolean {
