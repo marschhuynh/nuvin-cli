@@ -6,7 +6,7 @@ import { isWailsEnvironment } from '@/lib/browser-runtime';
 // Note: don't call these in browser; only used when isWailsEnvironment() is true
 import { OpenFileDialogAndRead } from '@wails/services/filedialogservice';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sun, Moon, Monitor, Droplet, GlassWater, MessageSquare, Eye, Upload } from 'lucide-react';
+import { Sun, Moon, Monitor, GlassWater, MessageSquare, Eye, Upload } from 'lucide-react';
 import type { UserPreferences } from '@/store/useUserPreferenceStore';
 import { useUserPreferenceStore } from '@/store/useUserPreferenceStore';
 import { useProviderStore } from '@/store/useProviderStore';

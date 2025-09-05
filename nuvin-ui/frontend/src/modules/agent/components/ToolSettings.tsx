@@ -78,7 +78,7 @@ export function ToolSettings({ toolConfig, isEditing, onToolConfigChange }: Tool
     <div className="space-y-4 flex flex-col h-full min-h-[300px]">
       {/* Tool Settings */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="grid space-y-2">
           <Label htmlFor="maxConcurrentCalls">Max Concurrent</Label>
           {isEditing ? (
             <Input
@@ -97,7 +97,7 @@ export function ToolSettings({ toolConfig, isEditing, onToolConfigChange }: Tool
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="grid space-y-2">
           <Label htmlFor="timeoutMs">Tool Timeout (ms)</Label>
           {isEditing ? (
             <Input
