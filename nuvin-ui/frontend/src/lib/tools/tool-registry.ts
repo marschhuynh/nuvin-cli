@@ -116,7 +116,7 @@ export class ToolRegistry {
 
     try {
       // Validate parameters if validator exists
-      if (tool.validate && !tool.validate(toolCall.parameters)) {
+      if (!tool?.validate?.(toolCall.parameters)) {
         return {
           id: toolCall.id,
           name: toolCall.name,
@@ -128,8 +128,22 @@ export class ToolRegistry {
         };
       }
 
-      // Execute the tool
+      // Measure pure execution time (exclude permission wait which happens before this call)
+      const startedAtMs = Date.now();
+      const startedAtIso = new Date(startedAtMs).toISOString();
       const result = await tool.execute(toolCall.parameters, context);
+      const completedAtMs = Date.now();
+      const completedAtIso = new Date(completedAtMs).toISOString();
+      const durationMs = completedAtMs - startedAtMs;
+
+      // Ensure metadata exists and attach timing
+      const metadata = {
+        ...(result.metadata || {}),
+        startedAt: startedAtIso,
+        completedAt: completedAtIso,
+        durationMs,
+      };
+      result.metadata = metadata;
 
       return {
         id: toolCall.id,
@@ -144,6 +158,10 @@ export class ToolRegistry {
           status: 'error',
           type: 'text',
           result: error instanceof Error ? error.message : 'Unknown error occurred',
+          metadata: {
+            // No timing if execution failed before starting, but if it failed after starting,
+            // upstream will have captured some timing; we omit here.
+          },
         },
       };
     }

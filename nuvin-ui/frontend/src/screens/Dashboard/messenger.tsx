@@ -182,7 +182,13 @@ export default function Messenger() {
               metadata: message.metadata,
               toolCall: message.toolCall,
             };
-            addMessage(conversationId, newMessage);
+            // If a message with this id already exists, update it; otherwise add it
+            const existing = getConversationMessages(conversationId).some((m) => m.id === newMessage.id);
+            if (existing) {
+              updateMessage(conversationId, newMessage);
+            } else {
+              addMessage(conversationId, newMessage);
+            }
           },
           onComplete: (finalContent: string) => {
             // Streaming is complete - add the final message to store and clear streaming state

@@ -32,6 +32,10 @@ export interface MessageResponse {
     name: string;
     id: string;
     arguments: any;
+    // Timing (for UI runtime display)
+    startedAt?: string;
+    completedAt?: string;
+    durationMs?: number;
     result?: {
       status: 'success' | 'error' | 'warning';
       type: 'text' | 'json';

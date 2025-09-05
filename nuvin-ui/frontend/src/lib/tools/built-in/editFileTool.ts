@@ -134,8 +134,6 @@ export const editFileTool: Tool = {
       return false;
     }
     const p: string = parameters.path;
-    const isAbs = p.startsWith('/') || /^\\\\/.test(p) || /^\\/.test(p) || /^[a-zA-Z]:[\\/]/.test(p);
-    if (!isAbs) return false;
     if (!parameters.patch || typeof parameters.patch !== 'string') {
       return false;
     }

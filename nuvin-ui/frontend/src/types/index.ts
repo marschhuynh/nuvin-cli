@@ -34,6 +34,10 @@ export interface Message {
     name: string;
     id: string;
     arguments: any;
+    // Timing information for display
+    startedAt?: string; // ISO timestamp when execution started
+    completedAt?: string; // ISO timestamp when execution finished
+    durationMs?: number; // Total run time in milliseconds
     result?: {
       status: 'success' | 'error' | 'warning';
       type: 'text' | 'json';

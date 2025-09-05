@@ -1,4 +1,16 @@
-import { Wrench, CheckCircle, XCircle, Clock, ChevronDown, ChevronRight, Trash2, Check, Copy } from 'lucide-react';
+import {
+  Wrench,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  Trash2,
+  Check,
+  Copy,
+  ChevronLeft,
+  ChevronUp,
+} from 'lucide-react';
 import { useState, useCallback, useRef } from 'react';
 import { ClipboardSetText } from '@/lib/browser-runtime';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -17,6 +29,7 @@ interface ToolCallMessageProps {
   toolName: string;
   description?: string;
   arguments: Record<string, unknown>;
+  durationMs?: number;
   result?: {
     status: 'success' | 'error' | 'warning';
     type: 'text' | 'json';
@@ -40,6 +53,7 @@ export function ToolCallMessage({
   toolName,
   description,
   arguments: args,
+  durationMs,
   result,
   isExecuting = false,
   messageMode,
@@ -202,6 +216,17 @@ export function ToolCallMessage({
   const displayToolName = getDisplayToolName();
   const resultPreview = getResultPreview();
 
+  const formatDuration = useCallback((ms?: number) => {
+    if (ms === undefined) return '';
+    if (ms < 1000) return `${ms}ms`;
+    const seconds = ms / 1000;
+    if (seconds < 60) return `${seconds.toFixed(1)}s`;
+    const m = Math.floor(seconds / 60);
+    const s = Math.round(seconds % 60);
+    return `${m}m ${s}s`;
+  }, []);
+  const runtimeText = !isExecuting && durationMs !== undefined ? `⏱ ${formatDuration(durationMs)}` : '';
+
   return (
     <>
       {/* Error dialog */}
@@ -238,196 +263,156 @@ export function ToolCallMessage({
               : 'rounded-lg bg-card border-border hover:shadow-xs hover:border-border/80 shadow-xxs border transition-all duration-300 overflow-visible relative'
           }
         >
-          {!showToolDetail ? (
-            /* Compact linear view: 2-line friendly layout */
-            <div className="px-3 py-2.5">
-              {/* First line: collapse icon > status icon > tool name > MCP name (if MCP tool) */}
-              <div className="flex items-center gap-3">
-                {/* Collapse controls */}
-                <button
-                  type="button"
-                  onClick={() => setShowToolDetail(!showToolDetail)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
+          {/* Header - consistent with compact mode */}
+          <div className="px-3 py-2.5 border-b border-border/50 relative">
+            {/* First line: collapse icon > status icon > tool name > MCP name (if MCP tool) */}
+            <div className="flex items-center gap-3">
+              {/* Collapse controls */}
+              <button
+                type="button"
+                onClick={() => setShowToolDetail(!showToolDetail)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
+              >
+                {showToolDetail ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
 
-                {/* Status icon */}
-                {getStatusIcon()}
+              {/* Status icon */}
+              {getStatusIcon()}
 
-                {/* Tool name */}
-                <span className="font-medium text-foreground text-sm flex-shrink-0">{displayToolName}</span>
+              {/* Tool name */}
+              <span className="font-medium text-foreground text-sm flex-shrink-0">{displayToolName}</span>
 
-                {/* MCP server name (if MCP tool) */}
-                {mcpServerName && (
-                  <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ml-auto flex-shrink-0">
-                    {mcpServerName}
-                  </span>
-                )}
-              </div>
+              {/* MCP server name (if MCP tool) */}
+              {mcpServerName && (
+                <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ml-auto flex-shrink-0">
+                  {mcpServerName}
+                </span>
+              )}
+            </div>
 
+            <div className="flex overflow-hidden">
               {/* Second line: tool description or result preview */}
               {(toolDescription || resultPreview) && (
-                <div className="mt-1 ml-8 flex items-center">
+                <div className="ml-8 flex flex-1 items-center overflow-hidden">
                   <span className="text-xs text-muted-foreground truncate">{toolDescription || resultPreview}</span>
                 </div>
               )}
+
+              {/* Total run time (bottom-right) */}
+              {runtimeText && (
+                <div className="flex ml-auto">
+                  <span className="text-[10px] text-muted-foreground">{runtimeText}</span>
+                </div>
+              )}
             </div>
-          ) : (
-            /* Expanded view */
-            <>
-              {/* Header - consistent with compact mode */}
-              <div className="px-3 py-2.5 border-b border-border/50">
-                {/* First line: collapse icon > status icon > tool name > MCP name (if MCP tool) */}
-                <div className="flex items-center gap-3">
-                  {/* Collapse controls */}
-                  <button
-                    type="button"
-                    onClick={() => setShowToolDetail(!showToolDetail)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted/50"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+          </div>
 
-                  {/* Status icon */}
-                  {getStatusIcon()}
+          {showToolDetail && (
+            <div className="p-3 space-y-3">
+              {/* Arguments Section */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">Arguments</span>
+                  <span className="text-xs text-muted-foreground">{Object.keys(args || {}).length} parameters</span>
+                </div>
 
-                  {/* Tool name */}
-                  <span className="font-medium text-foreground text-sm flex-shrink-0">{displayToolName}</span>
-
-                  {/* MCP server name (if MCP tool) */}
-                  {mcpServerName && (
-                    <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ml-auto flex-shrink-0">
-                      {mcpServerName}
-                    </span>
+                <div className="mt-2 p-3 bg-muted/50 rounded border border-border">
+                  {isEditing ? (
+                    <textarea
+                      value={editArgs}
+                      onChange={(e) => setEditArgs(e.target.value)}
+                      className="w-full bg-transparent text-foreground placeholder-muted-foreground border border-border rounded-md p-2 text-xs font-mono resize-y leading-relaxed"
+                      style={{
+                        minHeight: contentHeight ? `${Math.max(contentHeight, 120)}px` : '120px',
+                        height: contentHeight ? `${Math.max(contentHeight, 120)}px` : 'auto',
+                      }}
+                      placeholder="Edit tool arguments (JSON format)..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.ctrlKey) {
+                          e.preventDefault();
+                          handleSaveEdit();
+                        } else if (e.key === 'Escape') {
+                          handleCancelEdit();
+                        }
+                      }}
+                    />
+                  ) : (
+                    <pre ref={contentRef} className="text-xs text-foreground overflow-auto leading-relaxed font-mono">
+                      {formatJSON(args)}
+                    </pre>
                   )}
                 </div>
-
-                {/* Second line: tool description or result preview */}
-                {(toolDescription || resultPreview) && (
-                  <div className="mt-1 ml-8 flex items-center">
-                    <span className="text-xs text-muted-foreground truncate">{toolDescription || resultPreview}</span>
-                  </div>
-                )}
               </div>
-
-              {/* Content */}
-              <div className="p-3 space-y-3">
-                {/* Arguments Section */}
+              {/* Result Section */}
+              {result && (
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">Arguments</span>
-                    <span className="text-xs text-muted-foreground">{Object.keys(args || {}).length} parameters</span>
-                  </div>
-
-                  <div className="mt-2 p-3 bg-muted/50 rounded border border-border">
-                    {isEditing ? (
-                      <textarea
-                        value={editArgs}
-                        onChange={(e) => setEditArgs(e.target.value)}
-                        className="w-full bg-transparent text-foreground placeholder-muted-foreground border border-border rounded-md p-2 text-xs font-mono resize-y leading-relaxed"
-                        style={{
-                          minHeight: contentHeight ? `${Math.max(contentHeight, 120)}px` : '120px',
-                          height: contentHeight ? `${Math.max(contentHeight, 120)}px` : 'auto',
-                        }}
-                        placeholder="Edit tool arguments (JSON format)..."
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && e.ctrlKey) {
-                            e.preventDefault();
-                            handleSaveEdit();
-                          } else if (e.key === 'Escape') {
-                            handleCancelEdit();
-                          }
-                        }}
-                      />
+                    <span className="text-sm font-medium text-foreground">Result</span>
+                    {result.status === 'success' ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : result.status === 'warning' ? (
+                      <XCircle className="h-4 w-4 text-yellow-500" />
                     ) : (
-                      <pre ref={contentRef} className="text-xs text-foreground overflow-auto leading-relaxed font-mono">
-                        {formatJSON(args)}
-                      </pre>
+                      <XCircle className="h-4 w-4 text-red-500" />
                     )}
                   </div>
-                </div>
-                {/* Result Section */}
-                {result && (
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Result</span>
-                      {result.status === 'success' ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : result.status === 'warning' ? (
-                        <XCircle className="h-4 w-4 text-yellow-500" />
+
+                  <div className="mt-2">
+                    <div
+                      className={`overflow-auto p-3 rounded border text-sm ${
+                        result.status === 'success'
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-200'
+                          : result.status === 'warning'
+                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50 text-yellow-800 dark:text-yellow-200'
+                            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-200'
+                      }`}
+                    >
+                      {/* Display the actual result content */}
+                      {result.result ? (
+                        typeof result.result === 'string' ? (
+                          <div className="whitespace-pre-wrap text-xs leading-relaxed">
+                            {removeSystemReminderTags(result.result)}
+                          </div>
+                        ) : (
+                          <pre className="overflow-auto leading-relaxed font-mono text-xs">
+                            {formatJSON(result.result)}
+                          </pre>
+                        )
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <div className="flex items-center gap-2">
+                          {result.status === 'success' ? (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Operation completed successfully</span>
+                            </>
+                          ) : result.status === 'warning' ? (
+                            <>
+                              <XCircle className="h-4 w-4" />
+                              <span>Operation completed with warnings</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-4 w-4" />
+                              <span>Operation failed</span>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Show additional result if available */}
+                      {result.additionalResult && (
+                        <div className="mt-3 pt-3 border-t border-current/20">
+                          <div className="text-xs font-medium mb-2 opacity-80">Additional Information:</div>
+                          <pre className="overflow-auto leading-relaxed font-mono text-xs opacity-90">
+                            {formatJSON(result.additionalResult)}
+                          </pre>
+                        </div>
                       )}
                     </div>
-
-                    <div className="mt-2">
-                      <div
-                        className={`overflow-auto p-3 rounded border text-sm ${
-                          result.status === 'success'
-                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-200'
-                            : result.status === 'warning'
-                              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50 text-yellow-800 dark:text-yellow-200'
-                              : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-200'
-                        }`}
-                      >
-                        {/* Display the actual result content */}
-                        {result.result ? (
-                          typeof result.result === 'string' ? (
-                            <div className="whitespace-pre-wrap text-xs leading-relaxed">
-                              {removeSystemReminderTags(result.result)}
-                            </div>
-                          ) : (
-                            <pre className="overflow-auto leading-relaxed font-mono text-xs">
-                              {formatJSON(result.result)}
-                            </pre>
-                          )
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            {result.status === 'success' ? (
-                              <>
-                                <CheckCircle className="h-4 w-4" />
-                                <span>Operation completed successfully</span>
-                              </>
-                            ) : result.status === 'warning' ? (
-                              <>
-                                <XCircle className="h-4 w-4" />
-                                <span>Operation completed with warnings</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="h-4 w-4" />
-                                <span>Operation failed</span>
-                              </>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Show additional result if available */}
-                        {result.additionalResult && (
-                          <div className="mt-3 pt-3 border-t border-current/20">
-                            <div className="text-xs font-medium mb-2 opacity-80">Additional Information:</div>
-                            <pre className="overflow-auto leading-relaxed font-mono text-xs opacity-90">
-                              {formatJSON(result.additionalResult)}
-                            </pre>
-                          </div>
-                        )}
-
-                        {/* Show metadata if available */}
-                        {/* {result.metadata && Object.keys(result.metadata).length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-current/20">
-                            <div className="text-xs font-medium mb-2 opacity-80">Metadata:</div>
-                            <pre className="overflow-auto leading-relaxed font-mono text-xs opacity-90">
-                              {formatJSON(result.metadata)}
-                            </pre>
-                          </div>
-                        )} */}
-                      </div>
-                    </div>
                   </div>
-                )}
-              </div>
-            </>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Control buttons positioned absolutely inside the tool card */}

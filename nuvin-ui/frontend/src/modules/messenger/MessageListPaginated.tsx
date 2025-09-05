@@ -232,7 +232,7 @@ export function MessageListPaginated({
 
   return (
     <div className="flex-1 overflow-hidden bg-message-list-background">
-      <div ref={parentRef} className="h-full overflow-auto">
+      <div ref={parentRef} className="h-full overflow-auto overflow-y-scroll">
         <div className="p-6">
           <div className="max-w-4xl mx-auto">
             {renderMessages()}

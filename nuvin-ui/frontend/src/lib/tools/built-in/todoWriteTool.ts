@@ -217,7 +217,7 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
 
       if (allCompleted) {
         // Special celebration message when all todos are completed
-        systemReminderMessage = `🎉 Outstanding work! All ${todoItems.length} todo items have been completed successfully! This is a significant achievement that deserves recognition.
+        systemReminderMessage = `All ${todoItems.length} todo items have been completed successfully!
 
 <system-reminder>
 All todo items are now completed! You can celebrate this accomplishment with the user and ask if they'd like to work on new tasks or if there's anything else they need help with. Here's the completed todo list:

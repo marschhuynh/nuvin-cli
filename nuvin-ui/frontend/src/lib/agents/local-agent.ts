@@ -646,7 +646,46 @@ class ToolExecutor {
       return [];
     }
 
-    // Execute the tools using the tool integration service
+    // 1) Emit initial tool call messages as 'running' so the UI can show them immediately
+    const timestamp = new Date().toISOString();
+    const model = context.providerConfig.activeModel.model;
+
+    for (const toolCall of result.tool_calls) {
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(toolCall.function.arguments || '{}');
+      } catch {
+        args = {};
+      }
+      // Use the tool call id as the message id so we can update the same entry later
+      const runningMessage: MessageResponse = {
+        id: toolCall.id,
+        content: `Running tool: ${toolCall.function.name}`,
+        role: 'tool',
+        timestamp,
+        toolCall: {
+          name: toolCall.function.name,
+          id: toolCall.id,
+          arguments: args,
+          isExecuting: true,
+        },
+        metadata: {
+          agentType: 'local',
+          agentId: context.toolContext.metadata?.agentId || 'unknown',
+          provider: context.toolContext.metadata?.provider || 'unknown',
+          model,
+          // Individual tool messages don't track tokens/cost; main assistant message does
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          estimatedCost: 0,
+          responseTime: Date.now() - context.startTime,
+        },
+      };
+      onToolMessage(runningMessage);
+    }
+
+    // 2) Execute the tools using the tool integration service
     const processed = await toolIntegrationService.processCompletionResult(
       result,
       context.toolContext,
@@ -654,7 +693,7 @@ class ToolExecutor {
     );
 
     if (processed.requiresFollowUp && processed.tool_results) {
-      // Emit tool messages
+      // 3) Emit completion messages, updating the existing entries using the same IDs
       this.emitToolMessages(result.tool_calls, processed.tool_results, context, onToolMessage);
       return processed.tool_results;
     }
@@ -675,8 +714,15 @@ class ToolExecutor {
       const originalToolCall = toolCalls.find((tc) => tc.id === toolCallResult.id);
       const parameters = originalToolCall ? JSON.parse(originalToolCall.function.arguments || '{}') : {};
 
+      // Read timing from tool result metadata (measured at execution level)
+      const timingMeta = (toolCallResult.result && toolCallResult.result.metadata) || {} as any;
+      const startedAt: string | undefined = timingMeta.startedAt;
+      const completedAt: string | undefined = timingMeta.completedAt;
+      const durationMs: number | undefined = timingMeta.durationMs;
+
       const toolMessageResponse: MessageResponse = {
-        id: generateUUID(),
+        // Use the same id as the tool call so the UI updates the existing message
+        id: toolCallResult.id,
         content: `Executed tool: ${toolCallResult.name}`,
         role: 'tool',
         timestamp,
@@ -686,6 +732,9 @@ class ToolExecutor {
           arguments: parameters,
           result: toolCallResult.result,
           isExecuting: false,
+          startedAt,
+          completedAt,
+          durationMs,
         },
         metadata: {
           agentType: 'local',
