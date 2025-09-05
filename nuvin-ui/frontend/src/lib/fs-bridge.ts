@@ -11,6 +11,13 @@ export interface FileInfo {
 
 const isNode = typeof process !== 'undefined' && !!(process as any).versions?.node;
 
+// Expose a simple way for callers to understand availability
+export function getFsRuntime(): 'wails' | 'node' | 'browser' {
+  if (isWailsEnvironment()) return 'wails';
+  if (isNode) return 'node';
+  return 'browser';
+}
+
 async function nodeFs() {
   // Dynamically import to avoid bundling in browser
   const mod = await import('node:fs/promises');

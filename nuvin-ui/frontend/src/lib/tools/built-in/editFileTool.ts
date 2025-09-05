@@ -1,5 +1,6 @@
 import type { Tool } from '@/types/tools';
 import { readFile, writeFile } from '@/lib/fs-bridge';
+import { isAbsolutePath } from './utils'
 
 function applyPatch(original: string, patch: string): string | null {
   const origLines = original.split('\n');
@@ -60,13 +61,14 @@ function applyPatch(original: string, patch: string): string | null {
 export const editFileTool: Tool = {
   definition: {
     name: 'edit_file',
-    description: 'Applies a unified diff patch to modify a file',
+    description:
+      'Applies a unified diff patch to modify a file. Requires an absolute path; relative paths are not allowed.',
     parameters: {
       type: 'object',
       properties: {
         path: {
           type: 'string',
-          description: 'Path of the file to edit',
+          description: 'Absolute path of the file to edit (no relative paths)',
         },
         patch: {
           type: 'string',
@@ -86,6 +88,13 @@ export const editFileTool: Tool = {
           status: 'error',
           type: 'text',
           result: 'path parameter is required and must be a string',
+        };
+      }
+      if (!isAbsolutePath(path)) {
+        return {
+          status: 'error',
+          type: 'text',
+          result: 'Absolute path required. Relative paths are not allowed.',
         };
       }
       if (!patch || typeof patch !== 'string') {
@@ -124,6 +133,9 @@ export const editFileTool: Tool = {
     if (!parameters.path || typeof parameters.path !== 'string') {
       return false;
     }
+    const p: string = parameters.path;
+    const isAbs = p.startsWith('/') || /^\\\\/.test(p) || /^\\/.test(p) || /^[a-zA-Z]:[\\/]/.test(p);
+    if (!isAbs) return false;
     if (!parameters.patch || typeof parameters.patch !== 'string') {
       return false;
     }

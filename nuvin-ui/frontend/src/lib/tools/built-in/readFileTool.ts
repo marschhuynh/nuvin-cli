@@ -1,16 +1,18 @@
 import type { Tool } from '@/types/tools';
 import { readFile } from '@/lib/fs-bridge';
+import { isAbsolutePath } from './utils'
 
 export const readFileTool: Tool = {
   definition: {
     name: 'read_file',
-    description: 'Reads the contents of a file. Optionally return a specific line range.',
+    description:
+      'Reads the contents of a file at an absolute path. Optionally return a specific line range. Relative paths are not allowed.',
     parameters: {
       type: 'object',
       properties: {
         path: {
           type: 'string',
-          description: 'Path to the file to read',
+          description: 'Absolute path to the file to read (no relative paths)',
         },
         start: {
           type: 'number',
@@ -41,6 +43,14 @@ export const readFileTool: Tool = {
         };
       }
 
+      if (!isAbsolutePath(path)) {
+        return {
+          status: 'error',
+          type: 'text',
+          result: 'Absolute path required. Relative paths are not allowed.',
+        };
+      }
+
       const data = await readFile(path);
       let result = data;
 
@@ -65,6 +75,9 @@ export const readFileTool: Tool = {
     if (!parameters.path || typeof parameters.path !== 'string') {
       return false;
     }
+    const p: string = parameters.path;
+    const isAbs = p.startsWith('/') || /^\\\\/.test(p) || /^\\/.test(p) || /^[a-zA-Z]:[\\/]/.test(p);
+    if (!isAbs) return false;
     if (parameters.start !== undefined && typeof parameters.start !== 'number') {
       return false;
     }
