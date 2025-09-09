@@ -256,7 +256,7 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
       const localTools = new ToolRegistry({toolsMemory, todoMemory: todosMemory});
 
       let toolsPort: ToolRegistry | CompositeToolPort = localTools;
-      const enabledTools: string[] = ['todo_write'];
+      const enabledTools: string[] = ['todo_write', 'web_search', 'web_fetch'];
 
       const mcpPorts: MCPToolPort[] = [];
       const configPath = mcpConfigPath || '.nuvin_mcp.json';

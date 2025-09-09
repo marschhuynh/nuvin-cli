@@ -2,6 +2,8 @@ import type { ToolDefinition, ToolExecutionResult, ToolInvocation, ToolPort, Mem
 import { PersistedMemory, JsonFileMemoryPersistence } from './persistent';
 import { TodoStore, type TodoItem as StoreTodo } from './todo-store';
 import { TodoWriteTool } from './tools/TodoWriteTool';
+import { WebSearchTool } from './tools/WebSearchTool';
+import { WebFetchTool } from './tools/WebFetchTool';
 import type { FunctionTool } from './tools/types';
 
 export class ToolRegistry implements ToolPort {
@@ -18,6 +20,8 @@ export class ToolRegistry implements ToolPort {
 
     const toolInstances: FunctionTool[] = [
       new TodoWriteTool(todoStore),
+      new WebSearchTool(),
+      new WebFetchTool(),
     ];
 
     for (const tool of toolInstances) {
