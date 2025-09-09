@@ -30,6 +30,9 @@ const cli = meow(
   },
 );
 
+// Clear the terminal before starting the app
+console.clear();
+
 // Prefer explicit OpenRouter when both set
 const useOpenRouter = Boolean(cli.flags.openrouter || process.env.OPENROUTER_API_KEY);
 const useGithub = Boolean(!useOpenRouter && (cli.flags.github || process.env.GITHUB_COPILOT_API_KEY || process.env.GITHUB_ACCESS_TOKEN));
@@ -41,4 +44,8 @@ render(
     memPersist={Boolean(cli.flags.memPersist)}
     mcpConfigPath={cli.flags.mcpConfig}
   />,
+  {
+    exitOnCtrlC: true,
+    patchConsole: true
+  }
 );

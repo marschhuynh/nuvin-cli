@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState, useMemo} from 'react';
-import {Box, Text, useApp} from 'ink';
+import {Box, Text, useApp, useInput} from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
 import * as fs from 'node:fs';
@@ -18,13 +18,13 @@ import {NoopReminders} from '../../nuvin-core/reminders.js';
 import {ToolRegistry} from '../../nuvin-core/tools.js';
 import {EchoLLM, GithubLLM, OpenRouterLLM} from '../../nuvin-core/llm-providers/index.js';
 import {MCPToolPort, CoreMCPClient} from '../../nuvin-core/mcp/index.js';
-// import {MCPToolPort} from '../../nuvin-core/mcp-tools.js';
 import {CompositeToolPort} from '../../nuvin-core/tools-composite.js';
 import {loadMCPConfig} from '../../nuvin-core/config.js';
 import {PersistingConsoleEventPort} from '../../nuvin-core/events.js';
 import type {TodoItem as StoreTodo} from '../../nuvin-core/todo-store.js';
 import type {AgentEvent} from '../../nuvin-core/ports.js';
-import {AgentEventTypes} from '../../nuvin-core/ports.js';
+import {AgentEventTypes } from '../../nuvin-core/ports.js';
+
 
 type Props = {
   useOpenRouter?: boolean;
@@ -33,14 +33,28 @@ type Props = {
   mcpConfigPath?: string;
 };
 
-type Line = {text: string; color?: string};
+type MessageLine = {
+  id: string;
+  type: 'user' | 'assistant' | 'tool' | 'tool_result' | 'system' | 'error' | 'info';
+  content: string;
+  metadata?: {
+    timestamp?: string;
+    toolName?: string;
+    status?: 'success' | 'error';
+    duration?: number;
+    toolCallCount?: number;
+    toolCalls?: ToolCall[];
+    toolResult?: any;
+  };
+  color?: string;
+};
 
 class UIEventPort extends PersistingConsoleEventPort {
   private toolCallCount = 0;
   private streamingActive = false;
 
   constructor(
-    private appendLine: (text: string, color?: string) => void,
+    private appendLine: (line: MessageLine) => void,
     private appendAssistantChunk: (delta: string) => void,
     private setLastMetadata: (metadata: any) => void,
     opts: {filename: string}
@@ -59,27 +73,73 @@ class UIEventPort extends PersistingConsoleEventPort {
 
       case AgentEventTypes.ToolCalls:
         this.toolCallCount += event.toolCalls.length;
-        this.appendLine(`Using ${event.toolCalls.length} tool${event.toolCalls.length > 1 ? 's' : ''}: ${event.toolCalls.map(tc => tc.function.name).join(', ')}`, 'blue');
+        this.appendLine({
+          id: crypto.randomUUID(),
+          type: 'tool',
+          content: `[*] ${event.toolCalls.length > 1 ? 'tools' : 'tool'}: ${event.toolCalls.map(tc => tc.function.name).join(', ')}`,
+          metadata: {
+            toolCallCount: event.toolCalls.length,
+            timestamp: new Date().toISOString(),
+            toolCalls: event.toolCalls
+          },
+          color: 'blue'
+        });
         break;
 
       case AgentEventTypes.ToolResult:
         const tool = event.result;
-        const status = tool.status === 'success' ? '‣' : '■';
+        const statusIcon = tool.status === 'success' ? '[+]' : '[!]';
         const duration = tool.durationMs !== undefined ? ` (${tool.durationMs}ms)` : '';
-        this.appendLine(`${status} ${tool.name}: ${tool.status}${duration}`, tool.status === 'success' ? 'green' : 'red');
+
+        // Format the actual result content
+        // if (tool.result) {
+        //   if (tool.type === 'json' && typeof tool.result === 'object') {
+        //     resultContent = ` -> ${JSON.stringify(tool.result)}`;
+        //   } else {
+        //     resultContent = ` -> ${String(tool.result)}`;
+        //   }
+        // }
+
+        this.appendLine({
+          id: crypto.randomUUID(),
+          type: 'tool_result',
+          content: `  \\-- ${tool.name}: ${statusIcon} ${tool.status}${duration}`,
+          metadata: {
+            toolName: tool.name,
+            status: tool.status,
+            duration: tool.durationMs,
+            timestamp: new Date().toISOString(),
+            toolResult: tool
+          },
+          color: tool.status === 'success' ? 'green' : 'red'
+        });
         break;
 
       case AgentEventTypes.AssistantChunk:
         if (!this.streamingActive) {
           this.streamingActive = true;
-          this.appendLine(`assistant: `);
+          this.appendLine({
+            id: crypto.randomUUID(),
+            type: 'assistant',
+            content: 'assistant: ',
+            metadata: {
+              timestamp: new Date().toISOString()
+            }
+          });
         }
         if (event.delta) this.appendAssistantChunk(event.delta);
         break;
 
       case AgentEventTypes.AssistantMessage:
         if (!this.streamingActive && event.content) {
-          this.appendLine(`assistant: ${event.content}`);
+          this.appendLine({
+            id: crypto.randomUUID(),
+            type: 'assistant',
+            content: `assistant: ${event.content}`,
+            metadata: {
+              timestamp: new Date().toISOString()
+            }
+          });
         }
         this.streamingActive = false;
         break;
@@ -100,7 +160,15 @@ class UIEventPort extends PersistingConsoleEventPort {
         break;
 
       case AgentEventTypes.Error:
-        this.appendLine(`error: ${event.error}`, 'red');
+        this.appendLine({
+          id: crypto.randomUUID(),
+          type: 'error',
+          content: `error: ${event.error}`,
+          metadata: {
+            timestamp: new Date().toISOString()
+          },
+          color: 'red'
+        });
         break;
     }
   }
@@ -108,7 +176,7 @@ class UIEventPort extends PersistingConsoleEventPort {
 
 export default function App({useOpenRouter = false, useGithub = false, memPersist = false, mcpConfigPath}: Props) {
   const {exit} = useApp();
-  const [lines, setLines] = useState<Line[]>([]);
+  const [lines, setLines] = useState<MessageLine[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string>('Initializing...');
@@ -117,10 +185,30 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
   const [provider, setProvider] = useState<'OpenRouter' | 'GitHub' | 'Echo'>('Echo');
   const [model, setModel] = useState<string>('demo-echo');
   const [lastMetadata, setLastMetadata] = useState<any>(null);
+  const [showToolParams, setShowToolParams] = useState<boolean>(false);
+
+  // Handle keyboard shortcuts
+  useInput((input, key) => {
+    if (key.tab && key.shift) {
+      // Shift+Tab to toggle tool parameters
+      setShowToolParams(prev => !prev);
+    }
+  });
 
   // Initialize a session directory inside .history/<timestamp> on first render
   const sessionId = useMemo(() => String(Date.now()), []);
   const sessionDir = useMemo(() => path.join('.history', sessionId), [sessionId]);
+
+  // Custom error handler that writes to both stderr and chat
+  const handleError = (message: string) => {
+    appendLine({
+      id: crypto.randomUUID(),
+      type: 'error',
+      content: `error: ${message}`,
+      metadata: { timestamp: new Date().toISOString() },
+      color: 'red'
+    });
+  };
 
   useEffect(() => {
     let didCancel = false;
@@ -145,7 +233,7 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
         : new EchoLLM();
 
       const resolvedModel = useOpenRouter
-        ? process.env.OPENROUTER_MODEL || 'openai/gpt-4.1-mini'
+        ? process.env.OPENROUTER_MODEL || 'openai/gpt-4.1'
         : useGithub
         ? process.env.GITHUB_MODEL || 'gpt-4.1'
         : 'demo-echo';
@@ -180,40 +268,71 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
               let client: CoreMCPClient | null = null;
               const timeoutMs = serverCfg.timeoutMs || 30000; // Default 30 seconds
               if (serverCfg.transport === 'http' && serverCfg.url) {
-                client = new CoreMCPClient({type: 'http', url: serverCfg.url, headers: serverCfg.headers}, timeoutMs);
+                client = new CoreMCPClient({
+                  type: 'http',
+                  url: serverCfg.url,
+                  headers: serverCfg.headers
+                }, timeoutMs);
               } else if (serverCfg.command) {
-                client = new CoreMCPClient({type: 'stdio', command: serverCfg.command, args: serverCfg.args, env: serverCfg.env}, timeoutMs);
+                client = new CoreMCPClient({
+                  type: 'stdio',
+                  command: serverCfg.command,
+                  args: serverCfg.args,
+                  env: serverCfg.env,
+                  stderr: 'ignore',
+                }, timeoutMs);
               }
               if (!client) {
-                appendLine(`MCP server '${serverId}' missing transport info; skipping`, 'yellow');
+                appendLine({
+                  id: crypto.randomUUID(),
+                  type: 'info',
+                  content: `MCP server '${serverId}' missing transport info; skipping`,
+                  metadata: { timestamp: new Date().toISOString() },
+                  color: 'yellow'
+                });
                 continue;
               }
               const prefix = serverCfg.prefix || `mcp_${serverId}_`;
               const port = new MCPToolPort(client, {prefix});
               await port.init();
               const exposed = port.getExposedToolNames();
+
               if (exposed.length) {
                 mcpPorts.push(port);
                 mcpClientsRef.current.push(client); // Track for cleanup
                 enabledTools.push(...exposed);
-                appendLine(`MCP server '${serverId}' loaded with ${exposed.length} tools (prefix='${prefix}', timeout=${timeoutMs}ms).`, 'green');
+                appendLine({
+                  id: crypto.randomUUID(),
+                  type: 'info',
+                  content: `MCP server '${serverId}' loaded with ${exposed.length} tools (prefix='${prefix}', timeout=${timeoutMs}ms).`,
+                  metadata: { timestamp: new Date().toISOString() },
+                  color: 'green'
+                });
               } else {
-                appendLine(`MCP server '${serverId}' has no tools.`, 'yellow');
+                appendLine({
+                  id: crypto.randomUUID(),
+                  type: 'info',
+                  content: `MCP server '${serverId}' has no tools.`,
+                  metadata: { timestamp: new Date().toISOString() },
+                  color: 'yellow'
+                });
               }
+
             } catch (err: unknown) {
               const message = typeof err === 'object' && err !== null && 'message' in err
-                ? (err as {message?: string}).message
+                ? (err as {message?: string}).message ?? 'Unknown error'
                 : String(err);
-              appendLine(`Failed to initialize MCP server '${serverId}': ${message}`, 'red');
+              handleError(`Failed to initialize MCP server '${serverId}': ${message}`);
             }
           }
         }
       } catch (err: unknown) {
         const message = typeof err === 'object' && err !== null && 'message' in err
-          ? (err as {message?: string}).message
+          ? (err as {message?: string}).message ?? 'Unknown error'
           : String(err);
-        appendLine(`Failed to load MCP config from ${configPath}: ${message}`, 'yellow');
+        handleError(`Failed to load MCP config from ${configPath}: ${message}`);
       }
+
       if (mcpPorts.length > 0) {
         toolsPort = new CompositeToolPort([localTools, ...mcpPorts]);
       }
@@ -247,19 +366,12 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
       if (didCancel) return;
       orchestratorRef.current = orchestrator;
 
-      // Header lines similar to original CLI
-      appendLine(`Core Agent CLI (${selectedProvider}). Type 'exit' to quit.`);
-      appendLine(`Session: ${sessionId} -> ${sessionDir}`);
-      if (selectedProvider === 'OpenRouter') {
-        appendLine(`Using OpenRouter API. Model: ${resolvedModel}.`);
-      } else if (selectedProvider === 'GitHub') {
-        appendLine(`Using GitHub Copilot API. Model: ${resolvedModel}.`);
-        if (process.env.GITHUB_ACCESS_TOKEN) appendLine(`Auth via access token -> transport handles exchange/refresh.`);
-      } else {
-        appendLine(`Tips: '!reverse your text' or '!wc your text' to trigger tools.`);
-      }
-      appendLine(`Use 'todo_write' with echo via: !todo [{"id":"t1","content":"setup project","status":"pending","priority":"high"}]`);
-      appendLine(mcpPorts.length > 0 ? `Loaded ${mcpPorts.length} MCP server(s) from ${configPath}.` : `No MCP servers loaded. Provide ${configPath} to enable MCP.`);
+      appendLine({
+        id: crypto.randomUUID(),
+        type: 'info',
+        content: mcpPorts.length > 0 ? `Loaded ${mcpPorts.length} MCP server(s) from ${configPath}.` : `No MCP servers loaded. Provide ${configPath} to enable MCP.`,
+        metadata: { timestamp: new Date().toISOString() }
+      });
       setStatus('Ready');
     })();
 
@@ -271,34 +383,57 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useOpenRouter, useGithub, memPersist, mcpConfigPath]);
 
-  const appendLine = (text: string, color?: string) => setLines(prev => [...prev, {text, color}]);
+  const appendLine = (line: MessageLine) => setLines(prev => [...prev, line]);
   const appendAssistantChunk = (delta: string) =>
     setLines(prev => {
-      if (prev.length === 0) return [...prev, { text: `assistant: ${delta}` }];
+      if (prev.length === 0) return [...prev, {
+        id: crypto.randomUUID(),
+        type: 'assistant',
+        content: `assistant: ${delta}`,
+        metadata: { timestamp: new Date().toISOString() }
+      }];
       const next = [...prev];
       // Find the last assistant line to append to; default to last line
       let idx = next.length - 1;
       for (let i = next.length - 1; i >= 0; i--) {
-        if (next[i].text.startsWith('assistant:')) { idx = i; break; }
+        if (next[i].type === 'assistant') { idx = i; break; }
       }
       const current = next[idx];
-      const base = current?.text ?? '';
-      next[idx] = { ...current, text: base + delta };
+      const base = current?.content ?? '';
+      next[idx] = { ...current, content: base + delta };
       return next;
     });
 
   const cleanup = async () => {
     // Disconnect all MCP clients
     if (mcpClientsRef.current.length > 0) {
-      appendLine(`🔌 Disconnecting ${mcpClientsRef.current.length} MCP server${mcpClientsRef.current.length > 1 ? 's' : ''}...`, 'yellow');
+      appendLine({
+        id: crypto.randomUUID(),
+        type: 'info',
+        content: `🔌 Disconnecting ${mcpClientsRef.current.length} MCP server${mcpClientsRef.current.length > 1 ? 's' : ''}...`,
+        metadata: { timestamp: new Date().toISOString() },
+        color: 'yellow'
+      });
 
       const disconnectPromises = mcpClientsRef.current.map(async (client, index) => {
         try {
           await client.disconnect();
-          appendLine(`✅ MCP server ${index + 1} disconnected`, 'green');
+          appendLine({
+            id: crypto.randomUUID(),
+            type: 'info',
+            content: `✅ MCP server ${index + 1} disconnected`,
+            metadata: { timestamp: new Date().toISOString() },
+            color: 'green'
+          });
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
-          appendLine(`⚠️ Error disconnecting MCP server ${index + 1}: ${message}`, 'yellow');
+          appendLine({
+            id: crypto.randomUUID(),
+            type: 'error',
+            content: `⚠️ Error disconnecting MCP server ${index + 1}: ${message}`,
+            metadata: { timestamp: new Date().toISOString() },
+            color: 'yellow'
+          });
         }
       });
 
@@ -310,14 +445,32 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
   const handleSlashCommand = async (command: string, args: string): Promise<boolean> => {
     switch (command) {
       case '/exit':
-        appendLine('👋 Goodbye!', 'cyan');
+        appendLine({
+          id: crypto.randomUUID(),
+          type: 'info',
+          content: 'Goodbye!',
+          metadata: { timestamp: new Date().toISOString() },
+          color: 'cyan'
+        });
         await cleanup();
         exit();
         return true;
 
       default:
-        appendLine(`❌ Unknown command: ${command}`, 'red');
-        appendLine('Available commands: /exit', 'gray');
+        appendLine({
+          id: crypto.randomUUID(),
+          type: 'error',
+          content: `❌ Unknown command: ${command}`,
+          metadata: { timestamp: new Date().toISOString() },
+          color: 'red'
+        });
+        appendLine({
+          id: crypto.randomUUID(),
+          type: 'info',
+          content: 'Available commands: /exit',
+          metadata: { timestamp: new Date().toISOString() },
+          color: 'gray'
+        });
         return true;
     }
   };
@@ -332,7 +485,13 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
       const command = parts[0];
       const args = parts.slice(1).join(' ');
 
-      appendLine(`> ${trimmed}`, 'cyan');
+      appendLine({
+        id: crypto.randomUUID(),
+        type: 'user',
+        content: `> ${trimmed}`,
+        metadata: { timestamp: new Date().toISOString() },
+        color: 'cyan'
+      });
       setInput('');
 
       const handled = await handleSlashCommand(command, args);
@@ -341,13 +500,24 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
 
     // Legacy exit commands
     if (trimmed.toLowerCase() === 'exit' || trimmed.toLowerCase() === 'quit') {
-      appendLine('Bye!');
+      appendLine({
+        id: crypto.randomUUID(),
+        type: 'info',
+        content: 'Bye!',
+        metadata: { timestamp: new Date().toISOString() }
+      });
       await cleanup();
       exit();
       return;
     }
 
-    appendLine(`> ${trimmed}`, 'cyan');
+    appendLine({
+      id: crypto.randomUUID(),
+      type: 'user',
+      content: `> ${trimmed}`,
+      metadata: { timestamp: new Date().toISOString() },
+      color: 'cyan'
+    });
     setInput('');
     setBusy(true);
 
@@ -360,25 +530,14 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
       await orch.send(trimmed, {conversationId: 'cli', stream: true});
     } catch (err: unknown) {
       const message = typeof err === 'object' && err !== null && 'message' in err ? (err as {message?: string}).message : String(err);
-      appendLine(`error: ${message}`, 'red');
+      handleError(message);
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Box flexDirection="column" height="100%" paddingX={1}>
-      {/* Header */}
-      <Box borderStyle="round" justifyContent="space-between">
-        <Box>
-          <Text color="cyan" bold>Nuvin AI Agent CLI</Text>
-          <Box marginLeft={1}>
-            <Text color="green">●</Text>
-            <Text color="gray"> {status}</Text>
-          </Box>
-        </Box>
-      </Box>
-
+    <Box flexDirection="column" height="100%">
       {/* Main Chat Area */}
       <Box flexDirection="column" flexGrow={1} paddingX={1} marginBottom={1}>
         <Box flexDirection="column" minHeight={10}>
@@ -392,61 +551,105 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
             </Box>
           ) : (
             lines.map((l, i) => {
-              const isUser = l.text.startsWith('> ');
-              const isAssistant = l.text.startsWith('assistant: ');
-              const isMeta = l.text.startsWith('meta: ');
-              const isError = l.color === 'red';
-              const isToolCall = l.text.includes('tool') || l.text.includes('MCP');
+              // Use type-based logic instead of fragile string matching
+              switch (l.type) {
+                case 'user':
+                  return (
+                    <Box key={l.id || i} marginTop={1} flexDirection="row">
+                      <Text color="white" bold flexShrink={0}>● </Text>
+                      <Text flexShrink={1}>{l.content.startsWith('> ') ? l.content.substring(2) : l.content}</Text>
+                    </Box>
+                  );
 
-              // Skip meta lines - they're now shown in footer
-              if (isMeta) return null;
+                case 'assistant':
+                  return (
+                    <Box key={l.id || i} marginTop={1} flexDirection="row">
+                      <Text color="green" bold flexShrink={0}>● </Text>
+                      <Text flexShrink={1}>{l.content.startsWith('assistant: ') ? l.content.substring(11) : l.content}</Text>
+                    </Box>
+                  );
 
-              if (isUser) {
-                return (
-                  <Box key={i} marginY={0}>
-                    <Text color="white" bold>● </Text>
-                    <Text>{l.text.substring(2)}</Text>
-                  </Box>
-                );
+                case 'tool':
+                  return (
+                    <Box key={l.id || i} marginTop={1} flexDirection="column">
+                      <Box flexDirection="row">
+                        <Text color="blue" bold flexShrink={0}>● </Text>
+                        <Text flexShrink={1}>{l.content}</Text>
+                      </Box>
+                      {showToolParams && l.metadata?.toolCalls && l.metadata.toolCalls.map((tc, tcIndex) => (
+                        <Box key={tcIndex} marginLeft={2} flexDirection="column">
+                          <Text color="gray">  Parameters for {tc.function.name}:</Text>
+                          <Text color="gray">    {tc.function.arguments}</Text>
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+
+                case 'tool_result':
+                  return (
+                    <Box key={l.id || i} marginLeft={2} flexDirection="column">
+                      <Box flexDirection="row">
+                        <Text color={l.color as any} flexShrink={0}>  </Text>
+                        <Text color={l.color as any} flexShrink={1}>{l.content}</Text>
+                      </Box>
+                      {showToolParams && l.metadata?.toolResult && (
+                        <Box marginLeft={2} flexDirection="column">
+                          <Text color="gray">    Result Details:</Text>
+                          <Text color="gray">      ID: {l.metadata.toolResult.id}</Text>
+                          <Text color="gray">      Type: {l.metadata.toolResult.type}</Text>
+                          <Text color="gray">      Status: {l.metadata.toolResult.status}</Text>
+                          {l.metadata.toolResult.durationMs !== undefined && (
+                            <Text color="gray">      Duration: {l.metadata.toolResult.durationMs}ms</Text>
+                          )}
+                          {l.metadata.toolResult.metadata && (
+                            <Text color="gray">      Metadata: {JSON.stringify(l.metadata.toolResult.metadata)}</Text>
+                          )}
+                          <Text color="gray">      Full Result:</Text>
+                          <Text color="gray" wrap="wrap">        {typeof l.metadata.toolResult.result === 'object'
+                            ? JSON.stringify(l.metadata.toolResult.result, null, 2).split('\n').map((line, idx) =>
+                                idx === 0 ? line : `        ${line}`).join('\n')
+                            : String(l.metadata.toolResult.result)}</Text>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+
+                case 'error':
+                  return (
+                    <Box key={l.id || i} flexDirection="row">
+                      <Text color="red" bold flexShrink={0}>● </Text>
+                      <Text flexShrink={1}>{l.content}</Text>
+                    </Box>
+                  );
+
+                case 'info':
+                  return (
+                    <Box key={l.id || i} flexDirection="row">
+                      <Text color={l.color as any || 'gray'} bold flexShrink={0}>● </Text>
+                      <Text color={l.color as any} flexShrink={1}>{l.content}</Text>
+                    </Box>
+                  );
+
+                case 'system':
+                  return (
+                    <Box key={l.id || i} flexDirection="row">
+                      <Text color="yellow" bold flexShrink={0}>● </Text>
+                      <Text flexShrink={1}>{l.content}</Text>
+                    </Box>
+                  );
+
+                default:
+                  return (
+                    <Text key={l.id || i} color={l.color as any}>{l.content}</Text>
+                  );
               }
-
-              if (isAssistant) {
-                return (
-                  <Box key={i} marginY={0}>
-                    <Text color="green" bold>● </Text>
-                    <Text>{l.text.substring(11)}</Text>
-                  </Box>
-                );
-              }
-
-              if (isToolCall && !isMeta && !isError) {
-                return (
-                  <Box key={i} marginY={0}>
-                    <Text color="blue" bold>● </Text>
-                    <Text>{l.text}</Text>
-                  </Box>
-                );
-              }
-
-              if (isError) {
-                return (
-                  <Box key={i}>
-                    <Text color="red" bold>● </Text>
-                    <Text>{l.text}</Text>
-                  </Box>
-                );
-              }
-
-              return (
-                <Text key={i} color={l.color as any}>{l.text}</Text>
-              );
             })
           )}
         </Box>
       </Box>
 
       {/* Input Area */}
-      <Box borderStyle="round">
+      <Box paddingX={1} paddingY={0} borderColor="transparent" borderStyle="round" minHeight={3}>
         {busy ? (
           <Box>
             <Box marginRight={1}>
@@ -467,16 +670,21 @@ export default function App({useOpenRouter = false, useGithub = false, memPersis
         )}
       </Box>
 
-      {/* Footer with model info and metadata */}
-      <Box paddingX={1} paddingTop={1} justifyContent="space-between">
-        <Text color="gray" dimColor>
-          {provider} | {model}
-        </Text>
-        {lastMetadata && (
+      {/* Footer with model info, status and metadata */}
+      <Box paddingX={1} justifyContent="space-between" flexDirection="column">
+        <Box justifyContent="space-between">
           <Text color="gray" dimColor>
-            tokens: p:{lastMetadata.promptTokens ?? '-'} c:{lastMetadata.completionTokens ?? '-'} t:{lastMetadata.totalTokens ?? '-'} | cost: {lastMetadata.estimatedCost != null ? `$${Number(lastMetadata.estimatedCost).toFixed(6)}` : 'n/a'} | time: {lastMetadata.responseTime != null ? `${lastMetadata.responseTime}ms` : 'n/a'} | tools: {lastMetadata.toolCalls != null ? `${lastMetadata.toolCalls}` : '0'}
+            {provider} | {model} | <Text color="green">●</Text> {status}
           </Text>
-        )}
+          {lastMetadata && (
+            <Text color="gray" dimColor>
+              tokens: p:{lastMetadata.promptTokens ?? '-'} c:{lastMetadata.completionTokens ?? '-'} t:{lastMetadata.totalTokens ?? '-'} | cost: {lastMetadata.estimatedCost != null ? `$${Number(lastMetadata.estimatedCost).toFixed(6)}` : 'n/a'} | time: {lastMetadata.responseTime != null ? `${lastMetadata.responseTime}ms` : 'n/a'} | tools: {lastMetadata.toolCalls != null ? `${lastMetadata.toolCalls}` : '0'}
+            </Text>
+          )}
+        </Box>
+        <Text color="gray" dimColor>
+          Shift+Tab: {showToolParams ? 'Hide' : 'Show'} tool parameters & results
+        </Text>
       </Box>
     </Box>
   );

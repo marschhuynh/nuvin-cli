@@ -184,7 +184,8 @@ export const AgentEventTypes = {
   MemoryAppended: 'memory_appended',
   Done: 'done',
   Error: 'error',
-} as const;
+  MCPStderr: 'mcp_stderr',
+} as const;;
 
 export type AgentEvent =
   | {
@@ -236,6 +237,13 @@ export type AgentEvent =
       conversationId: string;
       messageId?: string;
       error: string;
+    }
+  | {
+      type: typeof AgentEventTypes.MCPStderr;
+      serverId: string;
+      serverName?: string;
+      data: string;
+      timestamp: string;
     };
 
 export interface EventPort {

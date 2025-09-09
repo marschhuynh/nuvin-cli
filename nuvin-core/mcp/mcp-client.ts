@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StdioClientTransport, StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type {
   ListToolsRequest,
@@ -9,7 +9,11 @@ import type {
 import { ListToolsResultSchema, CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
 
 export type MCPHttpOptions = { type: 'http'; url: string; headers?: Record<string, string> };
-export type MCPStdioOptions = { type: 'stdio'; command: string; args?: string[]; env?: Record<string, string> };
+export type MCPStdioOptions = {
+  type: 'stdio'; command: string; args?: string[]; env?: Record<string, string>;
+  stderr?: StdioServerParameters['stderr'];
+  cwd?: string;
+};
 export type MCPOptions = MCPHttpOptions | MCPStdioOptions;
 
 export type MCPToolSchema = {
@@ -44,11 +48,30 @@ export class CoreMCPClient {
         requestInit: { headers: this.opts.headers ?? {} },
       });
     } else {
+      // Check if stderr is a custom stream
+      const isCustomStream = this.opts.stderr &&
+        typeof this.opts.stderr === 'object' &&
+        typeof this.opts.stderr.pipe === 'function';
+
+      // Use 'pipe' if custom stream is provided, otherwise use the original value
+      const stderrOption = isCustomStream ? 'pipe' : (this.opts.stderr ?? 'inherit');
+
       this.transport = new StdioClientTransport({
         command: this.opts.command,
         args: this.opts.args ?? [],
         env: this.opts.env ?? {},
+        stderr: stderrOption,
+        cwd: this.opts.cwd,
       });
+
+      // If custom stream was provided, pipe the transport's stderr to it
+      if (isCustomStream) {
+        // Access the transport's stderr stream after creation
+        const transportStderr = (this.transport as StdioClientTransport).stderr;
+        if (transportStderr && this.opts.stderr) {
+          transportStderr.pipe(this.opts.stderr as unknown as NodeJS.WritableStream);
+        }
+      }
     }
 
     // Create SDK client and connect
@@ -73,7 +96,7 @@ export class CoreMCPClient {
         this.client?.close(),
         this.transport?.close?.()
       ]);
-      
+
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('MCP disconnect timed out after 5000ms')), 5000);
       });
@@ -127,7 +150,25 @@ export class CoreMCPClient {
       setTimeout(() => reject(new Error(`MCP tool call timed out after ${this.timeoutMs}ms`)), this.timeoutMs);
     });
 
-    return await Promise.race([requestPromise, timeoutPromise]);
+    const result = await Promise.race([requestPromise, timeoutPromise]);
+    
+    // Show tool result if it exists and has content
+    if (result.content && Array.isArray(result.content) && result.content.length > 0) {
+      console.log(`[MCP Tool Result] ${call.name}:`);
+      result.content.forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          if ('text' in item) {
+            console.log(`  ${index + 1}. ${item.text}`);
+          } else {
+            console.log(`  ${index + 1}. ${JSON.stringify(item, null, 2)}`);
+          }
+        } else {
+          console.log(`  ${index + 1}. ${String(item)}`);
+        }
+      });
+    }
+
+    return result;
   }
 }
 

@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
-    "@wailsio/runtime": "3.0.0-alpha.66"
+    "@wailsio/runtime": "3.0.0-alpha.66",
+    "execa": "^9.6.0"
   }
 }
