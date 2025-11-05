@@ -1,6 +1,6 @@
 {
 	"name": "@nuvin/nuvin-cli",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"private": false,
 	"description": "Interactive AI coding assistant CLI powered by Nuvin core",
 	"license": "Apache-2.0",
