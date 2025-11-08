@@ -72,7 +72,6 @@ const cli = meow(
     --config PATH       Merge configuration from file (JSON or YAML)
     --model NAME        Specify model (e.g., gpt-4o, claude-sonnet-4-5)
     --api-key KEY       Your API key for authentication (OpenRouter, Zai)
-    --mem-persist       Enable conversation history persistence (.history/<session>/)
     --mcp-config PATH   MCP servers configuration file (default: .nuvin_mcp.json)
     --reasoning-effort  Set reasoning effort for o1 models: low | medium | high (default: medium)
     --history PATH      Load conversation history from file on startup
@@ -101,8 +100,8 @@ const cli = meow(
     • "Refactor this function to follow SOLID principles"
 
   Quick Start Examples
-    $ nuvin-cli --provider openrouter --model openai/gpt-4o --mem-persist
-    $ nuvin-cli --provider github --mem-persist
+    $ nuvin-cli --provider openrouter --model openai/gpt-4o
+    $ nuvin-cli --provider github
   `,
   {
     importMeta: import.meta,
@@ -110,7 +109,6 @@ const cli = meow(
       provider: { type: 'string' },
       config: { type: 'string' },
       model: { type: 'string' },
-      memPersist: { type: 'boolean', default: false },
       mcpConfig: { type: 'string' },
       apiKey: { type: 'string' },
       reasoningEffort: { type: 'string' },
@@ -295,9 +293,6 @@ const cli = meow(
     }
   }
 
-  // Handle memPersist CLI flag
-  const memPersist = cli.flags.memPersist;
-
   // Process environment variables and load into 'env' scope
   // Priority chain: global < local < explicit < env < direct
   const envConfig = processEnvironmentVariables();
@@ -306,11 +301,9 @@ const cli = meow(
   }
 
   // Build direct scope config from CLI flags (highest priority)
-  const directConfig: Partial<CLIConfig> = {};
-
-  if (memPersist !== undefined) {
-    directConfig.session = { memPersist };
-  }
+  const directConfig: Partial<CLIConfig> = {
+    session: { memPersist: true }, // Memory persistence enabled by default
+  };
 
   // Load CLI overrides into 'direct' scope (overrides everything)
   if (Object.keys(cliOverrides).length > 0 || Object.keys(directConfig).length > 0) {
@@ -321,7 +314,7 @@ const cli = meow(
   const mergedConfig = configManager.getConfig();
 
   const thinkingSetting = mergedConfig.thinking;
-  const finalMemPersist = mergedConfig.session?.memPersist ?? false;
+  const finalMemPersist = mergedConfig.session?.memPersist ?? true;
   const finalRequireToolApproval = mergedConfig.requireToolApproval ?? true;
 
   const { configPath: configPathFromFile, servers: inlineServers } = resolveMCPDefinition(fileConfig, configSources);

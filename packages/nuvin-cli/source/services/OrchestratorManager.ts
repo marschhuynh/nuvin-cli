@@ -173,13 +173,13 @@ export class OrchestratorManager {
   /**
    * Create a new UIEventAdapter for the given session directory.
    */
-  private createEventAdapter(sessionDir: string, handlers: UIHandlers, memPersist: boolean, streamingChunks: boolean) {
+  private createEventAdapter(sessionDir: string, handlers: UIHandlers, persistEventLog: boolean, streamingChunks: boolean) {
     return new UIEventAdapter(
       handlers.appendLine,
       handlers.updateLine,
       handlers.updateLineMetadata,
       handlers.setLastMetadata,
-      memPersist
+      persistEventLog
         ? {
             filename: path.join(sessionDir, 'events.json'),
             streamingEnabled: streamingChunks,
@@ -215,7 +215,11 @@ export class OrchestratorManager {
 
       // Read config from ConfigManager
       const currentConfig = this.getCurrentConfig();
-      const httpLogFile = this.memPersist ? path.join(sessionDir, 'http-log.json') : undefined;
+      const sessionConfig = currentConfig.config.session;
+      const persistHttpLog = sessionConfig?.persistHttpLog ?? false;
+      const persistEventLog = sessionConfig?.persistEventLog ?? false;
+      
+      const httpLogFile = persistHttpLog ? path.join(sessionDir, 'http-log.json') : undefined;
 
       const llm = this.createLLM(httpLogFile);
 
@@ -325,7 +329,7 @@ export class OrchestratorManager {
         clock: new SystemClock(),
         cost: new SimpleCost(),
         reminders: new NoopReminders(),
-        events: this.createEventAdapter(sessionDir, handlers, this.memPersist, this.streamingChunks),
+        events: this.createEventAdapter(sessionDir, handlers, persistEventLog, this.streamingChunks),
       };
       const orchestrator = new AgentOrchestrator(agentConfig, agentDeps);
 
@@ -541,7 +545,8 @@ export class OrchestratorManager {
     }
 
     const currentConfig = this.getCurrentConfig();
-    const httpLogFile = this.memPersist && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
+    const persistHttpLog = currentConfig.config.session?.persistHttpLog ?? false;
+    const httpLogFile = persistHttpLog && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
     const newLLM = this.createLLM(httpLogFile);
     this.orchestrator.setLLM(newLLM);
 
@@ -623,7 +628,8 @@ export class OrchestratorManager {
     }
 
     const currentConfig = this.getCurrentConfig();
-    const httpLogFile = this.memPersist && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
+    const persistHttpLog = currentConfig.config.session?.persistHttpLog ?? false;
+    const httpLogFile = persistHttpLog && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
     const newLLM = this.createLLM(httpLogFile);
     this.orchestrator.setLLM(newLLM);
 
@@ -725,11 +731,15 @@ export class OrchestratorManager {
       this.createSessionDirectories(sessionDir);
     }
 
+    // Get persistence settings from config
+    const currentConfig = this.getCurrentConfig();
+    const persistEventLog = currentConfig.config.session?.persistEventLog ?? false;
+    
     // Create new memory instance
     const newMemory = this.createMemory(sessionDir, memPersist);
 
     // Create new event adapter for the new session
-    const newEventAdapter = this.createEventAdapter(sessionDir, this.handlers, memPersist, this.streamingChunks);
+    const newEventAdapter = this.createEventAdapter(sessionDir, this.handlers, persistEventLog, this.streamingChunks);
 
     // Update orchestrator with new memory and events
     this.orchestrator.setMemory(newMemory);
@@ -757,7 +767,8 @@ User message: ${userMessage}
 Respond with only the topic, no explanation.`;
 
     const currentConfig = this.getCurrentConfig();
-    const httpLogFile = this.memPersist && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
+    const persistHttpLog = currentConfig.config.session?.persistHttpLog ?? false;
+    const httpLogFile = persistHttpLog && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
     const llm = this.createLLM(httpLogFile);
 
     const topicMemory = new InMemoryMemory<Message>();

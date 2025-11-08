@@ -58,6 +58,8 @@ export interface CLIConfig {
   /** Session persistence options */
   session?: {
     memPersist?: boolean;
+    persistEventLog?: boolean;
+    persistHttpLog?: boolean;
   };
   /** Require manual approval before tool execution */
   requireToolApproval?: boolean;
