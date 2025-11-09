@@ -17,7 +17,11 @@
 		"forceConsistentCasingInFileNames": false,
 		"isolatedModules": true,
 		"allowJs": true,
-		"checkJs": false
+		"checkJs": false,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["source/*"]
+		}
 	},
 	"include": ["source/**/*"],
 	"exclude": ["node_modules", "dist"]

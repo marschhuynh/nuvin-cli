@@ -12,6 +12,11 @@ export default defineConfig({
     globals: false,
     reporters: ['default'],
   },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './source'),
+    },
+  },
   esbuild: {
     target: 'es2020',
     jsx: 'automatic',

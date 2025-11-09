@@ -12,6 +12,9 @@ export default defineConfig({
   esbuildOptions(options) {
     options.jsx = 'automatic';
     options.jsxImportSource = 'react';
+    options.alias = {
+      '@': './source',
+    };
   },
   shims: true,
 });
