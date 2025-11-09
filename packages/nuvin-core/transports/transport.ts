@@ -243,32 +243,3 @@ export class FetchTransport implements HttpTransport {
     }
   }
 }
-
-export class BearerAuthTransport implements HttpTransport {
-  constructor(
-    private inner: FetchTransport,
-    private apiKey?: string,
-  ) {}
-
-  private makeHeaders(headers?: HttpHeaders): HttpHeaders {
-    if (!this.apiKey || this.apiKey.trim() === '') {
-      throw new Error('API key missing');
-    }
-    const base: HttpHeaders = headers ? { ...headers } : {};
-    base.Authorization = `Bearer ${this.apiKey}`;
-    return base;
-  }
-
-  async get(url: string, headers?: HttpHeaders, signal?: AbortSignal): Promise<TransportResponse> {
-    return this.inner.get(url, this.makeHeaders(headers), signal);
-  }
-
-  async postJson(url: string, body: unknown, headers?: HttpHeaders, signal?: AbortSignal): Promise<TransportResponse> {
-    return this.inner.postJson(url, body, this.makeHeaders(headers), signal);
-  }
-
-  async postStream(url: string, body: unknown, headers?: HttpHeaders, signal?: AbortSignal): Promise<Response> {
-    // Preserve Accept if caller provided, otherwise caller decides; streaming handlers often set SSE header
-    return this.inner.postStream(url, body, this.makeHeaders(headers), signal);
-  }
-}

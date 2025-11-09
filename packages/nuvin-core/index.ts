@@ -67,7 +67,7 @@ export type { DelegationService, AgentCatalog, DelegationServiceConfig } from '.
 export { DelegationServiceFactory, LLMResolver } from './delegation/index.js';
 
 // LLM providers
-export { EchoLLM, GithubLLM, OpenRouterLLM, DeepInfraLLM, ZaiLLM, AnthropicLLM, AnthropicAISDKLLM } from './llm-providers/index.js';
+export { EchoLLM, GithubLLM, OpenRouterLLM, DeepInfraLLM, ZaiLLM, AnthropicAISDKLLM } from './llm-providers/index.js';
 export type { OpenRouterModel, DeepInfraModel } from './llm-providers/index.js';
 export { LLMError } from './llm-providers/base-llm.js';
 
@@ -80,4 +80,10 @@ export type { MCPConfig, MCPServerConfig } from './config.js';
 export { PersistingConsoleEventPort } from './events.js';
 
 // String utilities
-export { stripAnsiAndControls, normalizeNewlines, resolveCarriageReturns, resolveBackspaces, canonicalizeTerminalPaste } from './string-utils.js';
+export {
+  stripAnsiAndControls,
+  normalizeNewlines,
+  resolveCarriageReturns,
+  resolveBackspaces,
+  canonicalizeTerminalPaste,
+} from './string-utils.js';
