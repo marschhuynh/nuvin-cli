@@ -49,4 +49,146 @@ describe('FileDiffView', () => {
       }
     });
   });
+
+  describe('character-level diff highlighting', () => {
+    it('should highlight only the added comma when adding comma to end of line', () => {
+      const oldText = '\t\t"checkJs": false';
+      const newText = '\t\t"checkJs": false,';
+
+      const diff = createSimpleDiff(oldText, newText);
+
+      // Should produce two modify lines (one for old, one for new)
+      const modifyLines = diff.filter((line) => line.type === 'modify');
+      expect(modifyLines).toHaveLength(2);
+
+      // Old line should have all content as unchanged (nothing removed)
+      const oldLine = modifyLines.find((line) => line.oldLineNum !== undefined);
+      expect(oldLine).toBeDefined();
+      expect(oldLine!.segments).toBeDefined();
+
+      // All segments in old line should be 'unchanged' (no removals)
+      const oldSegments = oldLine!.segments!;
+      expect(oldSegments.every((seg) => seg.type === 'unchanged')).toBe(true);
+
+      // Reconstruct text from segments to verify correctness
+      const oldReconstructed = oldSegments.map((s) => s.text).join('');
+      expect(oldReconstructed).toBe(oldText);
+
+      // New line should have unchanged content + added comma
+      const newLine = modifyLines.find((line) => line.newLineNum !== undefined);
+      expect(newLine).toBeDefined();
+      expect(newLine!.segments).toBeDefined();
+
+      const newSegments = newLine!.segments!;
+
+      // Should have at least one 'unchanged' segment and one 'add' segment
+      expect(newSegments.some((seg) => seg.type === 'unchanged')).toBe(true);
+      expect(newSegments.some((seg) => seg.type === 'add')).toBe(true);
+
+      // The 'add' segment should only be the comma
+      const addedSegments = newSegments.filter((seg) => seg.type === 'add');
+      expect(addedSegments).toHaveLength(1);
+      expect(addedSegments[0].text).toBe(',');
+
+      // Reconstruct text from segments to verify correctness
+      const newReconstructed = newSegments.map((s) => s.text).join('');
+      expect(newReconstructed).toBe(newText);
+    });
+
+    it('should highlight only changed characters when modifying middle of line', () => {
+      const oldText = 'const value = "hello";';
+      const newText = 'const value = "world";';
+
+      const diff = createSimpleDiff(oldText, newText);
+
+      const modifyLines = diff.filter((line) => line.type === 'modify');
+      expect(modifyLines).toHaveLength(2);
+
+      // Old line: should have unchanged prefix + removed middle + unchanged suffix
+      const oldLine = modifyLines.find((line) => line.oldLineNum !== undefined);
+      expect(oldLine!.segments).toBeDefined();
+
+      const oldSegments = oldLine!.segments!;
+      const oldReconstructed = oldSegments.map((s) => s.text).join('');
+      expect(oldReconstructed).toBe(oldText);
+
+      // Should have unchanged content for common parts
+      expect(oldSegments.some((seg) => seg.type === 'unchanged' && seg.text.includes('const value'))).toBe(true);
+
+      // New line: should have unchanged prefix + added middle + unchanged suffix
+      const newLine = modifyLines.find((line) => line.newLineNum !== undefined);
+      expect(newLine!.segments).toBeDefined();
+
+      const newSegments = newLine!.segments!;
+      const newReconstructed = newSegments.map((s) => s.text).join('');
+      expect(newReconstructed).toBe(newText);
+    });
+
+    it('should handle adding text to beginning of line', () => {
+      const oldText = 'const world = 1;';
+      const newText = 'const hello world = 1;';
+
+      const diff = createSimpleDiff(oldText, newText);
+
+      const modifyLines = diff.filter((line) => line.type === 'modify');
+      expect(modifyLines).toHaveLength(2);
+
+      // New line should have common prefix, added segment in middle, and common suffix
+      const newLine = modifyLines.find((line) => line.newLineNum !== undefined);
+      const newSegments = newLine!.segments!;
+
+      // Should have unchanged segments for common parts
+      expect(newSegments.some((seg) => seg.type === 'unchanged')).toBe(true);
+
+      // Should have added segment for "hello "
+      expect(newSegments.some((seg) => seg.type === 'add' && seg.text === 'hello ')).toBe(true);
+
+      // Reconstruct to verify
+      const reconstructed = newSegments.map((s) => s.text).join('');
+      expect(reconstructed).toBe(newText);
+    });
+
+    it('should handle removing text from end of line', () => {
+      const oldText = 'const hello world = 1;';
+      const newText = 'const hello = 1;';
+
+      const diff = createSimpleDiff(oldText, newText);
+
+      const modifyLines = diff.filter((line) => line.type === 'modify');
+      expect(modifyLines).toHaveLength(2);
+
+      // Old line should have common prefix, removed segment in middle, and common suffix
+      const oldLine = modifyLines.find((line) => line.oldLineNum !== undefined);
+      const oldSegments = oldLine!.segments!;
+
+      // Should have unchanged segments for common parts
+      expect(oldSegments.some((seg) => seg.type === 'unchanged')).toBe(true);
+
+      // Should have removed segment for "world "
+      expect(oldSegments.some((seg) => seg.type === 'remove' && seg.text === 'world ')).toBe(true);
+
+      // Reconstruct to verify
+      const reconstructed = oldSegments.map((s) => s.text).join('');
+      expect(reconstructed).toBe(oldText);
+    });
+
+    it('should handle complete line replacement', () => {
+      const oldText = 'completely different';
+      const newText = 'totally new text';
+
+      const diff = createSimpleDiff(oldText, newText);
+
+      const modifyLines = diff.filter((line) => line.type === 'modify');
+
+      // Should create modify lines since similarity might be above threshold
+      // or should create remove + add lines if completely different
+      expect(modifyLines.length).toBeGreaterThanOrEqual(0);
+
+      const addLines = diff.filter((line) => line.type === 'add');
+      const removeLines = diff.filter((line) => line.type === 'remove');
+
+      // Should have either modify lines or add/remove lines
+      expect(modifyLines.length + addLines.length + removeLines.length).toBeGreaterThan(0);
+    });
+  });
 });

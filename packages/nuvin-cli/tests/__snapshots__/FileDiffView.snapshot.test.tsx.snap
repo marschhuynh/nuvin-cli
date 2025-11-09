@@ -1,0 +1,80 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FileDiffView - Snapshot Tests > renders empty blocks 1`] = `"  No changes to display"`;
+
+exports[`FileDiffView - Snapshot Tests > renders identical content (no changes) 1`] = `" (no changes)"`;
+
+exports[`FileDiffView - Snapshot Tests > renders middle-of-line change 1`] = `
+"1│ - const value = "hello";
+1│ + const value = "world";"
+`;
+
+exports[`FileDiffView - Snapshot Tests > renders multi-line addition 1`] = `
+"1│   function foo() {
+2│     console.log("test");
+3│ +   console.log("added line");
+4│ +   console.log("another line");
+3│   }"
+`;
+
+exports[`FileDiffView - Snapshot Tests > renders multi-line removal 1`] = `
+"1│   function bar() {
+2│     console.log("line 1");
+3│ -   console.log("line 2");
+4│ -   console.log("line 3");
+5│     return true;
+6│   }"
+`;
+
+exports[`FileDiffView - Snapshot Tests > renders multiple blocks of changes 1`] = `
+"  path: test.js
+─── Block 1/2 ───
+1│ - const oldValue = 1;
+1│ + const newValue = 2;
+─── Block 2/2 ───
+1│ - let temp = "old";
+1│ + let temp = "new";"
+`;
+
+exports[`FileDiffView - Snapshot Tests > renders simple comma addition (character-level highlighting) 1`] = `
+"1│ -     "checkJs": false
+1│ +     "checkJs": false,"
+`;
+
+exports[`FileDiffView - Snapshot Tests > renders tsconfig.json diff from llm.json (bug report case) 1`] = `
+"  path: tsconfig.json
+ 1│   {
+ 2│     "compilerOptions": {
+ 3│       "target": "es2020",
+ 4│       "module": "esnext",
+ 5│       "moduleResolution": "bundler",
+ 6│       "outDir": "dist",
+ 7│       "esModuleInterop": true,
+ 8│       "allowSyntheticDefaultImports": true,
+ 9│       "skipLibCheck": true,
+10│       "strict": false,
+11│       "noImplicitAny": false,
+12│       "noUnusedLocals": false,
+13│       "noUnusedParameters": false,
+14│       "jsx": "react-jsx",
+15│       "resolveJsonModule": true,
+16│       "declaration": false,
+17│       "forceConsistentCasingInFileNames": false,
+18│       "isolatedModules": true,
+19│       "allowJs": true,
+20│ -     "checkJs": false
+20│ +     "checkJs": false,
+21│ +     "baseUrl": ".",
+22│ +     "paths": {
+23│ +       "@/*": ["source/*"]
+24│ +     }
+21│     },
+22│     "include": ["source/**/*"],
+23│     "exclude": ["node_modules", "dist"]
+24│   }"
+`;
+
+exports[`FileDiffView - Snapshot Tests > renders with line numbers metadata 1`] = `
+"42│ - old line
+42│ + new line"
+`;

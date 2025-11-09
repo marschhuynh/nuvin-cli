@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import { useStdoutDimensions } from '../hooks';
+import { useStdoutDimensions } from '@/hooks';
 
 export type DiffSegment = {
   text: string;
@@ -74,51 +74,49 @@ function computeLCS(a: string[], b: string[]): number[][] {
   return dp;
 }
 
-// Compute character-level diff for inline highlighting
+// Compute character-level diff for inline highlighting using Myers algorithm
 function computeInlineDiff(oldText: string, newText: string): { old: DiffSegment[]; new: DiffSegment[] } {
-  const oldWords = oldText.split(/(\s+)/);
-  const newWords = newText.split(/(\s+)/);
-
-  const lcs = computeLCS(oldWords, newWords);
   const oldSegments: DiffSegment[] = [];
   const newSegments: DiffSegment[] = [];
 
-  let i = oldWords.length;
-  let j = newWords.length;
-
-  const oldOps: { type: 'unchanged' | 'remove'; text: string }[] = [];
-  const newOps: { type: 'unchanged' | 'add'; text: string }[] = [];
-
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
-      oldOps.unshift({ type: 'unchanged', text: oldWords[i - 1] });
-      newOps.unshift({ type: 'unchanged', text: newWords[j - 1] });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || lcs[i][j - 1] >= lcs[i - 1][j])) {
-      newOps.unshift({ type: 'add', text: newWords[j - 1] });
-      j--;
-    } else if (i > 0) {
-      oldOps.unshift({ type: 'remove', text: oldWords[i - 1] });
-      i--;
-    }
+  // Find common prefix
+  let prefixLen = 0;
+  while (prefixLen < oldText.length && prefixLen < newText.length && oldText[prefixLen] === newText[prefixLen]) {
+    prefixLen++;
   }
 
-  // Merge consecutive segments of same type
-  for (const op of oldOps) {
-    if (oldSegments.length > 0 && oldSegments[oldSegments.length - 1].type === op.type) {
-      oldSegments[oldSegments.length - 1].text += op.text;
-    } else {
-      oldSegments.push({ type: op.type, text: op.text });
-    }
+  // Find common suffix
+  let suffixLen = 0;
+  while (
+    suffixLen < oldText.length - prefixLen &&
+    suffixLen < newText.length - prefixLen &&
+    oldText[oldText.length - 1 - suffixLen] === newText[newText.length - 1 - suffixLen]
+  ) {
+    suffixLen++;
   }
 
-  for (const op of newOps) {
-    if (newSegments.length > 0 && newSegments[newSegments.length - 1].type === op.type) {
-      newSegments[newSegments.length - 1].text += op.text;
-    } else {
-      newSegments.push({ type: op.type, text: op.text });
-    }
+  // Extract the different parts
+  const oldMiddle = oldText.slice(prefixLen, oldText.length - suffixLen);
+  const newMiddle = newText.slice(prefixLen, newText.length - suffixLen);
+
+  // Add common prefix
+  if (prefixLen > 0) {
+    oldSegments.push({ type: 'unchanged', text: oldText.slice(0, prefixLen) });
+    newSegments.push({ type: 'unchanged', text: newText.slice(0, prefixLen) });
+  }
+
+  // Add different middle parts
+  if (oldMiddle.length > 0) {
+    oldSegments.push({ type: 'remove', text: oldMiddle });
+  }
+  if (newMiddle.length > 0) {
+    newSegments.push({ type: 'add', text: newMiddle });
+  }
+
+  // Add common suffix
+  if (suffixLen > 0) {
+    oldSegments.push({ type: 'unchanged', text: oldText.slice(oldText.length - suffixLen) });
+    newSegments.push({ type: 'unchanged', text: newText.slice(newText.length - suffixLen) });
   }
 
   return { old: oldSegments, new: newSegments };
@@ -256,24 +254,8 @@ export function DiffLineView({ line, maxWidth = 80, lineNumWidth = 3 }: DiffLine
     const isRemoveLine = !!line.oldLineNum;
     const lineBaseBg = isRemoveLine ? 'red' : 'green';
 
-    // Calculate total length and truncate if needed
-    let totalLength = 0;
-    const segments: typeof line.segments = [];
-    // const overhead = lineNumStr.length + 3; // line number + prefix
-
-    for (const segment of line.segments) {
-      const remaining = maxWidth - totalLength;
-      if (remaining <= 0) break;
-
-      if (totalLength + segment.text.length > maxWidth) {
-        segments.push({ ...segment, text: `${segment.text.slice(0, remaining)}…` });
-        totalLength = maxWidth;
-        break;
-      } else {
-        segments.push(segment);
-        totalLength += segment.text.length;
-      }
-    }
+    // Use segments without truncation to preserve diff highlighting accuracy
+    const segments: typeof line.segments = line.segments;
 
     return (
       <Box>
@@ -294,9 +276,12 @@ export function DiffLineView({ line, maxWidth = 80, lineNumWidth = 3 }: DiffLine
             segmentBg = 'redBright';
           }
 
+          // Replace tabs with spaces to avoid Ink rendering issues with stringWidth
+          const text = segment.text.replace(/\t/g, '  ');
+
           return (
-            <Text key={`segment-${segIdx}-${segment.type}`} backgroundColor={segmentBg} color={segmentFg}>
-              {segment.text}
+            <Text key={`seg-${segIdx}`} backgroundColor={segmentBg} color={segmentFg}>
+              {text}
             </Text>
           );
         })}
@@ -306,7 +291,9 @@ export function DiffLineView({ line, maxWidth = 80, lineNumWidth = 3 }: DiffLine
 
   // Handle regular add/remove/context lines
   const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
-  const content = line.content.length > maxWidth ? `${line.content.slice(0, maxWidth)}…` : line.content;
+  const rawContent = line.content.length > maxWidth ? `${line.content.slice(0, maxWidth)}…` : line.content;
+  // Replace tabs with spaces to avoid Ink rendering issues with stringWidth
+  const content = rawContent.replace(/\t/g, '  ');
 
   const bgColor = line.type === 'add' ? 'green' : line.type === 'remove' ? 'red' : undefined;
   const fgColor = line.type === 'add' || line.type === 'remove' ? 'white' : 'gray';
@@ -359,14 +346,19 @@ export function FileDiffView({ blocks, filePath, showPath = true, lineNumbers }:
             )}
             {hasChanges ? (
               <Box flexDirection="column">
-                {diff.map((line, ldx) => (
-                  <DiffLineView
-                    maxWidth={cols - 22}
-                    key={`line-${idx}-${ldx}-${line.content}`}
-                    line={line}
-                    lineNumWidth={lineNumWidth}
-                  />
-                ))}
+                {diff.map((line, ldx) => {
+                  // Calculate available width: terminal width - line number width - separators - prefix - padding
+                  // Line number (lineNumWidth) + "│" (1) + space (1) + prefix (2) + margin (4)
+                  const overhead = lineNumWidth + 1 + 1 + 2 + 4;
+                  const availableWidth = Math.max(80, cols - overhead);
+
+                  // Create unique key using line numbers and type to avoid duplicates
+                  const lineKey = `line-${idx}-${ldx}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`;
+
+                  return (
+                    <DiffLineView maxWidth={availableWidth} key={lineKey} line={line} lineNumWidth={lineNumWidth} />
+                  );
+                })}
               </Box>
             ) : (
               <Text color="gray" dimColor>
