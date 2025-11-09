@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { generateAuthUrl } from '../modules/commands/definitions/auth/anthropic-oauth.js';
+import { generateAuthUrl } from '@/modules/commands/definitions/auth/anthropic-oauth.js';
 import open from 'open';
 
 export type OAuthState =

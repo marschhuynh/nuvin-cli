@@ -1,5 +1,5 @@
 import { useInput } from 'ink';
-import { eventBus } from '../services/EventBus.js';
+import { eventBus } from '@/services/EventBus.js';
 
 export const useKeyboardInput = (): void => {
   useInput((_input, key) => {

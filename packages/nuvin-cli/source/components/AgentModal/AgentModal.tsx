@@ -1,9 +1,9 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import { useTheme } from '../../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
-import { AppModal } from '../AppModal.js';
-import { HelpText } from '../HelpText.js';
+import { AppModal } from '@/components/AppModal.js';
+import { HelpText } from '@/components/HelpText.js';
 import { useAgentModalState } from './useAgentModalState.js';
 import { useAgentModalKeyboard } from './useAgentModalKeyboard.js';
 import { AgentList } from './AgentList.js';

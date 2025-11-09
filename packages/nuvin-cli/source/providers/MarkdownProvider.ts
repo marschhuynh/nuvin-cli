@@ -1,5 +1,5 @@
 import { marked } from 'marked';
-import { terminalRenderer } from '../renderers/terminal-renderer.js';
+import { terminalRenderer } from '@/renderers/terminal-renderer.js';
 
 type RendererConfig = {
   width: number;

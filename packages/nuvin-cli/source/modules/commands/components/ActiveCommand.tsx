@@ -1,4 +1,4 @@
-import { useCommand } from '../hooks/useCommand.js';
+import { useCommand } from '@/modules/commands/hooks/useCommand.js';
 
 export function ActiveCommand() {
   const { activeCommand, clearActiveCommand } = useCommand();

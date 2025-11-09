@@ -1,6 +1,6 @@
 import type { ToolCall } from '@nuvin/nuvin-core';
 import * as crypto from 'node:crypto';
-import type { MessageLine } from '../adapters/index.js';
+import type { MessageLine } from '@/adapters/index.js';
 
 /**
  * Flattens error object to string format 'key:"value"|key:"value"'

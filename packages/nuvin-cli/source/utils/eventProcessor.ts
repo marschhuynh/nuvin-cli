@@ -1,6 +1,6 @@
 import * as crypto from 'node:crypto';
 import { AgentEventTypes, type AgentEvent, type ToolCall } from '@nuvin/nuvin-core';
-import type { MessageLine, MessageMetadata, LineMetadata } from '../adapters/index.js';
+import type { MessageLine, MessageMetadata, LineMetadata } from '@/adapters/index.js';
 import { renderToolCall, flattenError } from './messageProcessor.js';
 import { enrichToolCallsWithLineNumbers } from './enrichToolCalls.js';
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { eventBus } from '../../../services/EventBus.js';
-import { commandRegistry } from '../registry.js';
-import type { CommandDefinition, ActiveCommand, CommandContext } from '../types.js';
+import { eventBus } from '@/services/EventBus.js';
+import { commandRegistry } from '@/modules/commands/registry.js';
+import type { CommandDefinition, ActiveCommand, CommandContext } from '@/modules/commands/types.js';
 
 interface UseCommandReturn {
   commands: CommandDefinition[];

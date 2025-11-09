@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import * as crypto from 'node:crypto';
 import { useInput } from 'ink';
-import type { CommandRegistry, CommandComponentProps } from '../types.js';
-import { HistorySelection } from '../../../components/HistorySelection.js';
-import { scanAvailableSessions, loadSessionHistory } from '../../../hooks/useSessionManagement.js';
+import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
+import { HistorySelection } from '@/components/HistorySelection.js';
+import { scanAvailableSessions, loadSessionHistory } from '@/hooks/useSessionManagement.js';
 
 type SessionInfo = {
   sessionId: string;

@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Component } from 'react';
 import type { Memory } from '@nuvin/nuvin-core';
-import { autoExportHistory } from '../utils/autoExport.js';
+import { autoExportHistory } from '@/utils/autoExport.js';
 
 interface Props {
   children: React.ReactNode;

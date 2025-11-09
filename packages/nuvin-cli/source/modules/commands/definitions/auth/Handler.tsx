@@ -1,8 +1,8 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Box, Text } from 'ink';
-import SelectInput from '../../../../components/SelectInput/index.js';
-import { AppModal } from '../../../../components/AppModal.js';
-import type { CommandComponentProps } from '../../types.js';
+import SelectInput from '@/components/SelectInput/index.js';
+import { AppModal } from '@/components/AppModal.js';
+import type { CommandComponentProps } from '@/modules/commands/types.js';
 import {
   PROVIDER_ITEMS,
   PROVIDER_LABELS,
@@ -11,14 +11,14 @@ import {
   type AuthMethod,
   type ProviderItem,
   type AuthMethodItem,
-} from '../../../../const.js';
+} from '@/const.js';
 
 import { exchangeCodeForToken, createApiKey } from './anthropic-oauth.js';
-import { useTheme } from '../../../../contexts/ThemeContext.js';
-import { DeviceFlowUI, OAuthUI, TokenInputUI } from '../../../../components/auth/index.js';
-import { useDeviceFlow } from '../../../../hooks/useDeviceFlow.js';
-import { useOAuth } from '../../../../hooks/useOAuth.js';
-import { useAuthStorage } from '../../../../hooks/useAuthStorage.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { DeviceFlowUI, OAuthUI, TokenInputUI } from '@/components/auth/index.js';
+import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
+import { useOAuth } from '@/hooks/useOAuth.js';
+import { useAuthStorage } from '@/hooks/useAuthStorage.js';
 
 type Stage = 'provider' | 'method' | 'tokenEntry' | 'deviceFlow' | 'oauthMax' | 'oauthConsole';
 

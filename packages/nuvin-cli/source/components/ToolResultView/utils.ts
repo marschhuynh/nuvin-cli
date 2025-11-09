@@ -1,4 +1,4 @@
-import { stripAnsiAndControls } from '../../utils.js';
+import { stripAnsiAndControls } from '@/utils.js';
 
 export const parseDetailLines = ({ status, messageContent, toolResult }) => {
   let result: string[] = [];

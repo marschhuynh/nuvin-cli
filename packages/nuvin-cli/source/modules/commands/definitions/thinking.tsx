@@ -1,10 +1,10 @@
 import { Box, Text, useInput } from 'ink';
 import * as crypto from 'node:crypto';
-import SelectInput from '../../../components/SelectInput/index.js';
-import { AppModal } from '../../../components/AppModal.js';
-import type { CommandRegistry, CommandComponentProps, CommandContext } from '../types.js';
-import { useTheme } from '../../../contexts/ThemeContext.js';
-import { THINKING_LEVELS, type ThinkingLevel } from '../../../config/types.js';
+import SelectInput from '@/components/SelectInput/index.js';
+import { AppModal } from '@/components/AppModal.js';
+import type { CommandRegistry, CommandComponentProps, CommandContext } from '@/modules/commands/types.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { THINKING_LEVELS, type ThinkingLevel } from '@/config/types.js';
 
 const parseThinkingLevel = (input: string): ThinkingLevel | null => {
   const normalized = input.toUpperCase();

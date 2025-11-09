@@ -1,9 +1,9 @@
 import { Text, Box } from 'ink';
-import { AppModal } from '../../../components/AppModal.js';
+import { AppModal } from '@/components/AppModal.js';
 
-import { commandRegistry } from '../registry.js';
-import type { CommandRegistry, CommandComponentProps } from '../types.js';
-import { getVersionInfo } from '../../../utils/version.js';
+import { commandRegistry } from '@/modules/commands/registry.js';
+import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
+import { getVersionInfo } from '@/utils/version.js';
 
 const { version, commit } = getVersionInfo();
 

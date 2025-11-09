@@ -4,9 +4,9 @@ import type { ToolCall, ToolApprovalDecision } from '@nuvin/nuvin-core';
 import { ToolParameters } from './ToolParameters.js';
 import { ToolProgressInfo } from './ToolProgressInfo.js';
 import { ToolActions } from './ToolActions.js';
-import { AppModal } from '../AppModal.js';
-import { useToolApproval } from '../../contexts/ToolApprovalContext.js';
-import { theme } from '../../theme.js';
+import { AppModal } from '@/components/AppModal.js';
+import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
+import { theme } from '@/theme.js';
 
 type Props = {
   toolCalls: ToolCall[];

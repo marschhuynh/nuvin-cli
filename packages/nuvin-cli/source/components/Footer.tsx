@@ -2,13 +2,13 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import * as os from 'node:os';
 import { execSync } from 'node:child_process';
-import type { MessageMetadata } from '../adapters/index.js';
-import type { ProviderKey } from '../const.js';
-import { useNotification } from '../hooks/useNotification.js';
-import { useTheme } from '../contexts/ThemeContext.js';
-import { THINKING_LEVELS } from '../config/types.js';
-import { useToolApproval } from '../contexts/ToolApprovalContext.js';
-import { useConfig } from '../contexts/ConfigContext.js';
+import type { MessageMetadata } from '@/adapters/index.js';
+import type { ProviderKey } from '@/const.js';
+import { useNotification } from '@/hooks/useNotification.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { THINKING_LEVELS } from '@/config/types.js';
+import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
+import { useConfig } from '@/contexts/ConfigContext.js';
 
 type FooterProps = {
   status: string;

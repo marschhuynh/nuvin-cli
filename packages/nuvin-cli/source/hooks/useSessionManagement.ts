@@ -4,7 +4,7 @@ import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import type { Message } from '@nuvin/nuvin-core';
-import type { MessageLine, MessageMetadata } from '../adapters/index.js';
+import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
 
 function sessionsDir() {
   return path.join(os.homedir(), '.nuvin-cli', 'sessions');

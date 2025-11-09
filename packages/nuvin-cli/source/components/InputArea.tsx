@@ -4,8 +4,8 @@ import SelectInput from './SelectInput/index.js';
 import Spinner from 'ink-spinner';
 
 import TextInput from './TextInput/index.js';
-import { useTheme } from '../contexts/ThemeContext.js';
-import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 type VimMode = 'insert' | 'normal';
 

@@ -1,4 +1,4 @@
-import type { CommandRegistry } from '../types.js';
+import type { CommandRegistry } from '@/modules/commands/types.js';
 
 export function registerVimCommand(registry: CommandRegistry) {
   registry.register({

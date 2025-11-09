@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getLineInfo, moveCursorVertically, findNextWordEnd, type VimMode } from '../../utils/textNavigation.js';
+import { getLineInfo, moveCursorVertically, findNextWordEnd, type VimMode } from '@/utils/textNavigation.js';
 
 type InkKey = {
   upArrow: boolean;

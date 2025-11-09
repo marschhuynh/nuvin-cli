@@ -1,8 +1,8 @@
 import { Box, Text } from 'ink';
-import { useTheme } from '../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import Gradient from 'ink-gradient';
-import { getVersion } from '../utils/version.js';
-import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
+import { getVersion } from '@/utils/version.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 type SessionInfo = {
   sessionId: string;

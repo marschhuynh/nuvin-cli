@@ -1,4 +1,4 @@
-import { useNotificationContext } from '../contexts/NotificationContext.js';
+import { useNotificationContext } from '@/contexts/NotificationContext.js';
 
 export interface NotificationHook {
   notification: string | null;

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { Box, Text } from 'ink';
-import { FileDiffView, type LineNumbers } from '../FileDiffView.js';
-import type { EnrichedToolCall } from '../../utils/enrichToolCalls.js';
-import { useStdoutDimensions } from '../../hooks/index.js';
+import { FileDiffView, type LineNumbers } from '@/components/FileDiffView.js';
+import type { EnrichedToolCall } from '@/utils/enrichToolCalls.js';
+import { useStdoutDimensions } from '@/hooks/index.js';
 
 type FileEditArgs = {
   file_path: string;

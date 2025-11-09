@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect } from 'react';
-import { markdownCache } from '../utils/MarkdownCache.js';
+import { markdownCache } from '@/utils/MarkdownCache.js';
 
 interface StreamingOptions {
   debounceMs?: number;

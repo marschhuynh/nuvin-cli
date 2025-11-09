@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import { useTheme } from '../../contexts/ThemeContext.js';
-import { AppModal } from '../AppModal.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { AppModal } from '@/components/AppModal.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 
 interface AgentPreviewProps {

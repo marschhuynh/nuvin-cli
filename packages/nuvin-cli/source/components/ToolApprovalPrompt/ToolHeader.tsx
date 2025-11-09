@@ -1,7 +1,7 @@
 import type React from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { Box, Text } from 'ink';
-import { useTheme } from '../../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 
 type ToolHeaderProps = {
   toolCall: ToolCall;

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Text, useInput } from 'ink';
 import type { AgentTemplate, ToolPort, AgentAwareToolPort } from '@nuvin/nuvin-core';
-import { AppModal } from '../../../components/AppModal.js';
-import AgentModal, { type AgentInfo } from '../../../components/AgentModal/AgentModal.js';
-import type { CommandRegistry, CommandComponentProps } from '../types.js';
-import { useTheme } from '../../../contexts/ThemeContext.js';
-import { AgentCreator } from '../../../services/AgentCreator.js';
-import AgentCreation from '../../../components/AgentCreation/AgentCreation.js';
+import { AppModal } from '@/components/AppModal.js';
+import AgentModal, { type AgentInfo } from '@/components/AgentModal/AgentModal.js';
+import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { AgentCreator } from '@/services/AgentCreator.js';
+import AgentCreation from '@/components/AgentCreation/AgentCreation.js';
 
 // Navigation state types
 type NavigationSource = 'agent-config' | 'direct' | null;

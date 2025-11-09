@@ -7,9 +7,9 @@ import {
   AnthropicAISDKLLM,
   type LLMPort,
 } from '@nuvin/nuvin-core';
-import type { ConfigManager } from '../config/manager.js';
+import type { ConfigManager } from '@/config/manager.js';
 import type { ProviderKey } from './OrchestratorManager.js';
-import type { AuthMethod } from '../config/types.js';
+import type { AuthMethod } from '@/config/types.js';
 
 export type LLMConfig = {
   provider: ProviderKey;

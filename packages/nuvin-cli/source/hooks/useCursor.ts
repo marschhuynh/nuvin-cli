@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { clampOffset, type VimMode } from '../utils/textNavigation.js';
+import { clampOffset, type VimMode } from '@/utils/textNavigation.js';
 
 export type CursorState = {
   offset: number;

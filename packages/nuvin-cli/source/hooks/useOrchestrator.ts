@@ -1,9 +1,9 @@
 // biome-ignore-all lint/correctness/useExhaustiveDependencies: complex hook dependencies managed manually
 import { useRef, useEffect, useState } from 'react';
 import type { MemoryPort, AgentOrchestrator, Message, UserMessagePayload, SendMessageOptions } from '@nuvin/nuvin-core';
-import type { MessageLine, MessageMetadata } from '../adapters/index.js';
-import { OrchestratorManager, type OrchestratorConfig } from '../services/OrchestratorManager.js';
-import { useToolApproval } from '../contexts/ToolApprovalContext.js';
+import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
+import { OrchestratorManager, type OrchestratorConfig } from '@/services/OrchestratorManager.js';
+import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 
 type UseOrchestratorProps = {
   memPersist?: boolean;

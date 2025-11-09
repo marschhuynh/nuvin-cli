@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import * as crypto from 'node:crypto';
-import type { MessageLine } from '../adapters';
-import { MAX_RENDERED_LINES } from '../const.js';
+import type { MessageLine } from '@/adapters';
+import { MAX_RENDERED_LINES } from '@/const.js';
 
 const useMessages = () => {
   const [messages, setMessages] = useState<MessageLine[]>([]);

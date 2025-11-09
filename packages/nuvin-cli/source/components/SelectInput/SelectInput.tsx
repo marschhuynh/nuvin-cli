@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { processPasteChunk, createPasteState, type PasteState } from '../../utils/pasteHandler.js';
+import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
 
 export type SelectInputItem<T = unknown> = {
   key?: string;

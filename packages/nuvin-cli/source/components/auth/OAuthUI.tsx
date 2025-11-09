@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink';
-import TextInput from '../TextInput/index.js';
-import type { OAuthState } from '../../hooks/useOAuth.js';
+import TextInput from '@/components/TextInput/index.js';
+import type { OAuthState } from '@/hooks/useOAuth.js';
 
 type Props = {
   state: OAuthState;

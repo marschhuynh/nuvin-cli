@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import type { ToolExecutionResult } from '@nuvin/nuvin-core';
-import { useTheme } from '../../../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 
 type TodoItem = {
   content?: string;

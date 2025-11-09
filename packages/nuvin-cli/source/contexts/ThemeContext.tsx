@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { theme, type Theme } from '../theme.js';
-// import { theme, type Theme } from '../theme.js';
+import { theme, type Theme } from '@/theme.js';
+// import { theme, type Theme } from '@/theme.js';
 
 type ThemeContextValue = {
   theme: Theme;

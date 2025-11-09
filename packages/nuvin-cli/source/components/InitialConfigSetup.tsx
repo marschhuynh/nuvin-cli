@@ -2,17 +2,17 @@ import { Box, Text, useInput } from 'ink';
 import { useState, useEffect } from 'react';
 import SelectInput from './SelectInput/index.js';
 import { ComboBox } from './ComboBox/index.js';
-import { useTheme } from '../contexts/ThemeContext.js';
-import { useConfig } from '../contexts/ConfigContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { useConfig } from '@/contexts/ConfigContext.js';
 import Gradient from 'ink-gradient';
-import { getVersion } from '../utils/version.js';
-import type { ProviderKey } from '../config/const.js';
-import { PROVIDER_AUTH_METHODS, PROVIDER_MODELS, PROVIDER_OPTIONS, type AuthMethod } from '../const.js';
-import { exchangeCodeForToken, createApiKey } from '../modules/commands/definitions/auth/anthropic-oauth.js';
+import { getVersion } from '@/utils/version.js';
+import type { ProviderKey } from '@/config/const.js';
+import { PROVIDER_AUTH_METHODS, PROVIDER_MODELS, PROVIDER_OPTIONS, type AuthMethod } from '@/const.js';
+import { exchangeCodeForToken, createApiKey } from '@/modules/commands/definitions/auth/anthropic-oauth.js';
 import { DeviceFlowUI, OAuthUI, TokenInputUI } from './auth/index.js';
-import { useDeviceFlow } from '../hooks/useDeviceFlow.js';
-import { useOAuth } from '../hooks/useOAuth.js';
-import { useAuthStorage } from '../hooks/useAuthStorage.js';
+import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
+import { useOAuth } from '@/hooks/useOAuth.js';
+import { useAuthStorage } from '@/hooks/useAuthStorage.js';
 
 const LOGO = `Welcome to
 ███╗   ██╗ ██╗   ██╗ ██╗   ██╗ ██╗ ███╗   ██╗

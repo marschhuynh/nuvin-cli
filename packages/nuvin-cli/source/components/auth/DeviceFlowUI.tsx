@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import type { DeviceFlowState } from '../../hooks/useDeviceFlow.js';
+import type { DeviceFlowState } from '@/hooks/useDeviceFlow.js';
 
 type Props = {
   state: DeviceFlowState;

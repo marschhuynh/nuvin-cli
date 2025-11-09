@@ -1,5 +1,5 @@
 import { Box, Text } from 'ink';
-import TextInput from '../TextInput/index.js';
+import TextInput from '@/components/TextInput/index.js';
 
 type Props = {
   value: string;

@@ -1,5 +1,5 @@
 import * as crypto from 'node:crypto';
-import type { CommandRegistry } from '../../types.js';
+import type { CommandRegistry } from '@/modules/commands/types.js';
 import { compressConversation } from './compression.js';
 
 export function registerSummaryCommand(registry: CommandRegistry) {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
-import { autoExportHistory } from '../autoExport.js';
+import { autoExportHistory } from '@/utils/autoExport.js';
 import type { Memory } from '@nuvin/nuvin-core';
 
 vi.mock('node:fs/promises');

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { ConfigManager } from '../config/manager.js';
-import type { CLIConfig, ConfigScope } from '../config/types.js';
+import { ConfigManager } from '@/config/manager.js';
+import type { CLIConfig, ConfigScope } from '@/config/types.js';
 
 interface ConfigContextValue {
   config: CLIConfig;

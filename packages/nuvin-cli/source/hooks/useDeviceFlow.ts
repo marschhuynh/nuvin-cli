@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { generateVerificationCode, getAccessToken } from '../modules/commands/definitions/auth/gh-device-flow.js';
+import { generateVerificationCode, getAccessToken } from '@/modules/commands/definitions/auth/gh-device-flow.js';
 import open from 'open';
 
 export type DeviceFlowState =

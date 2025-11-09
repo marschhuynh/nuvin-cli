@@ -1,5 +1,5 @@
 import type { AgentEvent } from '@nuvin/nuvin-core';
-import type { MessageLine, MessageMetadata } from '../adapters/index.js';
+import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
 import {
   processAgentEvent,
   type EventProcessorCallbacks,

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { eventBus } from '../services/EventBus.js';
-import type { InputAreaHandle } from '../components/index.js';
+import { eventBus } from '@/services/EventBus.js';
+import type { InputAreaHandle } from '@/components/index.js';
 
 type UseGlobalKeyboardProps = {
   busy: boolean;

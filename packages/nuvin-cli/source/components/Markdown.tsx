@@ -1,9 +1,9 @@
 import type React from 'react';
 import { useMemo, useCallback } from 'react';
 import { Text } from 'ink';
-import { markdownProvider } from '../providers/MarkdownProvider.js';
-import { markdownCache } from '../utils/MarkdownCache.js';
-import { useStdoutDimensions } from '../hooks/index.js';
+import { markdownProvider } from '@/providers/MarkdownProvider.js';
+import { markdownCache } from '@/utils/MarkdownCache.js';
+import { useStdoutDimensions } from '@/hooks/index.js';
 
 type MarkdownProps = {
 	children: string;

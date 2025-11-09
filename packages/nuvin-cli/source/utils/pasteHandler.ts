@@ -1,4 +1,4 @@
-import { canonicalizeTerminalPaste } from '../utils.js';
+import { canonicalizeTerminalPaste } from '@/utils.js';
 
 const PASTE_START = '\x1b[200~';
 const PASTE_START_STRICT = '[200~';

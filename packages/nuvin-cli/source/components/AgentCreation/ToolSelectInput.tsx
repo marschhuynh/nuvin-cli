@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { useTheme } from '../../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 
 interface ToolSelectInputProps {
   focus: boolean;

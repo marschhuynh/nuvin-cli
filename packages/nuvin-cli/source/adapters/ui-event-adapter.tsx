@@ -11,8 +11,8 @@ import {
   type EventProcessorState,
   resetEventProcessorState,
   type SubAgentState,
-} from '../utils/eventProcessor.js';
-import { eventBus } from '../services/EventBus.js';
+} from '@/utils/eventProcessor.js';
+import { eventBus } from '@/services/EventBus.js';
 
 export type MessageMetadata = {
   promptTokens?: number;

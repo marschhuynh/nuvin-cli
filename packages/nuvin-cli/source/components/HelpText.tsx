@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Text } from 'ink';
-import { useTheme } from '../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 
 interface HelpTextSegment {
   text: string;

@@ -1,13 +1,13 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import type { ToolExecutionResult, ToolCall } from '@nuvin/nuvin-core';
-import { useTheme } from '../../contexts/ThemeContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import { TodoWriteRenderer } from './renderers/TodoWriteRenderer.js';
 import { FileEditRenderer } from './renderers/FileEditRenderer.js';
 import { BashToolRenderer } from './renderers/BashToolRenderer.js';
 import { DefaultRenderer } from './renderers/DefaultRenderer.js';
-import { Markdown } from '../Markdown.js';
-import { useStdoutDimensions } from '../../hooks/useStdoutDimensions.js';
+import { Markdown } from '@/components/Markdown.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 type ToolResultViewProps = {
   toolResult: ToolExecutionResult;

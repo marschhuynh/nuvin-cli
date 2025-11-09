@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Static } from 'ink';
 import { MessageLine } from './MessageLine.js';
 import { HeaderContent } from './Header.js';
-import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
-import { scanAvailableSessions } from '../hooks/useSessionManagement.js';
-import type { MessageLine as MessageLineType } from '../adapters/index.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
+import { scanAvailableSessions } from '@/hooks/useSessionManagement.js';
+import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 
 type SessionInfo = {
   sessionId: string;

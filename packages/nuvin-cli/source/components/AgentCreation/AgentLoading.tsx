@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import { useTheme } from '../../contexts/ThemeContext.js';
-import { AppModal } from '../AppModal.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { AppModal } from '@/components/AppModal.js';
 
 interface AgentLoadingProps {
   mode: 'create' | 'edit';

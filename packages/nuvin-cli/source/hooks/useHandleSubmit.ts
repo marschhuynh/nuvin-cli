@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 import * as crypto from 'node:crypto';
 import type { UserMessagePayload } from '@nuvin/nuvin-core';
 
-import { commandRegistry } from '../modules/commands/registry.js';
-import { prepareUserSubmission } from '../utils/userSubmission.js';
-import type { MessageLine } from '../adapters/index.js';
+import { commandRegistry } from '@/modules/commands/registry.js';
+import { prepareUserSubmission } from '@/utils/userSubmission.js';
+import type { MessageLine } from '@/adapters/index.js';
 
 export function useHandleSubmit(deps: {
   appendLine: (line: MessageLine) => void;

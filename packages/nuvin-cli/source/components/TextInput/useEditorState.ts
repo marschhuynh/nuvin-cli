@@ -1,5 +1,5 @@
 import { useReducer, useRef, useEffect } from 'react';
-import { clampOffset, type VimMode } from '../../utils/textNavigation.js';
+import { clampOffset, type VimMode } from '@/utils/textNavigation.js';
 
 export type EditorState = {
   value: string;

@@ -2,9 +2,9 @@ import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput } from 'ink';
 import chalk from 'chalk';
-import { useTheme } from '../../contexts/ThemeContext.js';
-import { processPasteChunk, createPasteState, type PasteState } from '../../utils/pasteHandler.js';
-import { SelectInput, type SelectInputItem, type SelectInputHandle } from '../SelectInput/SelectInput.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
+import { SelectInput, type SelectInputItem, type SelectInputHandle } from '@/components/SelectInput/SelectInput.js';
 
 export type ComboBoxItem = {
   label: string;

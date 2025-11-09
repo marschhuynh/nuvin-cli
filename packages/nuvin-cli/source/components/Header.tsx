@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Static } from 'ink';
-import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
-import { scanAvailableSessions } from '../hooks/useSessionManagement.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
+import { scanAvailableSessions } from '@/hooks/useSessionManagement.js';
 import { WelcomeMessage } from './index.js';
 
 type SessionInfo = {

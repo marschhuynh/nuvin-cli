@@ -1,6 +1,6 @@
 import type { ReactNode, FC } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { theme } from '../theme';
+import { theme } from '@/theme';
 
 export type AppModalType = 'info' | 'error' | 'warning' | 'success' | 'default';
 

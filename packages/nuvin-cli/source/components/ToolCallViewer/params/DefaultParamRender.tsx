@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import type { ToolParamRendererProps } from './types.js';
-import { useStdoutDimensions } from '../../../hooks/useStdoutDimensions.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 /**
  * DefaultParamRender - Parameter renderer for generic tool calls

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
-import { useConfig } from '../contexts/ConfigContext.js';
-import { commandRegistry } from '../modules/commands/registry.js';
+import { useConfig } from '@/contexts/ConfigContext.js';
+import { commandRegistry } from '@/modules/commands/registry.js';
 
 interface ConfigBridgeProps {
   children: ReactNode;

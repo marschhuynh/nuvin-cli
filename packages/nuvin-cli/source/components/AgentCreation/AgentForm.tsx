@@ -1,11 +1,11 @@
 import type React from 'react';
 import { Box, type BoxProps, Text } from 'ink';
-import { useTheme } from '../../contexts/ThemeContext.js';
-import { AppModal } from '../AppModal.js';
-import TextInput from '../TextInput/index.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { AppModal } from '@/components/AppModal.js';
+import TextInput from '@/components/TextInput/index.js';
 import { ToolSelectInput } from './ToolSelectInput.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
-import { useStdoutDimensions } from '../../hooks/useStdoutDimensions.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 interface AgentFormProps {
   mode: 'create' | 'edit';

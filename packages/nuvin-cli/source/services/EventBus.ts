@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { MessageLine, MessageMetadata } from '../adapters/index.js';
+import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
 
 type EventMap = {
   'ui:line': MessageLine;

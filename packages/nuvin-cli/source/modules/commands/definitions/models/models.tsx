@@ -1,12 +1,12 @@
 import { Box, Text, useInput } from 'ink';
-import SelectInput from '../../../../components/SelectInput/index.js';
-import { AppModal } from '../../../../components/AppModal.js';
-import TextInput from '../../../../components/TextInput/index.js';
-import { ComboBox } from '../../../../components/ComboBox/index.js';
-import type { CommandRegistry, CommandComponentProps } from '../../types.js';
+import SelectInput from '@/components/SelectInput/index.js';
+import { AppModal } from '@/components/AppModal.js';
+import TextInput from '@/components/TextInput/index.js';
+import { ComboBox } from '@/components/ComboBox/index.js';
+import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 
-import { type ProviderKey, PROVIDER_MODELS, PROVIDER_OPTIONS } from '../../../../const.js';
-import { useTheme } from '../../../../contexts/ThemeContext.js';
+import { type ProviderKey, PROVIDER_MODELS, PROVIDER_OPTIONS } from '@/const.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import { useModelsCommandState } from './hooks/useModelsCommandState.js';
 
 const ModelsCommandComponent = ({ context, deactivate }: CommandComponentProps) => {

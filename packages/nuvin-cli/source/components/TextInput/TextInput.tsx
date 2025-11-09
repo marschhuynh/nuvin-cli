@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Text, useInput } from 'ink';
 import type { Except } from 'type-fest';
-import { eventBus } from '../../services/EventBus.js';
-import { moveCursorVertically } from '../../utils/textNavigation.js';
+import { eventBus } from '@/services/EventBus.js';
+import { moveCursorVertically } from '@/utils/textNavigation.js';
 import { useVimMode } from './useVimMode.js';
 import { usePaste } from './usePaste.js';
 import { useCursorRenderer } from './useCursorRenderer.js';

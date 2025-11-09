@@ -3,8 +3,8 @@ import type { MCPConfig, MCPServerConfig } from '@nuvin/nuvin-core';
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import type { MessageLine } from '../adapters/index.js';
-import { theme, type ColorToken } from '../theme.js';
+import type { MessageLine } from '@/adapters/index.js';
+import { theme, type ColorToken } from '@/theme.js';
 
 // Default MCP config path
 const DEFAULT_MCP_CONFIG_PATH = path.join(os.homedir(), '.nuvin-cli', '.nuvin_mcp.json');

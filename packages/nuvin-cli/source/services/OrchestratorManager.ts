@@ -33,13 +33,13 @@ import {
   type SendMessageOptions,
   type ConversationMetadata,
 } from '@nuvin/nuvin-core';
-import { UIEventAdapter, type MessageLine, type MessageMetadata, type LineMetadata } from '../adapters/index.js';
-import { prompt } from '../prompt.js';
+import { UIEventAdapter, type MessageLine, type MessageMetadata, type LineMetadata } from '@/adapters/index.js';
+import { prompt } from '@/prompt.js';
 import { MCPServerManager } from './MCPServerManager.js';
-import { withRetry, AbortError } from '../utils/retry-utils.js';
+import { withRetry, AbortError } from '@/utils/retry-utils.js';
 import { eventBus } from './EventBus.js';
-import { ConfigManager } from '../config/manager.js';
-import { getProviderAuth } from '../config/utils.js';
+import { ConfigManager } from '@/config/manager.js';
+import { getProviderAuth } from '@/config/utils.js';
 import { LLMFactory } from './LLMFactory.js';
 
 // Default directory paths

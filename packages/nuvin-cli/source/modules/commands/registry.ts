@@ -1,6 +1,6 @@
 import type { MemoryPort, Message } from '@nuvin/nuvin-core';
-import { eventBus } from '../../services/EventBus.js';
-import type { OrchestratorManager } from '../../services/OrchestratorManager.js';
+import { eventBus } from '@/services/EventBus.js';
+import type { OrchestratorManager } from '@/services/OrchestratorManager.js';
 import type {
   CommandDefinition,
   CommandContext,

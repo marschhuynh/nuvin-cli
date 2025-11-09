@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { Box, Text } from 'ink';
-import { useStdoutDimensions } from '../../hooks';
+import { useStdoutDimensions } from '@/hooks';
 
 type FileNewArgs = {
   file_path: string;

@@ -1,8 +1,8 @@
 import type React from 'react';
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { ToolCall, AgentOrchestrator, ToolApprovalDecision } from '@nuvin/nuvin-core';
-import { eventBus } from '../services/EventBus.js';
-import { enrichToolCallsWithLineNumbers } from '../utils/enrichToolCalls.js';
+import { eventBus } from '@/services/EventBus.js';
+import { enrichToolCallsWithLineNumbers } from '@/utils/enrichToolCalls.js';
 
 interface ToolApprovalState {
   toolApprovalMode: boolean;

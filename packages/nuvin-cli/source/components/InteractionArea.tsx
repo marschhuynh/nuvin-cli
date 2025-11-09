@@ -2,11 +2,11 @@ import { forwardRef, useMemo, useCallback, useRef, useEffect, useState } from 'r
 import { Box, Text } from 'ink';
 import { useInput } from 'ink';
 import { ToolApprovalPrompt } from './ToolApprovalPrompt/ToolApprovalPrompt.js';
-import { ActiveCommand } from '../modules/commands/components/ActiveCommand.js';
+import { ActiveCommand } from '@/modules/commands/components/ActiveCommand.js';
 import { InputArea, type InputAreaHandle } from './InputArea.js';
-import { useCommand } from '../modules/commands/hooks/useCommand.js';
-import { useToolApproval } from '../contexts/ToolApprovalContext.js';
-import { useTheme } from '../contexts/ThemeContext.js';
+import { useCommand } from '@/modules/commands/hooks/useCommand.js';
+import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 
 type InteractionAreaProps = {
   busy?: boolean;

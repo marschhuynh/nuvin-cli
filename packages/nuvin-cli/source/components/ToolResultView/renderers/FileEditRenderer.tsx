@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box } from 'ink';
 import type { ToolExecutionResult, ToolCall } from '@nuvin/nuvin-core';
-import { FileDiffView, type LineNumbers } from '../../FileDiffView.js';
+import { FileDiffView, type LineNumbers } from '@/components/FileDiffView.js';
 
 type FileEditRendererProps = {
   toolResult: ToolExecutionResult;

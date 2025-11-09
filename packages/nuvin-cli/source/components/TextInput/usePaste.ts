@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { processPasteChunk, createPasteState, type PasteState } from '../../utils/pasteHandler.js';
+import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
 
 export type UsePasteReturn = {
   processPaste: (input: string) => {

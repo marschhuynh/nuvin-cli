@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import { useTheme } from '../contexts/ThemeContext.js';
-import type { MCPServerInfo } from '../services/MCPServerManager.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import type { MCPServerInfo } from '@/services/MCPServerManager.js';
 
 interface MCPServerItemProps {
   item: MCPServerInfo;

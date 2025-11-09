@@ -1,7 +1,7 @@
 import { useReducer } from 'react';
-import type { ProviderKey } from '../../../../../const';
-import type { CommandContext } from '../../../types';
-import type { LLMFactory } from '../../../../../services/LLMFactory.js';
+import type { ProviderKey } from '@/const';
+import type { CommandContext } from '@/modules/commands/types';
+import type { LLMFactory } from '@/services/LLMFactory.js';
 
 export type Stage = 'provider' | 'model' | 'custom' | 'loading';
 

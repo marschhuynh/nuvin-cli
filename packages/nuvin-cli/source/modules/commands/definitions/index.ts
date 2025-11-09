@@ -1,4 +1,4 @@
-import { commandRegistry } from '../registry.js';
+import { commandRegistry } from '@/modules/commands/registry.js';
 
 import { registerExitCommand } from './exit.js';
 import { registerHelpCommand } from './help.js';

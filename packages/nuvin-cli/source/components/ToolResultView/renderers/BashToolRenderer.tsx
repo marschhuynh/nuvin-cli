@@ -1,9 +1,9 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import type { ToolExecutionResult } from '@nuvin/nuvin-core';
-import { useTheme } from '../../../contexts/ThemeContext.js';
-import { parseDetailLines } from '../utils.js';
-import { useStdoutDimensions } from '../../../hooks/index.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import { parseDetailLines } from '@/components/ToolResultView/utils.js';
+import { useStdoutDimensions } from '@/hooks/index.js';
 
 type BashToolRendererProps = {
   toolResult: ToolExecutionResult;

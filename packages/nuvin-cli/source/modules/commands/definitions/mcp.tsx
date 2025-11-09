@@ -3,11 +3,11 @@ import { Text, useInput } from 'ink';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
-import { AppModal } from '../../../components/AppModal.js';
-import MCPModal from '../../../components/MCPModal.js';
-import type { CommandRegistry, CommandComponentProps } from '../types.js';
-import { useTheme } from '../../../contexts/ThemeContext.js';
-import type { MCPServerInfo } from '../../../services/MCPServerManager.js';
+import { AppModal } from '@/components/AppModal.js';
+import MCPModal from '@/components/MCPModal.js';
+import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
+import type { MCPServerInfo } from '@/services/MCPServerManager.js';
 
 const MCPCommandComponent = ({ context, deactivate }: CommandComponentProps) => {
   const { theme } = useTheme();

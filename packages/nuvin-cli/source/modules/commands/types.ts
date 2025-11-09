@@ -1,7 +1,7 @@
 import type { MemoryPort, Message } from '@nuvin/nuvin-core';
-import type { TypedEventBus } from '../../services/EventBus.js';
-import type { ConfigScope } from '../../config/types.js';
-import type { OrchestratorManager } from '../../services/OrchestratorManager.js';
+import type { TypedEventBus } from '@/services/EventBus.js';
+import type { ConfigScope } from '@/config/types.js';
+import type { OrchestratorManager } from '@/services/OrchestratorManager.js';
 
 export type CommandId = string;
 
