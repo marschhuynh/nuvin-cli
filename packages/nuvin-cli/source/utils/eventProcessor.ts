@@ -224,6 +224,20 @@ export function processAgentEvent(
         return state;
       }
 
+      // Handle usage/cost for non-streaming mode
+      if (!callbacks.streamingEnabled && event.usage) {
+        const metadata: MessageMetadata = {
+          promptTokens: event.usage.prompt_tokens,
+          completionTokens: event.usage.completion_tokens,
+          totalTokens: event.usage.total_tokens,
+          toolCalls: state.toolCallCount,
+          estimatedCost: null,
+          cost: event.usage.cost,
+          cachedTokens: event.usage.prompt_tokens_details?.cached_tokens,
+        };
+        callbacks.setLastMetadata?.(metadata);
+      }
+
       // If streaming is enabled and we have a streaming message, update it with final content
       if (callbacks.streamingEnabled && state.streamingMessageId) {
         // Only update if content differs (optimization to avoid unnecessary re-renders)
@@ -251,8 +265,7 @@ export function processAgentEvent(
       return state;
     }
 
-    case AgentEventTypes.StreamFinish:
-    case AgentEventTypes.Done: {
+    case AgentEventTypes.StreamFinish: {
       const usage = event.usage;
       if (usage) {
         const metadata: MessageMetadata = {
@@ -262,6 +275,28 @@ export function processAgentEvent(
           toolCalls: state.toolCallCount,
           estimatedCost: null,
           cost: usage.cost,
+          cachedTokens: usage.prompt_tokens_details?.cached_tokens,
+        };
+
+        callbacks.setLastMetadata?.(metadata);
+        return {
+          ...state,
+          metadata,
+        };
+      }
+      return state;
+    }
+
+    case AgentEventTypes.Done: {
+      const usage = event.usage;
+      if (usage) {
+        const metadata: MessageMetadata = {
+          promptTokens: usage.prompt_tokens,
+          completionTokens: usage.completion_tokens,
+          totalTokens: usage.total_tokens,
+          toolCalls: state.toolCallCount,
+          estimatedCost: null,
+          cost: callbacks.streamingEnabled ? undefined : usage.cost,
           cachedTokens: usage.prompt_tokens_details?.cached_tokens,
         };
 
