@@ -216,10 +216,10 @@ export class AgentOrchestrator {
     originalToolCalls: ToolCall[],
     assistantContent: string | null,
   ): Promise<void> {
-    accumulatedMessages.push({ 
-      role: 'assistant', 
-      content: assistantContent ?? null, 
-      tool_calls: originalToolCalls 
+    accumulatedMessages.push({
+      role: 'assistant',
+      content: assistantContent ?? null,
+      tool_calls: originalToolCalls,
     });
     turnHistory.push({
       id: this.deps.ids.uuid(),
@@ -231,14 +231,14 @@ export class AgentOrchestrator {
 
     for (const toolCall of originalToolCalls) {
       const toolDenialResult = 'Tool execution denied by user';
-      
-      accumulatedMessages.push({ 
-        role: 'tool', 
-        content: toolDenialResult, 
-        tool_call_id: toolCall.id, 
-        name: toolCall.function.name 
+
+      accumulatedMessages.push({
+        role: 'tool',
+        content: toolDenialResult,
+        tool_call_id: toolCall.id,
+        name: toolCall.function.name,
       });
-      
+
       turnHistory.push({
         id: toolCall.id,
         role: 'tool',
@@ -284,10 +284,10 @@ export class AgentOrchestrator {
       const denialMessage = `Tool execution was not approved: ${errorMsg}`;
 
       await this.handleToolDenial(
-        denialMessage, 
-        conversationId, 
-        messageId, 
-        accumulatedMessages, 
+        denialMessage,
+        conversationId,
+        messageId,
+        accumulatedMessages,
         turnHistory,
         toolCalls,
         assistantContent,
