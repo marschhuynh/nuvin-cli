@@ -130,18 +130,18 @@ export abstract class BaseLLM implements LLMPort {
       return params;
     }
 
-    const messages = params.messages.map(msg => {
+    const messages = params.messages.map((msg) => {
       if (typeof msg.content === 'string' || msg.content === null) {
         return msg;
       }
-      
+
       return {
         ...msg,
-        content: msg.content.map(part => ({ ...part })),
+        content: msg.content.map((part) => ({ ...part })),
       };
     });
-    
-    const systemMessages = messages.filter(msg => msg.role === 'system');
+
+    const systemMessages = messages.filter((msg) => msg.role === 'system');
     if (systemMessages.length > 0) {
       for (let i = 0; i < Math.min(2, systemMessages.length); i++) {
         const msg = systemMessages[i];
@@ -156,10 +156,8 @@ export abstract class BaseLLM implements LLMPort {
       }
     }
 
-    const userAssistantMessages = messages.filter(
-      msg => msg.role === 'user' || msg.role === 'assistant'
-    );
-    
+    const userAssistantMessages = messages.filter((msg) => msg.role === 'user' || msg.role === 'assistant');
+
     const lastTwoIndices: number[] = [];
     if (userAssistantMessages.length >= 2) {
       for (let i = userAssistantMessages.length - 2; i < userAssistantMessages.length; i++) {
@@ -194,7 +192,7 @@ export abstract class BaseLLM implements LLMPort {
 
   async generateCompletion(params: CompletionParams, signal?: AbortSignal): Promise<CompletionResult> {
     const enhancedParams = this.applyCacheControl(params);
-    
+
     const body: CompletionBody = {
       model: enhancedParams.model,
       messages: enhancedParams.messages,
@@ -207,7 +205,8 @@ export abstract class BaseLLM implements LLMPort {
     };
 
     if (enhancedParams.tools && enhancedParams.tools.length > 0) body.tools = enhancedParams.tools;
-    if (enhancedParams.tool_choice && enhancedParams.tools && enhancedParams.tools.length > 0) body.tool_choice = enhancedParams.tool_choice;
+    if (enhancedParams.tool_choice && enhancedParams.tools && enhancedParams.tools.length > 0)
+      body.tool_choice = enhancedParams.tool_choice;
 
     const res = await this.getTransport().postJson('/chat/completions', body, undefined, signal);
 
@@ -233,7 +232,7 @@ export abstract class BaseLLM implements LLMPort {
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
     const enhancedParams = this.applyCacheControl(params);
-    
+
     const body: CompletionBody = {
       model: enhancedParams.model,
       messages: enhancedParams.messages,
@@ -246,7 +245,8 @@ export abstract class BaseLLM implements LLMPort {
     };
 
     if (enhancedParams.tools && enhancedParams.tools.length > 0) body.tools = enhancedParams.tools;
-    if (enhancedParams.tool_choice && enhancedParams.tools && enhancedParams.tools.length > 0) body.tool_choice = enhancedParams.tool_choice;
+    if (enhancedParams.tool_choice && enhancedParams.tools && enhancedParams.tools.length > 0)
+      body.tool_choice = enhancedParams.tool_choice;
 
     const res = await this.getTransport().postStream(
       '/chat/completions',
@@ -269,6 +269,7 @@ export abstract class BaseLLM implements LLMPort {
     let content = '';
     const mergedToolCalls: ToolCall[] = [];
     let usage: UsageData | undefined;
+    let lastFinishReason: string | undefined;
 
     const flushEvent = (rawEvent: string) => {
       const lines = rawEvent.split('\n');
@@ -283,13 +284,18 @@ export abstract class BaseLLM implements LLMPort {
         const evt: LLMStreamEvent = JSON.parse(dataStr);
 
         const choices = Array.isArray(evt.choices) ? evt.choices : [];
-        const finishReason = choices.find((ch) => ch.finish_reason)?.finish_reason;
+        const finishReason = choices.find((ch) => ch.finish_reason && ch.finish_reason !== null)?.finish_reason;
+
+        // Track finish_reason across chunks
+        if (finishReason) {
+          lastFinishReason = finishReason;
+        }
 
         if (evt.usage) {
           usage = normalizeUsage(evt.usage);
-          // Emit finish event when we have finish_reason with usage
-          if (finishReason && handlers.onStreamFinish) {
-            handlers.onStreamFinish(finishReason, usage);
+          // Emit finish event when we have usage (and finish_reason from any chunk)
+          if (lastFinishReason && handlers.onStreamFinish) {
+            handlers.onStreamFinish(lastFinishReason, usage);
           } else {
             // Fallback to chunk event for backward compatibility
             handlers.onChunk?.('', usage);

@@ -1052,5 +1052,133 @@ describe('BaseLLM', () => {
       expect(onChunk).toHaveBeenCalledWith('Content');
       expect(result.content).toBe('Content');
     });
+
+    it('should emit stream_finish when finish_reason and usage arrive in separate chunks (OpenRouter pattern)', async () => {
+      // Real OpenRouter streaming pattern where finish_reason and usage are in different chunks
+      const chunks = [
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":"The user"},"finish_reason":null}]}',
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":" wants me to help"},"finish_reason":null}]}',
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"I\'ll help you review the latest"},"finish_reason":null}]}',
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":" commit.\\n"},"finish_reason":null}]}',
+        // Chunk with finish_reason but NO usage
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"bash_tool","arguments":"{\\"cmd\\": \\"pwd\\"}"}}]},"finish_reason":"tool_calls"}]}',
+        // Chunk with usage but finish_reason is null
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}],"usage":{"prompt_tokens":2978,"completion_tokens":121,"total_tokens":3099,"completion_tokens_details":{"reasoning_tokens":55}}}',
+        'data: [DONE]',
+      ];
+
+      const mockResponse = createMockStreamResponse(chunks);
+      vi.mocked(llm.mockTransport.postStream).mockResolvedValueOnce(mockResponse as any);
+
+      const onChunk = vi.fn();
+      const onStreamFinish = vi.fn();
+      const onToolCallDelta = vi.fn();
+
+      const params: CompletionParams = {
+        model: 'minimax/minimax-m2:free',
+        messages: [],
+      };
+
+      const result = await llm.streamCompletion(params, { onChunk, onStreamFinish, onToolCallDelta });
+
+      // Verify content chunks were emitted
+      expect(onChunk).toHaveBeenCalledWith('The user');
+      expect(onChunk).toHaveBeenCalledWith(' wants me to help');
+      expect(onChunk).toHaveBeenCalledWith('I\'ll help you review the latest');
+      expect(onChunk).toHaveBeenCalledWith(' commit.\n');
+
+      // Verify stream_finish was emitted with both finish_reason and usage
+      expect(onStreamFinish).toHaveBeenCalledTimes(1);
+      expect(onStreamFinish).toHaveBeenCalledWith('tool_calls', {
+        prompt_tokens: 2978,
+        completion_tokens: 121,
+        total_tokens: 3099,
+        completion_tokens_details: {
+          reasoning_tokens: 55,
+        },
+      });
+
+      // Verify tool calls were processed
+      expect(result.tool_calls).toHaveLength(1);
+      expect(result.tool_calls?.[0].function.name).toBe('bash_tool');
+
+      // Verify usage in result
+      expect(result.usage).toEqual({
+        prompt_tokens: 2978,
+        completion_tokens: 121,
+        total_tokens: 3099,
+        completion_tokens_details: {
+          reasoning_tokens: 55,
+        },
+      });
+    });
+
+    it('should NOT emit stream_finish if finish_reason never appears', async () => {
+      // Edge case: usage arrives but no finish_reason was ever sent
+      const chunks = [
+        'data: {"choices":[{"delta":{"content":"Hello"},"finish_reason":null}]}',
+        'data: {"choices":[{"delta":{"content":" world"},"finish_reason":null}]}',
+        'data: {"choices":[{"delta":{"content":""},"finish_reason":null}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}',
+        'data: [DONE]',
+      ];
+
+      const mockResponse = createMockStreamResponse(chunks);
+      vi.mocked(llm.mockTransport.postStream).mockResolvedValueOnce(mockResponse as any);
+
+      const onChunk = vi.fn();
+      const onStreamFinish = vi.fn();
+
+      const params: CompletionParams = {
+        model: 'gpt-4',
+        messages: [],
+      };
+
+      const result = await llm.streamCompletion(params, { onChunk, onStreamFinish });
+
+      // Verify content was emitted
+      expect(result.content).toBe('Hello world');
+      expect(result.usage).toBeDefined();
+
+      // onStreamFinish should NOT be called since finish_reason never appeared
+      expect(onStreamFinish).not.toHaveBeenCalled();
+
+      // Instead, fallback to chunk event with usage
+      expect(onChunk).toHaveBeenCalledWith('', {
+        prompt_tokens: 10,
+        completion_tokens: 5,
+        total_tokens: 15,
+      });
+    });
+
+    it('should emit stream_finish when finish_reason and usage arrive in same chunk', async () => {
+      // Standard pattern where both finish_reason and usage are in the same chunk
+      const chunks = [
+        'data: {"choices":[{"delta":{"content":"Hello world"},"finish_reason":null}]}',
+        'data: {"choices":[{"delta":{"content":""},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}',
+        'data: [DONE]',
+      ];
+
+      const mockResponse = createMockStreamResponse(chunks);
+      vi.mocked(llm.mockTransport.postStream).mockResolvedValueOnce(mockResponse as any);
+
+      const onStreamFinish = vi.fn();
+
+      const params: CompletionParams = {
+        model: 'gpt-4',
+        messages: [],
+      };
+
+      const result = await llm.streamCompletion(params, { onStreamFinish });
+
+      // Verify stream_finish was emitted
+      expect(onStreamFinish).toHaveBeenCalledTimes(1);
+      expect(onStreamFinish).toHaveBeenCalledWith('stop', {
+        prompt_tokens: 10,
+        completion_tokens: 5,
+        total_tokens: 15,
+      });
+
+      expect(result.content).toBe('Hello world');
+    });
   });
 });

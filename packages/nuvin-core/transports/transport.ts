@@ -255,7 +255,7 @@ export class BearerAuthTransport implements HttpTransport {
       throw new Error('API key missing');
     }
     const base: HttpHeaders = headers ? { ...headers } : {};
-    base['Authorization'] = `Bearer ${this.apiKey}`;
+    base.Authorization = `Bearer ${this.apiKey}`;
     return base;
   }
 

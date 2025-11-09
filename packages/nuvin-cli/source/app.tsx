@@ -73,7 +73,7 @@ export default function App({
   const handleSetLastMetadata = useCallback((metadata: MessageMetadata | null) => {
     setLastMetadata(metadata);
     if (metadata?.cost && metadata.cost > 0) {
-      setAccumulatedCost((prev) => prev + metadata.cost!);
+      setAccumulatedCost((prev) => prev + metadata.cost);
     }
   }, []);
 
