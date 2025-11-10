@@ -52,8 +52,8 @@ nuvin --config ./my-config.yaml
 nuvin
 
 # Use OpenRouter with specific model
-nuvin --provider openrouter --model openai/gpt-4o --api-key sk-ant-xxxxxxxx
-OPENROUTER_API_KEY=sk-ant-xxxxxxxx nuvin --provider openrouter --model openai/gpt-4o
+nuvin --provider openrouter --model minimax/minimax-m2:free --api-key sk-ant-xxxxxxxx
+OPENROUTER_API_KEY=sk-ant-xxxxxxxx nuvin --provider openrouter --model minimax/minimax-m2:free
 
 # Use DeepInfra
 nuvin --provider deepinfra --model meta-llama/Llama-3.3-70B-Instruct --api-key your-deepinfra-key
