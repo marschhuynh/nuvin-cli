@@ -23,7 +23,7 @@ npm install -g @nuvin/nuvin-cli
 pnpm install -g @nuvin/nuvin-cli
 
 # Or use with npx
-npx @nuvin/nuvin-cli
+npx @nuvin/nuvin-cli@latest
 ```
 
 ## Quick Start
