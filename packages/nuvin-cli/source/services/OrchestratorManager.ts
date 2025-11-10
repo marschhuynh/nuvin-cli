@@ -173,7 +173,12 @@ export class OrchestratorManager {
   /**
    * Create a new UIEventAdapter for the given session directory.
    */
-  private createEventAdapter(sessionDir: string, handlers: UIHandlers, persistEventLog: boolean, streamingChunks: boolean) {
+  private createEventAdapter(
+    sessionDir: string,
+    handlers: UIHandlers,
+    persistEventLog: boolean,
+    streamingChunks: boolean,
+  ) {
     return new UIEventAdapter(
       handlers.appendLine,
       handlers.updateLine,
@@ -218,7 +223,7 @@ export class OrchestratorManager {
       const sessionConfig = currentConfig.config.session;
       const persistHttpLog = sessionConfig?.persistHttpLog ?? false;
       const persistEventLog = sessionConfig?.persistEventLog ?? false;
-      
+
       const httpLogFile = persistHttpLog ? path.join(sessionDir, 'http-log.json') : undefined;
 
       const llm = this.createLLM(httpLogFile);
@@ -343,7 +348,7 @@ export class OrchestratorManager {
             reasoningEffort: fresh.reasoningEffort,
           };
         };
-        
+
         toolRegistry.setOrchestrator(agentConfig, agentTools, llmFactoryAdapter, configResolver);
       }
 
@@ -582,7 +587,7 @@ export class OrchestratorManager {
             eventBus.emit('ui:line', {
               id: crypto.randomUUID(),
               type: 'system',
-              content: `LLM request failed (attempt ${attempt}/${10}). Retrying in ${remainingSeconds}s... Error: ${error.message}`,
+              content: `Request failed (attempt ${attempt}/${10}). Retrying in ${remainingSeconds}s... Error: ${error.message}`,
               metadata: { timestamp: new Date().toISOString() },
               color: 'yellow',
             });
@@ -591,7 +596,7 @@ export class OrchestratorManager {
             eventBus.emit('ui:line', {
               id: crypto.randomUUID(),
               type: 'system',
-              content: `LLM request failed with non-retryable error: ${error.message}`,
+              content: `Request failed with error: ${error.message}`,
               metadata: { timestamp: new Date().toISOString() },
               color: 'red',
             });
@@ -617,8 +622,8 @@ export class OrchestratorManager {
       if (error instanceof Error && (error.name === 'AbortError' || /aborted/i.test(error.message))) {
         throw new AbortError(error.message);
       }
-      // Re-throw other errors
-      throw error;
+      // Don't re-throw other errors as they've already been displayed by onNonRetryable
+      return null;
     }
   }
 
@@ -695,7 +700,8 @@ export class OrchestratorManager {
       if (error instanceof Error && (error.name === 'AbortError' || /aborted/i.test(error.message))) {
         throw new AbortError(error.message);
       }
-      throw error;
+      // Don't re-throw other errors as they've already been displayed by onNonRetryable
+      return null;
     }
   }
 
@@ -734,7 +740,7 @@ export class OrchestratorManager {
     // Get persistence settings from config
     const currentConfig = this.getCurrentConfig();
     const persistEventLog = currentConfig.config.session?.persistEventLog ?? false;
-    
+
     // Create new memory instance
     const newMemory = this.createMemory(sessionDir, memPersist);
 
