@@ -1,0 +1,45 @@
+{
+  "providers": [
+    {
+      "name": "deepinfra",
+      "className": "DeepInfraLLM",
+      "baseUrl": "https://api.deepinfra.com/v1/openai",
+      "transportName": "deepinfra",
+      "features": {
+        "promptCaching": false,
+        "getModels": true
+      }
+    },
+    {
+      "name": "openrouter",
+      "className": "OpenRouterLLM",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "transportName": "openrouter",
+      "features": {
+        "promptCaching": true,
+        "getModels": true,
+        "includeUsage": true
+      }
+    },
+    {
+      "name": "zai",
+      "className": "ZaiLLM",
+      "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+      "transportName": "zai",
+      "features": {
+        "promptCaching": false,
+        "getModels": false
+      }
+    },
+    {
+      "name": "moonshot",
+      "className": "MoonshotLLM",
+      "baseUrl": "https://api.moonshot.ai/v1",
+      "transportName": "moonshot",
+      "features": {
+        "promptCaching": false,
+        "getModels": true
+      }
+    }
+  ]
+}

@@ -1,12 +1,4 @@
-import {
-  EchoLLM,
-  GithubLLM,
-  OpenRouterLLM,
-  DeepInfraLLM,
-  ZaiLLM,
-  AnthropicAISDKLLM,
-  type LLMPort,
-} from '@nuvin/nuvin-core';
+import { EchoLLM, GithubLLM, AnthropicAISDKLLM, createLLM, supportsGetModels, type LLMPort } from '@nuvin/nuvin-core';
 import type { ConfigManager } from '@/config/manager.js';
 import type { ProviderKey } from './OrchestratorManager.js';
 import type { AuthMethod } from '@/config/types.js';
@@ -77,13 +69,10 @@ export class LLMFactory implements LLMFactoryInterface {
 
     switch (provider) {
       case 'openrouter':
-        return new OpenRouterLLM({
-          apiKey: config.apiKey,
-          httpLogFile: options.httpLogFile,
-        });
-
       case 'deepinfra':
-        return new DeepInfraLLM({
+      case 'zai':
+      case 'moonshot':
+        return createLLM(provider, {
           apiKey: config.apiKey,
           httpLogFile: options.httpLogFile,
         });
@@ -91,12 +80,6 @@ export class LLMFactory implements LLMFactoryInterface {
       case 'github':
         return new GithubLLM({
           accessToken: config.apiKey,
-          httpLogFile: options.httpLogFile,
-        });
-
-      case 'zai':
-        return new ZaiLLM({
-          apiKey: config.apiKey,
           httpLogFile: options.httpLogFile,
         });
 
@@ -145,31 +128,23 @@ export class LLMFactory implements LLMFactoryInterface {
   }
 
   async getModels(provider: ProviderKey, signal?: AbortSignal): Promise<string[]> {
+    if (!supportsGetModels(provider)) {
+      return [];
+    }
+
     const config = this.getProviderConfig(provider);
 
-    switch (provider) {
-      case 'openrouter': {
-        if (!config.apiKey) {
-          throw new Error('OpenRouter API key not configured. Please run /auth first.');
-        }
-
-        const llm = new OpenRouterLLM({ apiKey: config.apiKey });
-        const models = await llm.getModels(signal);
-        return models.map((m) => m.id);
-      }
-
-      case 'deepinfra': {
-        if (!config.apiKey) {
-          throw new Error('DeepInfra API key not configured. Please run /auth first.');
-        }
-
-        const llm = new DeepInfraLLM({ apiKey: config.apiKey });
-        const models = await llm.getModels(signal);
-        return models.map((m) => m.id);
-      }
-
-      default:
-        return [];
+    if (!config.apiKey) {
+      throw new Error(`${provider} API key not configured. Please run /auth first.`);
     }
+
+    const llm = createLLM(provider, { apiKey: config.apiKey });
+
+    if ('getModels' in llm && typeof llm.getModels === 'function') {
+      const models = await llm.getModels(signal);
+      return models.map((m: { id: string }) => m.id);
+    }
+
+    return [];
   }
 }

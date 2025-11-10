@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OpenRouterLLM } from '../llm-providers/llm-openrouter.js';
+import { createLLM } from '../llm-providers/llm-factory.js';
 import type { CompletionParams } from '../ports.js';
 
 describe('OpenRouterLLM Cache Payload Format', () => {
-  let llm: OpenRouterLLM;
+  let llm: any;
   let mockTransport: any;
 
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe('OpenRouterLLM Cache Payload Format', () => {
       }),
     };
 
-    llm = new OpenRouterLLM({ apiKey: 'test-key' });
+    llm = createLLM('openrouter', { apiKey: 'test-key' });
     (llm as any).transport = mockTransport;
   });
 
@@ -103,7 +103,7 @@ describe('OpenRouterLLM Cache Payload Format', () => {
   });
 
   it('should preserve original format when caching is disabled', async () => {
-    llm = new OpenRouterLLM({ apiKey: 'test-key', enablePromptCaching: false });
+    llm = createLLM('openrouter', { apiKey: 'test-key', enablePromptCaching: false });
     (llm as any).transport = mockTransport;
 
     const params: CompletionParams = {

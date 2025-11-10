@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OpenRouterLLM } from '../llm-providers/llm-openrouter.js';
+import { createLLM } from '../llm-providers/llm-factory.js';
 import type { CompletionParams } from '../ports.js';
 
 describe('OpenRouterLLM Prompt Caching', () => {
-  let llm: OpenRouterLLM;
+  let llm: any;
   let mockTransport: any;
 
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('OpenRouterLLM Prompt Caching', () => {
       postStream: vi.fn(),
     };
 
-    llm = new OpenRouterLLM({ apiKey: 'test-key' });
+    llm = createLLM('openrouter', { apiKey: 'test-key' });
     (llm as any).transport = mockTransport;
   });
 
@@ -103,7 +103,7 @@ describe('OpenRouterLLM Prompt Caching', () => {
   });
 
   it('should respect enablePromptCaching: false', async () => {
-    llm = new OpenRouterLLM({ apiKey: 'test-key', enablePromptCaching: false });
+    llm = createLLM('openrouter', { apiKey: 'test-key', enablePromptCaching: false });
     (llm as any).transport = mockTransport;
 
     const params: CompletionParams = {

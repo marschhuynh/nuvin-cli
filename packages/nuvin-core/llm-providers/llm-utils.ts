@@ -44,14 +44,14 @@ export function normalizeUsage(
 ): UsageData | undefined {
   if (!usage) return undefined;
   const usageObj = usage as Record<string, unknown>;
-  const prompt_tokens = usage.prompt_tokens ?? 
-    (typeof usageObj.input_tokens === 'number' ? usageObj.input_tokens : undefined);
-  const completion_tokens = usage.completion_tokens ?? 
-    (typeof usageObj.output_tokens === 'number' ? usageObj.output_tokens : undefined);
+  const prompt_tokens =
+    usage.prompt_tokens ?? (typeof usageObj.input_tokens === 'number' ? usageObj.input_tokens : undefined);
+  const completion_tokens =
+    usage.completion_tokens ?? (typeof usageObj.output_tokens === 'number' ? usageObj.output_tokens : undefined);
   const total_tokens =
     usage.total_tokens ??
     (prompt_tokens != null && completion_tokens != null ? prompt_tokens + completion_tokens : undefined);
-  
+
   return {
     prompt_tokens,
     completion_tokens,

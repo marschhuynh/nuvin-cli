@@ -291,8 +291,11 @@ export abstract class BaseLLM implements LLMPort {
           lastFinishReason = finishReason;
         }
 
-        if (evt.usage) {
-          usage = normalizeUsage(evt.usage);
+        // Extract usage from top level or from choices (Kimi/Moonshot pattern)
+        const usageData = evt.usage || (choices[0] as LLMStreamEvent)?.usage;
+
+        if (usageData) {
+          usage = normalizeUsage(usageData);
           // Emit finish event when we have usage (and finish_reason from any chunk)
           if (lastFinishReason && handlers.onStreamFinish) {
             handlers.onStreamFinish(lastFinishReason, usage);
