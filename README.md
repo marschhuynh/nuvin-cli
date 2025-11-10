@@ -4,7 +4,7 @@ Interactive AI coding assistant CLI. Transform your natural language requests in
 
 ## Features
 
-- **🤖 Multi-Provider AI Support** - GitHub Models, OpenRouter, ZAI, Anthropic, and Echo providers
+- **🤖 Multi-Provider AI Support** - GitHub Models, OpenRouter, DeepInfra, ZAI, Moonshot, Anthropic, and Echo providers
 - **👥 Multi-Agent System** - Delegate tasks to specialist agents (code reviewer, tester, architect, etc.)
 - **🛠️ Rich Toolset** - File operations, web search, bash execution, and MCP integration
 - **💬 Memory Management** - Conversation history persistence and in-memory context
@@ -104,6 +104,8 @@ export GOOGLE_CSE_CX=your_search_engine_id
 - **[MCP Integration](packages/nuvin-cli/docs/mcp-integration.md)** - Model Context Protocol setup and usage
 - **[Specialist Agents](packages/nuvin-cli/docs/agents.md)** - Multi-agent system and delegation guide
 - **[Development Guide](packages/nuvin-cli/docs/development.md)** - Contributing and development workflow
+- **[Adding New Provider](docs/adding-new-provider.md)** - Complete guide to adding LLM providers
+- **[Provider Quick Reference](docs/provider-quick-reference.md)** - Quick checklist for adding providers
 
 ## License
 
