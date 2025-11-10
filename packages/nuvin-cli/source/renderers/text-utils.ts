@@ -20,7 +20,7 @@ export function compose(...funcs: Array<(text: string) => string>): (text: strin
 }
 
 export function escapeRegExp(str: string): string {
-	return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
+	return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
 }
 
 export function unescapeEntities(html: string): string {

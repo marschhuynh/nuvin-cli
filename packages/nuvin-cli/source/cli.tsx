@@ -146,40 +146,40 @@ const cli = meow(
     };
 
     const openrouterKey = ensureString(process.env.OPENROUTER_API_KEY);
-    if (openrouterKey) {
-      envConfig.providers!.openrouter = {
+    if (openrouterKey && envConfig.providers) {
+      envConfig.providers.openrouter = {
         auth: [{ type: 'api-key', 'api-key': openrouterKey }],
         'current-auth': 'api-key',
       };
     }
 
     const anthropicKey = ensureString(process.env.ANTHROPIC_API_KEY);
-    if (anthropicKey) {
-      envConfig.providers!.anthropic = {
+    if (anthropicKey && envConfig.providers) {
+      envConfig.providers.anthropic = {
         auth: [{ type: 'api-key', 'api-key': anthropicKey }],
         'current-auth': 'api-key',
       };
     }
 
     const zaiKey = ensureString(process.env.ZAI_API_KEY);
-    if (zaiKey) {
-      envConfig.providers!.zai = {
+    if (zaiKey && envConfig.providers) {
+      envConfig.providers.zai = {
         auth: [{ type: 'api-key', 'api-key': zaiKey }],
         'current-auth': 'api-key',
       };
     }
 
     const deepinfraKey = ensureString(process.env.DEEPINFRA_API_KEY);
-    if (deepinfraKey) {
-      envConfig.providers!.deepinfra = {
+    if (deepinfraKey && envConfig.providers) {
+      envConfig.providers.deepinfra = {
         auth: [{ type: 'api-key', 'api-key': deepinfraKey }],
         'current-auth': 'api-key',
       };
     }
 
     const githubToken = ensureString(process.env.GITHUB_ACCESS_TOKEN);
-    if (githubToken) {
-      envConfig.providers!.github = {
+    if (githubToken && envConfig.providers) {
+      envConfig.providers.github = {
         auth: [{ type: 'api-key', 'api-key': githubToken }],
         'current-auth': 'api-key',
       };

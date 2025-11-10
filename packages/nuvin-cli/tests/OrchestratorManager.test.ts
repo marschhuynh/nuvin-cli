@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { OrchestratorManager } from '../source/services/OrchestratorManager.js';
-import { ConfigManager } from '../source/config/manager.js';
+import type { ConfigManager } from '../source/config/manager.js';
 import type { MessageLine } from '../source/adapters/index.js';
 import type { MCPServerManager } from '../source/services/MCPServerManager.js';
 
