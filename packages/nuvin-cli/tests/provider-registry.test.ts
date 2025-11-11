@@ -19,7 +19,6 @@ describe('Provider Registry', () => {
   it('should include all special providers', () => {
     expect(ALL_PROVIDERS).toContain('github');
     expect(ALL_PROVIDERS).toContain('anthropic');
-    expect(ALL_PROVIDERS).toContain('echo');
   });
 
   it('should have labels for all providers', () => {
@@ -57,13 +56,11 @@ describe('Provider Registry', () => {
 
     expect(isFactoryProvider('github')).toBe(false);
     expect(isFactoryProvider('anthropic')).toBe(false);
-    expect(isFactoryProvider('echo')).toBe(false);
   });
 
   it('should correctly identify special providers', () => {
     expect(isSpecialProvider('github')).toBe(true);
     expect(isSpecialProvider('anthropic')).toBe(true);
-    expect(isSpecialProvider('echo')).toBe(true);
 
     expect(isSpecialProvider('openrouter')).toBe(false);
     expect(isSpecialProvider('deepinfra')).toBe(false);

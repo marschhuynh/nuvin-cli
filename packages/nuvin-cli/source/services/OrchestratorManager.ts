@@ -35,6 +35,7 @@ import {
 } from '@nuvin/nuvin-core';
 import { UIEventAdapter, type MessageLine, type MessageMetadata, type LineMetadata } from '@/adapters/index.js';
 import { prompt } from '@/prompt.js';
+import type { ProviderKey } from '@/config/providers.js';
 import { MCPServerManager } from './MCPServerManager.js';
 import { withRetry, AbortError } from '@/utils/retry-utils.js';
 import { eventBus } from './EventBus.js';
@@ -52,7 +53,7 @@ const defaultModels: Record<ProviderKey, string> = {
   github: 'gpt-4.1',
   zai: 'glm-4.5',
   anthropic: 'claude-sonnet-4-5',
-  echo: 'demo-echo',
+  moonshot: 'moonshot-v1-8k',
 };
 export type { ProviderKey } from '@/config/providers.js';
 
@@ -108,7 +109,7 @@ export class OrchestratorManager {
 
   private getCurrentConfig() {
     const config = this.configManager.getConfig();
-    const provider = config.activeProvider || 'echo';
+    const provider = config.activeProvider || 'openrouter';
     const model = config.model || defaultModels[provider];
     const auth = getProviderAuth(config, provider);
     const mcpAllowedTools = config.mcpAllowedTools;
@@ -262,7 +263,7 @@ export class OrchestratorManager {
 
           // Fallback to active provider if requested provider has no auth or no provider specified
           if (!provider) {
-            provider = this.getCurrentConfig().config.activeProvider || 'echo';
+            provider = this.getCurrentConfig().config.activeProvider || 'openrouter';
           }
 
           return this.llmFactory.createLLM(provider, { httpLogFile });

@@ -2,34 +2,33 @@ import { getAvailableProviders } from '@nuvin/nuvin-core';
 
 const FACTORY_PROVIDERS = getAvailableProviders();
 
-const SPECIAL_PROVIDERS = ['github', 'anthropic', 'echo'] as const;
+const SPECIAL_PROVIDERS = ['github', 'anthropic'] as const;
+
+type FactoryProvider = 'openrouter' | 'deepinfra' | 'zai' | 'moonshot';
+type SpecialProvider = (typeof SPECIAL_PROVIDERS)[number];
 
 export const ALL_PROVIDERS = [...FACTORY_PROVIDERS, ...SPECIAL_PROVIDERS] as const;
 
-export type ProviderKey = (typeof ALL_PROVIDERS)[number];
+export type ProviderKey = FactoryProvider | SpecialProvider;
 
-export type Provider = ProviderKey;
+export type ProviderItem = { label: string; value: ProviderKey };
 
-export type ProviderItem = { label: string; value: Provider };
-
-export const PROVIDER_LABELS: Record<Provider, string> = {
+export const PROVIDER_LABELS: Record<ProviderKey, string> = {
   openrouter: 'OpenRouter',
   deepinfra: 'DeepInfra',
   zai: 'Zai',
   moonshot: 'Moonshot',
   github: 'GitHub (Copilot)',
   anthropic: 'Anthropic (Claude)',
-  echo: 'Echo',
 };
 
-export const PROVIDER_DESCRIPTIONS: Record<Provider, string> = {
+export const PROVIDER_DESCRIPTIONS: Record<ProviderKey, string> = {
   openrouter: 'Wide selection of models',
   deepinfra: 'Open source models',
   zai: 'Enterprise AI platform',
   moonshot: 'Moonshot AI models',
   github: 'GitHub integrated models',
   anthropic: 'Claude AI models',
-  echo: 'Test/mock provider',
 };
 
 export const PROVIDER_ITEMS: ProviderItem[] = ALL_PROVIDERS.map((provider) => ({

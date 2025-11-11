@@ -26,8 +26,8 @@ const createMockHandlers = () => {
 const createMockConfigManager = () => {
   return {
     getConfig: vi.fn().mockReturnValue({
-      activeProvider: 'echo',
-      model: 'demo-echo',
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
       requireToolApproval: false,
       thinking: 'OFF',
       streamingChunks: false,
@@ -70,7 +70,7 @@ describe('OrchestratorManager', () => {
     expect(manager.getOrchestrator()).toBe(null);
   });
 
-  it('init initializes orchestrator with echo provider', async () => {
+  it('init initializes orchestrator with openrouter provider', async () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
@@ -78,7 +78,7 @@ describe('OrchestratorManager', () => {
 
     expect(result.orchestrator).toBeTruthy();
     expect(result.memory).toBeTruthy();
-    expect(result.model).toBe('demo-echo');
+    expect(result.model).toBe('openai/gpt-4');
     expect(result.sessionId).toBe(null); // null when memPersist is false (default)
     expect(result.sessionDir).toBe(null); // null when memPersist is false (default)
     expect(manager.getStatus()).toBe('Ready');

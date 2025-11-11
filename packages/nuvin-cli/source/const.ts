@@ -2,7 +2,7 @@ import type { Provider, ProviderKey } from './config/providers.js';
 
 export {
   type ProviderKey,
-  type Provider,
+  type ProviderKey,
   type ProviderItem,
   PROVIDER_ITEMS,
   PROVIDER_LABELS,
@@ -13,7 +13,7 @@ export type AuthMethodItem = { label: string; value: AuthMethod };
 
 export const MAX_RENDERED_LINES = 2000;
 
-export const PROVIDER_AUTH_METHODS: Record<Provider, AuthMethodItem[]> = {
+export const PROVIDER_AUTH_METHODS: Record<ProviderKey, AuthMethodItem[]> = {
   github: [
     { label: 'Device Flow Login', value: 'device-flow' },
     { label: 'Access Token', value: 'token' },

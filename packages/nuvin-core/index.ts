@@ -67,7 +67,7 @@ export type { DelegationService, AgentCatalog, DelegationServiceConfig } from '.
 export { DelegationServiceFactory, LLMResolver } from './delegation/index.js';
 
 // LLM providers
-export { EchoLLM, GithubLLM, AnthropicAISDKLLM } from './llm-providers/index.js';
+export { GithubLLM, AnthropicAISDKLLM } from './llm-providers/index.js';
 export { createLLM, getAvailableProviders, supportsGetModels, type LLMOptions } from './llm-providers/index.js';
 export { LLMError } from './llm-providers/base-llm.js';
 

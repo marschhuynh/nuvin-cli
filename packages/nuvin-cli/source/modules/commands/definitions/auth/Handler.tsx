@@ -7,7 +7,7 @@ import {
   PROVIDER_ITEMS,
   PROVIDER_LABELS,
   PROVIDER_AUTH_METHODS,
-  type Provider,
+  type ProviderKey,
   type AuthMethod,
   type ProviderItem,
   type AuthMethodItem,
@@ -41,7 +41,7 @@ const getColorForStatus = (status: StatusMessage) => {
 export const AuthCommandComponent = ({ context, deactivate }: CommandComponentProps) => {
   const { theme } = useTheme();
   const [stage, setStage] = useState<Stage>('provider');
-  const [provider, setProvider] = useState<Provider | null>(null);
+  const [provider, setProvider] = useState<ProviderKey | null>(null);
   const [tokenValue, setTokenValue] = useState('');
   const [status, setStatus] = useState<StatusMessage>(null);
 
@@ -221,7 +221,7 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
           <Box marginTop={1} flexDirection="column">
             <Text>Select provider:</Text>
             <Box marginTop={1}>
-              <SelectInput<Provider> items={PROVIDER_ITEMS} onSelect={handleProviderSelect} />
+              <SelectInput<ProviderKey> items={PROVIDER_ITEMS} onSelect={handleProviderSelect} />
             </Box>
           </Box>
         );

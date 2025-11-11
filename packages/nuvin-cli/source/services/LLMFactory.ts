@@ -1,4 +1,4 @@
-import { EchoLLM, GithubLLM, AnthropicAISDKLLM, createLLM, supportsGetModels, type LLMPort } from '@nuvin/nuvin-core';
+import { GithubLLM, AnthropicAISDKLLM, createLLM, supportsGetModels, type LLMPort } from '@nuvin/nuvin-core';
 import type { ConfigManager } from '@/config/manager.js';
 import type { ProviderKey } from './OrchestratorManager.js';
 import type { AuthMethod } from '@/config/types.js';
@@ -123,7 +123,7 @@ export class LLMFactory implements LLMFactoryInterface {
         });
 
       default:
-        return new EchoLLM();
+        throw new Error(`Unsupported provider: ${provider}`);
     }
   }
 

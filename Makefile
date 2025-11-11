@@ -31,3 +31,7 @@ install: build
 
 ci:
 	act -j release -W /Users/marsch/Projects/nuvin-space/.github/workflows/release.yml --container-architecture linux/amd64
+
+bun-build:
+# 	bun build --compile --target=bun-linux-x64 packages/nuvin-cli/source/cli.tsx --outfile nuvin
+	bun build --compile packages/nuvin-cli/source/cli.tsx --outfile nuvin

@@ -154,8 +154,8 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
 
   it('reads requireToolApproval from config', async () => {
     const mockConfig = new MockConfigManager({
-      activeProvider: 'echo',
-      model: 'demo-echo',
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
       requireToolApproval: true,
     });
 
@@ -174,8 +174,8 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
 
   it('handles thinking: OFF correctly', async () => {
     const mockConfig = new MockConfigManager({
-      activeProvider: 'echo',
-      model: 'demo-echo',
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
       thinking: 'OFF',
     });
 
@@ -194,8 +194,8 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
 
   it('reads streamingChunks from config', async () => {
     const mockConfig = new MockConfigManager({
-      activeProvider: 'echo',
-      model: 'demo-echo',
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
       streamingChunks: false,
     });
 
@@ -216,7 +216,7 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
     const result = await manager.init({}, handlers);
 
     expect(result.orchestrator).toBeTruthy();
-    expect(result.model).toBe('demo-echo');
+    expect(result.model).toBe('openai/gpt-4.1');
 
     await manager.cleanup();
   });
@@ -251,8 +251,8 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
 
   it('reads mcpAllowedTools from config', async () => {
     const mockConfig = new MockConfigManager({
-      activeProvider: 'echo',
-      model: 'demo-echo',
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
       mcpAllowedTools: {
         'test-server': {
           tool1: true,
