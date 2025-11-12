@@ -42,7 +42,10 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
   parameters = {
     type: 'object',
     properties: {
-      description: { type: 'string', description: 'Explanation of what file is being read and why (e.g., "Read package.json to check dependencies")' },
+      description: {
+        type: 'string',
+        description: 'Explanation of what file is being read and why (e.g., "Read package.json to check dependencies")',
+      },
       path: { type: 'string', description: 'Read contents of this file' },
       lineStart: { type: 'integer', minimum: 1, description: 'Start reading from this line number (1-based)' },
       lineEnd: { type: 'integer', minimum: 1, description: 'Stop reading at this line number (inclusive)' },
@@ -91,7 +94,7 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
 
         const numberedLines = lines.slice(lo - 1, hi).map((line, index) => {
           const lineNum = lo + index;
-          return `${lineNum}:${line}`;
+          return `${lineNum}│${line}`;
         });
         const slice = numberedLines.join('\n');
 
