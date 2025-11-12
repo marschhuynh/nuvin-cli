@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.1.0
+
+### Minor Changes
+
+- [`6b42a67`](https://github.com/marschhuynh/nuvin-space/commit/6b42a67a90cf1d4ff8be9679eede9f8fdbfc5b41) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add automatic update functionality with background updates
+
+  - Add UpdateChecker service to query npm registry for latest version
+  - Add AutoUpdater service with intelligent package manager detection (npm/pnpm/yarn)
+  - Integrate auto-update check on CLI startup with background update capability
+  - Support detection of installation method via executable path analysis
+
 ## 1.0.2
 
 ### Patch Changes
