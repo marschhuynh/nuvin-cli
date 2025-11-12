@@ -1,12 +1,12 @@
 import type React from 'react';
 import { Component } from 'react';
-import type { Memory } from '@nuvin/nuvin-core';
+import type { MemoryPort } from '@nuvin/nuvin-core';
 import { autoExportHistory } from '@/utils/autoExport.js';
 
 interface Props {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  memory?: Memory;
+  memory?: MemoryPort;
 }
 
 interface State {
@@ -34,11 +34,8 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     if (this.props.memory) {
-      const exportPath = await autoExportHistory(
-        this.props.memory,
-        `Application error: ${error.message}`
-      );
-      
+      const exportPath = await autoExportHistory(this.props.memory, `Application error: ${error.message}`);
+
       if (exportPath) {
         console.log(`\n✓ Conversation history auto-exported to: ${exportPath}`);
         this.setState({ exportPath });
@@ -54,9 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h3>Something went wrong</h3>
             <p>The application encountered an error but will continue running.</p>
             {this.state.exportPath && (
-              <p style={{ color: 'green', marginTop: '0.5rem' }}>
-                ✓ History exported to: {this.state.exportPath}
-              </p>
+              <p style={{ color: 'green', marginTop: '0.5rem' }}>✓ History exported to: {this.state.exportPath}</p>
             )}
             <details style={{ marginTop: '1rem' }}>
               <summary>Error details</summary>
