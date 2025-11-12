@@ -24,7 +24,7 @@ import {
   type ProviderKey,
 } from './config/index.js';
 import { ConfigCliHandler } from './config/cli-handler.js';
-import { AutoUpdater } from './services/auto-updater.js';
+import { AutoUpdater } from './services/AutoUpdater.js';
 
 process.stdout.write('\x1b[?2004h');
 
@@ -358,7 +358,8 @@ const cli = meow(
     {
       exitOnCtrlC: false,
       patchConsole: true,
-      maxFps: 30,
+      incrementalRendering: true,
+      maxFps: 60,
     },
   );
 
