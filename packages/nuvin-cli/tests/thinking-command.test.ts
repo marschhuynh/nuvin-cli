@@ -226,25 +226,5 @@ describe('/thinking command', () => {
     expect(errorEvents[0].data.content).toContain('Invalid thinking level');
   });
 
-  it('should emit thinking events when setting level', async () => {
-    await registry.execute('/thinking high');
 
-    const capturedEvents = mockEventBus.getCapturedEvents();
-    const thinkingToggleEvents = capturedEvents.filter(e => e.event === 'command:thinking:toggle');
-    expect(thinkingToggleEvents.length).toBe(1);
-    expect(thinkingToggleEvents[0].data.enabled).toBe(true);
-
-    const thinkingLevelEvents = capturedEvents.filter(e => e.event === 'command:thinking:level');
-    expect(thinkingLevelEvents.length).toBe(1);
-    expect(thinkingLevelEvents[0].data.level).toBe('high');
-  });
-
-  it('should emit disabled event when setting to off', async () => {
-    await registry.execute('/thinking off');
-
-    const capturedEvents = mockEventBus.getCapturedEvents();
-    const thinkingToggleEvents = capturedEvents.filter(e => e.event === 'command:thinking:toggle');
-    expect(thinkingToggleEvents.length).toBe(1);
-    expect(thinkingToggleEvents[0].data.enabled).toBe(false);
-  });
 });

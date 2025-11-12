@@ -18,13 +18,6 @@ const applyThinkingLevel = async (level: ThinkingLevel, context: CommandContext)
   try {
     await context.config.set('thinking', level, 'global');
 
-    if (level === THINKING_LEVELS.OFF) {
-      context.eventBus.emit('command:thinking:toggle', { enabled: false });
-    } else {
-      context.eventBus.emit('command:thinking:toggle', { enabled: true });
-      context.eventBus.emit('command:thinking:level', { level: level.toLowerCase() });
-    }
-
     context.eventBus.emit('ui:line', {
       id: crypto.randomUUID(),
       type: 'info' as const,
@@ -118,9 +111,6 @@ export function registerThinkingCommand(registry: CommandRegistry) {
       }
 
       await applyThinkingLevel(level, { rawInput, eventBus, config } as CommandContext);
-    },
-    onExit({ eventBus }) {
-      eventBus.emit('ui:thinking:close', undefined);
     },
   });
 }

@@ -62,8 +62,5 @@ export function registerHelpCommand(registry: CommandRegistry) {
     description: 'Show available commands and shortcuts.',
     category: 'ui',
     component: HelpModal,
-    onExit({ eventBus }) {
-      eventBus.emit('ui:help:close', undefined);
-    },
   });
 }

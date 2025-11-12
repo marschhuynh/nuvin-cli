@@ -8,8 +8,5 @@ export function registerAuthCommand(registry: CommandRegistry) {
     description: 'Authenticate with a provider.',
     category: 'integration',
     component: AuthCommandComponent,
-    onExit({ eventBus }) {
-      eventBus.emit('ui:auth:close', undefined);
-    },
   });
 }

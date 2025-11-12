@@ -171,8 +171,5 @@ export function registerMCPCommand(registry: CommandRegistry) {
     description: 'Configure MCP server tool permissions.',
     category: 'config',
     component: MCPCommandComponent,
-    onExit({ eventBus }) {
-      eventBus.emit('ui:mcp:close', undefined);
-    },
   });
 }

@@ -66,7 +66,6 @@ const HistoryCommandComponent = ({ context, deactivate }: CommandComponentProps)
     const handleHistorySelected = async (session: SessionInfo) => {
       try {
         deactivate();
-        context.eventBus.emit('ui:input:clear', undefined);
 
         const result = await loadSessionHistory(session.sessionId);
 
@@ -185,8 +184,5 @@ export function registerHistoryCommand(registry: CommandRegistry) {
     description: 'Load previous session',
     category: 'session',
     component: HistoryCommandComponent,
-    onExit({ eventBus }) {
-      eventBus.emit('ui:history:close', undefined);
-    },
   });
 }

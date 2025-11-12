@@ -157,7 +157,6 @@ export const HistorySelection: React.FC<HistorySelectionProps> = ({ availableSes
   useInput(
     (_input, key) => {
       if (key.escape) {
-        eventBus.emit('ui:history:close', undefined);
       }
     },
     { isActive: true },
