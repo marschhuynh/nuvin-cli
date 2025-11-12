@@ -120,6 +120,8 @@ export type Message = {
   // When role is 'tool'
   tool_call_id?: string;
   name?: string;
+  // Usage data for assistant messages
+  usage?: UsageData;
 };
 
 export type MessageResponse = {
@@ -328,6 +330,7 @@ export type AgentEvent =
       conversationId: string;
       messageId: string;
       toolCalls: ToolCall[];
+      usage?: UsageData;
     }
   | {
       type: typeof AgentEventTypes.ToolApprovalRequired;

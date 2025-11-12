@@ -215,6 +215,7 @@ export class AgentOrchestrator {
     turnHistory: Message[],
     originalToolCalls: ToolCall[],
     assistantContent: string | null,
+    usage?: UsageData,
   ): Promise<void> {
     const assistantMsg: Message = {
       id: this.deps.ids.uuid(),
@@ -222,6 +223,7 @@ export class AgentOrchestrator {
       content: assistantContent ?? null,
       timestamp: this.deps.clock.iso(),
       tool_calls: originalToolCalls,
+      usage,
     };
 
     accumulatedMessages.push({
@@ -261,6 +263,7 @@ export class AgentOrchestrator {
       conversationId,
       messageId,
       content: denialMessage,
+      usage: undefined,
     });
   }
 
@@ -271,6 +274,7 @@ export class AgentOrchestrator {
     accumulatedMessages: ChatMessage[],
     turnHistory: Message[],
     assistantContent: string | null,
+    usage?: UsageData,
   ): Promise<{ approvedCalls: ToolCall[]; wasDenied: boolean; denialMessage?: string }> {
     if (this.cfg.requireToolApproval === false) {
       return { approvedCalls: toolCalls, wasDenied: false };
@@ -298,6 +302,7 @@ export class AgentOrchestrator {
         turnHistory,
         toolCalls,
         assistantContent,
+        usage,
       );
 
       return { approvedCalls: [], wasDenied: true, denialMessage };
@@ -436,6 +441,7 @@ export class AgentOrchestrator {
           role: 'assistant',
           content,
           timestamp: this.deps.clock.iso(),
+          usage: result.usage,
         };
         await this.deps.memory.append(convo, [assistantMsg]);
         finalResponseSaved = true;
@@ -472,6 +478,7 @@ export class AgentOrchestrator {
           conversationId: convo,
           messageId: msgId,
           toolCalls: result.tool_calls,
+          usage: result.usage,
         });
 
         const approvalResult = await this.processToolApproval(
@@ -481,6 +488,7 @@ export class AgentOrchestrator {
           accumulatedMessages,
           turnHistory,
           result.content,
+          result.usage,
         );
 
         if (approvalResult.wasDenied) {
@@ -512,6 +520,7 @@ export class AgentOrchestrator {
           content: result.content ?? null,
           timestamp: this.deps.clock.iso(),
           tool_calls: approvedCalls,
+          usage: result.usage,
         };
 
         const toolResultMsgs: Message[] = [];
@@ -602,6 +611,7 @@ export class AgentOrchestrator {
             role: 'assistant',
             content,
             timestamp: this.deps.clock.iso(),
+            usage: result.usage,
           };
           await this.deps.memory.append(convo, [assistantMsg]);
           finalResponseSaved = true;
