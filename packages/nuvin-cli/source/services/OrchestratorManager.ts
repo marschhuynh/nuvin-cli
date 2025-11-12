@@ -286,9 +286,17 @@ export class OrchestratorManager {
       const runtimeEnv = new RuntimeEnv({ appName: 'nuvin-agent' });
       runtimeEnv.init(sessionId);
 
+      // Get enabled agents config to filter available agents
+      const enabledAgentsConfig = (currentConfig.config.agentsEnabled as Record<string, boolean>) || {};
+      
       const availableAgents = agentRegistry
         .list()
         .filter((agent) => agent.id && agent.name && agent.description)
+        .filter((agent) => {
+          // Include agent if it's enabled or if no explicit config exists (default to enabled)
+          const agentId = agent.id as string;
+          return enabledAgentsConfig[agentId] !== false; // Include if true or undefined
+        })
         .map((agent) => ({
           id: agent.id as string,
           name: agent.name as string,
