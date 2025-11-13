@@ -5,6 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import { TodoWriteRenderer } from './renderers/TodoWriteRenderer.js';
 import { FileEditRenderer } from './renderers/FileEditRenderer.js';
 import { FileReadRenderer } from './renderers/FileReadRenderer.js';
+import { FileNewRenderer } from './renderers/FileNewRenderer.js';
 import { BashToolRenderer } from './renderers/BashToolRenderer.js';
 import { DefaultRenderer } from './renderers/DefaultRenderer.js';
 import { Markdown } from '@/components/Markdown.js';
@@ -57,10 +58,8 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
 
   const getStatusMessage = () => {
     const isSuccess = toolResult.status === 'success';
-    const isAborted =
-      toolResult.status === 'error' &&
-      typeof toolResult.result === 'string' &&
-      toolResult.result.toLowerCase().includes('aborted by user');
+    const isAborted = toolResult.result.toLowerCase().includes('aborted by user');
+    const isDenied = toolResult.result.toLowerCase().includes('denied by user');
 
     const keyParam = getKeyParam();
     const paramText = keyParam ?? '';
@@ -68,6 +67,14 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
     if (isAborted) {
       return {
         text: 'Aborted',
+        color: theme.colors.warning || 'yellow',
+        paramText,
+      };
+    }
+
+    if (isDenied) {
+      return {
+        text: 'Denied',
         color: theme.colors.warning || 'yellow',
         paramText,
       };
@@ -138,6 +145,17 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
             fullMode={fullMode}
           />
         );
+      case 'file_new':
+        return (
+          <FileNewRenderer
+            toolResult={toolResult}
+            toolCall={toolCall}
+            messageId={messageId}
+            messageContent={messageContent}
+            messageColor={messageColor}
+            fullMode={fullMode}
+          />
+        );
       case 'bash_tool':
         return (
           <BashToolRenderer
@@ -164,42 +182,44 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
   const { text, color } = getStatusMessage();
   const content = renderContent();
 
-  const shouldShowResult =
-    (toolResult.result !== null && toolResult.result !== undefined && toolResult.result !== '') ||
-    toolResult.name === 'todo_write';
+  const hasResult = toolResult.result !== null && toolResult.result !== undefined && toolResult.result !== '';
+  const shouldShowContent =
+    (hasResult || toolResult.name === 'todo_write') &&
+    ((toolResult.name !== 'file_read' && toolResult.name !== 'file_new') || fullMode);
 
-  const shouldShowDone = toolResult.name !== 'file_read' || fullMode;
+  const shouldShowDone = (toolResult.name !== 'file_read' && toolResult.name !== 'file_new') || fullMode;
+  const shouldShowStatus = hasResult || toolResult.name === 'todo_write';
 
   return (
     <Box marginLeft={2} flexDirection="column">
-      {shouldShowResult ? (
-        <>
-          <Box flexDirection="row">
-            <Text dimColor color={color}>
-              {`${shouldShowDone ? '├─' : '└─'} ${text}`}
-            </Text>
-          </Box>
-          <Box
-            borderStyle="single"
-            borderColor={statusColor}
-            borderDimColor
-            borderBottom={false}
-            borderRight={false}
-            borderTop={false}
-            flexDirection="column"
-            paddingLeft={2}
-            width={cols - 10}
-          >
-            {content}
-          </Box>
-        </>
-      ) : null}
+      {shouldShowStatus && (
+        <Box flexDirection="row">
+          <Text dimColor color={color}>
+            {`${shouldShowContent || shouldShowDone ? '├─' : '└─'} ${text}`}
+          </Text>
+        </Box>
+      )}
+      {shouldShowContent && (
+        <Box
+          borderStyle="single"
+          borderColor={color}
+          borderDimColor
+          borderBottom={false}
+          borderRight={false}
+          borderTop={false}
+          flexDirection="column"
+          paddingLeft={2}
+          width={cols - 10}
+        >
+          {content}
+        </Box>
+      )}
       {shouldShowDone && (
         <Box flexDirection="row">
           {durationText && toolResult.durationMs > 1000 ? (
-            <Text dimColor={!!toolResult.result} color={statusColor}>{`└─ Done in ${durationText}`}</Text>
+            <Text dimColor={!!toolResult.result} color={color}>{`└─ Done in ${durationText}`}</Text>
           ) : (
-            <Text dimColor={!!toolResult.result} color={statusColor}>{`└─ Done`}</Text>
+            <Text dimColor={!!toolResult.result} color={color}>{`└─ Done`}</Text>
           )}
         </Box>
       )}

@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
+import { useExplainMode } from '@/contexts/ExplainModeContext.js';
+import { Markdown } from '@/components/Markdown.js';
 
 type FileNewArgs = {
   file_path: string;
@@ -19,6 +21,7 @@ function parseArgs(call: ToolCall): FileNewArgs | null {
 export function FileNewToolContent({ call }: { call: ToolCall }) {
   const args = useMemo(() => parseArgs(call), [call]);
   const [width] = useStdoutDimensions();
+  const { explainMode } = useExplainMode();
 
   if (!args)
     return (
@@ -27,17 +30,13 @@ export function FileNewToolContent({ call }: { call: ToolCall }) {
       </Box>
     );
 
-  const lines = args.content.split('\n');
-  const maxLineNumberWidth = String(lines.length).length;
+  if (!explainMode) {
+    return null;
+  }
 
   return (
     <Box flexDirection="column" marginTop={1} width={width - 10}>
-      {lines.map((line, index) => (
-        <Box key={`line-${index}-${line}`} flexDirection="row">
-          <Text dimColor>{String(index + 1).padStart(maxLineNumberWidth, ' ')}│ </Text>
-          <Text>{line}</Text>
-        </Box>
-      ))}
+      <Markdown>{args.content}</Markdown>
     </Box>
   );
 }

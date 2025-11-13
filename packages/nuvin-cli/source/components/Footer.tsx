@@ -106,11 +106,20 @@ const FooterComponent: React.FC<FooterProps> = ({
         ) : null}
       </Box>
       {workingDirectory && (
-        <Box paddingX={1} paddingTop={0} backgroundColor={theme.footer.infoBg}>
-          <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory)}</Text>
-          <Text dimColor color={theme.footer.gitBranch}>
-            {getGitBranch(workingDirectory) && `:${getGitBranch(workingDirectory)}`}
-          </Text>
+        <Box paddingX={1} paddingTop={0} backgroundColor={theme.footer.infoBg} justifyContent="space-between">
+          <Box>
+            <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory)}</Text>
+            <Text dimColor color={theme.footer.gitBranch}>
+              {getGitBranch(workingDirectory) && `:${getGitBranch(workingDirectory)}`}
+            </Text>
+          </Box>
+          <Box>
+            <Text dimColor>
+              <Text color={theme.colors.accent}>/</Text> command{' · '}
+              <Text color={theme.colors.accent}>ESC×2</Text> stop{' · '}
+              <Text color={theme.colors.accent}>Ctrl+E</Text> show detail
+            </Text>
+          </Box>
         </Box>
       )}
     </Box>
