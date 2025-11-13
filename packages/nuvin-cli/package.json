@@ -16,12 +16,12 @@
 	"author": "Marsch Huynh <marsch.huynh@gmail.com>",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/marschhuynh/nuvin-space.git",
+		"url": "https://github.com/marschhuynh/nuvin-cli.git",
 		"directory": "packages/nuvin-cli"
 	},
-	"homepage": "https://github.com/marschhuynh/nuvin-space#readme",
+	"homepage": "https://github.com/marschhuynh/nuvin-cli#readme",
 	"bugs": {
-		"url": "https://github.com/marschhuynh/nuvin-space/issues"
+		"url": "https://github.com/marschhuynh/nuvin-cli/issues"
 	},
 	"bin": {
 		"nuvin": "dist/cli.js"
