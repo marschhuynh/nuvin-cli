@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.2.1
+
+### Patch Changes
+
+- [`5f528cd`](https://github.com/marschhuynh/nuvin-space/commit/5f528cd5274cd7058e8c3945d198db6dadb92b65) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test trusted publishing workflow configuration
+
 ## 1.2.0
 
 ### Minor Changes
