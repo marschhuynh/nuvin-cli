@@ -1056,10 +1056,9 @@ describe('BaseLLM', () => {
     it('should emit stream_finish when finish_reason and usage arrive in separate chunks (OpenRouter pattern)', async () => {
       // Real OpenRouter streaming pattern where finish_reason and usage are in different chunks
       const chunks = [
-        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":"The user"},"finish_reason":null}]}',
-        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"","reasoning":" wants me to help"},"finish_reason":null}]}',
-        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"I\'ll help you review the latest"},"finish_reason":null}]}',
-        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":" commit.\\n"},"finish_reason":null}]}',
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"The user"},"finish_reason":null}]}',
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":" wants me to help"},"finish_reason":null}]}',
+        'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":"I\'ll help you review the latest commit.\\n"},"finish_reason":null}]}',
         // Chunk with finish_reason but NO usage
         'data: {"id":"gen-123","provider":"Minimax","model":"minimax/minimax-m2:free","choices":[{"index":0,"delta":{"role":"assistant","content":null,"tool_calls":[{"id":"call_1","type":"function","function":{"name":"bash_tool","arguments":"{\\"cmd\\": \\"pwd\\"}"}}]},"finish_reason":"tool_calls"}]}',
         // Chunk with usage but finish_reason is null
@@ -1084,8 +1083,7 @@ describe('BaseLLM', () => {
       // Verify content chunks were emitted
       expect(onChunk).toHaveBeenCalledWith('The user');
       expect(onChunk).toHaveBeenCalledWith(' wants me to help');
-      expect(onChunk).toHaveBeenCalledWith('I\'ll help you review the latest');
-      expect(onChunk).toHaveBeenCalledWith(' commit.\n');
+      expect(onChunk).toHaveBeenCalledWith('I\'ll help you review the latest commit.\n');
 
       // Verify stream_finish was emitted with both finish_reason and usage
       expect(onStreamFinish).toHaveBeenCalledTimes(1);

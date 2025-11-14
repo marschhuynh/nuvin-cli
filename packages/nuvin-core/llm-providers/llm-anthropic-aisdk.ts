@@ -9,7 +9,6 @@ import {
   type TextPart,
   type ImagePart,
   type ToolCallPart,
-  type ToolResultPart,
   type FilePart,
 } from 'ai';
 import { LLMError } from './base-llm.js';
@@ -82,9 +81,11 @@ export class AnthropicAISDKLLM {
 
   private updateCredentials(result: TokenRefreshResult): void {
     if (result.type === 'success' && result.access && result.refresh && result.expires) {
-      this.opts.oauth.access = result.access;
-      this.opts.oauth.refresh = result.refresh;
-      this.opts.oauth.expires = result.expires;
+      if (this.opts.oauth) {
+        this.opts.oauth.access = result.access;
+        this.opts.oauth.refresh = result.refresh;
+        this.opts.oauth.expires = result.expires;
+      }
 
       this.opts.onTokenUpdate?.({
         access: result.access,

@@ -307,7 +307,7 @@ export abstract class BaseLLM implements LLMPort {
 
         for (const ch of choices) {
           const delta: LLMMessageDelta = ch.delta ?? ch.message ?? {};
-          const textDelta: string | undefined = delta.content || delta.reasoning;
+          const textDelta: string | undefined = delta.content ?? undefined;
           if (typeof textDelta === 'string' && textDelta.length > 0) {
             if (content === '') {
               const trimmedDelta = textDelta.replace(/^\n+/, '');

@@ -86,7 +86,7 @@ export class GithubAuthTransport implements HttpTransport {
     return messages.messages.some((msg) => isVisionMessage(msg));
   }
 
-  private makeAuthHeaders(url: string, headers?: HttpHeaders, body?: unknown): HttpHeaders {
+  private makeAuthHeaders(headers?: HttpHeaders, body?: unknown): HttpHeaders {
     const base: HttpHeaders = headers ? { ...headers } : {};
     if (this.apiKey) base.Authorization = `Bearer ${this.apiKey}`;
     // Inject standard Copilot headers for Copilot API host
@@ -146,11 +146,11 @@ export class GithubAuthTransport implements HttpTransport {
     }
 
     const fullUrl = this.buildFullUrl(url);
-    let res = await this.inner.get(fullUrl, this.makeAuthHeaders(fullUrl, headers), signal);
+    let res = await this.inner.get(fullUrl, this.makeAuthHeaders(headers), signal);
     if (res.status === 401 && this.accessToken) {
       await this.exchangeToken(signal);
       const retryUrl = this.buildFullUrl(url);
-      res = await this.inner.get(retryUrl, this.makeAuthHeaders(retryUrl, headers), signal);
+      res = await this.inner.get(retryUrl, this.makeAuthHeaders(headers), signal);
     }
     return res;
   }
@@ -162,12 +162,12 @@ export class GithubAuthTransport implements HttpTransport {
     }
 
     const fullUrl = this.buildFullUrl(url);
-    let res = await this.inner.postJson(fullUrl, body, this.makeAuthHeaders(fullUrl, headers, body), signal);
+    let res = await this.inner.postJson(fullUrl, body, this.makeAuthHeaders(headers, body), signal);
     if (res.status === 401 && this.accessToken) {
       // Refresh and retry once
       await this.exchangeToken(signal);
       const retryUrl = this.buildFullUrl(url);
-      res = await this.inner.postJson(retryUrl, body, this.makeAuthHeaders(retryUrl, headers, body), signal);
+      res = await this.inner.postJson(retryUrl, body, this.makeAuthHeaders(headers, body), signal);
     }
     return res;
   }
@@ -180,13 +180,13 @@ export class GithubAuthTransport implements HttpTransport {
 
     const fullUrl = this.buildFullUrl(url);
     // Default SSE accept header for Copilot streams if not provided
-    const hdrs = this.makeAuthHeaders(fullUrl, { Accept: 'text/event-stream', ...(headers || {}) }, body);
+    const hdrs = this.makeAuthHeaders({ Accept: 'text/event-stream', ...(headers || {}) }, body);
     let res = await this.inner.postStream(fullUrl, body, hdrs, signal);
     if (res.status === 401 && this.accessToken) {
       // Refresh and retry once
       await this.exchangeToken(signal);
       const retryUrl = this.buildFullUrl(url);
-      res = await this.inner.postStream(retryUrl, body, this.makeAuthHeaders(retryUrl, hdrs, body), signal);
+      res = await this.inner.postStream(retryUrl, body, this.makeAuthHeaders(hdrs, body), signal);
     }
     return res;
   }

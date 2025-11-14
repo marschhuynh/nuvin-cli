@@ -36,8 +36,10 @@ export class AgentRegistry {
     // Register default agents
     for (const agent of defaultAgents) {
       const complete = this.applyDefaults(agent);
-      this.agents.set(complete.id, complete);
-      this.defaultAgentIds.add(complete.id);
+      if (complete.id) {
+        this.agents.set(complete.id, complete);
+        this.defaultAgentIds.add(complete.id);
+      }
     }
 
     // Start loading agents asynchronously
@@ -133,7 +135,7 @@ export class AgentRegistry {
         if (this.validateTemplate(agent)) {
           const complete = this.applyDefaults(agent);
           // Don't overwrite default agents with file versions
-          if (!this.defaultAgentIds.has(complete.id)) {
+          if (complete.id && !this.defaultAgentIds.has(complete.id)) {
             this.agents.set(complete.id, complete);
           }
         }
@@ -174,6 +176,7 @@ export class AgentRegistry {
     }
 
     const complete = this.applyDefaults(agent);
+    // ID is always generated in applyDefaults, but check for safety
     if (!complete.id) {
       throw new Error('Failed to generate agent ID');
     }

@@ -1,5 +1,5 @@
 import type { AgentCommandRunner } from './types.js';
-import type { AgentConfig, ToolPort, LLMFactory } from '../ports.js';
+import type { AgentConfig, ToolPort, AgentEvent, LLMFactory } from '../ports.js';
 import type { ToolExecutionContext } from '../tools/types.js';
 import { AgentManager } from '../agent-manager.js';
 
@@ -18,7 +18,7 @@ export class AgentManagerCommandRunner implements AgentCommandRunner {
       this.delegatingConfig,
       this.delegatingTools,
       this.llmFactory,
-      eventPort ? (event) => eventPort.emit(event) : undefined,
+      eventPort ? (event: AgentEvent) => eventPort.emit(event) : undefined,
       this.configResolver,
     );
     return agentManager.executeTask(config, signal);

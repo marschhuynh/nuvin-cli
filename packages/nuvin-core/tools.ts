@@ -7,7 +7,6 @@ import type {
   OrchestratorAwareToolPort,
   MemoryPort,
   AgentConfig,
-  LLMPort,
   LLMFactory,
 } from './ports.js';
 import { ErrorReason } from './ports.js';
@@ -105,12 +104,17 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
           .list()
           .filter(
             (agent) =>
-              typeof agent.id === 'string' && typeof agent.name === 'string' && typeof agent.description === 'string',
+              typeof agent.id === 'string' && 
+              typeof agent.name === 'string' && 
+              typeof agent.description === 'string' &&
+              agent.id !== undefined &&
+              agent.name !== undefined &&
+              agent.description !== undefined,
           )
           .map((agent) => ({
-            id: agent.id,
-            name: agent.name,
-            description: agent.description,
+            id: agent.id!,
+            name: agent.name!,
+            description: agent.description!,
           })),
     });
 

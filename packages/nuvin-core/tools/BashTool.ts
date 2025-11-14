@@ -140,8 +140,12 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext> 
       arr.push(chunk);
     };
 
-    child.stdout.on('data', (d: Buffer) => capPush(stdout, d));
-    child.stderr.on('data', (d: Buffer) => capPush(stderr, d));
+    if (child.stdout) {
+      child.stdout.on('data', (d: Buffer) => capPush(stdout, d));
+    }
+    if (child.stderr) {
+      child.stderr.on('data', (d: Buffer) => capPush(stderr, d));
+    }
 
     const exit = new Promise<{ code: number | null; signal: string | null }>((res) => {
       child.on('close', (code, signal) => res({ code, signal }));

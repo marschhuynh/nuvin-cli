@@ -62,7 +62,7 @@ function normalizeMCPConfig(raw: unknown): MCPConfig | null {
     }
   }
 
-  if (asRecord.config && typeof asRecord.config === 'object') {
+  if ('config' in asRecord && asRecord.config && typeof asRecord.config === 'object') {
     const nested = asRecord.config as Record<string, unknown>;
     if (isValidConfig(nested)) {
       const servers = nested.mcpServers;

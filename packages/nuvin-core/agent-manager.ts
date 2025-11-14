@@ -28,8 +28,8 @@ export class AgentManager {
     private eventCallback?: (event: AgentEvent) => void,
     private configResolver?: () => Partial<AgentConfig>,
   ) {
-    if (llmFactory) {
-      this.llmResolver = new LLMResolver(llmFactory);
+    if (this.llmFactory) {
+      this.llmResolver = new LLMResolver(this.llmFactory);
     }
   }
 
