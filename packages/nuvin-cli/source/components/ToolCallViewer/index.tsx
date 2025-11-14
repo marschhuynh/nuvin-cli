@@ -107,7 +107,7 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
       {/* Tool Call Parameters */}
       {(() => {
         const ParamRenderer = getParameterRenderer();
-        return <ParamRenderer toolCall={toolCall} args={args} statusColor={statusColor} formatValue={formatValue} fullMode={explainMode} />;
+        return <ParamRenderer toolCall={toolCall} args={args} statusColor={statusColor} formatValue={formatValue} />;
       })()}
 
       {!hasResult && (

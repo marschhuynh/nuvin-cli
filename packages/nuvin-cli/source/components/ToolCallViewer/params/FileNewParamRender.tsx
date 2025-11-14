@@ -12,23 +12,12 @@ export const FileNewParamRender: React.FC<ToolParamRendererProps> = ({
   args,
   statusColor,
   formatValue,
-  fullMode = false,
 }: ToolParamRendererProps) => {
   const { content: _content, description: _description, ...displayArgs } = args;
 
   if (Object.keys(displayArgs).length === 0) {
     return null;
   }
-
-  const format = (value: unknown): string => {
-    if (!fullMode) return formatValue(value);
-    
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object' && value !== null) {
-      return JSON.stringify(value, null, 2);
-    }
-    return String(value);
-  };
 
   return (
     <Box
@@ -45,7 +34,7 @@ export const FileNewParamRender: React.FC<ToolParamRendererProps> = ({
       {Object.entries(displayArgs).map(([key, value]) => (
         <Box key={key} flexDirection="row">
           <Text dimColor>{key}: </Text>
-          <Text dimColor>{format(value)}</Text>
+          <Text dimColor>{formatValue(value)}</Text>
         </Box>
       ))}
     </Box>

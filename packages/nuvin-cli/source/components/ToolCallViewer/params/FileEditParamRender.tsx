@@ -12,7 +12,6 @@ export const FileEditParamRender: React.FC<ToolParamRendererProps> = ({
   args,
   statusColor,
   formatValue,
-  fullMode = false,
 }: ToolParamRendererProps) => {
   const filteredArgs = Object.fromEntries(
     Object.entries(args).filter(([key]) => key !== 'old_text' && key !== 'new_text' && key !== 'description'),
@@ -21,16 +20,6 @@ export const FileEditParamRender: React.FC<ToolParamRendererProps> = ({
   if (Object.keys(filteredArgs).length === 0) {
     return null;
   }
-
-  const format = (value: unknown): string => {
-    if (!fullMode) return formatValue(value);
-    
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object' && value !== null) {
-      return JSON.stringify(value, null, 2);
-    }
-    return String(value);
-  };
 
   return (
     <Box
@@ -47,7 +36,7 @@ export const FileEditParamRender: React.FC<ToolParamRendererProps> = ({
       {Object.entries(filteredArgs).map(([key, value]) => (
         <Box key={key} flexDirection="row">
           <Text dimColor>{key}: </Text>
-          <Text dimColor>{format(value)}</Text>
+          <Text dimColor>{formatValue(value)}</Text>
         </Box>
       ))}
     </Box>
