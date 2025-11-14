@@ -1,5 +1,71 @@
 # @nuvin/nuvin-cli
 
+## 1.4.0
+
+### Minor Changes
+
+- [`8a1b3c9`](https://github.com/marschhuynh/nuvin-space/commit/8a1b3c95e8e7e501ae24d7030f9d26aed5548ecf) Thanks [@marschhuynh](https://github.com/marschhuynh)! - **Help Bar Feature:**
+
+  - Add help bar above input area showing keyboard shortcuts
+    - Displays 'Ctrl+E show detail · ESC×2 stop · / command'
+    - Uses single border line for clean appearance
+    - Highlighted shortcuts in accent color
+
+  **Tool Result Display Improvements:**
+
+  - Simplify file_new display to match file_read pattern
+    - Normal mode: Shows only file path and status (└─ Created)
+    - Explain mode: Shows full file content with Markdown rendering
+    - Add FileNewRenderer for better tool result visualization
+    - Update ToolContentRenderer to conditionally render based on explain mode
+
+  **Display Refinements:**
+
+  - Clean up file_read and file_new result display
+    - Hide 'Done' line for file_read and file_new in normal mode
+    - Show 'Done' line only in explain mode when content is displayed
+    - Restructure shouldShowResult logic to separate status line from content
+
+  **Status Handling:**
+
+  - Add 'denied by user' status handling in ToolResultView
+    - Detect denial in error messages
+    - Show 'Denied' status in yellow/warning color
+    - Consistent with 'Aborted' status handling
+
+  **Explain Mode Footer:**
+
+  - Update Footer for explain mode
+    - Show only 'Ctrl+E to toggle' message when in explain mode
+    - Hide all other status info (provider, model, tokens, costs)
+    - Provides focused, minimal interface in explain mode
+
+### Patch Changes
+
+- [`8a1b3c9`](https://github.com/marschhuynh/nuvin-space/commit/8a1b3c95e8e7e501ae24d7030f9d26aed5548ecf) Thanks [@marschhuynh](https://github.com/marschhuynh)! - **Critical Fixes:**
+
+  - Fix unsafe type casting in EventBus that could cause runtime errors
+  - Add error handling for JSON parsing in ToolResultView to prevent crashes from malformed tool arguments
+  - Export `ErrorReason` enum from `@nuvin/nuvin-core` for better error categorization
+
+  **Improvements:**
+
+  - Add `ErrorReason` metadata to tool execution results for better error tracking
+  - Improve error categorization in BashTool (permission denied, not found, timeout)
+  - Better error display in ToolResultView with status icons for different error types
+  - Add fallback behavior for `useExplainMode` when used outside provider context
+  - Refactor UpdateChecker and AutoUpdater to use namespaces instead of static classes
+  - Extract magic numbers to constants in BashToolRenderer
+
+  **Code Quality:**
+
+  - Remove unnecessary biome-ignore comments
+  - Fix useMemo dependencies in ExplainModeContext
+  - Improve error messaging and user feedback throughout the application
+
+- Updated dependencies [[`8a1b3c9`](https://github.com/marschhuynh/nuvin-space/commit/8a1b3c95e8e7e501ae24d7030f9d26aed5548ecf)]:
+  - @nuvin/nuvin-core@1.1.1
+
 ## 1.3.0
 
 ### Minor Changes
