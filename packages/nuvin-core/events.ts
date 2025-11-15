@@ -49,9 +49,9 @@ export class ConsoleEventPort implements EventPort {
 }
 
 export class PersistingConsoleEventPort implements EventPort {
-  // private console = new ConsoleEventPort();
   private memory: MemoryPort<AgentEvent>;
   private maxPerConversation: number;
+  private writeQueue: Promise<void> = Promise.resolve();
 
   constructor(opts?: { memory?: MemoryPort<AgentEvent>; filename?: string; maxPerConversation?: number }) {
     this.memory =
@@ -61,16 +61,19 @@ export class PersistingConsoleEventPort implements EventPort {
   }
 
   async emit(event: AgentEvent): Promise<void> {
-    try {
-      const key = event?.conversationId ?? 'default';
-      const existing = await this.memory.get(key);
-      const next = [...existing, { ...event }];
+    this.writeQueue = this.writeQueue.then(async () => {
+      try {
+        const key = event?.conversationId ?? 'default';
+        const existing = await this.memory.get(key);
+        const next = [...existing, { ...event }];
 
-      const max = this.maxPerConversation;
-      const trimmed = max > 0 && next.length > max ? next.slice(next.length - max) : next;
-      await this.memory.set(key, trimmed);
-    } catch {
-      // ignore persistence errors
-    }
+        const max = this.maxPerConversation;
+        const trimmed = max > 0 && next.length > max ? next.slice(next.length - max) : next;
+        await this.memory.set(key, trimmed);
+      } catch {
+        // ignore persistence errors
+      }
+    });
+    return this.writeQueue;
   }
 }
