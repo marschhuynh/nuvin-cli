@@ -1,5 +1,21 @@
 # @nuvin/nuvin-cli
 
+## 1.5.0
+
+### Minor Changes
+
+- [`48331d7`](https://github.com/marschhuynh/nuvin-space/commit/48331d78cfb34167e17df70e7fb441c62d980d04) Thanks [@marschhuynh](https://github.com/marschhuynh)! - **New Features:**
+
+  - Topic analyzer now includes all previous user messages for better context analysis
+  - Conversation topics are automatically analyzed and updated after each user input
+  - `/history` command now displays conversation topics instead of last messages
+
+  **Improvements:**
+
+  - Enhanced topic analysis with full conversation history context
+  - Better topic extraction by analyzing only user messages (excluding assistant and tool messages)
+  - Session metadata now includes topic information for easier conversation identification
+
 ## 1.4.0
 
 ### Minor Changes
