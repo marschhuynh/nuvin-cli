@@ -92,7 +92,7 @@ export async function exchangeCodeForToken(code: string, verifier: string): Prom
     });
 
     if (!response.ok) {
-      const _errorText = await response.text();
+      await response.text(); // consume response body
 
       // Try fallback: maybe the state should always be verifier
       try {

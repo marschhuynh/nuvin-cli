@@ -16,7 +16,7 @@ export function highlight(
 
 	try {
 		return highlightCli(code, Object.assign({}, { language }, highlightOpts));
-	} catch (e) {
+	} catch (_e) {
 		return styleFunc(code);
 	}
 }

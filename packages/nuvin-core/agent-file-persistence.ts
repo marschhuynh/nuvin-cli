@@ -10,7 +10,7 @@ export interface AgentFilePersistenceOptions {
 /**
  * AgentFilePersistence - handles loading and saving agents to YAML files
  */
-export class AgentFilePersistence{
+export class AgentFilePersistence {
   private agentsDir: string;
 
   constructor(options: AgentFilePersistenceOptions) {
@@ -123,9 +123,7 @@ export class AgentFilePersistence{
         fs.unlinkSync(filePath);
       }
     } catch (error) {
-      throw new Error(
-        `Failed to delete agent ${agentId}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw new Error(`Failed to delete agent ${agentId}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

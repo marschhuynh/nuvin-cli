@@ -263,7 +263,7 @@ export const MCPModal: React.FC<MCPModalProps> = ({ visible, servers, allowedToo
                 return (
                   <MCPServerItem
                     item={server}
-                    isSelected={props.isSelected}
+                    isSelected={!!props.isSelected}
                     allowedCount={getServerAllowedCount(server)}
                     totalCount={server.exposedTools.length}
                   />
@@ -317,7 +317,7 @@ export const MCPModal: React.FC<MCPModalProps> = ({ visible, servers, allowedToo
                   return (
                     <MCPToolItem
                       item={toolName}
-                      isSelected={props.isSelected}
+                      isSelected={!!props.isSelected}
                       allowed={isToolAllowed(selectedServer.id, toolName)}
                       index={displayIndex}
                     />

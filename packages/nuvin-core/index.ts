@@ -55,7 +55,7 @@ export { BashTool } from './tools/BashTool.js';
 export { AgentRegistry } from './agent-registry.js';
 export { AgentManager } from './agent-manager.js';
 export { AgentFilePersistence } from './agent-file-persistence.js';
-export type { AgentTemplate, SpecialistAgentConfig, SpecialistAgentResult, AssignParams } from './agent-types.js';
+export type { AgentTemplate, CompleteAgent, SpecialistAgentConfig, SpecialistAgentResult, AssignParams } from './agent-types.js';
 export {
   DefaultDelegationService,
   DefaultDelegationPolicy,

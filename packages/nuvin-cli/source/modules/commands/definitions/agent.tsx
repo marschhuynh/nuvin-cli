@@ -118,7 +118,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       const allAgents = agentRegistry.list();
       const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
         ...agent,
-        isDefault: agentRegistry.isDefault(agent.id || ''),
+        isDefault: agentRegistry.isDefault(agent.id),
       }));
 
       setAgents(agentInfos);
@@ -421,7 +421,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
             if (renamed) {
               delete updatedConfig[editingAgentId];
             }
-            updatedConfig[newId] = wasEnabled ?? true;
+            if (newId) updatedConfig[newId] = wasEnabled ?? true;
 
             await context.config.set('agentsEnabled', updatedConfig, 'global');
             setEnabledAgents(updatedConfig);
@@ -456,7 +456,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
                   activeView: 'config',
                   navigationSource: null,
                   preservedState: {
-                    selectedAgentId: newId,
+                    selectedAgentId: newId ?? null,
                     selectedAgentIndex: selectedIndex,
                   },
                 });

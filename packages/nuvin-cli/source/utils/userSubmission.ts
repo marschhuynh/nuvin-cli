@@ -148,6 +148,7 @@ export async function prepareUserSubmission(raw: string, clipboardFiles?: Buffer
       const mimeType = inlineMatch[1];
       const base64 = sanitizeBase64(inlineMatch[2]);
       preparedAttachments.push({
+        type: 'image',
         token: attachment.token,
         mimeType,
         data: base64,
@@ -168,6 +169,7 @@ export async function prepareUserSubmission(raw: string, clipboardFiles?: Buffer
     }
     const mimeType = ensureMimeType(resolvedPath);
     preparedAttachments.push({
+      type: 'image',
       token: attachment.token,
       mimeType,
       data: fileBuffer.toString('base64'),

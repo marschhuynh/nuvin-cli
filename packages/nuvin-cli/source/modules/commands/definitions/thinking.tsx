@@ -22,14 +22,14 @@ const applyThinkingLevel = async (level: ThinkingLevel, context: CommandContext)
       id: crypto.randomUUID(),
       type: 'info' as const,
       content: `Thinking display set to: ${level}`,
-      timestamp: new Date(),
+      metadata: { timestamp: new Date().toISOString() },
     });
   } catch (error) {
     context.eventBus.emit('ui:line', {
       id: crypto.randomUUID(),
       type: 'error' as const,
       content: `Failed to save thinking preference: ${error instanceof Error ? error.message : String(error)}`,
-      timestamp: new Date(),
+      metadata: { timestamp: new Date().toISOString() },
     });
   }
 };
@@ -105,7 +105,7 @@ export function registerThinkingCommand(registry: CommandRegistry) {
           id: crypto.randomUUID(),
           type: 'error' as const,
           content: `Invalid thinking level: "${arg}". Use: off, low, medium, or high`,
-          timestamp: new Date(),
+          metadata: { timestamp: new Date().toISOString() },
         });
         return;
       }

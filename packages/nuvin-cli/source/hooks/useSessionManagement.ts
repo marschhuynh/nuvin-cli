@@ -134,11 +134,8 @@ export const loadHistoryFromFile = async (historyFile: string): Promise<LoadResu
       const msg = cliMessages[i];
       if (msg.role === 'assistant') {
         metadata = {
-          conversationId: 'cli',
-          messageId: `msg-${i}`,
-          timestamp: new Date().toISOString(),
-          inputTokens: 0,
-          outputTokens: 0,
+          promptTokens: 0,
+          completionTokens: 0,
           totalTokens: 0,
         };
         break;

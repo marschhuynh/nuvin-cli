@@ -25,7 +25,7 @@ export function analyzeFileOperations(messages: Message[]): {
         const path = extractFilePath(tc);
         if (!path) return;
 
-        const timestamp = new Date(msg.timestamp);
+        const timestamp = msg.timestamp ? new Date(msg.timestamp) : new Date();
 
         if (tc.function.name === 'file_read') {
           reads.push({ path, timestamp, message: msg, operation: 'read' });

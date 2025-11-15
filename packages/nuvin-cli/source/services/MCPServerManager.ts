@@ -198,7 +198,9 @@ export class MCPServerManager {
 
     const promises = servers.map(async (serverInfo, index) => {
       try {
-        await serverInfo.client.disconnect();
+        if (serverInfo.client) {
+          await serverInfo.client.disconnect();
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         this.logError(`Error disconnecting MCP server ${index + 1}: ${message}`);
@@ -211,7 +213,7 @@ export class MCPServerManager {
 
   async disconnectServer(serverId: string): Promise<boolean> {
     const serverInfo = this.servers.get(serverId);
-    if (!serverInfo) return false;
+    if (!serverInfo || !serverInfo.client) return false;
 
     try {
       await serverInfo.client.disconnect();
@@ -291,7 +293,7 @@ export class MCPServerManager {
       type: 'info',
       content,
       metadata: { timestamp: new Date().toISOString() },
-      color: theme.colors[color] ?? theme.tokens.green,
+      color: (theme.colors as unknown as Record<string, string>)[color] ?? theme.tokens.green,
     });
   }
 

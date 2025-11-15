@@ -43,7 +43,7 @@ export const AgentList: React.FC<AgentListProps> = ({ agents, selectedAgentIndex
                 bold={isSelected}
               >
                 {isSelected ? '› ' : '  '}
-                {agent.name || agent.id}
+                {agent.name}
               </Text>
             </Box>
           </Box>

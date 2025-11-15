@@ -5,10 +5,10 @@ export const TABLE_CELL_SPLIT = '^*||*^';
 export const TABLE_ROW_WRAP = '*|*|*|*';
 export const TABLE_ROW_WRAP_REGEXP = new RegExp(escapeRegExp(TABLE_ROW_WRAP), 'g');
 
-export function generateTableRow(text: string, escape?: (text: string) => string): string[][] {
+export function generateTableRow(text: string, escapeFunc?: (text: string) => string): string[][] {
 	if (!text) return [];
-	escape = escape || identity;
-	const lines = escape(text).split('\n');
+	const escaper = escapeFunc || identity;
+	const lines = escaper(text).split('\n');
 
 	const data: string[][] = [];
 	lines.forEach((line) => {

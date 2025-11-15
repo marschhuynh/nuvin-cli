@@ -190,9 +190,9 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey 
 
   const noopToggle = useCallback(() => {}, []);
 
-  // Memoize message items with type to avoid recreating on every render
+  // Memoize message items to avoid recreating on every render
   const staticMessagesWithType = useMemo(
-    () => staticItems.map((item) => ({ type: 'message' as const, ...item })),
+    () => staticItems,
     [staticItems],
   );
 

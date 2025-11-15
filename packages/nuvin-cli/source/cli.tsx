@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import type { MCPConfig } from '@nuvin/nuvin-core';
+import type { AuthMethod } from './config/types.js';
 import App from './app.js';
 import { NotificationProvider } from './contexts/NotificationContext.js';
 import { ToolApprovalProvider } from './contexts/ToolApprovalContext.js';
@@ -141,7 +142,7 @@ const cli = meow(
   const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
     const providers = config.providers || {};
     return Object.values(providers).some(
-      (p) => Array.isArray(p.auth) && p.auth.length > 0 && p.auth.some((a) => a['api-key']),
+      (p) => Array.isArray(p.auth) && p.auth.length > 0 && p.auth.some((a) => a.type === 'api-key' && a['api-key']),
     );
   };
 
@@ -267,9 +268,9 @@ const cli = meow(
       const existingProviderConfig = fileConfig.providers?.[targetProvider];
       const existingAuth = existingProviderConfig?.auth || [];
 
-      const updatedAuth = existingAuth.filter((a: any) => a.type !== 'api-key');
+      const updatedAuth = existingAuth.filter((a) => a.type !== 'api-key') as AuthMethod[];
       updatedAuth.push({
-        type: 'api-key' as const,
+        type: 'api-key',
         'api-key': apiKeyFromFlags,
       });
 

@@ -52,9 +52,11 @@ export const useAgentModalKeyboard = ({
       if (input === ' ') {
         if (agents[state.selectedAgentIndex]) {
           const currentAgent = agents[state.selectedAgentIndex];
-          const newValue = state.localEnabledAgents[currentAgent.id] === false;
-          actions.toggleAgent(currentAgent.id);
-          onAgentStatusChange?.(currentAgent.id, newValue);
+          if (currentAgent.id) {
+            const newValue = state.localEnabledAgents[currentAgent.id] === false;
+            actions.toggleAgent(currentAgent.id);
+            onAgentStatusChange?.(currentAgent.id, newValue);
+          }
         }
         return;
       }

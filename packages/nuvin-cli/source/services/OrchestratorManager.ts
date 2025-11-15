@@ -81,7 +81,7 @@ export type UIHandlers = {
   appendLine: (line: MessageLine) => void;
   updateLine: (id: string, content: string) => void;
   updateLineMetadata: (id: string, metadata: Partial<LineMetadata>) => void;
-  setLastMetadata: (metadata: MessageMetadata) => void;
+  setLastMetadata: (metadata: MessageMetadata | null) => void;
   handleError: (message: string) => void;
 };
 
@@ -291,11 +291,9 @@ export class OrchestratorManager {
       
       const availableAgents = agentRegistry
         .list()
-        .filter((agent) => agent.id && agent.name && agent.description)
         .filter((agent) => {
           // Include agent if it's enabled or if no explicit config exists (default to enabled)
-          const agentId = agent.id as string;
-          return enabledAgentsConfig[agentId] !== false; // Include if true or undefined
+          return enabledAgentsConfig[agent.id] !== false; // Include if true or undefined
         })
         .map((agent) => ({
           id: agent.id as string,
@@ -829,7 +827,7 @@ Respond with only the topic, no explanation.`;
     const llm = this.createLLM(httpLogFile);
 
     const topicMemory = new InMemoryMemory<Message>();
-    const topicTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ filePersistence: null }) });
+    const topicTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ filePersistence: undefined }) });
 
     const topicConfig = {
       id: 'topic-analyzer',
@@ -851,7 +849,6 @@ Respond with only the topic, no explanation.`;
       clock: new SystemClock(),
       cost: new SimpleCost(),
       reminders: new NoopReminders(),
-      events: null,
     };
 
     const topicOrchestrator = new AgentOrchestrator(topicConfig, topicDeps);
@@ -943,7 +940,7 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const llm = this.createLLM(httpLogFile);
 
     const summaryMemory = new InMemoryMemory<Message>();
-    const summaryTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ filePersistence: null }) });
+    const summaryTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ filePersistence: undefined }) });
 
     const summaryConfig = {
       id: 'summary-agent',
@@ -965,7 +962,6 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
       clock: new SystemClock(),
       cost: new SimpleCost(),
       reminders: new NoopReminders(),
-      events: null,
     };
 
     const summaryOrchestrator = new AgentOrchestrator(summaryConfig, summaryDeps);

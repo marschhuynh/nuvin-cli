@@ -36,17 +36,18 @@ describe('Footer Sudo Mode Logic', () => {
   it('should toggle SUDO display correctly when toolApprovalMode changes', () => {
     // Initial state: tool approval required (sudo OFF)
     let toolApprovalMode = true;
-    let statusText = ['echo', 'test-model', 'OFF' !== 'OFF' ? `Thinking: OFF` : '', !toolApprovalMode ? 'SUDO' : ''].filter(Boolean);
+    const thinkingLevel = 'OFF';
+    let statusText = ['echo', 'test-model', thinkingLevel !== 'OFF' ? `Thinking: ${thinkingLevel}` : '', !toolApprovalMode ? 'SUDO' : ''].filter(Boolean);
     expect(statusText).not.toContain('SUDO');
 
     // Toggle: disable tool approval (sudo ON)
     toolApprovalMode = false;
-    statusText = ['echo', 'test-model', 'OFF' !== 'OFF' ? `Thinking: OFF` : '', !toolApprovalMode ? 'SUDO' : ''].filter(Boolean);
+    statusText = ['echo', 'test-model', thinkingLevel !== 'OFF' ? `Thinking: ${thinkingLevel}` : '', !toolApprovalMode ? 'SUDO' : ''].filter(Boolean);
     expect(statusText).toContain('SUDO');
 
     // Toggle back: enable tool approval (sudo OFF)
     toolApprovalMode = true;
-    statusText = ['echo', 'test-model', 'OFF' !== 'OFF' ? `Thinking: OFF` : '', !toolApprovalMode ? 'SUDO' : ''].filter(Boolean);
+    statusText = ['echo', 'test-model', thinkingLevel !== 'OFF' ? `Thinking: ${thinkingLevel}` : '', !toolApprovalMode ? 'SUDO' : ''].filter(Boolean);
     expect(statusText).not.toContain('SUDO');
   });
 

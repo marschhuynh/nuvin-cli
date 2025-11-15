@@ -13,7 +13,7 @@ import { useExplainMode } from '@/contexts/ExplainModeContext.js';
 
 type FooterProps = {
   status: string;
-  lastMetadata?: MessageMetadata;
+  lastMetadata?: MessageMetadata | null;
   accumulatedCost?: number;
   toolApprovalMode?: boolean;
   vimModeEnabled?: boolean;

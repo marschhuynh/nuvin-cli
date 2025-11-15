@@ -75,7 +75,7 @@ export default function App({
   const handleSetLastMetadata = useCallback((metadata: MessageMetadata | null) => {
     setLastMetadata(metadata);
     if (metadata?.cost && metadata.cost > 0) {
-      setAccumulatedCost((prev) => prev + metadata.cost);
+      setAccumulatedCost((prev) => prev + (metadata.cost ?? 0));
     }
   }, []);
 
@@ -374,11 +374,11 @@ export default function App({
     previousVimModeRef.current = vimModeEnabled;
   }, [vimModeEnabled]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cols dependency intentionally excluded to avoid re-renders
   useEffect(() => {
     if (!cols || cols < 10) return;
     try {
-      // console.log(ansiEscapes.clearTerminal);
+      console.log(ansiEscapes.clearTerminal);
       onViewRefresh();
     } catch (error) {
       console.warn('Error during resize refresh, continuing with safe state:', error);

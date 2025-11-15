@@ -1,12 +1,13 @@
 import { EventEmitter } from 'node:events';
 import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
+import type { ToolCall } from '@nuvin/nuvin-core';
 
 type EventMap = {
   'ui:line': MessageLine;
   'ui:lastMetadata': MessageMetadata | null;
   'ui:error': string;
   'ui:toolApprovalRequired': {
-    toolCalls: unknown[];
+    toolCalls: ToolCall[];
     approvalId: string;
     conversationId: string;
     messageId: string;

@@ -6,6 +6,10 @@ import { commandRegistry } from '@/modules/commands/registry.js';
 import { prepareUserSubmission } from '@/utils/userSubmission.js';
 import type { MessageLine } from '@/adapters/index.js';
 
+declare global {
+  var __clipboardFiles: Buffer[] | undefined;
+}
+
 export function useHandleSubmit(deps: {
   appendLine: (line: MessageLine) => void;
   handleError: (message: string) => void;

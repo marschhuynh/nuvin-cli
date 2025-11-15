@@ -20,14 +20,20 @@ export type AgentTemplate = {
   // Sampling parameters (optional - inherits if not specified)
   temperature?: number; // Default temperature (defaults to 0.7)
   maxTokens?: number; // Default token limit (defaults to 4000)
-  topP?: number; // Top-p sampling
-
-  // Execution settings
-  timeoutMs?: number; // Max execution time (default: 5min)
-  shareContext?: boolean; // Share conversation context (default: false)
-
-  metadata?: Record<string, unknown>; // Additional configuration
+  topP?: number;
+  timeoutMs?: number;
+  shareContext?: boolean;
+  metadata?: Record<string, unknown>;
 };
+
+/**
+ * CompleteAgent is an AgentTemplate with all required fields populated
+ * Used for registered agents that have gone through applyDefaults()
+ */
+export type CompleteAgent = Required<
+  Pick<AgentTemplate, 'id' | 'name' | 'description' | 'systemPrompt' | 'tools' | 'temperature' | 'maxTokens'>
+> &
+  Pick<AgentTemplate, 'provider' | 'model' | 'topP' | 'timeoutMs' | 'shareContext' | 'metadata'>;
 
 /**
  * Specialist Agent Configuration (Internal - used by AgentManager)

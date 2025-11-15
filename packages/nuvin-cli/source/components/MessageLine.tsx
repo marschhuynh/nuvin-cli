@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import { ToolCallViewer } from './ToolCallViewer/index.js';
 import { SubAgentActivity } from './SubAgentActivity.js';
 import type { SubAgentState } from '@/utils/eventProcessor.js';
-import { useStreamingMarkdown } from '@/hooks/index.js';
+// import { useStreamingMarkdown } from '@/hooks/index.js';
 
 type MessageLineProps = {
   key: string;
@@ -21,7 +21,8 @@ type MessageLineProps = {
 const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor }) => {
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
-  const streamingContent = useStreamingMarkdown(message.content, isStreaming);
+  // const streamingContent = useStreamingMarkdown(message.content, isStreaming);
+  const streamingContent = message.content;
 
   const renderMessage = () => {
     switch (message.type) {

@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from 'ink';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import SelectInput from './SelectInput/index.js';
 import { ComboBox } from './ComboBox/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
@@ -7,19 +7,13 @@ import { useConfig } from '@/contexts/ConfigContext.js';
 import Gradient from 'ink-gradient';
 import { getVersion } from '@/utils/version.js';
 import type { ProviderKey } from '@/config/const.js';
-import {
-  PROVIDER_AUTH_METHODS,
-  PROVIDER_MODELS,
-  PROVIDER_OPTIONS,
-  getProviderAuthMethods,
-  getProviderModels,
-  type AuthMethod,
-} from '@/const.js';
+import { PROVIDER_OPTIONS, getProviderAuthMethods, getProviderModels, type AuthMethod } from '@/const.js';
 import { exchangeCodeForToken, createApiKey } from '@/modules/commands/definitions/auth/anthropic-oauth.js';
 import { DeviceFlowUI, OAuthUI, TokenInputUI } from './auth/index.js';
 import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
 import { useOAuth } from '@/hooks/useOAuth.js';
 import { useAuthStorage } from '@/hooks/useAuthStorage.js';
+import type { LLMFactoryInterface } from '@/services/LLMFactory.js';
 
 const LOGO = `Welcome to
 ███╗   ██╗ ██╗   ██╗ ██╗   ██╗ ██╗ ███╗   ██╗
@@ -41,7 +35,7 @@ type SetupStep =
 interface SelectItem {
   value: string;
   label: string;
-  key: string;
+  key?: string;
   description?: string;
 }
 
@@ -135,7 +129,7 @@ const AuthMethodItem: React.FC<Pick<SelectInputItemProps, 'isSelected' | 'label'
 
 type Props = {
   onComplete: () => void;
-  llmFactory?: any;
+  llmFactory?: LLMFactoryInterface;
 };
 
 export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
@@ -235,7 +229,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
     }
   };
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     if (!llmFactory) {
       setAvailableModels([]);
       setStep('model');
@@ -246,6 +240,9 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
     setFetchError(null);
 
     try {
+      if (!llmFactory?.getModels) {
+        throw new Error('LLM factory does not support getModels');
+      }
       const modelIds = await llmFactory.getModels(selectedProvider);
       setAvailableModels(modelIds);
       setStep('model');
@@ -254,7 +251,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
       setAvailableModels([]);
       setStep('model');
     }
-  };
+  }, [llmFactory, selectedProvider]);
 
   const handleTokenSubmit = async (value: string) => {
     if (!value.trim()) return;
@@ -279,6 +276,10 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
       }
 
       if (oauthMode === 'console') {
+        if (!credentials.access) {
+          console.error('No access token received');
+          return;
+        }
         const apiKeyResult = await createApiKey(credentials.access);
         if (apiKeyResult.type === 'failed' || !apiKeyResult.key) {
           console.error('Failed to create API key');
@@ -286,6 +287,10 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
         }
         await saveApiKeyAuth(selectedProvider, apiKeyResult.key);
       } else {
+        if (!credentials.access || !credentials.refresh) {
+          console.error('Missing OAuth credentials');
+          return;
+        }
         await saveOAuthAuth(selectedProvider, credentials.access, credentials.refresh, credentials.expires);
       }
 
@@ -318,7 +323,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
         await fetchModels();
       })();
     }
-  }, [deviceFlowState.status, step, deviceFlowState, selectedProvider, saveApiKeyAuth]);
+  }, [deviceFlowState.status, step, deviceFlowState, selectedProvider, saveApiKeyAuth, fetchModels]);
 
   return (
     <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
@@ -369,7 +374,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
               };
             })}
             itemComponent={({ isSelected, ...item }) => (
-              <ProviderItem isSelected={isSelected} {...(item as SelectItem)} />
+              <ProviderItem isSelected={!!isSelected} {...(item as SelectItem)} />
             )}
             onSelect={handleProviderSubmit}
           />
@@ -392,7 +397,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
               description: AUTH_METHOD_DESCRIPTIONS[method.value],
             }))}
             itemComponent={({ isSelected, ...item }) => (
-              <AuthMethodItem isSelected={isSelected} {...(item as SelectItem)} />
+              <AuthMethodItem isSelected={!!isSelected} {...(item as SelectItem)} />
             )}
             onSelect={handleAuthMethodSubmit}
           />

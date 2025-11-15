@@ -10,6 +10,7 @@ export function reflowText(text: string, width: number, gfm?: boolean): string {
   const reflowed: string[] = [];
 
   sections.forEach((section) => {
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences are intentional for terminal formatting
     const fragments = section.split(/(\u001b\[(?:\d{1,3})(?:;\d{1,3})*m)/g);
     let column = 0;
     let currentLine = '';

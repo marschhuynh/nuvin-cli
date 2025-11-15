@@ -86,15 +86,18 @@ const MCPCommandComponent = ({ context, deactivate }: CommandComponentProps) => 
               const config = JSON.parse(configContent);
               if (config.mcpServers) {
                 const placeholderServers: MCPServerInfo[] = Object.entries(config.mcpServers).map(
-                  ([serverId, serverConfig]: [string, { prefix?: string }]) => ({
-                    id: serverId,
-                    client: null,
-                    port: null,
-                    exposedTools: [],
-                    allowedTools: [],
-                    prefix: serverConfig.prefix || `mcp_${serverId}_`,
-                    status: 'pending' as const,
-                  }),
+                  ([serverId, serverConfig]) => {
+                    const cfg = serverConfig as { prefix?: string } | undefined;
+                    return {
+                      id: serverId,
+                      client: null,
+                      port: null,
+                      exposedTools: [],
+                      allowedTools: [],
+                      prefix: cfg?.prefix || `mcp_${serverId}_`,
+                      status: 'pending' as const,
+                    };
+                  },
                 );
                 setServers(placeholderServers);
                 return;

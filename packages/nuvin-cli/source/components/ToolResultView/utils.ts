@@ -1,6 +1,7 @@
 import { stripAnsiAndControls } from '@/utils.js';
+import type { ToolExecutionResult } from '@nuvin/nuvin-core';
 
-export const parseDetailLines = ({ status, messageContent, toolResult }) => {
+export const parseDetailLines = ({ status, messageContent, toolResult }: { status: string; messageContent?: string; toolResult: ToolExecutionResult }) => {
   let result: string[] = [];
 
   if (status !== 'success') {

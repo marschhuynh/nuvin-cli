@@ -7,7 +7,6 @@ import { InputArea, type InputAreaHandle } from './InputArea.js';
 import { useCommand } from '@/modules/commands/hooks/useCommand.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 type InteractionAreaProps = {
   busy?: boolean;
@@ -46,7 +45,6 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   const { commands } = useCommand();
   const { pendingApproval, toolApprovalMode, handleApprovalResponse } = useToolApproval();
   const { theme } = useTheme();
-  const [cols] = useStdoutDimensions();
 
   const escStageRef = useRef<'none' | 'armed-clear' | 'armed-stop'>('none');
   const [queuedMessages, setQueuedMessages] = useState<string[]>([]);
@@ -68,9 +66,9 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
     async (value: string) => {
       if (busy && !value.startsWith('/')) {
         setQueuedMessages((prev) => [...prev, value]);
-        onNotification(`Message queued, will be sent when current request completes`, 1000);
+        onNotification?.(`Message queued, will be sent when current request completes`, 1000);
       } else {
-        await onInputSubmit(value);
+        await onInputSubmit?.(value);
       }
     },
     [busy, onNotification, onInputSubmit],

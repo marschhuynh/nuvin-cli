@@ -280,7 +280,7 @@ export function DiffLineView({ line, maxWidth = 80, lineNumWidth = 3 }: DiffLine
           const text = segment.text.replace(/\t/g, '  ');
 
           return (
-            <Text key={`seg-${segIdx}`} backgroundColor={segmentBg} color={segmentFg}>
+            <Text key={`${lineNum}-${segIdx}-${segment.type}`} backgroundColor={segmentBg} color={segmentFg}>
               {text}
             </Text>
           );

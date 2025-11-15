@@ -210,7 +210,7 @@ export const HistorySelection: React.FC<HistorySelectionProps> = ({ availableSes
               }
             }
             return (
-              <SessionItem cols={cols - 2} item={props.value} isSelected={props.isSelected} />
+              <SessionItem cols={cols - 2} item={props.value} isSelected={!!props.isSelected} />
             );
           }}
           onSelect={(item) => eventBus.emit('ui:history:selected', item.value)}

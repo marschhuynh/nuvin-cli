@@ -8,6 +8,31 @@ export interface AgentCreationResult {
 }
 
 /**
+ * Generate 4 random characters from a-zA-Z0-9
+ */
+function generateRandomSuffix(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 4; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+/**
+ * Generate unique agent ID with random suffix
+ */
+function generateAgentId(name?: string): string {
+  const baseId = name
+    ? name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+    : 'agent';
+  return `${baseId}-${generateRandomSuffix()}`;
+}
+
+/**
  * AgentCreator - service for LLM-assisted agent creation
  */
 export class AgentCreator {
@@ -35,7 +60,6 @@ export class AgentCreator {
         model,
         messages,
         temperature: 0.7,
-        maxTokens: 2000,
         topP: 1,
       });
 
@@ -69,6 +93,10 @@ export class AgentCreator {
           error: 'LLM did not generate required field: systemPrompt',
         };
       }
+
+      // Ensure agent ID has random suffix
+      const name = agentConfig.name || agentConfig.id;
+      agentConfig.id = generateAgentId(name);
 
       return {
         success: true,

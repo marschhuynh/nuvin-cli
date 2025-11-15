@@ -1,4 +1,3 @@
-import { identity, textLength } from './text-utils.js';
 
 const BULLET_POINT_REGEX = '\\*';
 const NUMBERED_POINT_REGEX = '\\d+\\.';
@@ -21,7 +20,7 @@ function bulletPointLines(lines: string, indent: string): string {
   const transform = (line: string) => bulletPointLine(indent, line);
   return lines
     .split('\n')
-    .filter((line) => textLength(line.trim()) > 0)
+    .filter((line) => line.trim().length > 0)
     .map(transform)
     .join('\n');
 }
@@ -46,7 +45,7 @@ function numberedLines(lines: string, indent: string): string {
   let num = 0;
   return lines
     .split('\n')
-    .filter((line) => textLength(line.trim()) > 0)
+    .filter((line) => line.trim().length > 0)
     .map((line) => {
       const numbered = numberedLine(indent, line, num);
       num = numbered.num;

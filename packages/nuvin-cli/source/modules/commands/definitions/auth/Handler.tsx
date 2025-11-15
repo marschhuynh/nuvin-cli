@@ -6,7 +6,6 @@ import type { CommandComponentProps } from '@/modules/commands/types.js';
 import {
   PROVIDER_ITEMS,
   PROVIDER_LABELS,
-  PROVIDER_AUTH_METHODS,
   getProviderAuthMethods,
   type ProviderKey,
   type AuthMethod,
@@ -213,7 +212,7 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
         }
       })();
     }
-  }, [deviceFlowState.status, stage, provider, deviceFlowState.token, saveApiKeyAuth, resetToProviderStage]);
+  }, [deviceFlowState, stage, provider, saveApiKeyAuth, resetToProviderStage]);
 
   const renderStage = () => {
     switch (stage) {

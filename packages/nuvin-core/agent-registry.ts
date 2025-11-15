@@ -1,4 +1,4 @@
-import type { AgentTemplate } from './agent-types.js';
+import type { AgentTemplate, CompleteAgent } from './agent-types.js';
 import type { MemoryPort } from './ports.js';
 import type { AgentFilePersistence } from './agent-file-persistence.js';
 
@@ -22,7 +22,7 @@ function generateIdFromName(name?: string): string | null {
  * AgentRegistry - manages registered specialist agent configurations
  */
 export class AgentRegistry {
-  private agents = new Map<string, AgentTemplate>();
+  private agents = new Map<string, CompleteAgent>();
   private defaultAgentIds = new Set<string>();
   private persistence?: MemoryPort<AgentTemplate>;
   private filePersistence?: AgentFilePersistence;
@@ -74,7 +74,7 @@ export class AgentRegistry {
    * Apply defaults to a partial agent template
    * Only systemPrompt is required; all other fields get defaults
    */
-  applyDefaults(partial: Partial<AgentTemplate> & { systemPrompt: string }): AgentTemplate {
+  applyDefaults(partial: Partial<AgentTemplate> & { systemPrompt: string }): CompleteAgent {
     const id = partial.id || generateIdFromName(partial.name) || `agent-${Date.now()}`;
     const name = partial.name || 'Custom Agent';
     const description = partial.description || 'Custom specialist agent';
@@ -187,13 +187,9 @@ export class AgentRegistry {
   /**
    * Save agent to file
    */
-  async saveToFile(agent: AgentTemplate): Promise<void> {
+  async saveToFile(agent: CompleteAgent): Promise<void> {
     if (!this.filePersistence) {
       throw new Error('File persistence not configured');
-    }
-
-    if (!agent.id) {
-      throw new Error('Cannot save agent without ID');
     }
 
     if (this.defaultAgentIds.has(agent.id)) {
@@ -241,14 +237,14 @@ export class AgentRegistry {
   /**
    * Get an agent template by ID
    */
-  get(agentId: string): AgentTemplate | undefined {
+  get(agentId: string): CompleteAgent | undefined {
     return this.agents.get(agentId);
   }
 
   /**
    * List all registered agent templates
    */
-  list(): AgentTemplate[] {
+  list(): CompleteAgent[] {
     return Array.from(this.agents.values());
   }
 

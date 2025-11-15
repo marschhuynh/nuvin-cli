@@ -124,7 +124,7 @@ export class AgentManager {
 
     // Get fresh config values if resolver is available
     const freshConfig = this.configResolver?.() ?? {};
-    
+
     // Create specialist agent config
     const specialistConfig: AgentConfig = {
       id: agentId,
@@ -242,7 +242,9 @@ export class AgentManager {
    */
   private resolveLLM(config: SpecialistAgentConfig): LLMPort {
     if (!this.llmResolver) {
-      throw new Error('AgentManager requires LLMFactory to create sub-agents. Please provide llmFactory in constructor.');
+      throw new Error(
+        'AgentManager requires LLMFactory to create sub-agents. Please provide llmFactory in constructor.',
+      );
     }
     return this.llmResolver.resolve(config);
   }

@@ -10,7 +10,7 @@ type FileEditRendererProps = {
   fullMode?: boolean;
 };
 
-export const FileEditRenderer: React.FC<FileEditRendererProps> = ({ toolResult, toolCall, fullMode = false }) => {
+export const FileEditRenderer: React.FC<FileEditRendererProps> = ({ toolResult, toolCall }) => {
   // Parse tool call arguments
   let args: {
     file_path?: string;
@@ -34,18 +34,12 @@ export const FileEditRenderer: React.FC<FileEditRendererProps> = ({ toolResult, 
       }
     | undefined;
 
-  const toolCallMetadata = toolCall?.metadata as
-    | {
-        lineNumbers?: LineNumbers;
-      }
-    | undefined;
-
   // Check if we have the necessary data (allow empty strings for new_text - it could be a deletion)
   if (!args || args.old_text === undefined || args.new_text === undefined) {
     return null;
   }
 
-  const lineNumbers = resultMetadata?.lineNumbers || toolCallMetadata?.lineNumbers;
+  const lineNumbers = resultMetadata?.lineNumbers;
 
   return (
     <Box flexDirection="column">

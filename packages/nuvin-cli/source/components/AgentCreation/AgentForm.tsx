@@ -7,6 +7,8 @@ import { ToolSelectInput } from './ToolSelectInput.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
+type EditingField = 'name' | 'id' | 'description' | 'systemPrompt' | 'tools' | 'model' | 'temperature';
+
 interface AgentFormProps {
   mode: 'create' | 'edit';
   preview: Partial<AgentTemplate> & { systemPrompt: string };
@@ -21,7 +23,7 @@ interface AgentFormProps {
   editedModel: string;
   error?: string;
   onFieldChange: (field: string, value: string) => void;
-  onFieldSubmit: (field: string) => void;
+  onFieldSubmit: (field: EditingField) => void;
   onToolsChange: (tools: string[]) => void;
 }
 

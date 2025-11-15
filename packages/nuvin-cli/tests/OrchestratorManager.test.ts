@@ -35,6 +35,7 @@ const createMockConfigManager = () => {
     }),
     get: vi.fn().mockReturnValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
+  // biome-ignore lint/suspicious/noExplicitAny: test mock
   } as any;
 };
 

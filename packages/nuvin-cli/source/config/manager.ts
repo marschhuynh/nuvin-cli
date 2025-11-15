@@ -132,7 +132,7 @@ export class ConfigManager {
   async set(key: string, value: unknown, scope: ConfigScope = 'global'): Promise<void> {
     if (scope === 'direct' || scope === 'env') {
       // For runtime scopes, just update in memory without persisting
-      const patch = this.createNestedObject(key, value);
+      const patch = this.createNestedObject(key, value) as Partial<CLIConfig>;
       const currentScope = this.scopeData[scope]?.data ?? {};
       const merged = mergeConfigs([currentScope, patch]);
       this.loadConfig(merged, scope);
@@ -143,7 +143,7 @@ export class ConfigManager {
       throw new Error('Cannot set to explicit config because no --config file was loaded.');
     }
 
-    const patch = this.createNestedObject(key, value);
+    const patch = this.createNestedObject(key, value) as Partial<CLIConfig>;
     await this.update(scope, patch);
   }
 

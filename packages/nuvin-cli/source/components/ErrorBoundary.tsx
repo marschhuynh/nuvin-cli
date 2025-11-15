@@ -6,7 +6,7 @@ import { autoExportHistory } from '@/utils/autoExport.js';
 interface Props {
   children: React.ReactNode;
   fallback?: React.ReactNode;
-  memory?: MemoryPort;
+  memory?: MemoryPort | null;
 }
 
 interface State {

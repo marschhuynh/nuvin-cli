@@ -46,7 +46,8 @@ class MarkdownProvider {
     );
 
     const originalText = renderer.renderer.text;
-    renderer.renderer.text = function (text: string | { tokens?: unknown[] }) {
+    // biome-ignore lint/suspicious/noExplicitAny: marked library has complex internal types
+    renderer.renderer.text = function (this: any, text: string | { tokens?: unknown[] }) {
       if (
         typeof text === 'object' &&
         text.tokens &&
@@ -57,7 +58,8 @@ class MarkdownProvider {
         return this.parser.parseInline(text.tokens);
       }
       return originalText.call(this, text);
-    };
+    // biome-ignore lint/suspicious/noExplicitAny: marked library requires type assertion
+    } as any;
 
     this.markedInstance.use(renderer);
   }

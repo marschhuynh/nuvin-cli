@@ -5,12 +5,20 @@ import {
   supportsGetModels,
   getAvailableProviders,
   type LLMPort,
-  type CustomProviderDefinition,
 } from '@nuvin/nuvin-core';
 import type { ConfigManager } from '@/config/manager.js';
 import type { ProviderKey } from './OrchestratorManager.js';
 import type { AuthMethod, ProviderConfig } from '@/config/types.js';
 import { getVersion } from '@/utils/version.js';
+
+// Local type definitions since they are not exported from nuvin-core
+type ModelConfig = false | true | string | string[] | Array<{ id: string; name?: string; [key: string]: unknown }>;
+
+type CustomProviderDefinition = {
+  type?: 'openai-compat' | 'anthropic';
+  baseUrl?: string;
+  models?: ModelConfig;
+};
 
 export type LLMConfig = {
   provider: ProviderKey;
@@ -166,7 +174,7 @@ export class LLMFactory implements LLMFactoryInterface {
         });
 
       default:
-        if (customProviders && customProviders[provider]) {
+        if (customProviders?.[provider]) {
           return createLLM(
             provider,
             {
@@ -196,7 +204,7 @@ export class LLMFactory implements LLMFactoryInterface {
 
     const llm = createLLM(provider, { apiKey: config.apiKey }, customProviders);
 
-    if ('getModels' in llm && typeof llm.getModels === 'function') {
+    if (llm && 'getModels' in llm && typeof llm.getModels === 'function') {
       const models = await llm.getModels(signal);
       return models.map((m: { id: string }) => m.id);
     }

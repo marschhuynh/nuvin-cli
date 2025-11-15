@@ -1,7 +1,6 @@
-import type { Provider, ProviderKey } from './config/providers.js';
+import type { ProviderKey } from './config/providers.js';
 
 export {
-  type ProviderKey,
   type ProviderKey,
   type ProviderItem,
   PROVIDER_ITEMS,

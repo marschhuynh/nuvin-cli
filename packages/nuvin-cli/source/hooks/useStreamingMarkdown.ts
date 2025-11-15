@@ -7,8 +7,8 @@ interface StreamingOptions {
 }
 
 export const useStreamingMarkdown = (content: string, isStreaming: boolean, options: StreamingOptions = {}) => {
-  const { debounceMs = 100 } = options;
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { debounceMs: _debounceMs = 100 } = options;
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastContentRef = useRef<string>('');
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export const useStreamingMarkdown = (content: string, isStreaming: boolean, opti
 
     lastContentRef.current = content;
     return content;
-  }, [content, isStreaming, debounceMs]);
+  }, [content, isStreaming]);
 
   return debouncedContent;
 };

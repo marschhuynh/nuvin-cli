@@ -160,9 +160,12 @@ export function processMessageToUILines(msg: {
     if (typeof content === 'object' && content.type === 'parts') {
       // Extract text from parts
       const result = content.parts
-        .map((part) => {
+        .map((part: unknown) => {
           if (typeof part === 'string') return part;
-          if (part?.type === 'text' && part?.text) return part.text;
+          if (typeof part === 'object' && part !== null && 'type' in part && 'text' in part) {
+            const typedPart = part as { type: string; text: string };
+            if (typedPart.type === 'text' && typedPart.text) return typedPart.text;
+          }
           return '';
         })
         .filter(Boolean)

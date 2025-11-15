@@ -8,7 +8,6 @@ import type {
   InternalRendererOptions,
   MarkedToken,
   RendererExtension,
-  RendererContext,
   StyleFunction,
   MarkedParser,
   MarkedOptions,
@@ -89,10 +88,10 @@ class Renderer {
     return this.o.text(text);
   }
 
-  code(code: string | { text: string; lang?: string; escaped?: boolean }, lang?: string, escaped?: boolean): string {
+  code(code: string | { text: string; lang?: string; escaped?: boolean }, lang?: string, _escaped?: boolean): string {
     if (typeof code === 'object') {
       lang = code.lang;
-      escaped = !!code.escaped;
+      // const escaped = !!code.escaped; // unused
       code = code.text;
     }
     return section(indent(this.tab, highlight(code, lang, this.o.code, this.o.reflowText, this.highlightOptions)));
@@ -304,9 +303,8 @@ class Renderer {
     return this.o.del(delText);
   }
 
-  link(href: string | { href: string; title?: string; tokens: MarkedToken[] }, title?: string, text?: string): string {
+  link(href: string | { href: string; title?: string; tokens: MarkedToken[] }, _titleParam?: string, text?: string): string {
     if (typeof href === 'object') {
-      title = href.title;
       text = this.parser.parseInline(href.tokens);
       href = href.href;
     }
@@ -336,7 +334,7 @@ class Renderer {
       }
       out = ansiEscapes.link(link, href.replace(/\+/g, '%20'));
     } else {
-      if (hasText) out += `${this.emojiTransform(text)} (`;
+      if (hasText && text) out += `${this.emojiTransform(text)} (`;
       out += this.o.href(href);
       if (hasText) out += ')';
     }
@@ -395,15 +393,18 @@ export function terminalRenderer(options?: RendererOptions, highlightOptions?: H
 
   return funcs.reduce<RendererExtension>(
     (extension, func) => {
-      extension.renderer[func as string] = function (this: RendererContext, ...args: unknown[]) {
+      // biome-ignore lint/suspicious/noExplicitAny: marked library requires dynamic method signatures
+      extension.renderer[func as string] = function (this: any, ...args: unknown[]) {
         r.options = this.options;
         r.parser = this.parser;
         const method = r[func];
         if (typeof method === 'function') {
-          return method.apply(r, args);
+          // biome-ignore lint/suspicious/noExplicitAny: dynamic method invocation from marked
+          return (method as any).apply(r, args);
         }
         return '';
-      };
+      // biome-ignore lint/suspicious/noExplicitAny: marked library type compatibility
+      } as any;
       return extension;
     },
     { renderer: {}, useNewRenderer: true },

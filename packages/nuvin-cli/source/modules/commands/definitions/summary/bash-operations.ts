@@ -21,7 +21,7 @@ export function analyzeBashOperations(messages: Message[]): BashOperation[] {
         const command = extractBashCommand(tc);
         if (!command) return;
 
-        const timestamp = new Date(msg.timestamp);
+        const timestamp = msg.timestamp ? new Date(msg.timestamp) : new Date();
         const toolResultMsg = messages.find((m) => m.role === 'tool' && m.tool_call_id === tc.id);
 
         bashOps.push({

@@ -21,7 +21,7 @@ export const ExplainModeProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(
     () => ({ explainMode, toggleExplainMode, setExplainMode }),
-    [explainMode, toggleExplainMode],
+    [explainMode, toggleExplainMode, setExplainMode],
   );
 
   return <ExplainModeContext.Provider value={value}>{children}</ExplainModeContext.Provider>;

@@ -2,7 +2,6 @@ import type React from 'react';
 import { Box, Text } from 'ink';
 import type { ToolExecutionResult } from '@nuvin/nuvin-core';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { parseDetailLines } from '@/components/ToolResultView/utils.js';
 import { useStdoutDimensions } from '@/hooks/index.js';
 
 type FileReadRendererProps = {
@@ -35,8 +34,8 @@ export const FileReadRenderer: React.FC<FileReadRendererProps> = ({
     const linesToRender = fileContent.split(/\r?\n/);
     return (
       <Box flexDirection="column" width={cols - 10}>
-        {linesToRender.map((line, idx) => (
-          <Text key={`${messageId}-tool-result-${idx}`} dimColor color={detailColor}>
+        {linesToRender.map((line) => (
+          <Text key={`${messageId}-${line.substring(0, 50)}`} dimColor color={detailColor}>
             {line}
           </Text>
         ))}

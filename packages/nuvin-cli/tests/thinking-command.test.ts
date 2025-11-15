@@ -72,9 +72,9 @@ vi.mock('node:os', () => ({
 
 type EventHandler = (...args: unknown[]) => void;
 
-const createMockEventBus = (): TypedEventBus & { getCapturedEvents: () => Array<{ event: string; data: any }> } => {
+const createMockEventBus = (): TypedEventBus & { getCapturedEvents: () => Array<{ event: string; data: unknown }> } => {
   const listeners = new Map<string, Set<EventHandler>>();
-  const capturedEvents: Array<{ event: string; data: any }> = [];
+  const capturedEvents: Array<{ event: string; data: unknown }> = [];
 
   return {
     on: vi.fn((event: string, handler: EventHandler) => {
@@ -96,7 +96,7 @@ const createMockEventBus = (): TypedEventBus & { getCapturedEvents: () => Array<
       }
     }),
     getCapturedEvents: () => capturedEvents,
-  } as TypedEventBus & { getCapturedEvents: () => Array<{ event: string; data: any }> };
+  } as TypedEventBus & { getCapturedEvents: () => Array<{ event: string; data: unknown }> };
 };
 
 describe('/thinking command', () => {
@@ -108,7 +108,7 @@ describe('/thinking command', () => {
     mockEventBus = createMockEventBus();
     
     // Replace global event bus for the test
-    (registry as any).createContext = function(input: string) {
+    (registry as unknown as { createContext: (input: string) => unknown }).createContext = function(input: string) {
       const config = ConfigManager.getInstance();
       return {
         rawInput: input,

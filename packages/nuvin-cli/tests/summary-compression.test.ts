@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Message } from '@nuvin/nuvin-core';
+import type { Message, ToolCall } from '@nuvin/nuvin-core';
 import { compressConversation } from '../source/modules/commands/definitions/summary/compression.js';
 import { analyzeFileOperations, isStaleFileRead, isStaleFileEdit } from '../source/modules/commands/definitions/summary/file-operations.js';
 import { analyzeBashOperations, isStaleBashCommand, hasErrors } from '../source/modules/commands/definitions/summary/bash-operations.js';
@@ -9,7 +9,7 @@ function createMessage(
   role: 'user' | 'assistant' | 'tool',
   content: string,
   timestamp: string,
-  toolCalls?: any[],
+  toolCalls?: ToolCall[],
   toolCallId?: string,
   name?: string
 ): Message {
@@ -114,7 +114,7 @@ describe('File Operations', () => {
         },
       ];
 
-      const creates: any[] = [];
+      const creates: Array<{ path: string; timestamp: Date }> = [];
 
       expect(isStaleFileRead(readOp, edits, creates)).toBe(true);
     });
@@ -127,7 +127,7 @@ describe('File Operations', () => {
         operation: 'read' as const,
       };
 
-      const edits: any[] = [];
+      const edits: Array<{ path: string; timestamp: Date }> = [];
       const creates = [
         {
           path: '/test/file.ts',

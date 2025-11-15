@@ -51,6 +51,7 @@ describe.skip('OrchestratorManager - Topic Analysis', () => {
       }),
       get: vi.fn().mockReturnValue(undefined),
       set: vi.fn().mockResolvedValue(undefined),
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
     } as any;
 
     manager = new OrchestratorManager(mockConfigManager);
@@ -121,7 +122,7 @@ describe.skip('OrchestratorManager - Topic Analysis', () => {
       await manager.send('First message', { conversationId });
       await manager.updateConversationTopic(conversationId, 'Initial Topic');
 
-      const metadataBefore = await manager.getConversationMetadata(conversationId);
+      const _metadataBefore = await manager.getConversationMetadata(conversationId);
 
       await manager.updateConversationTopic(conversationId, 'Updated Topic');
 

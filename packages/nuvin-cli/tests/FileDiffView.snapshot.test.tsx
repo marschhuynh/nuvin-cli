@@ -97,11 +97,11 @@ describe('FileDiffView - Snapshot Tests', () => {
     // Check the new line (with comma added)
     const newLine = line20Diffs.find((line) => line.newLineNum === 20);
     expect(newLine).toBeDefined();
-    expect(newLine!.type).toBe('modify');
-    expect(newLine!.segments).toBeDefined();
+    expect(newLine?.type).toBe('modify');
+    expect(newLine?.segments).toBeDefined();
 
     // Verify segments
-    const segments = newLine!.segments!;
+    const segments = newLine?.segments ?? [];
     expect(segments).toHaveLength(2);
 
     // First segment should be unchanged text
@@ -265,9 +265,7 @@ describe('FileDiffView - Snapshot Tests', () => {
       replace: 'let temp = "new";',
     };
 
-    const { lastFrame } = render(
-      <FileDiffView blocks={[block1, block2]} filePath="test.js" showPath={true} />,
-    );
+    const { lastFrame } = render(<FileDiffView blocks={[block1, block2]} filePath="test.js" showPath={true} />);
 
     expect(lastFrame()).toMatchSnapshot();
   });

@@ -55,7 +55,7 @@ export class UIEventAdapter extends PersistingConsoleEventPort {
     private appendLine: (line: MessageLine) => void,
     private updateLine: (id: string, content: string) => void,
     private updateLineMetadata: (id: string, metadata: Partial<LineMetadata>) => void,
-    private setLastMetadata: (metadata: MessageMetadata) => void,
+    private setLastMetadata: (metadata: MessageMetadata | null) => void,
     opts?: { filename?: string; streamingEnabled?: boolean },
   ) {
     super(opts?.filename ? { filename: opts.filename } : { memory: new InMemoryMemory<AgentEvent>() });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import { autoExportHistory } from '@/utils/autoExport.js';
-import type { Memory } from '@nuvin/nuvin-core';
+import type { MemoryPort } from '@nuvin/nuvin-core';
 
 vi.mock('node:fs/promises');
 
@@ -22,7 +22,7 @@ describe('autoExportHistory', () => {
   it('should return null if no messages in history', async () => {
     const mockMemory = {
       get: vi.fn().mockResolvedValue([]),
-    } as unknown as Memory;
+    } as unknown as MemoryPort;
 
     const result = await autoExportHistory(mockMemory, 'test error');
     expect(result).toBeNull();
@@ -37,7 +37,7 @@ describe('autoExportHistory', () => {
 
     const mockMemory = {
       get: vi.fn().mockResolvedValue(mockMessages),
-    } as unknown as Memory;
+    } as unknown as MemoryPort;
 
     vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
@@ -61,7 +61,7 @@ describe('autoExportHistory', () => {
   it('should handle write errors gracefully', async () => {
     const mockMemory = {
       get: vi.fn().mockResolvedValue([{ role: 'user', content: 'test' }]),
-    } as unknown as Memory;
+    } as unknown as MemoryPort;
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(fs.writeFile).mockRejectedValue(new Error('Disk full'));

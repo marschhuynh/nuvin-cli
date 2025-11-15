@@ -44,11 +44,11 @@ export function ConfigProvider({ children, initialConfig = {} }: ConfigProviderP
   }, [configManager, initialConfig]);
 
   const get = useCallback(
-    (key: string, scope?: ConfigScope): unknown => {
+    (key: string, scope?: ConfigScope) => {
       return configManager.get(key, scope);
     },
     [configManager],
-  );
+  ) as <T>(key: string, scope?: ConfigScope) => T | undefined;
 
   const set = useCallback(
     async (key: string, value: unknown, scope: ConfigScope = 'global'): Promise<void> => {

@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import type { AgentTemplate } from '@nuvin/nuvin-core';
+import type { CompleteAgent } from '@nuvin/nuvin-core';
 import { AppModal } from '@/components/AppModal.js';
 import { HelpText } from '@/components/HelpText.js';
 import { useAgentModalState } from './useAgentModalState.js';
@@ -9,7 +9,7 @@ import { useAgentModalKeyboard } from './useAgentModalKeyboard.js';
 import { AgentList } from './AgentList.js';
 import { AgentDetails } from './AgentDetails.js';
 
-export interface AgentInfo extends AgentTemplate {
+export interface AgentInfo extends CompleteAgent {
   isDefault: boolean;
 }
 

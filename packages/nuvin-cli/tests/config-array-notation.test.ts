@@ -88,6 +88,7 @@ describe('ConfigManager Array Notation', () => {
     const config = manager.getConfig();
     expect(config.providers?.openrouter?.auth).toBeDefined();
     expect(Array.isArray(config.providers?.openrouter?.auth)).toBe(true);
+    // biome-ignore lint/suspicious/noExplicitAny: test assertion for dynamic config
     expect((config.providers?.openrouter?.auth as any[])[0]).toEqual({ 'api-key': 'sk-or-xxx' });
   });
 
@@ -101,6 +102,7 @@ describe('ConfigManager Array Notation', () => {
     await manager.set('providers.openrouter.auth[0].api-key', 'sk-or-xxx', 'global');
 
     const config = manager.getConfig();
+    // biome-ignore lint/suspicious/noExplicitAny: test assertion for dynamic config
     const auth = config.providers?.openrouter?.auth as any[];
     
     expect(auth).toBeDefined();

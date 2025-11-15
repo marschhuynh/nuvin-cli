@@ -3,10 +3,14 @@ import { eventBus } from '@/services/EventBus.js';
 import type { InputAreaHandle } from '@/components/index.js';
 import { useExplainMode } from '@/contexts/ExplainModeContext.js';
 
+declare global {
+  var __clipboardFiles: Buffer[] | undefined;
+}
+
 type UseGlobalKeyboardProps = {
   busy: boolean;
   pendingApproval: unknown;
-  inputAreaRef: React.RefObject<InputAreaHandle>;
+  inputAreaRef: React.RefObject<InputAreaHandle | null>;
   onNotification: (message: string | null, duration?: number) => void;
 };
 

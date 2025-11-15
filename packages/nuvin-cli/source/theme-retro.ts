@@ -199,11 +199,11 @@ export type MessageTypeColor = keyof typeof theme.messageTypes;
 // Helper function to get color by path
 export function getThemeColor(path: string): string {
   const parts = path.split('.');
-  let value = theme;
+  let value: unknown = theme;
 
   for (const part of parts) {
     if (value && typeof value === 'object' && part in value) {
-      value = value[part];
+      value = (value as Record<string, unknown>)[part];
     } else {
       return 'white'; // Default fallback
     }

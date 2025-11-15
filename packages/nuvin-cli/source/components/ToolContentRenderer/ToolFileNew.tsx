@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
-import { useExplainMode } from '@/contexts/ExplainModeContext.js';
 import { Markdown } from '@/components/Markdown.js';
 
 type FileNewArgs = {

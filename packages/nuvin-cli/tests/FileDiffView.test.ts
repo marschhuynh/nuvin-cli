@@ -64,10 +64,10 @@ describe('FileDiffView', () => {
       // Old line should have all content as unchanged (nothing removed)
       const oldLine = modifyLines.find((line) => line.oldLineNum !== undefined);
       expect(oldLine).toBeDefined();
-      expect(oldLine!.segments).toBeDefined();
+      expect(oldLine?.segments).toBeDefined();
 
       // All segments in old line should be 'unchanged' (no removals)
-      const oldSegments = oldLine!.segments!;
+      const oldSegments = oldLine?.segments ?? [];
       expect(oldSegments.every((seg) => seg.type === 'unchanged')).toBe(true);
 
       // Reconstruct text from segments to verify correctness
@@ -77,9 +77,9 @@ describe('FileDiffView', () => {
       // New line should have unchanged content + added comma
       const newLine = modifyLines.find((line) => line.newLineNum !== undefined);
       expect(newLine).toBeDefined();
-      expect(newLine!.segments).toBeDefined();
+      expect(newLine?.segments).toBeDefined();
 
-      const newSegments = newLine!.segments!;
+      const newSegments = newLine?.segments ?? [];
 
       // Should have at least one 'unchanged' segment and one 'add' segment
       expect(newSegments.some((seg) => seg.type === 'unchanged')).toBe(true);
@@ -106,9 +106,9 @@ describe('FileDiffView', () => {
 
       // Old line: should have unchanged prefix + removed middle + unchanged suffix
       const oldLine = modifyLines.find((line) => line.oldLineNum !== undefined);
-      expect(oldLine!.segments).toBeDefined();
+      expect(oldLine?.segments).toBeDefined();
 
-      const oldSegments = oldLine!.segments!;
+      const oldSegments = oldLine?.segments ?? [];
       const oldReconstructed = oldSegments.map((s) => s.text).join('');
       expect(oldReconstructed).toBe(oldText);
 
@@ -117,9 +117,9 @@ describe('FileDiffView', () => {
 
       // New line: should have unchanged prefix + added middle + unchanged suffix
       const newLine = modifyLines.find((line) => line.newLineNum !== undefined);
-      expect(newLine!.segments).toBeDefined();
+      expect(newLine?.segments).toBeDefined();
 
-      const newSegments = newLine!.segments!;
+      const newSegments = newLine?.segments ?? [];
       const newReconstructed = newSegments.map((s) => s.text).join('');
       expect(newReconstructed).toBe(newText);
     });
@@ -135,7 +135,7 @@ describe('FileDiffView', () => {
 
       // New line should have common prefix, added segment in middle, and common suffix
       const newLine = modifyLines.find((line) => line.newLineNum !== undefined);
-      const newSegments = newLine!.segments!;
+      const newSegments = newLine?.segments ?? [];
 
       // Should have unchanged segments for common parts
       expect(newSegments.some((seg) => seg.type === 'unchanged')).toBe(true);
@@ -159,7 +159,7 @@ describe('FileDiffView', () => {
 
       // Old line should have common prefix, removed segment in middle, and common suffix
       const oldLine = modifyLines.find((line) => line.oldLineNum !== undefined);
-      const oldSegments = oldLine!.segments!;
+      const oldSegments = oldLine?.segments ?? [];
 
       // Should have unchanged segments for common parts
       expect(oldSegments.some((seg) => seg.type === 'unchanged')).toBe(true);

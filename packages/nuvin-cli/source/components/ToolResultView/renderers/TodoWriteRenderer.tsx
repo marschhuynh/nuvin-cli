@@ -14,7 +14,7 @@ type TodoWriteRendererProps = {
   fullMode?: boolean;
 };
 
-export const TodoWriteRenderer: React.FC<TodoWriteRendererProps> = ({ toolResult, messageId, fullMode = false }) => {
+export const TodoWriteRenderer: React.FC<TodoWriteRendererProps> = ({ toolResult, messageId }) => {
   const { theme } = useTheme();
 
   if (toolResult.status !== 'success') return null;

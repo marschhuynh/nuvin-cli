@@ -5,13 +5,15 @@ import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
 import { OrchestratorManager, type OrchestratorConfig } from '@/services/OrchestratorManager.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 
+import type { LineMetadata } from '@/adapters';
+
 type UseOrchestratorProps = {
   memPersist?: boolean;
   mcpConfigPath?: string;
   appendLine: (line: MessageLine) => void;
   updateLine: (id: string, content: string) => void;
-  updateLineMetadata: (id: string, metadata: Partial<MessageLine['metadata']>) => void;
-  setLastMetadata: (metadata: MessageMetadata) => void;
+  updateLineMetadata: (id: string, metadata: Partial<LineMetadata>) => void;
+  setLastMetadata: (metadata: MessageMetadata | null) => void;
   handleError: (message: string) => void;
 };
 

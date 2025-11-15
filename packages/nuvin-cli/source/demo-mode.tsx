@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { render } from 'ink';
 import { Box, Text, useApp } from 'ink';
 import * as fs from 'node:fs/promises';

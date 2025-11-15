@@ -14,7 +14,7 @@ export class CommandRegistry implements ICommandRegistry {
   private activeCommand: ActiveCommand | null = null;
   private configFunctions: CommandContext['config'] | null = null;
   private memory: MemoryPort<Message> | null = null;
-  private orchestrator: OrchestratorManager = null;
+  private orchestrator: OrchestratorManager | null = null;
 
   register(command: CommandDefinition): void {
     this.commands.set(command.id, command);
