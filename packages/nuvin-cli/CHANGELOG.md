@@ -1,5 +1,14 @@
 # @nuvin/nuvin-cli
 
+## 1.5.1
+
+### Patch Changes
+
+- [`af0232a`](https://github.com/marschhuynh/nuvin-space/commit/af0232ab2d5ff44afa8e84efdef70be447ae7899) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve welcome screen UX with enhanced recent activity display and better time formatting. Refactor streaming markdown hook for better performance. Simplify topic analysis call to fire-and-forget pattern.
+
+- Updated dependencies [[`3f7a1e2`](https://github.com/marschhuynh/nuvin-space/commit/3f7a1e2297bfe7e3602749afdbb3435c30eb9868)]:
+  - @nuvin/nuvin-core@1.1.2
+
 ## 1.5.0
 
 ### Minor Changes

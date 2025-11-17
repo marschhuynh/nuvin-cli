@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.1.2
+
+### Patch Changes
+
+- [`3f7a1e2`](https://github.com/marschhuynh/nuvin-space/commit/3f7a1e2297bfe7e3602749afdbb3435c30eb9868) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix race condition in event persistence causing streaming chunk events to be lost. Serialize writes using promise queue to prevent concurrent overwrites.
+
 ## 1.1.1
 
 ### Patch Changes
