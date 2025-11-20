@@ -1,5 +1,27 @@
 # @nuvin/nuvin-cli
 
+## 1.6.0
+
+### Minor Changes
+
+- [`de16725`](https://github.com/marschhuynh/nuvin-space/commit/de16725d520098d68355a4cd2b2e3f08268165d3) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: Enhance LLM streaming and Github provider
+
+  - **Core**: Improved `BaseLLM` streaming handling to support unknown fields (e.g. reasoning metadata) dynamically.
+  - **Core**: Better tool call merging and usage tracking in streaming responses.
+  - **GitHub Provider**: Updates to GitHub transport and model definitions.
+  - **CLI**: Updated LLM factory and orchestrator to leverage new core capabilities.
+
+- [`2992369`](https://github.com/marschhuynh/nuvin-space/commit/2992369a1f89428c312500f7085f9a7773c5c5ff) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: Add multi-profile support
+
+  - Added support for multiple configuration profiles.
+  - Profiles allow switching between different environments/configurations easily.
+  - New `profile-manager` and related logic in CLI config.
+
+### Patch Changes
+
+- Updated dependencies [[`de16725`](https://github.com/marschhuynh/nuvin-space/commit/de16725d520098d68355a4cd2b2e3f08268165d3)]:
+  - @nuvin/nuvin-core@1.2.0
+
 ## 1.5.1
 
 ### Patch Changes

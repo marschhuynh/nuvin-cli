@@ -1,5 +1,16 @@
 # @nuvin/nuvin-core
 
+## 1.2.0
+
+### Minor Changes
+
+- [`de16725`](https://github.com/marschhuynh/nuvin-space/commit/de16725d520098d68355a4cd2b2e3f08268165d3) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: Enhance LLM streaming and Github provider
+
+  - **Core**: Improved `BaseLLM` streaming handling to support unknown fields (e.g. reasoning metadata) dynamically.
+  - **Core**: Better tool call merging and usage tracking in streaming responses.
+  - **GitHub Provider**: Updates to GitHub transport and model definitions.
+  - **CLI**: Updated LLM factory and orchestrator to leverage new core capabilities.
+
 ## 1.1.2
 
 ### Patch Changes
