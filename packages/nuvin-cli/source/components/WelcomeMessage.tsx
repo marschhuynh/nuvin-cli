@@ -132,13 +132,7 @@ const WelcomeMessage = ({ recentSessions }: WelcomeMessageProps) => {
       <Box justifyContent="center" gap={1} marginTop={1}>
         {/* Right column - Recent Activity */}
         <Box flexDirection="column" paddingX={2} flexGrow={1}>
-          <Box
-            borderStyle="single"
-            // borderBottomColor={t}
-            borderLeft={false}
-            borderRight={false}
-            borderTop={false}
-          >
+          <Box width={15} borderDimColor borderStyle="single" borderLeft={false} borderRight={false} borderTop={false}>
             <Text color={theme.welcome.title} bold>
               Recent Activity
             </Text>

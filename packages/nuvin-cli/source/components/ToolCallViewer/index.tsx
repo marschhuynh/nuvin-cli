@@ -93,7 +93,7 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
         : theme.status.idle;
 
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column">
       {/* Tool Call Header */}
       <Box flexDirection="row">
         <Box flexShrink={0} marginRight={1}>

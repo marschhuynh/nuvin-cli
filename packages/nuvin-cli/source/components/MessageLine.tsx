@@ -28,7 +28,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
     switch (message.type) {
       case 'user':
         return (
-          <Box flexDirection="row" marginTop={1}>
+          <Box flexDirection="row" marginY={1}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.colors.accent} bold>
                 ❯
@@ -42,7 +42,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'assistant':
         return (
-          <Box flexDirection="column" marginTop={1}>
+          <Box flexDirection="column" marginY={1}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.assistant} bold>
                 ● [assistant]
@@ -84,16 +84,18 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 }
 
                 return (
-                  <ToolCallViewer
-                    key={toolCall.id || `${message.id}-tool-${callIndex}`}
-                    toolCall={toolCall}
-                    toolResult={toolResultMsg}
-                    messageId={message.id}
-                  />
+                  <Box key={toolCall.id || `${message.id}-tool-${callIndex}`} marginY={1}>
+                    <ToolCallViewer
+                      key={toolCall.id || `${message.id}-tool-${callIndex}`}
+                      toolCall={toolCall}
+                      toolResult={toolResultMsg}
+                      messageId={message.id}
+                    />
+                  </Box>
                 );
               })
             ) : (
-              <Box flexDirection="row">
+              <Box flexDirection="row" marginY={1}>
                 <Box flexShrink={0} marginRight={1}>
                   <Text color={theme.messageTypes.tool} bold>
                     »
