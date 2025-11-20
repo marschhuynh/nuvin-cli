@@ -69,8 +69,7 @@ const FooterComponent: React.FC<FooterProps> = ({
             <Text color={theme.footer.status} dimColor>
               {[
                 currentProfile && currentProfile !== 'default' ? currentProfile : null, // Only show if not default
-                provider,
-                model,
+                `${provider}:${model}`,
                 thinking && thinking !== THINKING_LEVELS.OFF ? `Thinking: ${thinking}` : '',
                 !toolApprovalMode ? 'SUDO' : '',
               ]

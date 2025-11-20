@@ -248,7 +248,7 @@ const cli = meow(
   let fileConfig: CLIConfig = {};
   let configSources: ConfigSource[] = [];
   try {
-    const { config: loadedConfig, sources } = await configManager.load({ 
+    const { config: loadedConfig, sources } = await configManager.load({
       explicitPath: normalizedExplicitConfig,
       profile: normalizedProfile,
     });
@@ -394,7 +394,7 @@ const cli = meow(
     {
       exitOnCtrlC: false,
       patchConsole: true,
-      incrementalRendering: true,
+      incrementalRendering: false,
       maxFps: 60,
     },
   );
