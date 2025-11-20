@@ -8,6 +8,7 @@ interface ConfigContextValue {
   set: (key: string, value: unknown, scope?: ConfigScope) => Promise<void>;
   delete: (key: string, scope?: ConfigScope) => Promise<void>;
   reload: () => Promise<void>;
+  getCurrentProfile: () => string | undefined;
 }
 
 const ConfigContext = createContext<ConfigContextValue | null>(null);
@@ -19,6 +20,7 @@ interface ConfigProviderProps {
 
 export function ConfigProvider({ children, initialConfig = {} }: ConfigProviderProps) {
   const [config, setConfig] = useState<CLIConfig>(initialConfig);
+  const [currentProfile, setCurrentProfile] = useState<string | undefined>();
   const configManager = ConfigManager.getInstance();
 
   // Load initial config and set up state
@@ -28,6 +30,10 @@ export function ConfigProvider({ children, initialConfig = {} }: ConfigProviderP
         await configManager.load();
         const loadedConfig = configManager.getConfig();
         setConfig(loadedConfig);
+        
+        // Set current profile
+        const profile = configManager.getCurrentProfile?.();
+        setCurrentProfile(profile);
       } catch (error) {
         console.error('Failed to load config in ConfigProvider:', error);
       }
@@ -38,6 +44,10 @@ export function ConfigProvider({ children, initialConfig = {} }: ConfigProviderP
       // Update ConfigManager's internal combined config so get() calls work correctly
       configManager.combined = initialConfig;
       setConfig(initialConfig);
+      
+      // Set current profile
+      const profile = configManager.getCurrentProfile?.();
+      setCurrentProfile(profile);
     } else {
       loadConfig();
     }
@@ -101,6 +111,7 @@ export function ConfigProvider({ children, initialConfig = {} }: ConfigProviderP
     set,
     delete: deleteKey,
     reload,
+    getCurrentProfile: () => currentProfile,
   };
 
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;

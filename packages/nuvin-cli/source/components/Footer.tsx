@@ -33,11 +33,12 @@ const FooterComponent: React.FC<FooterProps> = ({
   const { theme } = useTheme();
   const { toolApprovalMode } = useToolApproval();
   const { explainMode } = useExplainMode();
-  const { get } = useConfig();
+  const { get, getCurrentProfile } = useConfig();
 
   const thinking = get<string>('thinking');
   const provider = get<ProviderKey>('activeProvider');
   const model = get<string>('model');
+  const currentProfile = getCurrentProfile?.();
 
   return (
     <Box
@@ -67,6 +68,7 @@ const FooterComponent: React.FC<FooterProps> = ({
             )}
             <Text color={theme.footer.status} dimColor>
               {[
+                currentProfile && currentProfile !== 'default' ? currentProfile : null, // Only show if not default
                 provider,
                 model,
                 thinking && thinking !== THINKING_LEVELS.OFF ? `Thinking: ${thinking}` : '',

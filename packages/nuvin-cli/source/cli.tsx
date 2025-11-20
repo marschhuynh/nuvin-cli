@@ -27,6 +27,7 @@ import {
 } from './config/index.js';
 import { ConfigCliHandler } from './config/cli-handler.js';
 import { AutoUpdater } from './services/AutoUpdater.js';
+import { StrictMode } from 'react';
 
 process.stdout.write('\x1b[?2004h');
 
@@ -62,6 +63,7 @@ const cli = meow(
   Usage
     $ nuvin-cli [options]
     $ nuvin-cli config <command> [options]
+    $ nuvin-cli profile <command> [options]
     $ nuvin-cli --demo <path/to/history.json>
 
   Configuration Commands
@@ -69,6 +71,15 @@ const cli = meow(
     config set <key> <value>    Set a configuration value
     config list                 List all configuration values
     config help                 Show config command help
+
+  Profile Commands
+    profile list                List all profiles
+    profile create <name>       Create a new profile
+    profile delete <name>       Delete a profile
+    profile switch <name>       Switch active profile
+    profile show                Show current profile info
+    profile clone <src> <dst>   Clone an existing profile
+    profile help                 Show profile command help
 
   Configuration Options
     --provider NAME     Choose AI provider: openrouter | deepinfra | github | zai | anthropic | echo
@@ -78,6 +89,7 @@ const cli = meow(
     --mcp-config PATH   MCP servers configuration file (default: .nuvin_mcp.json)
     --reasoning-effort  Set reasoning effort for o1 models: low | medium | high (default: medium)
     --history PATH      Load conversation history from file on startup
+    --profile NAME      Use specific profile (overrides active profile)
 
   Authentication Setup
     Environment variables are automatically detected and loaded at startup:
@@ -118,6 +130,7 @@ const cli = meow(
       version: { type: 'boolean', alias: 'v' },
       demo: { type: 'string' },
       history: { type: 'string' },
+      profile: { type: 'string' },
     },
   },
 );
@@ -217,14 +230,28 @@ const cli = meow(
     process.exit(0);
   }
 
+  // Handle profile subcommand
+  if (cli.input.length > 0 && cli.input[0] === 'profile') {
+    const { ProfileCliHandler } = await import('./config/profile-handler.js');
+    const profileHandler = new ProfileCliHandler();
+    // Pass the original process.argv instead of processed cli.input to preserve flags
+    const profileArgs = process.argv.slice(3); // Skip 'node', 'cli.js', 'profile'
+    await profileHandler.handleProfileCommand(profileArgs);
+    process.exit(0);
+  }
+
   const configManager = ConfigManager.getInstance();
 
   const normalizedExplicitConfig = ensureString(cli.flags.config as string | undefined);
+  const normalizedProfile = ensureString(cli.flags.profile as string | undefined);
 
   let fileConfig: CLIConfig = {};
   let configSources: ConfigSource[] = [];
   try {
-    const { config: loadedConfig, sources } = await configManager.load({ explicitPath: normalizedExplicitConfig });
+    const { config: loadedConfig, sources } = await configManager.load({ 
+      explicitPath: normalizedExplicitConfig,
+      profile: normalizedProfile,
+    });
     fileConfig = loadedConfig;
     configSources = sources;
   } catch (error) {
@@ -337,28 +364,33 @@ const cli = meow(
   registerCommands();
 
   const { waitUntilExit } = render(
-    <ThemeProvider>
-      <StdoutDimensionsProvider>
-        <ConfigProvider initialConfig={mergedConfig}>
-          <NotificationProvider>
-            <ToolApprovalProvider requireToolApproval={finalRequireToolApproval} onError={(msg) => console.error(msg)}>
-              <CommandProvider>
-                <ExplainModeProvider>
-                  <ConfigBridge>
-                    <App
-                      memPersist={finalMemPersist}
-                      mcpConfigPath={displayMcpConfigPath}
-                      thinking={thinkingSetting}
-                      historyPath={historyPath}
-                    />
-                  </ConfigBridge>
-                </ExplainModeProvider>
-              </CommandProvider>
-            </ToolApprovalProvider>
-          </NotificationProvider>
-        </ConfigProvider>
-      </StdoutDimensionsProvider>
-    </ThemeProvider>,
+    <StrictMode>
+      <ThemeProvider>
+        <StdoutDimensionsProvider>
+          <ConfigProvider initialConfig={mergedConfig}>
+            <NotificationProvider>
+              <ToolApprovalProvider
+                requireToolApproval={finalRequireToolApproval}
+                onError={(msg) => console.error(msg)}
+              >
+                <CommandProvider>
+                  <ExplainModeProvider>
+                    <ConfigBridge>
+                      <App
+                        memPersist={finalMemPersist}
+                        mcpConfigPath={displayMcpConfigPath}
+                        thinking={thinkingSetting}
+                        historyPath={historyPath}
+                      />
+                    </ConfigBridge>
+                  </ExplainModeProvider>
+                </CommandProvider>
+              </ToolApprovalProvider>
+            </NotificationProvider>
+          </ConfigProvider>
+        </StdoutDimensionsProvider>
+      </ThemeProvider>
+    </StrictMode>,
     {
       exitOnCtrlC: false,
       patchConsole: true,

@@ -5,6 +5,8 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { isPlainObject, structuredCloneConfig, mergeConfigs } from './utils';
 import type { CLIConfig, ConfigFormat, ConfigLoadOptions, ConfigLoadResult, ConfigScope, ConfigSource } from './types';
 import { CONFIG_FILE_CANDIDATES } from './const';
+import { ProfileManager } from './profile-manager';
+import { DEFAULT_PROFILE } from './profile-types';
 
 export class ConfigManager {
   private static instance: ConfigManager | null = null;
@@ -12,6 +14,8 @@ export class ConfigManager {
   localDir: string = path.join(process.cwd(), '.nuvin-cli');
   private scopeData: Partial<Record<ConfigScope, ConfigSource>> = {};
   public combined: CLIConfig = {};
+  private profileManager?: ProfileManager;
+  private currentProfile = DEFAULT_PROFILE;
 
   private constructor(readonly _logger: (message: string) => void = () => {}) {}
 
@@ -26,7 +30,35 @@ export class ConfigManager {
     ConfigManager.instance = null;
   }
 
+  async initializeProfile(profile?: string): Promise<void> {
+    if (!this.profileManager) {
+      this.profileManager = new ProfileManager(this._logger);
+      await this.profileManager.initialize();
+    }
+
+    // Determine active profile (CLI flag overrides registry)
+    this.currentProfile = profile || await this.profileManager.getActive();
+
+    // Update global directory based on profile
+    if (this.profileManager.isDefault(this.currentProfile)) {
+      this.globalDir = path.join(os.homedir(), '.nuvin-cli');
+    } else {
+      this.globalDir = this.profileManager.getProfileDir(this.currentProfile);
+    }
+  }
+
+  getProfileManager(): ProfileManager | undefined {
+    return this.profileManager;
+  }
+
+  getCurrentProfile(): string {
+    return this.currentProfile;
+  }
+
   async load(options: ConfigLoadOptions = {}): Promise<ConfigLoadResult> {
+    // Initialize profile support
+    await this.initializeProfile(options.profile);
+
     const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
     this.localDir = path.join(cwd, '.nuvin-cli');
     this.scopeData = {};

@@ -104,6 +104,7 @@ export interface ConfigSource {
 export interface ConfigLoadOptions {
   explicitPath?: string;
   cwd?: string;
+  profile?: string;
 }
 
 export interface ConfigLoadResult {
