@@ -1,4 +1,5 @@
 import type { CommandRegistry } from '@/modules/commands/types.js';
+import { OrchestratorStatus } from '@/services/OrchestratorManager.js';
 
 export function registerNewCommand(registry: CommandRegistry) {
   registry.register({
@@ -12,7 +13,7 @@ export function registerNewCommand(registry: CommandRegistry) {
         return;
       }
 
-      if (orchestrator.getStatus() !== 'Ready') {
+      if (orchestrator.getStatus() !== OrchestratorStatus.READY) {
         eventBus.emit('ui:error', 'Cannot start new conversation: System is still initializing');
         return;
       }

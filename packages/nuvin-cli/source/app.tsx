@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { Box, Spacer, Text } from 'ink';
 import ansiEscapes from 'ansi-escapes';
 import * as crypto from 'node:crypto';
@@ -26,6 +26,7 @@ import type { ProviderKey } from './const.js';
 import useMessages from './hooks/useMessage.js';
 import { useConfig } from './contexts/ConfigContext.js';
 import { useExplainMode } from './contexts/ExplainModeContext.js';
+import { OrchestratorStatus } from './services/OrchestratorManager.js';
 
 type Props = {
   provider?: ProviderKey;
@@ -49,7 +50,7 @@ export default function App({
   const [busy, setBusy] = useState(false);
   const [lastMetadata, setLastMetadata] = useState<MessageMetadata | null>(null);
   const [accumulatedCost, setAccumulatedCost] = useState(0);
-  const [showInitialSetup, setShowInitialSetup] = useState(false);
+
   const [_setupComplete, setSetupComplete] = useState(false);
 
   const { setNotification } = useNotification();
@@ -66,6 +67,7 @@ export default function App({
   const abortRef = useRef<AbortController | null>(null);
   const previousVimModeRef = useRef<boolean | null>(null);
   const inputAreaRef = useRef<InputAreaHandle>(null);
+  const isInitialMountRef = useRef(true);
 
   const newConversationInProgressRef = useRef(false);
   const historyLoadedRef = useRef(false);
@@ -79,7 +81,7 @@ export default function App({
     }
   }, []);
 
-  const { orchestrator, manager, memory, status, send, createNewConversation, reinit } = useOrchestrator({
+  const { orchestrator, manager, memory, status, send, createNewConversation, reinit, sessionId } = useOrchestrator({
     appendLine,
     updateLine,
     updateLineMetadata,
@@ -89,20 +91,20 @@ export default function App({
   });
 
   useEffect(() => {
-    if (orchestrator) {
+    if (status === OrchestratorStatus.READY) {
       setOrchestrator(orchestrator);
+      commandRegistry.setMemory(memory);
+      commandRegistry.setOrchestrator(manager);
     }
-  }, [orchestrator, setOrchestrator]);
+  }, [status]);
 
-  useEffect(() => {
+  const showInitialSetup = useMemo(() => {
     if (!config.activeProvider) {
-      setShowInitialSetup(true);
-      return;
+      return true;
     }
 
     if (config.activeProvider === 'echo') {
-      setShowInitialSetup(false);
-      return;
+      return false;
     }
 
     const provider = config.activeProvider;
@@ -110,8 +112,7 @@ export default function App({
     const hasNewAuth = providerConfig?.auth && Array.isArray(providerConfig.auth) && providerConfig.auth.length > 0;
     const hasLegacyAuth = providerConfig?.token || providerConfig?.apiKey || config.tokens?.[provider] || config.apiKey;
 
-    const needsSetup = !hasNewAuth && !hasLegacyAuth;
-    setShowInitialSetup(needsSetup);
+    return !hasNewAuth && !hasLegacyAuth;
   }, [config]);
 
   const handleSetupComplete = async () => {
@@ -120,7 +121,6 @@ export default function App({
     if (reinit) {
       await reinit();
     }
-    setShowInitialSetup(false);
   };
 
   useEffect(() => {
@@ -193,16 +193,6 @@ export default function App({
       eventBus.off('ui:new:conversation', onNewConversation);
     };
   }, [appendLine, handleError, createNewConversation, createNewSession, clearMessages, setLines]);
-
-  // Update command registry with memory reference when it becomes available
-  useEffect(() => {
-    commandRegistry.setMemory(memory);
-  }, [memory]);
-
-  // Update command registry with orchestrator reference when it becomes available
-  useEffect(() => {
-    commandRegistry.setOrchestrator(manager);
-  }, [manager]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: We only want to load once at startup
   useEffect(() => {
@@ -372,6 +362,12 @@ export default function App({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: cols dependency intentionally excluded to avoid re-renders
   useEffect(() => {
+    // Skip on initial mount to avoid unnecessary render
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+
     if (!cols || cols < 10) return;
     try {
       console.log(ansiEscapes.clearTerminal);
@@ -415,7 +411,7 @@ export default function App({
         </Box>
       }
     >
-      <Box flexDirection="column" height={'100%'} width="100%">
+      <Box flexDirection="column" height="100%" width="100%">
         <ChatDisplay key={`chat-display-${headerKey}`} messages={messages} headerKey={headerKey} />
         <Spacer />
 
@@ -442,6 +438,7 @@ export default function App({
           vimModeEnabled={vimModeEnabled}
           vimMode={vimMode}
           workingDirectory={process.cwd()}
+          sessionId={sessionId}
         />
       </Box>
     </ErrorBoundary>
