@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import type { Message } from '@nuvin/nuvin-core';
 import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
+import { getDefaultLogger } from '@/utils/file-logger.js';
+import { SessionInfo } from '@/types.js';
 
 function sessionsDir() {
   return path.join(os.homedir(), '.nuvin-cli', 'sessions');
@@ -28,74 +30,121 @@ async function readJson<T>(file: string): Promise<T | null> {
   }
 }
 
+// Cache for scanAvailableSessions
+type SessionData = SessionInfo[];
+
+const sessionCache = new Map<
+  number | undefined,
+  {
+    timestamp: number;
+    data: SessionData;
+  }
+>();
+
+const CACHE_TTL = 10000; // 10 seconds
+
+// Promise for deduplication
+const scanPromises = new Map<number | undefined, Promise<SessionData>>();
+
+const logger = getDefaultLogger();
+
 // Export standalone functions for use in commands
-export const scanAvailableSessions = async (): Promise<
-  Array<{
-    sessionId: string;
-    timestamp: string;
-    lastMessage: string;
-    messageCount: number;
-    topic?: string;
-  }>
+export const scanAvailableSessions = async (limit?: number): Promise<
+  SessionInfo[]
 > => {
-  try {
-    const dir = sessionsDir();
-    if (!fs.existsSync(dir)) return [];
+  // Check cache
 
-    const entries = await fsp.readdir(dir, { withFileTypes: true });
-    const sessionDirs = entries.filter((d) => d.isDirectory()).map((d) => d.name);
+  logger.info('scanAvailableSessions with limit:', limit);
 
-    const sessions: Array<{
-      sessionId: string;
-      timestamp: string;
-      lastMessage: string;
-      messageCount: number;
-      topic?: string;
-    }> = [];
+  const cached = sessionCache.get(limit);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    logger.info('Cache hit:', limit);
+    return cached.data;
+  }
 
-    for (const sessionIdStr of sessionDirs) {
-      const historyFile = path.join(dir, sessionIdStr, 'history.json');
-      try {
-        const historyData = await readJson<Record<string, unknown>>(historyFile);
-        const cliMessages = (historyData?.cli ?? []) as Message[];
-        if (cliMessages.length === 0) continue;
+  // Check active promise
+  const existingPromise = scanPromises.get(limit);
+  if (existingPromise) {
+    return existingPromise;
+  }
 
-        let lastMessage = 'No messages';
-        for (let i = cliMessages.length - 1; i >= 0; i--) {
-          const msg = cliMessages[i];
-          if (!msg || typeof msg !== 'object') continue;
-          const msgObj = msg as { role?: string; content?: unknown };
-          if (msgObj.role === 'user' || msgObj.role === 'assistant') {
-            const content = msgObj.content;
-            const text = typeof content === 'string' ? content : '';
-            lastMessage = text;
-            break;
-          }
+  const promise = (async () => {
+    try {
+      const dir = sessionsDir();
+      if (!fs.existsSync(dir)) return [];
+
+      const entries = await fsp.readdir(dir, { withFileTypes: true });
+      const sessionDirs = entries.filter((d) => d.isDirectory()).map((d) => d.name);
+
+      // Sort by timestamp descending (newest first)
+      sessionDirs.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+
+      const sessions: SessionData = [];
+
+      for (const sessionIdStr of sessionDirs) {
+        // Stop if we have enough sessions
+        if (limit && sessions.length >= limit) {
+          break;
         }
 
-        const metadataKey = '__metadata__cli';
-        const metadataArray = historyData?.[metadataKey] as unknown[];
-        const metadata = metadataArray && metadataArray.length > 0 ? metadataArray[0] : null;
-        const topic = metadata && typeof metadata === 'object' && 'topic' in metadata 
-          ? (metadata as { topic?: string }).topic 
-          : undefined;
+        const historyFile = path.join(dir, sessionIdStr, 'history.json');
+        try {
+          const historyData = await readJson<Record<string, unknown>>(historyFile);
+          if (!historyData) {
+            continue;
+          }
 
-        const timestamp = new Date(parseInt(sessionIdStr, 10)).toLocaleString();
-        sessions.push({
-          sessionId: sessionIdStr,
-          timestamp,
-          lastMessage,
-          messageCount: cliMessages.length,
-          topic,
-        });
-      } catch {}
+          const cliMessages = (historyData?.cli ?? []) as Message[];
+          if (cliMessages.length === 0) {
+            continue;
+          }
+
+          let lastMessage = 'No messages';
+          for (let i = cliMessages.length - 1; i >= 0; i--) {
+            const msg = cliMessages[i];
+            if (!msg || typeof msg !== 'object') continue;
+            const msgObj = msg as { role?: string; content?: unknown };
+            if (msgObj.role === 'user' || msgObj.role === 'assistant') {
+              const content = msgObj.content;
+              const text = typeof content === 'string' ? content : '';
+              lastMessage = text;
+              break;
+            }
+          }
+
+          const metadataKey = '__metadata__cli';
+          const metadataArray = historyData?.[metadataKey] as unknown[];
+          const metadata = metadataArray && metadataArray.length > 0 ? metadataArray[0] : null;
+          const topic = metadata && typeof metadata === 'object' && 'topic' in metadata
+            ? (metadata as { topic?: string }).topic
+            : undefined;
+
+          const timestamp = new Date(parseInt(sessionIdStr, 10)).toLocaleString();
+          sessions.push({
+            sessionId: sessionIdStr,
+            timestamp,
+            lastMessage,
+            messageCount: cliMessages.length,
+            topic,
+          });
+        } catch (err) {
+        }
+      }
+
+      // Update cache
+      sessionCache.set(limit, {
+        timestamp: Date.now(),
+        data: sessions,
+      });
+
+      return sessions;
+    } finally {
+      scanPromises.delete(limit);
     }
+  })();
 
-    sessions.sort((a, b) => parseInt(b.sessionId, 10) - parseInt(a.sessionId, 10));
-    return sessions;
-  } catch {
-    return [];
-  }
+  scanPromises.set(limit, promise);
+  return promise;
 };
 
 export type LoadResult =
@@ -108,7 +157,7 @@ export const createNewSession = async (customId?: string): Promise<{ sessionId: 
   const sessionDir = path.join(dir, id);
   try {
     await fsp.mkdir(sessionDir, { recursive: true });
-  } catch {}
+  } catch { }
   return { sessionId: id, sessionDir };
 };
 
@@ -156,13 +205,7 @@ export const loadSessionHistory = async (selectedSessionId: string): Promise<Loa
 
 export const useSessionManagement = () => {
   const [availableSessions, setAvailableSessions] = useState<
-    Array<{
-      sessionId: string;
-      timestamp: string;
-      lastMessage: string;
-      messageCount: number;
-      topic?: string;
-    }>
+    SessionInfo[]
   >([]);
 
   return {
