@@ -203,7 +203,7 @@ export class FileLogger {
         // Write to file
         try {
             const stream = this.getWriteStream();
-            stream.write(formattedMessage + '\n');
+            stream.write(`${formattedMessage}\n`);
         } catch (error) {
             console.error('Error writing to log file:', error);
         }

@@ -3,7 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import Gradient from 'ink-gradient';
 import { getVersion } from '@/utils/version.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
-import { SessionInfo } from '@/types.js';
+import type { SessionInfo } from '@/types.js';
 
 type RecentSessionsProps = {
   recentSessions: SessionInfo[];

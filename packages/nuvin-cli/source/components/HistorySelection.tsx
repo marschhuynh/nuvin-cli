@@ -4,7 +4,7 @@ import { Box, Text, useInput } from 'ink';
 import { eventBus } from '@/services/EventBus.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { SessionInfo } from '@/types.js';
+import type { SessionInfo } from '@/types.js';
 import SelectInput from './SelectInput/index.js';
 
 type HistorySelectionProps = {

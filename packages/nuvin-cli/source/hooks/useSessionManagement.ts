@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import type { Message } from '@nuvin/nuvin-core';
 import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
 import { getDefaultLogger } from '@/utils/file-logger.js';
-import { SessionInfo } from '@/types.js';
+import type { SessionInfo } from '@/types.js';
 
 function sessionsDir() {
   return path.join(os.homedir(), '.nuvin-cli', 'sessions');
@@ -127,7 +127,7 @@ export const scanAvailableSessions = async (limit?: number): Promise<
             messageCount: cliMessages.length,
             topic,
           });
-        } catch (err) {
+        } catch (_err) {
         }
       }
 

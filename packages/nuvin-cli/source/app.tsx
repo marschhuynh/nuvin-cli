@@ -81,7 +81,7 @@ export default function App({
     }
   }, []);
 
-  const { orchestrator, manager, memory, status, send, createNewConversation, reinit, sessionId } = useOrchestrator({
+  const { orchestrator, manager, memory, status, send, createNewConversation, reinit } = useOrchestrator({
     appendLine,
     updateLine,
     updateLineMetadata,
@@ -90,6 +90,7 @@ export default function App({
     memPersist,
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: just depend on the status
   useEffect(() => {
     if (status === OrchestratorStatus.READY) {
       setOrchestrator(orchestrator);
@@ -438,7 +439,6 @@ export default function App({
           vimModeEnabled={vimModeEnabled}
           vimMode={vimMode}
           workingDirectory={process.cwd()}
-          sessionId={sessionId}
         />
       </Box>
     </ErrorBoundary>

@@ -6,7 +6,7 @@ import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import { getDefaultLogger } from '@/utils/file-logger.js';
 import { RecentSessions, WelcomeLogo } from './RecentSessions.js';
 
-import { SessionInfo } from '@/types.js';
+import type { SessionInfo } from '@/types.js';
 
 type ChatDisplayProps = {
   key: string;
@@ -278,8 +278,8 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey 
             if (item.type === 'logo') {
               return <WelcomeLogo key={item.id} />;
             }
-            if (item.type === 'sessions') {
-              return <RecentSessions key={item.id} recentSessions={item.sessions!} />;
+            if (item.type === 'sessions' && item.sessions) {
+              return <RecentSessions key={item.id} recentSessions={item.sessions} />;
             }
             return <MessageLine key={item.id} message={item as MessageLineType} />;
           }}

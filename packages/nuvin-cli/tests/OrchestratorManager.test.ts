@@ -35,7 +35,7 @@ const createMockConfigManager = () => {
     }),
     get: vi.fn().mockReturnValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
-  // biome-ignore lint/suspicious/noExplicitAny: test mock
+    // biome-ignore lint/suspicious/noExplicitAny: test mock
   } as any;
 };
 
@@ -62,7 +62,7 @@ describe('OrchestratorManager', () => {
   it('getStatus returns Initializing before init', () => {
     const manager = new OrchestratorManager(mockConfigManager);
 
-    expect(manager.getStatus()).toBe('Initializing...');
+    expect(manager.getStatus()).toBe('Initializing');
   });
 
   it('getOrchestrator returns null before init', () => {
@@ -75,7 +75,7 @@ describe('OrchestratorManager', () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
-    const result = await manager.init({ mcpConfigPath: "/non/existent/path/mcp-config.json" }, handlers);
+    const result = await manager.init({ mcpConfigPath: '/non/existent/path/mcp-config.json' }, handlers);
 
     expect(result.orchestrator).toBeTruthy();
     expect(result.memory).toBeTruthy();
@@ -91,7 +91,7 @@ describe('OrchestratorManager', () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
-    await manager.init({ mcpConfigPath: "/non/existent/path/mcp-config.json" }, handlers);
+    await manager.init({ mcpConfigPath: '/non/existent/path/mcp-config.json' }, handlers);
 
     const orchestrator = manager.getOrchestrator();
     expect(orchestrator).toBeTruthy();
@@ -141,7 +141,7 @@ describe('OrchestratorManager', () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
-    await manager.init({ mcpConfigPath: "/non/existent/path/mcp-config.json" }, handlers);
+    await manager.init({ mcpConfigPath: '/non/existent/path/mcp-config.json' }, handlers);
 
     const orchestrator = manager.getOrchestrator();
     const initialConfig = orchestrator?.getConfig();
@@ -186,7 +186,7 @@ describe('OrchestratorManager', () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
-    await manager.init({ mcpConfigPath: "/non/existent/path/mcp-config.json" }, handlers);
+    await manager.init({ mcpConfigPath: '/non/existent/path/mcp-config.json' }, handlers);
 
     // Verify that the MCPServerManager received the config
     const mcpManager = manager.getMcpManager();
@@ -202,7 +202,7 @@ describe('OrchestratorManager', () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
-    const result = await manager.init({ mcpConfigPath: "/non/existent/path/mcp-config.json" }, handlers);
+    const result = await manager.init({ mcpConfigPath: '/non/existent/path/mcp-config.json' }, handlers);
 
     expect(result.orchestrator).toBeTruthy();
     expect(manager.getStatus()).toBe('Ready');
@@ -214,7 +214,7 @@ describe('OrchestratorManager', () => {
     const manager = new OrchestratorManager(mockConfigManager);
     const handlers = createMockHandlers();
 
-    await manager.init({ mcpConfigPath: "/non/existent/path/mcp-config.json" }, handlers);
+    await manager.init({ mcpConfigPath: '/non/existent/path/mcp-config.json' }, handlers);
 
     const orchestrator = manager.getOrchestrator();
     const initialConfig = orchestrator?.getConfig();
