@@ -42,6 +42,7 @@ import { eventBus } from './EventBus.js';
 import { ConfigManager } from '@/config/manager.js';
 import { getProviderAuth } from '@/config/utils.js';
 import { LLMFactory } from './LLMFactory.js';
+import { OrchestratorStatus } from '@/types/orchestrator.js';
 
 // Directory paths will be resolved dynamically based on active profile
 const defaultModels: Record<ProviderKey, string> = {
@@ -53,6 +54,7 @@ const defaultModels: Record<ProviderKey, string> = {
   moonshot: 'moonshot-v1-8k',
 };
 export type { ProviderKey } from '@/config/providers.js';
+export { OrchestratorStatus } from '@/types/orchestrator.js';
 
 const enabledTools: string[] = [
   'bash_tool',
@@ -88,7 +90,7 @@ export class OrchestratorManager {
   private conversationStore: ConversationStore | null = null;
   private conversationContext: ConversationContext;
   private model: string = 'demo-echo';
-  private status: 'Initializing...' | 'Ready' | 'Error' = 'Initializing...';
+  private status: OrchestratorStatus = OrchestratorStatus.INITIALIZING;
   private sessionId: string | null = null;
   private sessionDir: string | null = null;
   private mcpManager: MCPServerManager | null = null;
@@ -139,8 +141,8 @@ export class OrchestratorManager {
 
     const oauthConfig = auth?.oauth
       ? {
-          anthropic: auth.oauth,
-        }
+        anthropic: auth.oauth,
+      }
       : undefined;
 
     return {
@@ -208,17 +210,17 @@ export class OrchestratorManager {
       handlers.setLastMetadata,
       persistEventLog
         ? {
-            filename: path.join(sessionDir, 'events.json'),
-            streamingEnabled: streamingChunks,
-          }
+          filename: path.join(sessionDir, 'events.json'),
+          streamingEnabled: streamingChunks,
+        }
         : {
-            streamingEnabled: streamingChunks,
-          },
+          streamingEnabled: streamingChunks,
+        },
     );
   }
 
   async init(options: OrchestratorConfig, handlers: UIHandlers) {
-    this.status = 'Initializing...';
+    this.status = OrchestratorStatus.INITIALIZING;
 
     const { sessionId, sessionDir } = this.resolveSession(options);
 
@@ -399,7 +401,7 @@ export class OrchestratorManager {
       this.sessionId = this.memPersist ? sessionId : null;
       this.sessionDir = this.memPersist ? sessionDir : null;
       this.mcpManager = mcpManager;
-      this.status = 'Ready';
+      this.status = OrchestratorStatus.READY;
 
       await this.initializeDefaultConversation();
 
@@ -414,7 +416,7 @@ export class OrchestratorManager {
         sessionDir: this.sessionDir,
       } as const;
     } catch (e) {
-      this.status = 'Error';
+      this.status = OrchestratorStatus.ERROR;
       throw e;
     }
   }
@@ -747,7 +749,7 @@ export class OrchestratorManager {
     this.orchestrator = null;
     this.memory = null;
     this.model = 'demo-echo';
-    this.status = 'Initializing...';
+    this.status = OrchestratorStatus.INITIALIZING;
     this.sessionId = null;
     this.sessionDir = null;
   }
