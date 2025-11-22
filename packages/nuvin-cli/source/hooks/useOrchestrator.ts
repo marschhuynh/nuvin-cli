@@ -4,6 +4,7 @@ import type { MemoryPort, AgentOrchestrator, Message, UserMessagePayload, SendMe
 import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
 import { OrchestratorManager, type OrchestratorConfig } from '@/services/OrchestratorManager.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
+import { OrchestratorStatus } from '@/types/orchestrator.js';
 
 import type { LineMetadata } from '@/adapters';
 
@@ -26,7 +27,7 @@ export const useOrchestrator = ({
   setLastMetadata,
   handleError,
 }: UseOrchestratorProps) => {
-  const [status, setStatus] = useState<string>('Initializing...');
+  const [status, setStatus] = useState<OrchestratorStatus>(OrchestratorStatus.INITIALIZING);
   const { toolApprovalMode } = useToolApproval();
 
   const orchestratorRef = useRef<AgentOrchestrator | null>(null);
@@ -41,9 +42,8 @@ export const useOrchestrator = ({
   };
 
   const initializeOrchestrator = async (overrides?: Partial<OrchestratorConfig>, isReinit = false) => {
-    setStatus('Initializing...');
-
     if (isReinit) {
+      setStatus(OrchestratorStatus.INITIALIZING);
       await managerRef.current.cleanup();
       managerRef.current.reset();
     }
@@ -59,7 +59,7 @@ export const useOrchestrator = ({
 
     memoryRef.current = result.memory;
     orchestratorRef.current = result.orchestrator;
-    setStatus('Ready');
+    setStatus(OrchestratorStatus.READY);
 
     return result;
   };
@@ -77,9 +77,9 @@ export const useOrchestrator = ({
   useEffect(() => {
     let didCancel = false;
 
-    if (managerRef.current.getStatus() === 'Ready') {
+    if (managerRef.current.getStatus() === OrchestratorStatus.READY) {
       memoryRef.current = managerRef.current.getMemory();
-      setStatus('Ready');
+      setStatus(OrchestratorStatus.READY);
       return () => {
         didCancel = true;
       };
@@ -93,7 +93,7 @@ export const useOrchestrator = ({
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         handleError(`Failed to initialize agent: ${message}`);
-        if (!didCancel) setStatus('Error');
+        if (!didCancel) setStatus(OrchestratorStatus.ERROR);
       }
     })();
 
@@ -121,5 +121,6 @@ export const useOrchestrator = ({
     reinit,
     send,
     createNewConversation,
+    sessionId: managerRef.current.getSession().sessionId,
   };
 };
