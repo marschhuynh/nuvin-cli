@@ -15,3 +15,11 @@ export type MessageLine = {
   };
   color?: string;
 };
+
+export type SessionInfo = {
+  sessionId: string;
+  timestamp: string;
+  lastMessage: string;
+  messageCount: number;
+  topic?: string;
+};
