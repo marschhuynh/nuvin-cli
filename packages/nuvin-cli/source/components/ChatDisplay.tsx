@@ -1,18 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Static } from 'ink';
 import { MessageLine } from './MessageLine.js';
-import { HeaderContent } from './Header.js';
-import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { scanAvailableSessions } from '@/hooks/useSessionManagement.js';
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
+import { getDefaultLogger } from '@/utils/file-logger.js';
+import { RecentSessions, WelcomeLogo } from './RecentSessions.js';
 
-type SessionInfo = {
-  sessionId: string;
-  timestamp: string;
-  lastMessage: string;
-  messageCount: number;
-  topic?: string;
-};
+import { SessionInfo } from '@/types.js';
 
 type ChatDisplayProps = {
   key: string;
@@ -124,24 +118,31 @@ function hasAnyPendingToolCalls(msg: MessageLineType): boolean {
   return false; // All tool calls have results
 }
 
+const logger = getDefaultLogger()
+
+let isScanned = false;
+
+
 const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey }) => {
   const DYNAMIC_COUNT = 0;
-  const [columns] = useStdoutDimensions();
-  const [sessions, setSessions] = useState<SessionInfo[]>([]);
-  const [headerLoaded, setHeaderLoaded] = useState(false);
+  const [sessions, setSessions] = useState<SessionInfo[] | null>(null);
 
   useEffect(() => {
     const loadSessions = async () => {
       try {
-        const result = await scanAvailableSessions();
-        setSessions(result.slice(0, 5));
+        const result = await scanAvailableSessions(5);
+        setSessions(result);
       } catch (_error) {
+        setSessions([]);
       } finally {
-        setHeaderLoaded(true);
+        isScanned = true;
       }
     };
 
-    loadSessions();
+    if (!isScanned) {
+      loadSessions();
+    }
+
   }, []);
 
   // Merge tool calls with results for display only
@@ -188,8 +189,6 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey 
     return Math.min(staticCount, staticItems.length);
   }, [staticCount, staticItems.length]);
 
-  const noopToggle = useCallback(() => {}, []);
-
   // Memoize message items to avoid recreating on every render
   const staticMessagesWithType = useMemo(
     () => staticItems,
@@ -197,9 +196,22 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey 
   );
 
   const staticItemsWithHeader = useMemo(() => {
-    if (!headerLoaded) return [];
-    return [{ type: 'header' as const, id: `header-${headerKey}`, sessions, columns }, ...staticMessagesWithType];
-  }, [headerLoaded, headerKey, sessions, columns, staticMessagesWithType]);
+    const hasMessages = messages.length > 0;
+    const items: Array<{ type: 'logo' | 'sessions' | MessageLineType['type']; id: string; sessions?: SessionInfo[] } | MessageLineType> = [];
+
+    // Always show logo at the start
+    items.push({ type: 'logo' as const, id: `logo-${headerKey}` });
+
+    // Only show Recent Activity when no messages and sessions are loaded
+    if (!hasMessages && sessions !== null && sessions.length > 0) {
+      items.push({ type: 'sessions' as const, id: `sessions-${headerKey}-${sessions.length}`, sessions });
+    }
+
+    // Add all static messages
+    items.push(...staticMessagesWithType);
+
+    return items;
+  }, [headerKey, sessions, staticMessagesWithType, messages.length]);
 
   useEffect(() => {
     setStaticItems((prev) => {
@@ -249,22 +261,33 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey 
 
   const visible = useMemo(() => mergedMessages.slice(safeStaticCount), [mergedMessages, safeStaticCount]);
 
+  logger.info('ChatDisplayComponent mounted', {
+    staticItemsWithHeader: staticItemsWithHeader.length,
+    headerKey,
+    isScanned,
+    sessions: sessions?.length
+  });
+
+
   /* Render static items using Ink's Static so they don't update after being printed */
   return (
     <Box flexDirection="column" flexShrink={1} flexGrow={1} overflow="hidden">
       {staticItemsWithHeader.length > 0 && (
         <Static items={staticItemsWithHeader}>
           {(item) => {
-            if (item.type === 'header') {
-              return <HeaderContent key={item.id} sessions={item.sessions} columns={item.columns} />;
+            if (item.type === 'logo') {
+              return <WelcomeLogo key={item.id} />;
             }
-            return <MessageLine key={item.id} message={item} onToggleExpansion={noopToggle} />;
+            if (item.type === 'sessions') {
+              return <RecentSessions key={item.id} recentSessions={item.sessions!} />;
+            }
+            return <MessageLine key={item.id} message={item as MessageLineType} />;
           }}
         </Static>
       )}
 
       {visible.map((line) => (
-        <MessageLine key={line.id} message={line} onToggleExpansion={noopToggle} />
+        <MessageLine key={line.id} message={line} />
       ))}
     </Box>
   );
