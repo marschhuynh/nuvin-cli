@@ -10,6 +10,10 @@ import { mergeToolCallsWithResultsCached, type MergeCache } from '../ChatDisplay
 import { VirtualizedList } from '../VirtualizedList.js';
 import { useMeasureHeight } from '@/hooks/useHeight.js';
 
+type HeaderItem = { type: 'header'; key: string };
+type MessageItem = { type: 'message'; message: MessageLineType };
+type ListItem = HeaderItem | MessageItem;
+
 export type FlexLayoutProps = {
   width: number;
   height: number;
@@ -33,23 +37,41 @@ export function FlexLayout({
   const mergeCacheRef = useRef<MergeCache>(new Map());
   const mergedMessages = useMemo(() => mergeToolCallsWithResultsCached(messages, mergeCacheRef.current), [messages]);
 
-  const welcomeHeader = useMemo(
-    () => <WelcomeLogo key={`welcome-${headerKey}`} recentSessions={sessions ?? []} />,
-    [headerKey, sessions],
-  );
+  // Combine header and messages into a single items array
+  const listItems: ListItem[] = useMemo(() => {
+    const header: HeaderItem = { type: 'header', key: `welcome-${headerKey}` };
+    const messageItems: MessageItem[] = mergedMessages.map((message) => ({
+      type: 'message' as const,
+      message,
+    }));
+    return [header, ...messageItems];
+  }, [headerKey, mergedMessages]);
+
+  const renderItem = (item: ListItem): ReactNode => {
+    if (item.type === 'header') {
+      return <WelcomeLogo recentSessions={sessions ?? []} />;
+    }
+    return <MessageLine key={item.message.id} message={item.message} />;
+  };
+
+  const keyExtractor = (item: ListItem): string => {
+    if (item.type === 'header') {
+      return item.key;
+    }
+    return item.message.id;
+  };
 
   const listHeight = height - bottomHeight;
 
   return (
-    <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.colors.background}>
+    <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.tokens.black}>
       <Box flexDirection="column" height={listHeight > 0 ? listHeight : undefined} overflow="hidden" flexGrow={1}>
         <VirtualizedList
-          items={mergedMessages}
-          renderItem={(message: MessageLineType) => <MessageLine key={message.id} message={message} />}
-          keyExtractor={(message: MessageLineType) => message.id}
-          overscan={5}
+          items={listItems}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          overscan={1}
           mousePriority={10}
-          header={welcomeHeader}
           height={listHeight > 0 ? listHeight : undefined}
         />
       </Box>

@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
 import { CommandMenu, type CommandMenuHandle } from './CommandMenu/index.js';
+import { useAltMode } from '@/contexts/AltModeContext.js';
 
 type VimMode = 'insert' | 'normal';
 
@@ -53,6 +54,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     ref,
   ) => {
     const { theme } = useTheme();
+    const { altMode } = useAltMode();
     const [input, setInput] = useState('');
     const [focusKey, setFocusKey] = useState(0);
     const [_vimMode, setVimMode] = useState<VimMode>('insert');
@@ -201,25 +203,31 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     const handleTextInputUpArrow = showCommandMenu ? undefined : handleUpArrow;
     const handleTextInputDownArrow = showCommandMenu ? undefined : handleDownArrow;
 
+    const inputProps = altMode
+      ? {
+          backgroundColor: theme.colors.background,
+          paddingY: 1,
+        }
+      : {
+          borderStyle: 'single' as const,
+          borderBottomDimColor: true,
+          borderTop: false,
+          borderBottom: true,
+          borderLeft: false,
+          borderRight: false,
+        };
+
     return (
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderBottomDimColor
-        borderTop={false}
-        borderBottom
-        borderLeft={false}
-        borderRight={false}
-        position="relative"
-      >
-        {showCommandMenu && filteredCommandItems.length > 0 && (
-          <CommandMenu
-            ref={commandMenuRef}
-            items={filteredCommandItems}
-            width="100%"
-            focus={isFocused && !showToolApproval}
-          />
-        )}
+      <Box flexDirection="column" position="relative" {...inputProps}>
+        {showCommandMenu &&
+          filteredCommandItems.length > 0 &&
+          (altMode ? (
+            <Box position="absolute" bottom={2} backgroundColor={theme.colors.background}>
+              <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
+            </Box>
+          ) : (
+            <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
+          ))}
         <Box flexShrink={0} minWidth={1}>
           {!busy ? (
             <Text color={theme.input.prompt} bold>

@@ -39,7 +39,7 @@ function Scrollbar({
   }
 
   return (
-    <Box flexDirection="column" flexShrink={0}>
+    <Box flexDirection="column" flexShrink={0} marginLeft={1}>
       {track.map((char, i) => (
         <Text key={`track-${i}-${char}`} color={char === '┃' ? color : trackColor}>
           {char}
@@ -64,7 +64,6 @@ export type VirtualizedListProps<T> = {
   focus?: boolean;
   manualFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
-  header?: ReactNode;
 } & Omit<BoxProps, 'ref' | 'overflow' | 'children'>;
 
 export function VirtualizedList<T>({
@@ -75,19 +74,17 @@ export function VirtualizedList<T>({
   scrollStep = 1,
   enableMouseScroll = true,
   showScrollbar = true,
-  scrollbarColor = 'cyan',
+  scrollbarColor = 'white',
   scrollbarTrackColor = 'gray',
   mousePriority = 0,
   enableKeyboardScroll = true,
   focus: externalFocus,
   manualFocus = false,
   onFocusChange,
-  header,
   ...boxProps
 }: VirtualizedListProps<T>) {
   const containerRef = useRef<BoxRef>(null);
   const contentRef = useRef<BoxRef>(null);
-  const headerRef = useRef<BoxRef>(null);
   const itemRefsMap = useRef<Map<string, DOMElement>>(new Map());
   const shouldAutoScrollRef = useRef(true);
   const heightCacheRef = useRef<Map<string, number>>(new Map());
@@ -95,18 +92,6 @@ export function VirtualizedList<T>({
 
   const [scrollY, setScrollY] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  useLayoutEffect(() => {
-    if (header && headerRef.current) {
-      const { height } = measureElement(headerRef.current);
-      if (height > 0 && height !== headerHeight) {
-        setHeaderHeight(height);
-      }
-    } else if (!header && headerHeight !== 0) {
-      setHeaderHeight(0);
-    }
-  });
 
   const measureVisibleItems = useCallback(() => {
     let hasChanges = false;
@@ -135,7 +120,7 @@ export function VirtualizedList<T>({
   // biome-ignore lint/correctness/useExhaustiveDependencies: heightCacheVersion is needed
   const { itemOffsets, totalContentHeight } = useMemo(() => {
     const offsets: number[] = [];
-    let total = headerHeight;
+    let total = 0;
 
     for (let i = 0; i < items.length; i++) {
       offsets.push(total);
@@ -152,7 +137,7 @@ export function VirtualizedList<T>({
       itemOffsets: offsets,
       totalContentHeight: total,
     };
-  }, [items, headerHeight, keyExtractor, heightCacheVersion]);
+  }, [items, keyExtractor, heightCacheVersion]);
 
   const needsScrollbar = showScrollbar && totalContentHeight > containerHeight;
   const internalFocus = useFocus({ active: needsScrollbar && !manualFocus });
@@ -165,9 +150,7 @@ export function VirtualizedList<T>({
   const findStartIndex = useCallback(
     (scrollPos: number): number => {
       if (items.length === 0) return 0;
-
-      const adjustedScrollPos = scrollPos - headerHeight;
-      if (adjustedScrollPos <= 0) return 0;
+      if (scrollPos <= 0) return 0;
 
       let low = 0;
       let high = itemOffsets.length - 1;
@@ -183,7 +166,7 @@ export function VirtualizedList<T>({
 
       return Math.max(0, low - 1);
     },
-    [itemOffsets, items.length, headerHeight],
+    [itemOffsets, items.length],
   );
 
   const visibleRange = useMemo(() => {
@@ -196,7 +179,7 @@ export function VirtualizedList<T>({
     const startIndex = Math.max(0, findStartIndex(clampedScrollY) - overscan);
 
     let endIndex = startIndex;
-    let accHeight = itemOffsets[startIndex] || headerHeight;
+    let accHeight = itemOffsets[startIndex] || 0;
     const viewportEnd = clampedScrollY + containerHeight;
 
     while (endIndex < items.length && accHeight < viewportEnd) {
@@ -209,17 +192,7 @@ export function VirtualizedList<T>({
     endIndex = Math.min(items.length - 1, endIndex + overscan);
 
     return { start: startIndex, end: endIndex };
-  }, [
-    items,
-    scrollY,
-    containerHeight,
-    overscan,
-    findStartIndex,
-    itemOffsets,
-    keyExtractor,
-    headerHeight,
-    totalContentHeight,
-  ]);
+  }, [items, scrollY, containerHeight, overscan, findStartIndex, itemOffsets, keyExtractor, totalContentHeight]);
 
   const scrollTo = useCallback(
     (newY: number) => {
@@ -326,7 +299,7 @@ export function VirtualizedList<T>({
   }, [totalContentHeight, containerHeight]);
 
   const topOffset =
-    visibleRange.start >= 0 && visibleRange.start < itemOffsets.length ? itemOffsets[visibleRange.start] : headerHeight;
+    visibleRange.start >= 0 && visibleRange.start < itemOffsets.length ? itemOffsets[visibleRange.start] : 0;
   const visibleItems = items.slice(visibleRange.start, visibleRange.end + 1);
 
   const scrollInfo: ScrollInfo = {
@@ -346,18 +319,13 @@ export function VirtualizedList<T>({
   const maxScrollY = Math.max(0, totalContentHeight - containerHeight);
   const effectiveScrollY = shouldAutoScrollRef.current ? maxScrollY : scrollY;
   const clampedScrollY = Math.max(0, Math.min(effectiveScrollY, maxScrollY));
-  const skippedItemsHeight = topOffset - headerHeight;
+  const skippedItemsHeight = topOffset;
   const marginTopValue = -clampedScrollY + skippedItemsHeight;
 
   return (
     <Box flexDirection="row" overflow="hidden" {...boxProps}>
       <Box ref={containerRef} flexDirection="column" flexGrow={1} overflow="hidden">
         <Box ref={contentRef} flexDirection="column" marginTop={marginTopValue}>
-          {header && (
-            <Box ref={headerRef} flexShrink={0}>
-              {header}
-            </Box>
-          )}
           {visibleItems.map((item, i) => {
             const actualIndex = visibleRange.start + i;
             const key = keyExtractor(item, actualIndex);

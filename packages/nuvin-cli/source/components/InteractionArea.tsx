@@ -212,7 +212,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 
     case 'command':
       return altMode ? (
-        <Box position="absolute" bottom={0} zIndex={10}>
+        <Box position="absolute" bottom={0} zIndex={10} backgroundColor={theme.colors.background}>
           <ActiveCommand />
         </Box>
       ) : (

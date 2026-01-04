@@ -33,6 +33,7 @@ function arraysEqual(a: string[], b: string[]): boolean {
 
 export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cache: MergeCache): MessageLineType[] {
   const result: MessageLineType[] = [];
+  const runningToolCalls: MessageLineType[] = [];
   const toolResultsById = new Map<string, MessageLineType>();
 
   for (const msg of messages) {
@@ -77,7 +78,8 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
           result.push(toolResult);
         }
       } else {
-        result.push(msg);
+        // Tool call without results yet - defer to end
+        runningToolCalls.push(msg);
       }
     } else if (msg.type === 'tool_result') {
       const toolResultId = msg.metadata?.toolResult?.id;
@@ -95,6 +97,9 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
       result.push(msg);
     }
   }
+
+  // Append running tool calls at the end so they appear as the newest messages
+  result.push(...runningToolCalls);
 
   for (const key of cache.keys()) {
     if (!seenIds.has(key)) {

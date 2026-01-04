@@ -4,6 +4,14 @@ const stripSystemReminder = (text: string): string => {
   return text.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
 };
 
+/**
+ * Normalize tab characters to spaces for consistent rendering in Ink/Yoga.
+ * Tabs have variable display width which can cause layout miscalculations.
+ */
+const normalizeTabs = (text: string, tabWidth = 4): string => {
+  return text.replace(/\t/g, ' '.repeat(tabWidth));
+};
+
 export const parseDetailLines = ({
   status,
   messageContent,
@@ -24,7 +32,8 @@ export const parseDetailLines = ({
     const textResult = toolResult.result as string;
     const cleaned = stripAnsiAndControls(textResult);
     const withoutReminder = stripSystemReminder(cleaned);
-    const trimmed = withoutReminder.trim();
+    const normalized = normalizeTabs(withoutReminder);
+    const trimmed = normalized.trim();
     result = trimmed ? trimmed.split(/\r?\n/) : [];
   } else if (toolResult.type === 'json') {
     result = JSON.stringify(toolResult.result, null, 2).split(/\r?\n/);

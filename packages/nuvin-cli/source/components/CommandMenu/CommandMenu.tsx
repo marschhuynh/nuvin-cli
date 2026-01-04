@@ -16,13 +16,12 @@ export type CommandMenuHandle = {
 
 export type CommandMenuProps = {
   items: CommandMenuItem[];
-  width: number | string;
   focus?: boolean;
   onHighlight?: (item: CommandMenuItem) => void;
 };
 
 export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
-  ({ items, width, focus = false, onHighlight }, ref) => {
+  ({ items, focus = false, onHighlight }, ref) => {
     const { theme } = useTheme();
     const selectInputRef = useRef<SelectInputHandle>(null);
 
@@ -43,31 +42,33 @@ export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
     }));
 
     return (
-      <Box flexDirection="column" width={width}>
+      <Box flexDirection="column" flexGrow={1} width={'100%'}>
         <Box backgroundColor={theme.colors.accent}>
           <Text color={theme.tokens.black} bold>
             {' '}
             Commands ({items.length}) - Use ↑↓ to navigate, Enter to select, Esc to cancel
           </Text>
         </Box>
-        <SelectInput
-          ref={selectInputRef}
-          items={selectItems}
-          limit={10}
-          focus={focus}
-          enableRotation={false}
-          showScrollIndicators={true}
-          onHighlight={(item) => onHighlight?.(item.value)}
-          itemComponent={({ isSelected, label }) => (
-            <Text
-              color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
-              bold={isSelected}
-            >
-              {label}
-            </Text>
-          )}
-          indicatorComponent={({ isSelected }) => <Text>{isSelected ? '❯ ' : '  '}</Text>}
-        />
+        <Box paddingX={1}>
+          <SelectInput
+            ref={selectInputRef}
+            items={selectItems}
+            limit={10}
+            focus={focus}
+            enableRotation={false}
+            showScrollIndicators={true}
+            onHighlight={(item) => onHighlight?.(item.value)}
+            itemComponent={({ isSelected, label }) => (
+              <Text
+                color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
+                bold={isSelected}
+              >
+                {label}
+              </Text>
+            )}
+            indicatorComponent={({ isSelected }) => <Text>{isSelected ? '❯ ' : '  '}</Text>}
+          />
+        </Box>
       </Box>
     );
   },

@@ -23,7 +23,7 @@ type MessageLineProps = {
 
 const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false }) => {
   const { rows } = useStdoutDimensions();
-  const { altMode } = useAltMode()
+  const { altMode } = useAltMode();
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
   const streamingContent = message.content;
@@ -39,7 +39,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
               </Text>
             </Box>
             <Box marginX={2}>
-              <Markdown>{streamingContent}</Markdown>
+              <Markdown reflowText>{streamingContent}</Markdown>
             </Box>
           </Box>
         );

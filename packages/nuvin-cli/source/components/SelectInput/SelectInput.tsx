@@ -4,6 +4,7 @@ import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
 import { useTheme } from '@/contexts/ThemeContext';
+import { theme } from '@/theme';
 
 export type SelectInputItem<T = unknown> = {
   key?: string;
@@ -43,7 +44,7 @@ const DefaultItemComponent = ({ isSelected, label }: { isSelected?: boolean; lab
 
 const DefaultIndicatorComponent = ({ isSelected }: { isSelected?: boolean }) => (
   <Box>
-    <Text>{isSelected ? '❯ ' : '  '}</Text>
+    <Text color={theme.colors.accent}>{isSelected ? '❯ ' : '  '}</Text>
   </Box>
 );
 
@@ -152,7 +153,7 @@ export const SelectInput = forwardRef<SelectInputHandle, SelectInputProps<unknow
   const hasMoreBelow = hasLimit && limit !== undefined && scrollOffset + limit < items.length;
 
   return (
-    <Box flexDirection="column" flexShrink={0}>
+    <Box flexDirection="column" width="100%" overflow="hidden">
       {showScrollIndicators && (
         <Box marginLeft={1} height={1}>
           {hasMoreAbove ? <Text dimColor> ▲ {scrollOffset} more</Text> : null}
@@ -165,7 +166,7 @@ export const SelectInput = forwardRef<SelectInputHandle, SelectInputProps<unknow
         const key = item.key || String(actualIndex);
 
         return (
-          <Box key={key}>
+          <Box key={key} width="100%">
             <IndicatorComponent isSelected={focus && isSelected} />
             <ItemComponent isSelected={focus && isSelected} label={item.label} value={item.value} />
           </Box>
