@@ -43,7 +43,7 @@ const HelpModal = ({ deactivate }: CommandComponentProps) => {
         </Text>
       </Box>
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={1} marginBottom={1} flexDirection="column">
         <Text color="yellow" bold>
           Commands
         </Text>

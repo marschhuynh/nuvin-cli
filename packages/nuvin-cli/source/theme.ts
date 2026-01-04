@@ -81,7 +81,7 @@ const COLORS = {
 
   // Backgrounds and borders
   // background: COLOR_TOKENS.black,
-  background: '#1e2123',
+  background: '#171a1b',
   
   border: COLOR_TOKENS.gray,
 

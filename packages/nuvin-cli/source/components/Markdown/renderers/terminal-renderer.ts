@@ -242,7 +242,7 @@ class Renderer {
         body += this.tablerow({ text: cell });
       }
     }
-    return section(createTable(header, body || '', this.tableSettings, this.transform, this.o.table));
+    return section(createTable(header, body || '', this.tableSettings, this.transform, this.o.table, this.o.width));
   }
 
   tablerow(content: string | { text: string }): string {

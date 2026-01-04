@@ -1,0 +1,24 @@
+Accept-Encoding: gzip, deflate, br, zstd
+authorization: Bearer tid=c4a00e73480400753559afae22774b12;exp=1767542778;sku=plus_monthly_subscriber_quota;proxy-ep=proxy.individual.githubcopilot.com;st=dotcom;chat=1;cit=1;malfil=1;editor_preview_features=1;agent_mode=1;agent_mode_auto_approval=1;mcp=1;ccr=1;8kp=1;ip=27.79.44.252;asn=AS7552:91a5e5ddcc622f4c87f18a0788bc2bbec960056965652fb224fb21fec9cced87
+Connection: keep-alive
+Content-Length: 86745
+content-type: application/json
+copilot-integration-id: vscode-chat
+copilot-vision-request: true
+editor-plugin-version: copilot-chat/0.35.2
+editor-version: vscode/1.107.1
+Host: api.individual.githubcopilot.com
+openai-intent: conversation-agent
+Sec-Fetch-Dest: empty
+Sec-Fetch-Mode: no-cors
+Sec-Fetch-Site: none
+user-agent: GitHubCopilotChat/0.35.2
+vscode-abexpcontext: vsliv368cf:30146710;binariesv615:30325510;nativeloc1:31344060;7d05f481:31426900;cg8ef616:31426899;copilot_t_ci:31333650;pythonrdcb7:31342333;6518g693:31436602;aj953862:31281341;nes-set-on:31351930;6abeh943:31336334;cloudbuttont:31379625;todos-1:31405332;upload-service:31384080;3efgi100_wstrepl:31403338;use-responses-api:31390855;ddidt:31399633;je187915:31401257;2a0ce269:31428710;ec5jj548:31422691;cp_cls_t_966_ss:31435506;copilot6169-t2000-control:31440805;c0683394:31419495;478ah919:31426797;30h21147:31435638;ge8j1254_inline_auto_hint_haiku:31431912;a5gib710:31434435;7371f403_haiku:31440729;request_with_suggest:31435827;rename_enabled:31436409;7a04d226_do_not_restore_last_panel_session:31438103;anthropic_thinking_t:31432745;406hc587_ask_agent:31428393;9ab0j925:31438092;cp_cls_t_1081:31433292;copilot-nes-oct-trt:31432596;nes-slash-models-on:31440958;;cmp-ext-treat:31426748
+vscode-machineid: 5e996cad18aff2c33d6e9605d54e011500b3e3d580a98d285acd295ece9b5d0c
+vscode-sessionid: 6759c24a-2adb-4dbd-aa12-3d090ca24c251767539607747
+x-github-api-version: 2025-10-01
+x-initiator: user
+x-interaction-id: f964dd5d-2de4-4608-89a3-0268f4645c5e
+x-interaction-type: conversation-agent
+x-request-id: 7fb42ba0-ea2f-4576-a70b-8645056ee407
+x-vscode-user-agent-library-version: electron-fetch
