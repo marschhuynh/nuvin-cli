@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.26.1
+
+### Patch Changes
+
+- [`9219f88`](https://github.com/marschhuynh/nuvin-space/commit/9219f889cf52912a17e79f3070e3efd8de47a461) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix altMode layout consistency and InputArea rendering logic
+
+- [`9219f88`](https://github.com/marschhuynh/nuvin-space/commit/9219f889cf52912a17e79f3070e3efd8de47a461) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update components with styling fixes and AGENTS.md improvements
+
 ## 1.26.0
 
 ### Minor Changes
