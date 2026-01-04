@@ -197,7 +197,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 
   const mode = pendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
 
-  const render = () => {
+  const renderDynamicContent = () => {
     switch (mode) {
       case 'approval':
         if (!pendingApproval || !toolApprovalMode) {
@@ -239,7 +239,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
           )}
         </Box>
       )}
-      {render()}
+      {renderDynamicContent()}
       <InputArea
         ref={ref}
         busy={busy}

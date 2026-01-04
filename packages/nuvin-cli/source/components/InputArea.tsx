@@ -63,6 +63,10 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     const { isFocused } = useFocus({ autoFocus: true, active: true });
     const commandMenuRef = useRef<CommandMenuHandle>(null);
 
+    // Track input value in ref for stable callbacks
+    const inputRef = useRef(input);
+    inputRef.current = input;
+
     const showCommandMenu = input.startsWith('/');
 
     const filteredCommandItems = useMemo(() => {
@@ -103,7 +107,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
           setInput('');
           onInputChanged?.('');
         },
-        getValue: () => input,
+        getValue: () => inputRef.current,
         setValue: (value: string) => {
           setInput(value);
           onInputChanged?.(value);
@@ -125,7 +129,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
           setInput('');
         },
       }),
-      [onInputChanged, input],
+      [onInputChanged],
     );
 
     useEffect(() => {
@@ -136,10 +140,13 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
       }
     }, [vimModeEnabled]);
 
-    const handleChange = (value: string) => {
-      setInput(value);
-      onInputChanged?.(value);
-    };
+    const handleChange = useCallback(
+      (value: string) => {
+        setInput(value);
+        onInputChanged?.(value);
+      },
+      [onInputChanged],
+    );
 
     const handleVimModeChange = useCallback(
       (mode: VimMode) => {
@@ -216,15 +223,6 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
 
     return (
       <Box flexDirection="column" position="relative" {...inputProps}>
-        {showCommandMenu &&
-          filteredCommandItems.length > 0 &&
-          (altMode ? (
-            <Box position="absolute" bottom={2} backgroundColor={theme.colors.background}>
-              <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
-            </Box>
-          ) : (
-            <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
-          ))}
         <Box flexShrink={0} minWidth={1}>
           {!busy ? (
             <Text color={theme.input.prompt} bold>
@@ -249,6 +247,15 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
             />
           </Box>
         </Box>
+        {showCommandMenu &&
+          filteredCommandItems.length > 0 &&
+          (altMode ? (
+            <Box position="absolute" bottom={2} backgroundColor={theme.colors.background}>
+              <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
+            </Box>
+          ) : (
+            <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
+          ))}
       </Box>
     );
   },

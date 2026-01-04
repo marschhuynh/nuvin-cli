@@ -72,7 +72,7 @@ export const AppModal: FC<AppModalProps> = ({
       };
 
   return (
-    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.colors.background} {...props}>
+    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.tokens.black} {...props}>
       <Box flexWrap="wrap" justifyContent="space-between" backgroundColor={globalTheme.modal.titleBackground}>
         {title ? (
           <Box>

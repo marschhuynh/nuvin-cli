@@ -64,7 +64,7 @@ export function FlexLayout({
   const listHeight = height - bottomHeight;
 
   return (
-    <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.tokens.black}>
+    <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.colors.background}>
       <Box flexDirection="column" height={listHeight > 0 ? listHeight : undefined} overflow="hidden" flexGrow={1}>
         <VirtualizedList
           items={listItems}

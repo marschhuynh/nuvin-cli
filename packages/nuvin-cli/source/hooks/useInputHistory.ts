@@ -23,6 +23,16 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
 
   const historyPrevArmedRef = useRef(false);
   const historyNextArmedRef = useRef(false);
+  
+  // Use refs to avoid recreating callbacks when these values change
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  
+  const currentInputRef = useRef(currentInput);
+  currentInputRef.current = currentInput;
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -74,33 +84,37 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
   }, [memory]);
 
   const navigatePrev = useCallback((): string | null => {
-    logger.debug('navigatePrev', { messages, currentIndex: index });
+    const currentMessages = messagesRef.current;
+    const currentIndex = indexRef.current;
+    logger.debug('navigatePrev', { messages: currentMessages, currentIndex });
 
-    if (messages.length === 0 || index === 0) {
+    if (currentMessages.length === 0 || currentIndex === 0) {
       logger.debug('navigatePrev: early return');
       return null;
     }
 
-    const newIndex = index === -1 ? messages.length - 1 : index - 1;
+    const newIndex = currentIndex === -1 ? currentMessages.length - 1 : currentIndex - 1;
     setIndex(newIndex);
 
-    const message = messages[newIndex];
+    const message = currentMessages[newIndex];
     logger.debug('navigatePrev: recalling', { newIndex, message });
     return message ?? null;
-  }, [messages, index]);
+  }, []);
 
   const navigateNext = useCallback((): string | null => {
-    logger.debug('navigateNext', { messages, currentIndex: index });
+    const currentMessages = messagesRef.current;
+    const currentIndex = indexRef.current;
+    logger.debug('navigateNext', { messages: currentMessages, currentIndex });
 
-    if (index === -1) {
+    if (currentIndex === -1) {
       logger.debug('navigateNext: early return');
       return null;
     }
 
-    if (index < messages.length - 1) {
-      const newIndex = index + 1;
+    if (currentIndex < currentMessages.length - 1) {
+      const newIndex = currentIndex + 1;
       setIndex(newIndex);
-      const message = messages[newIndex];
+      const message = currentMessages[newIndex];
       logger.debug('navigateNext: recalling', { newIndex, message });
       return message ?? null;
     }
@@ -108,7 +122,7 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
     setIndex(-1);
     logger.debug('navigateNext: reset to empty');
     return '';
-  }, [messages, index]);
+  }, []);
 
   const handleHistoryPrev = useCallback(() => {
     const message = navigatePrev();
@@ -131,8 +145,9 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
       }
 
       const isMultiline = lineInfo.lines.length > 1;
+      const input = currentInputRef.current;
 
-      if (!isMultiline || currentInput.trim() === '') {
+      if (!isMultiline || input.trim() === '') {
         handleHistoryPrev();
       } else if (historyPrevArmedRef.current) {
         historyPrevArmedRef.current = false;
@@ -145,7 +160,7 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
         }, 1000);
       }
     },
-    [currentInput, handleHistoryPrev, setNotification],
+    [handleHistoryPrev, setNotification],
   );
 
   const handleDownArrow = useCallback(
@@ -155,8 +170,9 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
       }
 
       const isMultiline = lineInfo.lines.length > 1;
+      const input = currentInputRef.current;
 
-      if (!isMultiline || currentInput.trim() === '') {
+      if (!isMultiline || input.trim() === '') {
         handleHistoryNext();
       } else if (historyNextArmedRef.current) {
         historyNextArmedRef.current = false;
@@ -169,7 +185,7 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
         }, 1000);
       }
     },
-    [currentInput, handleHistoryNext, setNotification],
+    [handleHistoryNext, setNotification],
   );
 
   const addMessage = useCallback((message: string) => {

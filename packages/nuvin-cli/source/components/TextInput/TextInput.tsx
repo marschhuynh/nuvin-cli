@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Text } from 'ink';
 import type { Except } from 'type-fest';
 import { useInput } from '@/contexts/InputContext/index.js';
@@ -62,12 +62,23 @@ function TextInput({
   const { processPaste } = usePaste();
   const { renderWithCursor } = useCursorRenderer();
 
+  // Use refs to access current state in callbacks without recreating them
+  const editorStateRef = useRef(editorState);
+  editorStateRef.current = editorState;
+
+  const setValueRef = useRef(setValue);
+  setValueRef.current = setValue;
+
+  const moveCursorRef = useRef(moveCursor);
+  moveCursorRef.current = moveCursor;
+
   useEffect(() => {
     setInitialCursor(focus);
   }, [focus, setInitialCursor]);
 
-  useInput(
-    (input, key) => {
+  // Stable input handler using refs for current state
+  const handleInput = useCallback(
+    (input: string, key: Parameters<Parameters<typeof useInput>[0]>[1]) => {
       const pasteResult = processPaste(input);
 
       if (pasteResult.shouldWaitForMore) {
@@ -78,22 +89,22 @@ function TextInput({
         input = pasteResult.processedInput;
       }
 
-      const currentCursorOffset = editorState.cursorOffset;
-      const currentValue = editorState.value;
+      const currentCursorOffset = editorStateRef.current.cursorOffset;
+      const currentValue = editorStateRef.current.value;
       const vimAction = handleVimInput(input, key, currentValue, currentCursorOffset);
 
       if (vimAction.type === 'move-cursor') {
-        moveCursor(vimAction.offset);
+        moveCursorRef.current(vimAction.offset);
         return true;
       }
 
       if (vimAction.type === 'set-value') {
-        setValue(vimAction.value, vimAction.offset);
+        setValueRef.current(vimAction.value, vimAction.offset);
         return true;
       }
 
       if (vimAction.type === 'enter-insert-and-set-value') {
-        setValue(vimAction.value, vimAction.offset);
+        setValueRef.current(vimAction.value, vimAction.offset);
         enterInsertMode();
         return true;
       }
@@ -101,7 +112,7 @@ function TextInput({
       if (vimAction.type === 'enter-insert-mode') {
         enterInsertMode();
         if (vimAction.offset !== undefined) {
-          moveCursor(vimAction.offset);
+          moveCursorRef.current(vimAction.offset);
         }
         return true;
       }
@@ -156,9 +167,9 @@ function TextInput({
         if (showCursor) {
           if (key.meta) {
             const lineInfo = getLineInfo(currentValue, currentCursorOffset);
-            moveCursor(lineInfo.lineStart);
+            moveCursorRef.current(lineInfo.lineStart);
           } else {
-            moveCursor(currentCursorOffset - 1);
+            moveCursorRef.current(currentCursorOffset - 1);
           }
         }
         return true;
@@ -166,22 +177,22 @@ function TextInput({
         if (showCursor) {
           if (key.meta) {
             const lineInfo = getLineInfo(currentValue, currentCursorOffset);
-            moveCursor(lineInfo.lineEnd);
+            moveCursorRef.current(lineInfo.lineEnd);
           } else {
-            moveCursor(currentCursorOffset + 1);
+            moveCursorRef.current(currentCursorOffset + 1);
           }
         }
         return true;
       } else if (key.home || (key.ctrl && input === 'a')) {
         if (showCursor) {
           const lineInfo = getLineInfo(currentValue, currentCursorOffset);
-          moveCursor(lineInfo.lineStart);
+          moveCursorRef.current(lineInfo.lineStart);
         }
         return true;
       } else if (key.end || (key.ctrl && input === 'e')) {
         if (showCursor) {
           const lineInfo = getLineInfo(currentValue, currentCursorOffset);
-          moveCursor(lineInfo.lineEnd);
+          moveCursorRef.current(lineInfo.lineEnd);
         }
         return true;
       } else if (key.upArrow) {
@@ -197,7 +208,7 @@ function TextInput({
         }
         const target = moveCursorVertically(currentValue, currentCursorOffset, 'up');
         if (target !== null) {
-          moveCursor(target);
+          moveCursorRef.current(target);
         }
         return true;
       } else if (key.downArrow) {
@@ -213,7 +224,7 @@ function TextInput({
         }
         const target = moveCursorVertically(currentValue, currentCursorOffset, 'down');
         if (target !== null) {
-          moveCursor(target);
+          moveCursorRef.current(target);
         }
         return true;
       } else if (key.backspace || key.delete) {
@@ -222,7 +233,7 @@ function TextInput({
             currentValue.slice(0, currentCursorOffset - 1) +
             currentValue.slice(currentCursorOffset, currentValue.length);
           const nextCursorOffset = currentCursorOffset - 1;
-          setValue(nextValue, nextCursorOffset);
+          setValueRef.current(nextValue, nextCursorOffset);
         }
         return true;
       } else {
@@ -233,12 +244,25 @@ function TextInput({
         const nextCursorOffset = currentCursorOffset + input.length;
         const nextCursorWidth = input.length > 1 ? input.length : 0;
 
-        setValue(nextValue, nextCursorOffset, nextCursorWidth);
+        setValueRef.current(nextValue, nextCursorOffset, nextCursorWidth);
         return true;
       }
     },
-    { isActive: focus },
+    [
+      processPaste,
+      handleVimInput,
+      enterInsertMode,
+      onSubmit,
+      onUpArrow,
+      onDownArrow,
+      showCursor,
+      vimModeEnabled,
+      vimMode,
+      onChange,
+    ],
   );
+
+  useInput(handleInput, { isActive: focus });
 
   const value = mask ? mask.repeat(editorState.value.length) : editorState.value;
   const { renderedValue, renderedPlaceholder } = renderWithCursor(
