@@ -197,58 +197,64 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 
   const mode = pendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
 
-  switch (mode) {
-    case 'approval':
-      if (!pendingApproval || !toolApprovalMode) {
-        return null;
-      }
-      return altMode ? (
-        <Box position="absolute" bottom={0} zIndex={10}>
+  const render = () => {
+    switch (mode) {
+      case 'approval':
+        if (!pendingApproval || !toolApprovalMode) {
+          return null;
+        }
+        return altMode ? (
+          <Box position="absolute" bottom={0} zIndex={10}>
+            <ToolApprovalPrompt toolCalls={pendingApproval.toolCalls} onApproval={handleApprovalResponse} />
+          </Box>
+        ) : (
           <ToolApprovalPrompt toolCalls={pendingApproval.toolCalls} onApproval={handleApprovalResponse} />
-        </Box>
-      ) : (
-        <ToolApprovalPrompt toolCalls={pendingApproval.toolCalls} onApproval={handleApprovalResponse} />
-      );
+        );
 
-    case 'command':
-      return altMode ? (
-        <Box position="absolute" bottom={0} zIndex={10} backgroundColor={theme.colors.background}>
+      case 'command':
+        return altMode ? (
+          <Box position="absolute" bottom={0} zIndex={10} backgroundColor={theme.colors.background}>
+            <ActiveCommand />
+          </Box>
+        ) : (
           <ActiveCommand />
-        </Box>
-      ) : (
-        <ActiveCommand />
-      );
-    default:
-      return (
-        <Box flexDirection="column" marginTop={2}>
-          {queuedMessages.length > 0 && (
-            <Box flexDirection="row" marginLeft={2}>
-              <Text color={theme.colors.secondary} dimColor>
-                ⟀ {queuedMessages[0]}
-              </Text>
-              {queuedMessages.length > 1 && (
-                <Text color={theme.colors.secondary} dimColor>
-                  {' '}
-                  + {queuedMessages.length - 1}
-                </Text>
-              )}
-            </Box>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Box flexDirection="column" marginTop={2} position="relative">
+      {queuedMessages.length > 0 && (
+        <Box flexDirection="row" marginLeft={2}>
+          <Text color={theme.colors.secondary} dimColor>
+            ⟀ {queuedMessages[0]}
+          </Text>
+          {queuedMessages.length > 1 && (
+            <Text color={theme.colors.secondary} dimColor>
+              {' '}
+              + {queuedMessages.length - 1}
+            </Text>
           )}
-          <InputArea
-            ref={ref}
-            busy={busy}
-            messageQueueLength={messageQueueLength}
-            showToolApproval={!!pendingApproval}
-            commandItems={commandItems}
-            vimModeEnabled={vimModeEnabled}
-            memory={memory}
-            useAbsoluteMenu={useAbsoluteMenu}
-            onInputChanged={onInputChanged}
-            onInputSubmit={handleInputSubmit}
-            onVimModeToggle={onVimModeToggle}
-            onVimModeChanged={onVimModeChanged}
-          />
         </Box>
-      );
-  }
+      )}
+      {render()}
+      <InputArea
+        ref={ref}
+        busy={busy}
+        messageQueueLength={messageQueueLength}
+        showToolApproval={!!pendingApproval}
+        commandItems={commandItems}
+        vimModeEnabled={vimModeEnabled}
+        memory={memory}
+        useAbsoluteMenu={useAbsoluteMenu}
+        onInputChanged={onInputChanged}
+        onInputSubmit={handleInputSubmit}
+        onVimModeToggle={onVimModeToggle}
+        onVimModeChanged={onVimModeChanged}
+        disabled={mode !== 'input'}
+      />
+    </Box>
+  );
 });

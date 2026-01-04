@@ -25,6 +25,7 @@ type InputAreaProps = {
   messageQueueLength: number;
   showToolApproval?: boolean;
   useAbsoluteMenu?: boolean;
+  disabled?: boolean;
 
   commandItems: Array<{ label: string; value: string }>;
   vimModeEnabled?: boolean;
@@ -42,6 +43,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
       busy,
       showToolApproval = false,
       useAbsoluteMenu: _useAbsoluteMenu = false,
+      disabled = false,
 
       commandItems,
       vimModeEnabled = false,
@@ -197,25 +199,20 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
           onInputChanged?.('');
         }
       },
-      { isActive: isFocused && !showToolApproval },
+      { isActive: isFocused && !showToolApproval && !disabled },
     );
 
     const handleTextInputUpArrow = showCommandMenu ? undefined : handleUpArrow;
     const handleTextInputDownArrow = showCommandMenu ? undefined : handleDownArrow;
 
-    const inputProps = altMode
-      ? {
-          backgroundColor: theme.colors.background,
-          paddingY: 1,
-        }
-      : {
-          borderStyle: 'single' as const,
-          borderBottomDimColor: true,
-          borderTop: false,
-          borderBottom: true,
-          borderLeft: false,
-          borderRight: false,
-        };
+    const inputProps = {
+      borderStyle: 'single' as const,
+      borderBottomDimColor: true,
+      borderTop: false,
+      borderBottom: true,
+      borderLeft: false,
+      borderRight: false,
+    };
 
     return (
       <Box flexDirection="column" position="relative" {...inputProps}>
@@ -244,7 +241,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
               onChange={handleChange}
               onSubmit={handleSubmit}
               placeholder="Type your message..."
-              focus={isFocused && !showToolApproval}
+              focus={isFocused && !showToolApproval && !disabled}
               vimModeEnabled={vimModeEnabled}
               onVimModeChange={handleVimModeChange}
               onUpArrow={handleTextInputUpArrow}

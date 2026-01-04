@@ -2,6 +2,7 @@ import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { SelectInput, type SelectInputItem, type SelectInputHandle } from '../SelectInput/SelectInput.js';
+import { useAltMode } from '@/contexts/AltModeContext.js';
 
 export type CommandMenuItem = {
   label: string;
@@ -23,6 +24,7 @@ export type CommandMenuProps = {
 export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
   ({ items, focus = false, onHighlight }, ref) => {
     const { theme } = useTheme();
+    const { altMode } = useAltMode();
     const selectInputRef = useRef<SelectInputHandle>(null);
 
     useImperativeHandle(ref, () => ({
@@ -49,7 +51,7 @@ export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
             Commands ({items.length}) - Use ↑↓ to navigate, Enter to select, Esc to cancel
           </Text>
         </Box>
-        <Box paddingX={1}>
+        <Box paddingX={altMode ? 1 : 0}>
           <SelectInput
             ref={selectInputRef}
             items={selectItems}
