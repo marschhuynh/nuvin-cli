@@ -2,13 +2,14 @@ import { forwardRef, useMemo, useCallback, useRef, useEffect, useState } from 'r
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import type { MemoryPort, Message } from '@nuvin/nuvin-core';
-import { ToolApprovalPrompt } from './ToolApprovalPrompt/ToolApprovalPrompt.js';
 import { ActiveCommand } from '@/modules/commands/components/ActiveCommand.js';
-import { InputArea, type InputAreaHandle } from './InputArea.js';
 import { useCommand } from '@/modules/commands/hooks/useCommand.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
+import { ToolApprovalPrompt } from './ToolApprovalPrompt/ToolApprovalPrompt.js';
+import { InputArea, type InputAreaHandle, type CommandMenuState } from './InputArea.js';
+import { CommandMenu } from './CommandMenu/index.js';
 
 type InteractionAreaProps = {
   busy?: boolean;
@@ -18,7 +19,7 @@ type InteractionAreaProps = {
   memory?: MemoryPort<Message> | null;
   useAbsoluteMenu?: boolean;
 
-  abortRef?: React.MutableRefObject<AbortController | null>;
+  abortRef?: React.RefObject<AbortController | null>;
   onNotification?: (message: string | null, duration?: number) => void;
   onBusyChange?: (busy: boolean) => void;
 
@@ -57,6 +58,11 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   const [queuedMessages, setQueuedMessages] = useState<string[]>([]);
   const isProcessingQueueRef = useRef(false);
   const escTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [commandMenuState, setCommandMenuState] = useState<CommandMenuState | null>(null);
+
+  const handleCommandMenuChange = useCallback((state: CommandMenuState) => {
+    setCommandMenuState(state);
+  }, []);
 
   useEffect(() => {
     if (!busy && queuedMessages.length > 0 && onInputSubmit && !isProcessingQueueRef.current) {
@@ -195,7 +201,13 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
     [commands],
   );
 
-  const mode = pendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
+  const mode = pendingApproval
+    ? 'approval'
+    : hasActiveCommand
+      ? 'command'
+      : commandMenuState?.show
+        ? 'command-menu'
+        : 'input';
 
   const renderDynamicContent = () => {
     switch (mode) {
@@ -204,7 +216,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
           return null;
         }
         return altMode ? (
-          <Box position="absolute" bottom={0} zIndex={10}>
+          <Box position="absolute" bottom={2} zIndex={20}>
             <ToolApprovalPrompt toolCalls={pendingApproval.toolCalls} onApproval={handleApprovalResponse} />
           </Box>
         ) : (
@@ -213,19 +225,33 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 
       case 'command':
         return altMode ? (
-          <Box position="absolute" bottom={0} zIndex={10} backgroundColor={theme.colors.background}>
+          <Box position="absolute" bottom={2} zIndex={10}>
             <ActiveCommand />
           </Box>
         ) : (
           <ActiveCommand />
         );
+
       default:
         return null;
     }
   };
 
+  const renderCommandMenu = () => {
+    if (!commandMenuState?.show || !commandMenuState.items.length) {
+      return null;
+    }
+    return altMode ? (
+      <Box position="absolute" bottom={2} zIndex={10} backgroundColor={theme.colors.background}>
+        <CommandMenu ref={commandMenuState.ref} items={commandMenuState.items} focus={!pendingApproval} />
+      </Box>
+    ) : (
+      <CommandMenu ref={commandMenuState.ref} items={commandMenuState.items} focus={!pendingApproval} />
+    );
+  };
+
   return (
-    <Box flexDirection="column" marginTop={2} position="relative">
+    <Box flexDirection="column" marginTop={3} position="relative">
       {queuedMessages.length > 0 && (
         <Box flexDirection="row" marginLeft={2}>
           <Text color={theme.colors.secondary} dimColor>
@@ -253,8 +279,10 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
         onInputSubmit={handleInputSubmit}
         onVimModeToggle={onVimModeToggle}
         onVimModeChanged={onVimModeChanged}
-        disabled={mode !== 'input'}
+        onCommandMenuChange={handleCommandMenuChange}
+        disabled={mode === 'approval' || mode === 'command'}
       />
+      {renderCommandMenu()}
     </Box>
   );
 });

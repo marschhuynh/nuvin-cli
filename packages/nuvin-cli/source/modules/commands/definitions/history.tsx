@@ -145,7 +145,7 @@ const HistoryCommandComponent = ({ context, deactivate }: CommandComponentProps)
   }
 
   return (
-    <AppModal visible={true} title="Session History" onClose={deactivate} closeOnEscape={true}>
+    <AppModal visible={true} title="Session History" onClose={deactivate} closeOnEscape={false}>
       <HistorySelection availableSessions={availableSessions} />
     </AppModal>
   );

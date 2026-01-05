@@ -415,7 +415,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
         </Box>
       }
     >
-      <Box flexDirection="column">
+      <Box flexDirection="column" backgroundColor={theme.colors.background}>
         <ChatDisplay
           key={`chat-display-${headerKey}`}
           messages={messages}

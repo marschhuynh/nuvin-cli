@@ -83,7 +83,7 @@ const COLORS = {
   // background: COLOR_TOKENS.black,
   // background: '#171a1b',
   background: '#1e2123',
-  
+
   border: COLOR_TOKENS.gray,
 
   // Badge and status indicators
@@ -133,7 +133,7 @@ export const theme = {
     keyBinding: COLOR_TOKENS.green,
     description: COLOR_TOKENS.gray,
     help: COLOR_TOKENS.gray,
-    background: COLOR_TOKENS.transparent,
+    background: COLOR_TOKENS.black,
   },
 
   // Command and help colors
@@ -264,22 +264,6 @@ export type ColorToken = keyof typeof theme.tokens;
 export type ColorKey = keyof typeof theme.colors;
 export type StatusColor = keyof typeof theme.status;
 export type MessageTypeColor = keyof typeof theme.messageTypes;
-
-// Helper function to get color by path
-export function getThemeColor(path: string): string {
-  const parts = path.split('.');
-  let value: unknown = theme;
-
-  for (const part of parts) {
-    if (value && typeof value === 'object' && part in value) {
-      value = (value as Record<string, unknown>)[part];
-    } else {
-      return 'white'; // Default fallback
-    }
-  }
-
-  return typeof value === 'string' ? value : 'white';
-}
 
 // Helper function for status colors
 export function getStatusColor(status: 'success' | 'error' | 'pending' | 'running' | 'idle'): string {

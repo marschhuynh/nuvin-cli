@@ -6,10 +6,15 @@ import Spinner from 'ink-spinner';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
-import { CommandMenu, type CommandMenuHandle } from './CommandMenu/index.js';
-import { useAltMode } from '@/contexts/AltModeContext.js';
+import type { CommandMenuHandle, CommandMenuItem } from './CommandMenu/index.js';
 
 type VimMode = 'insert' | 'normal';
+
+export type CommandMenuState = {
+  show: boolean;
+  items: CommandMenuItem[];
+  ref: React.RefObject<CommandMenuHandle | null>;
+};
 
 export type InputAreaHandle = {
   clear: () => void;
@@ -18,6 +23,7 @@ export type InputAreaHandle = {
   setValueForRecall: (value: string) => void;
   appendValue: (text: string) => void;
   closeMenu: () => void;
+  getCommandMenuState: () => CommandMenuState;
 };
 
 type InputAreaProps = {
@@ -35,6 +41,7 @@ type InputAreaProps = {
   onInputSubmit?: (value: string) => Promise<void>;
   onVimModeToggle?: () => void;
   onVimModeChanged?: (mode: 'insert' | 'normal') => void;
+  onCommandMenuChange?: (state: CommandMenuState) => void;
 };
 
 const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
@@ -52,11 +59,11 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
       onInputChanged,
       onInputSubmit,
       onVimModeChanged,
+      onCommandMenuChange,
     },
     ref,
   ) => {
     const { theme } = useTheme();
-    const { altMode } = useAltMode();
     const [input, setInput] = useState('');
     const [focusKey, setFocusKey] = useState(0);
     const [_vimMode, setVimMode] = useState<VimMode>('insert');
@@ -84,6 +91,15 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     useEffect(() => {
       commandMenuRef.current?.setSelectedIndex(0);
     }, [filteredCommandItems.length]);
+
+    // Notify parent about command menu state changes
+    useEffect(() => {
+      onCommandMenuChange?.({
+        show: showCommandMenu && filteredCommandItems.length > 0,
+        items: filteredCommandItems,
+        ref: commandMenuRef,
+      });
+    }, [showCommandMenu, filteredCommandItems, onCommandMenuChange]);
 
     const onRecall = useCallback(
       (message: string) => {
@@ -128,8 +144,13 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
         closeMenu: () => {
           setInput('');
         },
+        getCommandMenuState: () => ({
+          show: showCommandMenu && filteredCommandItems.length > 0,
+          items: filteredCommandItems,
+          ref: commandMenuRef,
+        }),
       }),
-      [onInputChanged],
+      [onInputChanged, showCommandMenu, filteredCommandItems],
     );
 
     useEffect(() => {
@@ -247,15 +268,6 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
             />
           </Box>
         </Box>
-        {showCommandMenu &&
-          filteredCommandItems.length > 0 &&
-          (altMode ? (
-            <Box position="absolute" bottom={2} backgroundColor={theme.colors.background}>
-              <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
-            </Box>
-          ) : (
-            <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={isFocused && !showToolApproval} />
-          ))}
       </Box>
     );
   },

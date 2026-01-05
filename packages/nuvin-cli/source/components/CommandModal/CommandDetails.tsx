@@ -15,11 +15,7 @@ const SOURCE_NAMES: Record<CommandSource, string> = {
   local: 'Local',
 };
 
-export const CommandDetails: React.FC<CommandDetailsProps> = ({
-  command,
-  shadowedCommands,
-  activeProfile,
-}) => {
+export const CommandDetails: React.FC<CommandDetailsProps> = ({ command, shadowedCommands, activeProfile }) => {
   const { theme } = useTheme();
 
   const getSourceDisplay = (source: CommandSource): string => {
@@ -64,7 +60,7 @@ export const CommandDetails: React.FC<CommandDetailsProps> = ({
           {shadowedCommands.length > 0 && (
             <Box flexDirection="column" marginBottom={1}>
               <Text color="yellow">
-                ⚠ Shadows: {shadowedCommands.map(c => SOURCE_NAMES[c.source].toLowerCase()).join(', ')}
+                ⚠ Shadows: {shadowedCommands.map((c) => SOURCE_NAMES[c.source].toLowerCase()).join(', ')}
               </Text>
             </Box>
           )}

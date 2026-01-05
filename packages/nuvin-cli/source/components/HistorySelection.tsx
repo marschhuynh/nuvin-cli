@@ -163,7 +163,7 @@ export const HistorySelection: React.FC<HistorySelectionProps> = ({ availableSes
   );
 
   return (
-    <Box marginTop={1} flexDirection="column">
+    <Box flexDirection="column">
       <Box marginBottom={1} justifyContent="space-between">
         <Box>
           <Text color={theme.history.title} bold>

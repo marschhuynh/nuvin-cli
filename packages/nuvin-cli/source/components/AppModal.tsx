@@ -3,7 +3,6 @@ import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext';
 import { theme } from '@/theme';
-import { useAltMode } from '@/contexts/AltModeContext';
 
 export type AppModalType = 'info' | 'error' | 'warning' | 'success' | 'default';
 
@@ -31,7 +30,7 @@ export const AppModal: FC<AppModalProps> = ({
   title,
   rightTitle,
   titleColor,
-  borderColor,
+  borderColor: _borderColor,
   children,
   onClose,
   closeOnEscape = true,
@@ -44,8 +43,6 @@ export const AppModal: FC<AppModalProps> = ({
   footer,
 }) => {
   const { theme: globalTheme } = useTheme();
-  const { altMode } = useAltMode();
-  const finalBorderColor = borderColor;
   const finalTitleColor = titleColor || globalTheme.modal.title;
 
   useInput(
@@ -64,15 +61,8 @@ export const AppModal: FC<AppModalProps> = ({
 
   if (!visible) return null;
 
-  const props = altMode
-    ? {}
-    : {
-        borderStyle: 'single' as const,
-        borderColor: finalBorderColor,
-      };
-
   return (
-    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.tokens.black} {...props}>
+    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.modal.background}>
       <Box flexWrap="wrap" justifyContent="space-between" backgroundColor={globalTheme.modal.titleBackground}>
         {title ? (
           <Box>

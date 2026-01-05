@@ -26,13 +26,27 @@ import { AltModeProvider } from './contexts/AltModeContext.js';
 
 const ENTER_ALT_SCREEN = '\x1b[?1049h';
 const EXIT_ALT_SCREEN = '\x1b[?1049l';
+const KITTY_KEYBOARD_DISABLE = '\x1b[<u';
+const MOUSE_MODE_DISABLE = '\x1b[?1006l\x1b[?1002l\x1b[?1000l';
+const BRACKETED_PASTE_DISABLE = '\x1b[?2004l';
+
+// Cleanup function to reset all terminal modes
+const cleanupTerminal = (isAlt: boolean | undefined) => {
+  console.log(KITTY_KEYBOARD_DISABLE);
+  console.log(MOUSE_MODE_DISABLE);
+  console.log(BRACKETED_PASTE_DISABLE);
+
+  if (isAlt) {
+    console.log(EXIT_ALT_SCREEN);
+  }
+};
 
 declare global {
   // var __clipboardFiles: Buffer[] | undefined;
   var __fullClear: () => void;
 }
 
-process.stdout.write('\x1b[?2004h');
+console.log('\x1b[?2004h');
 
 process.on('uncaughtException', (error) => {
   console.error('\n\n❌ Uncaught Exception:', error);
@@ -443,10 +457,6 @@ const cli = meow(
 
   await waitUntilExit();
 
-  if (cli.flags.alt) {
-    process.stdout.write(EXIT_ALT_SCREEN);
-  }
-
-  process.stdout.write('\x1b[?2004l');
+  cleanupTerminal(cli.flags.alt)
   process.exit(0);
 })();
