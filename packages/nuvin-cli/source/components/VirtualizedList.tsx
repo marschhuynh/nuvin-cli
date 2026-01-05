@@ -113,10 +113,6 @@ export function VirtualizedList<T>({
     }
   }, []);
 
-  useLayoutEffect(() => {
-    measureVisibleItems();
-  });
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: heightCacheVersion is needed
   const { itemOffsets, totalContentHeight } = useMemo(() => {
     const offsets: number[] = [];
@@ -193,6 +189,12 @@ export function VirtualizedList<T>({
 
     return { start: startIndex, end: endIndex };
   }, [items, scrollY, containerHeight, overscan, findStartIndex, itemOffsets, keyExtractor, totalContentHeight]);
+
+  // Measure visible items after they've been determined - run when visible range changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length intentionally triggers remeasurement
+  useLayoutEffect(() => {
+    measureVisibleItems();
+  }, [measureVisibleItems, items.length]);
 
   const scrollTo = useCallback(
     (newY: number) => {
@@ -278,6 +280,7 @@ export function VirtualizedList<T>({
   useMouse(handleMouseEvent, { isActive: enableMouseScroll && needsScrollbar, priority: mousePriority });
   useInput(handleKeyboardEvent, { isActive: needsScrollbar, priority: mousePriority });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length intentionally triggers remeasurement
   useLayoutEffect(() => {
     if (containerRef.current) {
       const { height } = measureElement(containerRef.current);
@@ -285,7 +288,7 @@ export function VirtualizedList<T>({
         setContainerHeight(height);
       }
     }
-  });
+  }, [items.length, containerHeight]);
 
   useEffect(() => {
     if (containerHeight <= 0) return;

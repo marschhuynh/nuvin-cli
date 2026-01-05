@@ -90,6 +90,11 @@ export const InputProvider: React.FC<Props> = ({
   const mouseEnableCountRef = useRef(0);
   const [isMouseModeEnabled, setIsMouseModeEnabled] = useState(false);
 
+  const sortedSubscribersCacheRef = useRef<Subscriber[]>([]);
+  const sortedMouseSubscribersCacheRef = useRef<MouseSubscriber[]>([]);
+  const subscribersDirtyRef = useRef(true);
+  const mouseSubscribersDirtyRef = useRef(true);
+
   useEffect(() => {
     middlewareRef.current = initialMiddleware;
   }, [initialMiddleware]);
@@ -174,9 +179,11 @@ export const InputProvider: React.FC<Props> = ({
     };
 
     subscribersRef.current.set(id, subscriber);
+    subscribersDirtyRef.current = true;
 
     return () => {
       subscribersRef.current.delete(id);
+      subscribersDirtyRef.current = true;
     };
   }, []);
 
@@ -196,9 +203,11 @@ export const InputProvider: React.FC<Props> = ({
     };
 
     mouseSubscribersRef.current.set(id, subscriber);
+    mouseSubscribersDirtyRef.current = true;
 
     return () => {
       mouseSubscribersRef.current.delete(id);
+      mouseSubscribersDirtyRef.current = true;
     };
   }, []);
 
@@ -207,9 +216,13 @@ export const InputProvider: React.FC<Props> = ({
     if (subscriber) {
       if (options.isActive !== undefined) {
         subscriber.isActive = options.isActive;
+        subscribersDirtyRef.current = true;
+        mouseSubscribersDirtyRef.current = true;
       }
       if (options.priority !== undefined) {
         subscriber.priority = options.priority;
+        subscribersDirtyRef.current = true;
+        mouseSubscribersDirtyRef.current = true;
       }
     }
   }, []);
@@ -227,13 +240,17 @@ export const InputProvider: React.FC<Props> = ({
   /**
    * Distribute input to all active subscribers in priority order.
    * Stops when a handler returns true.
+   * Uses cached sorted list that's only rebuilt when subscribers change.
    */
   const distributeInput = useCallback((input: string, key: Key) => {
-    const sortedSubscribers = Array.from(subscribersRef.current.values())
-      .filter((s) => s.isActive)
-      .sort((a, b) => b.priority - a.priority);
+    if (subscribersDirtyRef.current) {
+      sortedSubscribersCacheRef.current = Array.from(subscribersRef.current.values())
+        .filter((s) => s.isActive)
+        .sort((a, b) => b.priority - a.priority);
+      subscribersDirtyRef.current = false;
+    }
 
-    for (const subscriber of sortedSubscribers) {
+    for (const subscriber of sortedSubscribersCacheRef.current) {
       const result = subscriber.handler(input, key);
       if (result === true) break;
     }
@@ -242,13 +259,17 @@ export const InputProvider: React.FC<Props> = ({
   /**
    * Distribute mouse events to all active subscribers in priority order.
    * Stops when a handler returns true.
+   * Uses cached sorted list that's only rebuilt when subscribers change.
    */
   const distributeMouse = useCallback((event: MouseEvent) => {
-    const sortedSubscribers = Array.from(mouseSubscribersRef.current.values())
-      .filter((s) => s.isActive)
-      .sort((a, b) => b.priority - a.priority);
+    if (mouseSubscribersDirtyRef.current) {
+      sortedMouseSubscribersCacheRef.current = Array.from(mouseSubscribersRef.current.values())
+        .filter((s) => s.isActive)
+        .sort((a, b) => b.priority - a.priority);
+      mouseSubscribersDirtyRef.current = false;
+    }
 
-    for (const subscriber of sortedSubscribers) {
+    for (const subscriber of sortedMouseSubscribersCacheRef.current) {
       const result = subscriber.handler(event);
       if (result === true) break;
     }

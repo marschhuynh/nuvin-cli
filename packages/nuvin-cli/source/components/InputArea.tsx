@@ -4,9 +4,10 @@ import { useFocus, useInput } from '@/contexts/InputContext/index.js';
 import type { MemoryPort, Message } from '@nuvin/nuvin-core';
 import Spinner from 'ink-spinner';
 import { useTheme } from '@/contexts/ThemeContext.js';
+import { useAltMode } from '@/contexts/AltModeContext.js';
 import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
-import type { CommandMenuHandle, CommandMenuItem } from './CommandMenu/index.js';
+import { CommandMenu, type CommandMenuHandle, type CommandMenuItem } from './CommandMenu/index.js';
 
 type VimMode = 'insert' | 'normal';
 
@@ -30,8 +31,8 @@ type InputAreaProps = {
   busy: boolean;
   messageQueueLength: number;
   showToolApproval?: boolean;
-  useAbsoluteMenu?: boolean;
   disabled?: boolean;
+  mode?: 'input' | 'approval' | 'command' | 'command-menu';
 
   commandItems: Array<{ label: string; value: string }>;
   vimModeEnabled?: boolean;
@@ -49,8 +50,8 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     {
       busy,
       showToolApproval = false,
-      useAbsoluteMenu: _useAbsoluteMenu = false,
       disabled = false,
+      mode = 'input',
 
       commandItems,
       vimModeEnabled = false,
@@ -64,6 +65,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     ref,
   ) => {
     const { theme } = useTheme();
+    const { altMode } = useAltMode();
     const [input, setInput] = useState('');
     const [focusKey, setFocusKey] = useState(0);
     const [_vimMode, setVimMode] = useState<VimMode>('insert');
@@ -242,6 +244,22 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
       borderRight: false,
     };
 
+    const shouldShowCommandMenu =
+      mode !== 'approval' && mode !== 'command' && showCommandMenu && filteredCommandItems.length > 0;
+
+    const renderCommandMenu = () => {
+      if (!shouldShowCommandMenu) {
+        return null;
+      }
+      return altMode ? (
+        <Box position="absolute" bottom={2} zIndex={10} backgroundColor={theme.colors.background}>
+          <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval} />
+        </Box>
+      ) : (
+        <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval} />
+      );
+    };
+
     return (
       <Box flexDirection="column" position="relative" {...inputProps}>
         <Box flexShrink={0} minWidth={1}>
@@ -268,6 +286,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
             />
           </Box>
         </Box>
+        {renderCommandMenu()}
       </Box>
     );
   },

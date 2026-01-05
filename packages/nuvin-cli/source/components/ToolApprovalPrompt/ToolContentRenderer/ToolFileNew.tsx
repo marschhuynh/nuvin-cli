@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type FileNewArgs = {
   file_path: string;
@@ -39,6 +40,7 @@ function addLineNumbers(content: string): {
 }
 
 export function FileNewToolContent({ call }: { call: ToolCall }) {
+  const { theme } = useTheme();
   const args = useMemo(() => parseArgs(call), [call]);
   const { cols: width } = useStdoutDimensions();
 
@@ -61,6 +63,7 @@ export function FileNewToolContent({ call }: { call: ToolCall }) {
           <Box
             borderStyle={'single'}
             borderDimColor
+            backgroundColor={theme.modal.background}
             borderBottom={false}
             borderTop={false}
             borderRight={false}

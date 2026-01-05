@@ -135,7 +135,7 @@ export const theme = {
     description: COLOR_TOKENS.gray,
     help: COLOR_TOKENS.gray,
     background: COLOR_TOKENS.black,
-    footerBackground: COLOR_TOKENS.dimYellow,
+    footerBackground: COLOR_TOKENS.gray,
   },
 
   // Command and help colors

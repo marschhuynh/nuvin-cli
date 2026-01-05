@@ -45,17 +45,11 @@ export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
 
     return (
       <Box flexDirection="column" flexGrow={1} width={'100%'}>
-        {/* <Box backgroundColor={theme.colors.accent}>
-          <Text color={theme.tokens.black} bold>
-            {' '}
-            Commands ({items.length}) - Use ↑↓ to navigate, Enter to select, Esc to cancel
-          </Text>
-        </Box> */}
         <Box paddingX={altMode ? 1 : 0}>
           <SelectInput
             ref={selectInputRef}
             items={selectItems}
-            limit={10}
+            limit={5}
             focus={focus}
             enableRotation={false}
             showScrollIndicators={true}

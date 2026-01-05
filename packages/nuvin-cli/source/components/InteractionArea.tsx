@@ -8,8 +8,7 @@ import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
 import { ToolApprovalPrompt } from './ToolApprovalPrompt/ToolApprovalPrompt.js';
-import { InputArea, type InputAreaHandle, type CommandMenuState } from './InputArea.js';
-import { CommandMenu } from './CommandMenu/index.js';
+import { InputArea, type InputAreaHandle } from './InputArea.js';
 
 type InteractionAreaProps = {
   busy?: boolean;
@@ -36,7 +35,6 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
     vimModeEnabled = false,
     hasActiveCommand = false,
     memory,
-    useAbsoluteMenu = false,
 
     abortRef,
     onNotification,
@@ -58,11 +56,6 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   const [queuedMessages, setQueuedMessages] = useState<string[]>([]);
   const isProcessingQueueRef = useRef(false);
   const escTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [commandMenuState, setCommandMenuState] = useState<CommandMenuState | null>(null);
-
-  const handleCommandMenuChange = useCallback((state: CommandMenuState) => {
-    setCommandMenuState(state);
-  }, []);
 
   useEffect(() => {
     if (!busy && queuedMessages.length > 0 && onInputSubmit && !isProcessingQueueRef.current) {
@@ -201,13 +194,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
     [commands],
   );
 
-  const mode = pendingApproval
-    ? 'approval'
-    : hasActiveCommand
-      ? 'command'
-      : commandMenuState?.show
-        ? 'command-menu'
-        : 'input';
+  const mode = pendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
 
   const renderDynamicContent = () => {
     switch (mode) {
@@ -233,56 +220,40 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
         );
 
       default:
-        return null;
+        return (
+          <Box flexDirection="column" marginTop={3} position="relative">
+            {queuedMessages.length > 0 && (
+              <Box flexDirection="row" marginLeft={2}>
+                <Text color={theme.colors.secondary} dimColor>
+                  ⟀ {queuedMessages[0]}
+                </Text>
+                {queuedMessages.length > 1 && (
+                  <Text color={theme.colors.secondary} dimColor>
+                    {' '}
+                    + {queuedMessages.length - 1}
+                  </Text>
+                )}
+              </Box>
+            )}
+            <InputArea
+              ref={ref}
+              busy={busy}
+              messageQueueLength={messageQueueLength}
+              showToolApproval={!!pendingApproval}
+              commandItems={commandItems}
+              vimModeEnabled={vimModeEnabled}
+              memory={memory}
+              mode={mode}
+              onInputChanged={onInputChanged}
+              onInputSubmit={handleInputSubmit}
+              onVimModeToggle={onVimModeToggle}
+              onVimModeChanged={onVimModeChanged}
+              // disabled={mode === 'approval' || mode === 'command'}
+            />
+          </Box>
+        );
     }
   };
 
-  const renderCommandMenu = () => {
-    if (!commandMenuState?.show || !commandMenuState.items.length) {
-      return null;
-    }
-    return altMode ? (
-      <Box position="absolute" bottom={2} zIndex={10} backgroundColor={theme.colors.background}>
-        <CommandMenu ref={commandMenuState.ref} items={commandMenuState.items} focus={!pendingApproval} />
-      </Box>
-    ) : (
-      <CommandMenu ref={commandMenuState.ref} items={commandMenuState.items} focus={!pendingApproval} />
-    );
-  };
-
-  return (
-    <Box flexDirection="column" marginTop={3} position="relative">
-      {queuedMessages.length > 0 && (
-        <Box flexDirection="row" marginLeft={2}>
-          <Text color={theme.colors.secondary} dimColor>
-            ⟀ {queuedMessages[0]}
-          </Text>
-          {queuedMessages.length > 1 && (
-            <Text color={theme.colors.secondary} dimColor>
-              {' '}
-              + {queuedMessages.length - 1}
-            </Text>
-          )}
-        </Box>
-      )}
-      {renderDynamicContent()}
-      <InputArea
-        ref={ref}
-        busy={busy}
-        messageQueueLength={messageQueueLength}
-        showToolApproval={!!pendingApproval}
-        commandItems={commandItems}
-        vimModeEnabled={vimModeEnabled}
-        memory={memory}
-        useAbsoluteMenu={useAbsoluteMenu}
-        onInputChanged={onInputChanged}
-        onInputSubmit={handleInputSubmit}
-        onVimModeToggle={onVimModeToggle}
-        onVimModeChanged={onVimModeChanged}
-        onCommandMenuChange={handleCommandMenuChange}
-        disabled={mode === 'approval' || mode === 'command'}
-      />
-      {renderCommandMenu()}
-    </Box>
-  );
+  return renderDynamicContent();
 });

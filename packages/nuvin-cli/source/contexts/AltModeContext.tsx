@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 type AltModeContextType = {
   altMode: boolean;
@@ -7,7 +7,8 @@ type AltModeContextType = {
 const AltModeContext = createContext<AltModeContextType | undefined>(undefined);
 
 export const AltModeProvider = ({ children, altMode = false }: { children: ReactNode; altMode?: boolean }) => {
-  return <AltModeContext.Provider value={{ altMode }}>{children}</AltModeContext.Provider>;
+  const value = useMemo(() => ({ altMode }), [altMode]);
+  return <AltModeContext.Provider value={value}>{children}</AltModeContext.Provider>;
 };
 
 export const useAltMode = () => {

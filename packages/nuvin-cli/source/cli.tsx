@@ -451,12 +451,12 @@ const cli = meow(
       exitOnCtrlC: false,
       patchConsole: true,
       incrementalRendering: true,
-      maxFps: 30,
+      maxFps: 60,
     },
   );
 
   await waitUntilExit();
 
-  cleanupTerminal(cli.flags.alt)
+  cleanupTerminal(cli.flags.alt);
   process.exit(0);
 })();

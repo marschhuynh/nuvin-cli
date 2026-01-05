@@ -1,5 +1,5 @@
 import { type BoxRef, Box, type BoxProps, measureElement, Text } from 'ink';
-import { useRef, useEffect, useCallback, useState, type ReactNode } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo, type ReactNode } from 'react';
 import { useMouse, useInput, useFocus, type MouseEvent, type Key } from '../contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 
@@ -65,6 +65,31 @@ function Scrollbar({
   );
 }
 
+function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+  let lastCall = 0;
+  let timeoutId: NodeJS.Timeout | null = null;
+  let lastArgs: unknown[] | null = null;
+
+  return ((...args: unknown[]) => {
+    const now = Date.now();
+    lastArgs = args;
+
+    if (now - lastCall >= ms) {
+      lastCall = now;
+      fn(...args);
+    } else if (!timeoutId) {
+      timeoutId = setTimeout(
+        () => {
+          lastCall = Date.now();
+          timeoutId = null;
+          if (lastArgs) fn(...lastArgs);
+        },
+        ms - (now - lastCall),
+      );
+    }
+  }) as T;
+}
+
 export function AutoScrollBox({
   maxHeight,
   children,
@@ -85,6 +110,7 @@ export function AutoScrollBox({
   const contentRef = useRef<BoxRef>(null);
   const prevChildrenRef = useRef(children);
   const isUserScrolledRef = useRef(false);
+  const cachedDimensionsRef = useRef<{ container: { height: number }; content: { height: number } } | null>(null);
   const [scrollInfo, setScrollInfo] = useState<ScrollInfo>({
     scrollY: 0,
     containerHeight: 0,
@@ -99,17 +125,29 @@ export function AutoScrollBox({
     onFocusChange?.(isFocused);
   }, [isFocused, onFocusChange]);
 
-  const updateScrollInfo = useCallback(() => {
-    if (!boxRef.current || !contentRef.current) return;
-    const pos = boxRef.current.getScrollPosition();
+  const measureDimensions = useCallback(() => {
+    if (!boxRef.current || !contentRef.current) return null;
     const containerDim = measureElement(boxRef.current);
     const contentDim = measureElement(contentRef.current);
-    setScrollInfo({
-      scrollY: pos?.y ?? 0,
-      containerHeight: containerDim.height,
-      contentHeight: contentDim.height,
-    });
+    cachedDimensionsRef.current = { container: containerDim, content: contentDim };
+    return cachedDimensionsRef.current;
   }, []);
+
+  const updateScrollInfoThrottled = useMemo(
+    () =>
+      throttle(() => {
+        if (!boxRef.current || !contentRef.current) return;
+        const pos = boxRef.current.getScrollPosition();
+        const dims = measureDimensions();
+        if (!dims) return;
+        setScrollInfo({
+          scrollY: pos?.y ?? 0,
+          containerHeight: dims.container.height,
+          contentHeight: dims.content.height,
+        });
+      }, 32),
+    [measureDimensions],
+  );
 
   const scrollBy = useCallback(
     (delta: number) => {
@@ -120,19 +158,20 @@ export function AutoScrollBox({
       boxRef.current.scrollTo({ x: 0, y: newY });
       const actualPos = boxRef.current.getScrollPosition();
       if (actualPos) {
-        const containerDim = measureElement(boxRef.current);
-        const contentDim = measureElement(contentRef.current);
-        const maxScrollY = contentDim.height - containerDim.height;
-        const isAtBottom = actualPos.y >= maxScrollY - 1;
-        if (isAtBottom) {
-          isUserScrolledRef.current = false;
-        } else if (actualPos.y > 0) {
-          isUserScrolledRef.current = true;
+        const dims = cachedDimensionsRef.current || measureDimensions();
+        if (dims) {
+          const maxScrollY = dims.content.height - dims.container.height;
+          const isAtBottom = actualPos.y >= maxScrollY - 1;
+          if (isAtBottom) {
+            isUserScrolledRef.current = false;
+          } else if (actualPos.y > 0) {
+            isUserScrolledRef.current = true;
+          }
         }
       }
-      updateScrollInfo();
+      updateScrollInfoThrottled();
     },
-    [updateScrollInfo],
+    [measureDimensions, updateScrollInfoThrottled],
   );
 
   const handleMouseEvent = useCallback(
@@ -171,17 +210,17 @@ export function AutoScrollBox({
         if (!boxRef.current || !contentRef.current) return;
         boxRef.current.scrollTo({ x: 0, y: 0 });
         isUserScrolledRef.current = true;
-        updateScrollInfo();
+        updateScrollInfoThrottled();
         return true;
       }
       if (input === 'G') {
         boxRef.current?.scrollToBottom();
         isUserScrolledRef.current = false;
-        updateScrollInfo();
+        updateScrollInfoThrottled();
         return true;
       }
     },
-    [isFocused, scrollBy, scrollStep, needsScrollbar, updateScrollInfo, enableKeyboardScroll],
+    [isFocused, scrollBy, scrollStep, needsScrollbar, updateScrollInfoThrottled, enableKeyboardScroll],
   );
 
   useMouse(handleMouseEvent, { isActive: enableMouseScroll && needsScrollbar, priority: mousePriority });
@@ -194,8 +233,8 @@ export function AutoScrollBox({
       }
       prevChildrenRef.current = children;
     }
-    updateScrollInfo();
-  }, [children, updateScrollInfo]);
+    updateScrollInfoThrottled();
+  }, [children, updateScrollInfoThrottled]);
 
   return (
     <Box
