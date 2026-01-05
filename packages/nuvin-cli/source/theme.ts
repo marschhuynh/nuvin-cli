@@ -34,6 +34,7 @@ export const COLOR_TOKENS = {
   redBright: lightenColor('#c5564c', 0.3),
   orange: '#de935f',
   yellow: '#FFC371',
+  dimYellow: '#a28152',
   blue: '#81a2be',
   magenta: '#ff79c6',
   white: '#ffffff',
@@ -134,6 +135,7 @@ export const theme = {
     description: COLOR_TOKENS.gray,
     help: COLOR_TOKENS.gray,
     background: COLOR_TOKENS.black,
+    footerBackground: COLOR_TOKENS.dimYellow,
   },
 
   // Command and help colors

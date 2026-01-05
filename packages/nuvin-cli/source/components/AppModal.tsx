@@ -95,11 +95,7 @@ export const AppModal: FC<AppModalProps> = ({
         {footer ? (
           <Box
             flexGrow={1}
-            borderStyle="single"
-            borderLeft={false}
-            borderRight={false}
-            borderBottom={false}
-            borderColor={globalTheme.tokens.gray}
+            backgroundColor={theme.modal.footerBackground}
           >
             {footer}
           </Box>
