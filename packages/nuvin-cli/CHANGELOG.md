@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.26.2
+
+### Patch Changes
+
+- [`8f0e702`](https://github.com/marschhuynh/nuvin-space/commit/8f0e702cc38c37bf794bf3d33c69b8ba32639572) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Optimize React rendering with stable callbacks and shared cursor blink state
+
+- [`86d9d6d`](https://github.com/marschhuynh/nuvin-space/commit/86d9d6d13bafe32d7b406e9629470e96aad2aad1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve markdown table rendering with dynamic column width calculation
+
 ## 1.26.1
 
 ### Patch Changes
