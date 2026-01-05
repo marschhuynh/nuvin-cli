@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.27.0
+
+### Minor Changes
+
+- [`2a411fc`](https://github.com/marschhuynh/nuvin-space/commit/2a411fc3afb6b6f2cda837432f18d972cde0f186) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(cli): improve terminal cleanup and command menu state management
+
 ## 1.26.2
 
 ### Patch Changes
