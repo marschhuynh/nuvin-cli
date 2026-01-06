@@ -43,7 +43,7 @@ type Props = {
 
 export default function App({ apiKey: _apiKey, memPersist = false, historyPath, initialSessions }: Props) {
   const { theme } = useTheme();
-  const { cols } = useStdoutDimensions();
+  const { cols, rows } = useStdoutDimensions();
   const { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, handleError } = useMessages();
   const [busy, setBusy] = useState(false);
   const [metrics, setMetrics] = useState<MetricsSnapshot>(createEmptySnapshot());
@@ -415,7 +415,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
         </Box>
       }
     >
-      <Box flexDirection="column">
+      <Box flexDirection="column" maxHeight={rows - 1}>
         <ChatDisplay
           key={`chat-display-${headerKey}`}
           messages={messages}

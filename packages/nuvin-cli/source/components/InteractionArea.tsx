@@ -221,7 +221,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 
       default:
         return (
-          <Box flexDirection="column" marginTop={3} position="relative">
+          <Box flexDirection="column" marginTop={3} position="relative" flexShrink={0}>
             {queuedMessages.length > 0 && (
               <Box flexDirection="row" marginLeft={2}>
                 <Text color={theme.colors.secondary} dimColor>
