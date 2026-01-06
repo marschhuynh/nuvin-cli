@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.27.1
+
+### Patch Changes
+
+- [`c18a168`](https://github.com/marschhuynh/nuvin-space/commit/c18a16881fecf176a2a3ad9ea9137cffe35c08b2) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update ink to version 6.6.1
+
+- [`4be8d98`](https://github.com/marschhuynh/nuvin-space/commit/4be8d98e9380e1fd80afc79762d9b65db30a66f9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor ToolResultView into ToolCallViewer, improve markdown rendering, update imports
+
 ## 1.27.0
 
 ### Minor Changes
