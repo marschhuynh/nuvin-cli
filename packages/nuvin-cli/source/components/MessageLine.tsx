@@ -6,10 +6,11 @@ import type { MessageLine as MessageLineType } from '@/adapters';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { SubAgentState } from '@/utils/eventProcessor.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions';
-import { ToolCallViewer } from './ToolCallViewer';
-import { SubAgentActivity } from './ToolResultView/SubAgentActivity.js';
-import { AutoScrollBox } from './AutoScrollBox.js';
 import { useAltMode } from '@/contexts/AltModeContext';
+import { useToolApproval } from '@/contexts/ToolApprovalContext';
+import { ToolCallViewer } from './ToolCallViewer';
+import { AutoScrollBox } from './AutoScrollBox.js';
+import { SubAgentActivity } from './ToolCallViewer/ToolResultView';
 
 type MessageLineProps = {
   key: string;
@@ -27,6 +28,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
   const streamingContent = message.content;
+  const { pendingApproval } = useToolApproval();
 
   const renderMessage = () => {
     switch (message.type) {
@@ -54,7 +56,9 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 </Text>
               </Box>
               <AutoScrollBox maxHeight={'100%'} marginX={2} width={'100%'}>
-                <Markdown enableCache>{streamingContent}</Markdown>
+                <Markdown reflowText enableCache>
+                  {streamingContent}
+                </Markdown>
               </AutoScrollBox>
             </Box>
           );
@@ -68,7 +72,9 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
               </Text>
             </Box>
             <Box marginX={2}>
-              <Markdown enableCache>{streamingContent}</Markdown>
+              <Markdown reflowText enableCache>
+                {streamingContent}
+              </Markdown>
             </Box>
           </Box>
         );
@@ -85,6 +91,11 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
           <Box flexDirection="column">
             {toolCalls.length > 0 ? (
               toolCalls.map((toolCall: ToolCall, callIndex: number) => {
+                const isAwaitingApproval = pendingApproval?.toolCalls.some((tc) => tc.id === toolCall.id) ?? false;
+
+                if (isAwaitingApproval) {
+                  return null;
+                }
                 // Get the result for this tool call (if available)
                 const toolResultMsg = toolResultsByCallId?.get(toolCall.id);
 

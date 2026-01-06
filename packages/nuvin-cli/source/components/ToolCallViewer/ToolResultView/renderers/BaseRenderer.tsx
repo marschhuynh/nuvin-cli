@@ -2,7 +2,7 @@ import type React from 'react';
 import { Box, Text } from 'ink';
 import { type ToolExecutionResult, ErrorReason } from '@nuvin/nuvin-core';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { parseDetailLines } from '@/components/ToolResultView/utils.js';
+import { parseDetailLines } from '@/components/ToolCallViewer/ToolResultView/utils';
 import { LAYOUT, TRUNCATION } from './constants.js';
 
 export type TruncationMode = 'head' | 'tail';

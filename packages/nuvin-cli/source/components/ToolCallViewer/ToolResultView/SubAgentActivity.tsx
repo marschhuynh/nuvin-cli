@@ -7,13 +7,13 @@ import {
   parseToolArguments,
   type ToolArguments,
 } from '@nuvin/nuvin-core';
-import type { MessageLine as MessageLineType } from '@/adapters/index.js';
-import { useTheme } from '@/contexts/ThemeContext.js';
-import { ToolResultView } from './ToolResultView.js';
-import { ToolTimer } from '../ToolTimer.js';
-import { GradientRunText } from '../Gradient.js';
-import { formatCost, formatTokens } from '@/utils/formatters.js';
-import { AutoScrollBox } from '../AutoScrollBox.js';
+import type { MessageLine as MessageLineType } from '@/adapters/index';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ToolResultView } from './ToolResultView';
+import { ToolTimer } from '../../ToolTimer';
+import { GradientRunText } from '../../Gradient';
+import { formatCost, formatTokens } from '@/utils/formatters';
+import { AutoScrollBox } from '../../AutoScrollBox';
 
 type SubAgentActivityProps = {
   toolCall: ToolCall;

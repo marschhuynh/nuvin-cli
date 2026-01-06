@@ -4,7 +4,7 @@ import { type ToolCall, type ToolExecutionResult, ErrorReason, parseToolArgument
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
-import { ToolResultView } from '@/components/ToolResultView/index.js';
+import { ToolResultView } from './ToolResultView/index.js';
 import { FileEditParamRender, FileNewParamRender, DefaultParamRender, AssignTaskParamRender } from './params/index.js';
 import { ToolTimer } from '@/components/ToolTimer.js';
 import { getToolDisplayName } from '@/components/toolRegistry.js';
@@ -79,7 +79,7 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
       <Box flexDirection="row">
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
-            ⚙︎
+            {'⚙︎'}
           </Text>
         </Box>
         <Text bold>{displayName}</Text>

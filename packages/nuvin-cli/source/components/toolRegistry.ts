@@ -5,7 +5,7 @@ import {
   DefaultParamRender,
   AssignTaskParamRender,
 } from '@/components/ToolCallViewer/params/index.js';
-import type { StatusStrategy } from '@/components/ToolResultView/statusStrategies/index.js';
+import type { StatusStrategy } from '@/components/ToolCallViewer/ToolResultView/statusStrategies/index.js';
 import {
   assignTaskStrategy,
   bashToolStrategy,
@@ -19,7 +19,7 @@ import {
   todoWriteStrategy,
   webFetchStrategy,
   webSearchStrategy,
-} from '@/components/ToolResultView/statusStrategies/strategies.js';
+} from '@/components/ToolCallViewer/ToolResultView/statusStrategies/strategies.js';
 
 export type ToolMetadata = {
   displayName: string;

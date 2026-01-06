@@ -451,7 +451,7 @@ const cli = meow(
       exitOnCtrlC: false,
       patchConsole: true,
       incrementalRendering: true,
-      maxFps: 60,
+      maxFps: 30,
     },
   );
 

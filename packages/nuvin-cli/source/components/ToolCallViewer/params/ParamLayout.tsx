@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box } from 'ink';
 import { useStdoutDimensions } from '@/hooks/index.js';
-import { LAYOUT } from '@/components/ToolResultView/renderers/constants.js';
+import { LAYOUT } from '@/components/ToolCallViewer/ToolResultView/renderers/constants';
 
 type ParamLayoutProps = {
   statusColor: string;
