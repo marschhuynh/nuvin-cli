@@ -47,13 +47,13 @@ export const useGlobalKeyboard = ({
 
       await orchestratorManager?.cleanup();
 
-      eventBus.emit('ui:line', {
-        id: crypto.randomUUID(),
-        type: 'info',
-        content: 'Cleanup complete. Exiting now.',
-        metadata: { timestamp: new Date().toISOString() },
-        color: 'cyan',
-      });
+      // eventBus.emit('ui:line', {
+      //   id: crypto.randomUUID(),
+      //   type: 'info',
+      //   content: 'Cleanup complete. Exiting now.',
+      //   metadata: { timestamp: new Date().toISOString() },
+      //   color: 'cyan',
+      // });
 
       setTimeout(() => {
         process.stdout.write('\x1b[?2004l');

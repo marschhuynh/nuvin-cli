@@ -1,11 +1,21 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import type { ToolExecutionResult } from '@nuvin/nuvin-core';
+import { type ToolExecutionResult, ErrorReason } from '@nuvin/nuvin-core';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { parseDetailLines } from '@/components/ToolResultView/utils.js';
 import { LAYOUT, TRUNCATION } from './constants.js';
 
 export type TruncationMode = 'head' | 'tail';
+
+// Error reasons that should use warning (yellow) color instead of error (red)
+const warningReasons = new Set([
+  ErrorReason.Aborted,
+  ErrorReason.Denied,
+  ErrorReason.Edited,
+  ErrorReason.Timeout,
+  ErrorReason.RateLimit,
+  ErrorReason.ValidationFailed,
+]);
 
 export type BaseRendererProps = {
   toolResult: ToolExecutionResult;
@@ -37,7 +47,10 @@ export const BaseRenderer: React.FC<BaseRendererProps> = ({
 }) => {
   const { theme } = useTheme();
 
-  const statusColor = toolResult.status === 'success' ? theme.tokens.gray : theme.tokens.red;
+  const errorReason = (toolResult.metadata as { errorReason?: ErrorReason } | undefined)?.errorReason;
+  const isWarning = errorReason && warningReasons.has(errorReason);
+  const statusColor =
+    toolResult.status === 'success' ? theme.tokens.gray : isWarning ? theme.colors.warning : theme.tokens.red;
   const detailColor = messageColor ?? statusColor;
   const linesToRender = parseDetailLines({ status: toolResult.status, messageContent, toolResult });
 
@@ -61,6 +74,7 @@ export const BaseRenderer: React.FC<BaseRendererProps> = ({
         </Text>
       )}
       {linesToShow.map((line, idx) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: no other choice
         <Text key={`${messageId}-line-${idx}`} dimColor color={detailColor}>
           {truncateLine(line, effectiveMaxLineLength, fullMode)}
         </Text>

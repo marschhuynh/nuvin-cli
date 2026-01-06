@@ -79,7 +79,7 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
       <Box flexDirection="row">
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
-            »
+            ⚙︎
           </Text>
         </Box>
         <Text bold>{displayName}</Text>

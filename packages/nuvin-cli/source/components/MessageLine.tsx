@@ -8,7 +8,7 @@ import type { SubAgentState } from '@/utils/eventProcessor.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions';
 import { ToolCallViewer } from './ToolCallViewer';
 import { SubAgentActivity } from './ToolResultView/SubAgentActivity.js';
-import { AutoScrollBox } from './AutoScrollBox';
+import { AutoScrollBox } from './AutoScrollBox.js';
 import { useAltMode } from '@/contexts/AltModeContext';
 
 type MessageLineProps = {
@@ -78,7 +78,10 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         const toolCalls = (message.metadata?.toolCalls ?? []) as ToolCall[];
         const toolResultsByCallId = message.metadata?.toolResultsByCallId as Map<string, MessageLineType> | undefined;
 
-        return (
+        // Check if any tool call is still running (no result yet)
+        const hasRunningToolCall = toolCalls.some((toolCall) => !toolResultsByCallId?.has(toolCall.id));
+
+        const _render = (
           <Box flexDirection="column">
             {toolCalls.length > 0 ? (
               toolCalls.map((toolCall: ToolCall, callIndex: number) => {
@@ -118,7 +121,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
               <Box flexDirection="row" marginY={1}>
                 <Box flexShrink={0} marginRight={1}>
                   <Text color={theme.messageTypes.tool} bold>
-                    »
+                    ⚙︎
                   </Text>
                 </Box>
                 <Text>{message.content}</Text>
@@ -126,6 +129,18 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
             )}
           </Box>
         );
+
+        if (hasRunningToolCall) {
+          return (
+            <Box flexDirection="column" maxHeight={rows - 9}>
+              <AutoScrollBox mousePriority={100} showScrollbar maxHeight="100%">
+                {_render}
+              </AutoScrollBox>
+            </Box>
+          );
+        }
+
+        return _render;
       }
 
       case 'tool_result': {
@@ -183,7 +198,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       case 'thinking': {
         if (isStreaming && !altMode) {
           return (
-            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={Math.min(rows - 10, 15)}>
+            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={rows - 10}>
               <Box flexShrink={0} marginRight={1} position="sticky" top={0}>
                 <Text color={theme.messageTypes.thinking} bold>
                   ● [thinking]

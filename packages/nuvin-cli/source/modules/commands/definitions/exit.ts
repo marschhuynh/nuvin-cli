@@ -20,13 +20,13 @@ export function registerExitCommand(registry: CommandRegistry) {
       await orchestratorManager?.cleanup();
 
       // Emit completion message
-      eventBus.emit('ui:line', {
-        id: crypto.randomUUID(),
-        type: 'info',
-        content: 'Cleanup complete. Exiting now.',
-        metadata: { timestamp: new Date().toISOString() },
-        color: 'cyan',
-      });
+      // eventBus.emit('ui:line', {
+      //   id: crypto.randomUUID(),
+      //   type: 'info',
+      //   content: 'Cleanup complete. Exiting now.',
+      //   metadata: { timestamp: new Date().toISOString() },
+      //   color: 'cyan',
+      // });
 
       // Exit the application
       setTimeout(() => {
