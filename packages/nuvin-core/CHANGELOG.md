@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.14.1
+
+### Patch Changes
+
+- [`e78209c`](https://github.com/marschhuynh/nuvin-space/commit/e78209c97bcab81438bba01a14205a2cb077f2c1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add thinking_blocks with signature support for Anthropic extended thinking
+
 ## 1.14.0
 
 ### Minor Changes
