@@ -33,7 +33,8 @@ export function registerSummaryCommand(registry: CommandRegistry) {
         return;
       }
 
-      const history = await memory.get('cli');
+      const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
+      const history = await memory.get(conversationId);
       if (!history || history.length === 0) {
         eventBus.emit('ui:line', {
           id: crypto.randomUUID(),

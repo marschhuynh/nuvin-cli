@@ -48,6 +48,9 @@ describe('/clear command', () => {
     mockOrchestratorManager = {
       getMemory: vi.fn(() => mockMemory),
       getSession: vi.fn(() => ({ sessionId: 'test-session-id' })),
+      getConversationContext: vi.fn(() => ({
+        getActiveConversationId: () => 'default',
+      })),
     } as unknown as OrchestratorManager;
 
     registry = new CommandRegistry();
@@ -69,7 +72,7 @@ describe('/clear command', () => {
   it('should clear memory when executed', async () => {
     await registry.execute('/clear');
 
-    expect(mockMemory.delete).toHaveBeenCalledWith('cli');
+    expect(mockMemory.delete).toHaveBeenCalledWith('default');
   });
 
   it('should emit ui:lines:clear event', async () => {

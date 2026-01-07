@@ -151,7 +151,7 @@ describe('Context Window Auto-Summary', () => {
       content: 'Hello',
       timestamp: new Date().toISOString(),
     };
-    await memory.set('cli', [testMessage]);
+    await memory.set('default', [testMessage]);
     testableManager.memory = memory;
     testableManager.handlers = {};
     testableManager.memPersist = true;
@@ -216,7 +216,7 @@ describe('Context Window Auto-Summary', () => {
         timestamp: new Date().toISOString(),
       },
     ];
-    await memory.set('cli', testMessages);
+    await memory.set('default', testMessages);
     testableManager.memory = memory;
     testableManager.handlers = {};
     testableManager.memPersist = true;
@@ -270,7 +270,7 @@ describe('Context Window Auto-Summary', () => {
       content: 'Hello',
       timestamp: new Date().toISOString(),
     };
-    await memory.set('cli', [testMessage]);
+    await memory.set('default', [testMessage]);
     testableManager.memory = memory;
     testableManager.handlers = {};
     testableManager.memPersist = true;
@@ -312,7 +312,7 @@ describe('Context Window Auto-Summary', () => {
 
     await testableManager.checkContextWindowUsage(provider, model);
 
-    expect(mockUpdateMetadata).toHaveBeenCalledWith('cli', {
+    expect(mockUpdateMetadata).toHaveBeenCalledWith('default', {
       summarizedFrom: TEST_SESSION_ID,
       topic: `Summary of session ${TEST_SESSION_ID}`,
     });
@@ -326,7 +326,7 @@ describe('Context Window Auto-Summary', () => {
       content: 'Hello',
       timestamp: new Date().toISOString(),
     };
-    await memory.set('cli', [testMessage]);
+    await memory.set('default', [testMessage]);
     testableManager.memory = memory;
     testableManager.handlers = {};
     testableManager.memPersist = true;
@@ -381,7 +381,7 @@ describe('Context Window Auto-Summary', () => {
       content: 'Hello',
       timestamp: new Date().toISOString(),
     };
-    await memory.set('cli', [testMessage]);
+    await memory.set('default', [testMessage]);
     testableManager.memory = memory;
     testableManager.handlers = {};
     testableManager.memPersist = true;
@@ -505,7 +505,7 @@ describe('Context Window Auto-Summary', () => {
       content: 'Hello',
       timestamp: new Date().toISOString(),
     };
-    await memory.set('cli', [testMessage]);
+    await memory.set('default', [testMessage]);
     testableManager.memory = memory;
     testableManager.handlers = {};
     testableManager.memPersist = true;

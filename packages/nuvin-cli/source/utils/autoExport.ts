@@ -8,7 +8,7 @@ export async function autoExportHistory(memory: MemoryPort | undefined, reason: 
   }
 
   try {
-    const messages = await memory.get('cli');
+    const messages = await memory.get('default');
 
     if (!messages || messages.length === 0) {
       return null;

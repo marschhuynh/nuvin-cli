@@ -26,8 +26,7 @@ export function registerExportCommand(registry: CommandRegistry) {
       }
 
       try {
-        const memory = orchestratorManager?.getMemory();
-        if (!memory) {
+        if (!orchestratorManager) {
           eventBus.emit('ui:line', {
             id: crypto.randomUUID(),
             type: 'error',
@@ -38,8 +37,20 @@ export function registerExportCommand(registry: CommandRegistry) {
           return;
         }
 
-        // Get conversation history from memory
-        const messages = await memory.get('cli');
+        const memory = orchestratorManager.getMemory();
+        if (!memory) {
+          eventBus.emit('ui:line', {
+            id: crypto.randomUUID(),
+            type: 'error',
+            content: 'Memory not initialized',
+            metadata: { timestamp: new Date().toISOString() },
+            color: 'red',
+          });
+          return;
+        }
+
+        const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
+        const messages = await memory.get(conversationId);
 
         if (!messages || messages.length === 0) {
           eventBus.emit('ui:line', {

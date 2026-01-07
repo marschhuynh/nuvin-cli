@@ -10,8 +10,9 @@ export function registerClearCommand(registry: CommandRegistry) {
     category: 'session',
     async handler({ eventBus, orchestratorManager }) {
       const memory = orchestratorManager?.getMemory();
-      if (memory) {
-        await memory.delete('cli');
+      if (memory && orchestratorManager) {
+        const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
+        await memory.delete(conversationId);
       }
 
       const sessionId = orchestratorManager?.getSession().sessionId;

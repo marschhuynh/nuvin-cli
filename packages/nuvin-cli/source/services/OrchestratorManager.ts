@@ -776,8 +776,9 @@ export class OrchestratorManager {
     const newSessionId = result.sessionId;
     const newSessionDir = result.sessionDir;
 
+    const conversationId = this.conversationContext.getActiveConversationId();
     if (this.conversationStore) {
-      await this.conversationStore.updateMetadata('cli', {
+      await this.conversationStore.updateMetadata(conversationId, {
         summarizedFrom: previousSessionId,
         topic: `Summary of session ${previousSessionId}`,
       });
@@ -789,7 +790,7 @@ export class OrchestratorManager {
       content: `Previous conversation summary:\n\n${summary}`,
       timestamp: new Date().toISOString(),
     };
-    await this.memory?.append('cli', [summaryMessage]);
+    await this.memory?.append(conversationId, [summaryMessage]);
 
     if (!options.skipEvents) {
       eventBus.emit('ui:lines:clear');
@@ -841,7 +842,8 @@ export class OrchestratorManager {
 
     const previousSessionId = this.sessionId;
 
-    const history = await this.memory.get('cli');
+    const conversationId = this.conversationContext.getActiveConversationId();
+    const history = await this.memory.get(conversationId);
     if (!history || history.length === 0) {
       throw new Error('No conversation history to compress');
     }
@@ -858,13 +860,13 @@ export class OrchestratorManager {
     const newSessionDir = result.sessionDir;
 
     if (this.conversationStore) {
-      await this.conversationStore.updateMetadata('cli', {
+      await this.conversationStore.updateMetadata(conversationId, {
         summarizedFrom: previousSessionId,
         topic: `Compressed from session ${previousSessionId}`,
       });
     }
 
-    await this.memory?.set('cli', compressed);
+    await this.memory?.set(conversationId, compressed);
 
     sessionMetricsService.reset(newSessionId);
 
@@ -1187,7 +1189,8 @@ Respond with only the topic, no explanation.`;
       throw new Error('Memory not initialized');
     }
 
-    const history = await this.memory.get('cli');
+    const conversationId = this.conversationContext.getActiveConversationId();
+    const history = await this.memory.get(conversationId);
     if (!history || history.length === 0) {
       return 'No conversation history to summarize.';
     }

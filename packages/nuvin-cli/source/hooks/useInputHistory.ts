@@ -12,11 +12,12 @@ type LineInfo = {
 
 type UseInputHistoryOptions = {
   memory?: MemoryPort<Message> | null;
+  conversationId?: string;
   currentInput: string;
   onRecall: (message: string) => void;
 };
 
-export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHistoryOptions) => {
+export const useInputHistory = ({ memory, conversationId = 'default', currentInput, onRecall }: UseInputHistoryOptions) => {
   const { setNotification } = useNotification();
   const [messages, setMessages] = useState<string[]>([]);
   const [index, setIndex] = useState(-1);
@@ -55,7 +56,7 @@ export const useInputHistory = ({ memory, currentInput, onRecall }: UseInputHist
       }
 
       try {
-        const memMessages = await memory.get('cli');
+        const memMessages = await memory.get(conversationId);
         const userMessages = memMessages
           .filter((msg) => msg.role === 'user')
           .map((msg) => {

@@ -26,7 +26,7 @@ describe('autoExportHistory', () => {
 
     const result = await autoExportHistory(mockMemory, 'test error');
     expect(result).toBeNull();
-    expect(mockMemory.get).toHaveBeenCalledWith('cli');
+    expect(mockMemory.get).toHaveBeenCalledWith('default');
   });
 
   it('should export history with metadata when messages exist', async () => {

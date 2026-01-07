@@ -84,7 +84,8 @@ const HistoryCommandComponent = ({ context, deactivate }: CommandComponentProps)
           });
 
           if (switchResult.memory && result.cliMessages.length > 0) {
-            await switchResult.memory.set('cli', result.cliMessages);
+            const conversationId = context.orchestratorManager.getConversationContext().getActiveConversationId();
+            await switchResult.memory.set(conversationId, result.cliMessages);
           }
 
           console.log(ansiEscapes.clearTerminal);
