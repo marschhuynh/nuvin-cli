@@ -257,7 +257,7 @@ export abstract class BaseLLM implements LLMPort {
       temperature: enhancedParams.temperature,
       top_p: enhancedParams.topP,
       stream: false,
-      ...(enhancedParams.maxTokens !== undefined && { max_tokens: enhancedParams.maxTokens }),
+      max_tokens: enhancedParams.maxTokens ?? 64000,
       ...(enhancedParams.reasoning && { reasoning: enhancedParams.reasoning }),
       ...(enhancedParams.usage && { usage: enhancedParams.usage }),
     };
@@ -298,7 +298,7 @@ export abstract class BaseLLM implements LLMPort {
       temperature: enhancedParams.temperature,
       top_p: enhancedParams.topP,
       stream: true,
-      ...(enhancedParams.maxTokens !== undefined && { max_tokens: enhancedParams.maxTokens }),
+      max_tokens: enhancedParams.maxTokens ?? 64000,
       ...(enhancedParams.reasoning && { reasoning: enhancedParams.reasoning }),
       ...(enhancedParams.usage && { usage: enhancedParams.usage }),
     };

@@ -285,6 +285,71 @@ describe('Anthropic-compat Provider Type', () => {
       expect(result.reasoning).toBe('Let me think...');
     });
 
+    it('should capture thinking_blocks with signature in streaming', async () => {
+      const streamEvents = [
+        'data: {"type":"message_start","message":{"id":"msg_123","usage":{"input_tokens":10,"output_tokens":0}}}',
+        '',
+        'data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}',
+        '',
+        'data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Let me think..."}}',
+        '',
+        'data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig_stream_abc"}}',
+        '',
+        'data: {"type":"content_block_stop","index":0}',
+        '',
+        'data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}',
+        '',
+        'data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Here is the answer"}}',
+        '',
+        'data: {"type":"content_block_stop","index":1}',
+        '',
+        'data: {"type":"content_block_start","index":2,"content_block":{"type":"tool_use","id":"tc_1","name":"search","input":{}}}',
+        '',
+        'data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"{\\"query\\":\\"test\\"}"}}',
+        '',
+        'data: {"type":"content_block_stop","index":2}',
+        '',
+        'data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":50}}',
+        '',
+        'data: {"type":"message_stop"}',
+        '',
+      ].join('\n');
+
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(streamEvents));
+          controller.close();
+        },
+      });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: stream,
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+      const result = await llm.streamCompletion(
+        {
+          messages: [{ role: 'user', content: 'Search for something' }],
+          model: 'test-model',
+          temperature: 0.7,
+          topP: 1,
+          thinking: { type: 'enabled', budget_tokens: 4096 },
+        },
+        {},
+      );
+
+      expect(result.reasoning).toBe('Let me think...');
+      expect(result.thinking_blocks).toEqual([
+        { type: 'thinking', thinking: 'Let me think...', signature: 'sig_stream_abc' },
+      ]);
+      expect(result.tool_calls).toHaveLength(1);
+      expect(result.content).toBe('Here is the answer');
+    });
+
     it('should send thinking disabled in streaming request', async () => {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
@@ -327,6 +392,290 @@ describe('Anthropic-compat Provider Type', () => {
       const requestBody = JSON.parse(fetchCall[1].body as string);
 
       expect(requestBody.thinking).toEqual({ type: 'disabled' });
+    });
+
+    it('should include thinking block from previous assistant messages', async () => {
+      const mockResponse = {
+        id: 'msg_123',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'text', text: 'Final answer' }],
+        model: 'test-model',
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 10 },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(mockResponse),
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+      await llm.generateCompletion({
+        messages: [
+          { role: 'user', content: 'What is 2+2?' },
+          {
+            role: 'assistant',
+            content: 'Let me calculate...',
+            tool_calls: [{ id: 'tc_1', type: 'function', function: { name: 'calculator', arguments: '{"a":2,"b":2}' } }],
+            reasoning: 'I need to use the calculator tool for this arithmetic.',
+          },
+          { role: 'tool', content: '4', tool_call_id: 'tc_1' },
+        ],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+        thinking: { type: 'enabled', budget_tokens: 4096 },
+      });
+
+      const fetchCall = (global.fetch as vi.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body as string);
+
+      const assistantMsg = requestBody.messages.find((m: any) => m.role === 'assistant');
+      expect(assistantMsg).toBeDefined();
+      expect(assistantMsg.content).toBeInstanceOf(Array);
+      expect(assistantMsg.content[0]).toEqual({
+        type: 'thinking',
+        thinking: 'I need to use the calculator tool for this arithmetic.',
+      });
+      expect(assistantMsg.content[1]).toEqual({
+        type: 'text',
+        text: 'Let me calculate...',
+      });
+      expect(assistantMsg.content[2]).toMatchObject({
+        type: 'tool_use',
+        id: 'tc_1',
+        name: 'calculator',
+      });
+    });
+
+    it('should preserve thinking_blocks with signature from previous assistant messages', async () => {
+      const mockResponse = {
+        id: 'msg_123',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'text', text: 'The answer is 4' }],
+        model: 'test-model',
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 10 },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(mockResponse),
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+      await llm.generateCompletion({
+        messages: [
+          { role: 'user', content: 'What is 2+2?' },
+          {
+            role: 'assistant',
+            content: 'Let me calculate...',
+            tool_calls: [{ id: 'tc_1', type: 'function', function: { name: 'calculator', arguments: '{"a":2,"b":2}' } }],
+            thinking_blocks: [
+              { type: 'thinking', thinking: 'I need to use the calculator tool.', signature: 'sig_abc123' },
+            ],
+          },
+          { role: 'tool', content: '4', tool_call_id: 'tc_1' },
+        ],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+        thinking: { type: 'enabled', budget_tokens: 4096 },
+      });
+
+      const fetchCall = (global.fetch as vi.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body as string);
+
+      const assistantMsg = requestBody.messages.find((m: any) => m.role === 'assistant');
+      expect(assistantMsg).toBeDefined();
+      expect(assistantMsg.content[0]).toEqual({
+        type: 'thinking',
+        thinking: 'I need to use the calculator tool.',
+        signature: 'sig_abc123',
+      });
+    });
+
+    it('should preserve redacted_thinking blocks from previous assistant messages', async () => {
+      const mockResponse = {
+        id: 'msg_123',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'text', text: 'Done' }],
+        model: 'test-model',
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 10 },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(mockResponse),
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+      await llm.generateCompletion({
+        messages: [
+          { role: 'user', content: 'Analyze this' },
+          {
+            role: 'assistant',
+            content: 'Processing...',
+            tool_calls: [{ id: 'tc_1', type: 'function', function: { name: 'analyze', arguments: '{}' } }],
+            thinking_blocks: [
+              { type: 'thinking', thinking: 'Let me think...', signature: 'sig_1' },
+              { type: 'redacted_thinking', data: 'encrypted_data_abc' },
+            ],
+          },
+          { role: 'tool', content: 'result', tool_call_id: 'tc_1' },
+        ],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+        thinking: { type: 'enabled', budget_tokens: 4096 },
+      });
+
+      const fetchCall = (global.fetch as vi.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body as string);
+
+      const assistantMsg = requestBody.messages.find((m: any) => m.role === 'assistant');
+      expect(assistantMsg.content[0]).toEqual({
+        type: 'thinking',
+        thinking: 'Let me think...',
+        signature: 'sig_1',
+      });
+      expect(assistantMsg.content[1]).toEqual({
+        type: 'redacted_thinking',
+        data: 'encrypted_data_abc',
+      });
+    });
+
+    it('should capture thinking_blocks with signature from response', async () => {
+      const mockResponse = {
+        id: 'msg_123',
+        type: 'message',
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'Let me analyze...', signature: 'sig_xyz789' },
+          { type: 'text', text: 'The result is...' },
+          { type: 'tool_use', id: 'tc_1', name: 'search', input: { query: 'test' } },
+        ],
+        model: 'test-model',
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 50, output_tokens: 100 },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(mockResponse),
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+      const result = await llm.generateCompletion({
+        messages: [{ role: 'user', content: 'Search for something' }],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+        thinking: { type: 'enabled', budget_tokens: 4096 },
+      });
+
+      expect(result.reasoning).toBe('Let me analyze...');
+      expect(result.thinking_blocks).toEqual([
+        { type: 'thinking', thinking: 'Let me analyze...', signature: 'sig_xyz789' },
+      ]);
+      expect(result.tool_calls).toHaveLength(1);
+    });
+
+    it('should handle full tool use loop with thinking blocks preserved', async () => {
+      const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+
+      const firstResponse = {
+        id: 'msg_1',
+        type: 'message',
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'I need to search first', signature: 'sig_first' },
+          { type: 'text', text: 'Let me search...' },
+          { type: 'tool_use', id: 'tc_1', name: 'search', input: { query: 'test' } },
+        ],
+        model: 'test-model',
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 50, output_tokens: 100 },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(firstResponse),
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const result1 = await llm.generateCompletion({
+        messages: [{ role: 'user', content: 'Find something' }],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+        thinking: { type: 'enabled', budget_tokens: 4096 },
+      });
+
+      expect(result1.thinking_blocks).toEqual([
+        { type: 'thinking', thinking: 'I need to search first', signature: 'sig_first' },
+      ]);
+
+      const secondResponse = {
+        id: 'msg_2',
+        type: 'message',
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: 'Now I have the results', signature: 'sig_second' },
+          { type: 'text', text: 'Here is what I found...' },
+        ],
+        model: 'test-model',
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 50 },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue(secondResponse),
+        text: vi.fn().mockResolvedValue(''),
+      } as any);
+
+      const { usage: _u, ...extraFields } = result1;
+      await llm.generateCompletion({
+        messages: [
+          { role: 'user', content: 'Find something' },
+          {
+            ...extraFields,
+            role: 'assistant',
+            content: result1.content,
+            tool_calls: result1.tool_calls,
+          },
+          { role: 'tool', content: 'search results here', tool_call_id: 'tc_1' },
+        ],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+        thinking: { type: 'enabled', budget_tokens: 4096 },
+      });
+
+      const fetchCall = (global.fetch as vi.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body as string);
+
+      const assistantMsg = requestBody.messages.find((m: any) => m.role === 'assistant');
+      expect(assistantMsg.content[0]).toEqual({
+        type: 'thinking',
+        thinking: 'I need to search first',
+        signature: 'sig_first',
+      });
     });
   });
 });

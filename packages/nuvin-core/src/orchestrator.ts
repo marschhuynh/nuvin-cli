@@ -132,8 +132,8 @@ export class AgentOrchestrator {
   // Per-tool approval map: approvalId -> { resolve, toolCall }
   private pendingApprovals = new Map<
     string,
-    { 
-      resolve: (result: PerToolApprovalResult) => void; 
+    {
+      resolve: (result: PerToolApprovalResult) => void;
       reject: (error: Error) => void;
       toolCall: ToolCall;
     }
@@ -272,7 +272,7 @@ export class AgentOrchestrator {
    * - Non-bypass tools wait for their individual approval
    * - All tools run in parallel, each waiting only for its own approval
    * - ToolResult events emitted immediately when each tool completes
-   * 
+   *
    * @param enrichedToolCalls - Tool calls already enriched with approvalId and requiresApproval
    */
   private async processToolApproval(
@@ -290,7 +290,7 @@ export class AgentOrchestrator {
     _usage?: UsageData,
     signal?: AbortSignal,
   ): Promise<{ results: ToolExecutionResult[] }> {
-    
+
     // Setup abort handlers for all approval promises
     if (signal) {
       const abortHandler = () => {
@@ -330,17 +330,17 @@ export class AgentOrchestrator {
             metadata: { errorReason: ErrorReason.Aborted },
             durationMs: 0,
           };
-          
+
           await this.events?.emit({
             type: AgentEventTypes.ToolResult,
             conversationId,
             messageId,
             result,
           });
-          
+
           return result;
         }
-        
+
         // Check abort immediately after approval received
         if (signal?.aborted) {
           result = {
@@ -352,14 +352,14 @@ export class AgentOrchestrator {
             metadata: { errorReason: ErrorReason.Aborted },
             durationMs: 0,
           };
-          
+
           await this.events?.emit({
             type: AgentEventTypes.ToolResult,
             conversationId,
             messageId,
             result,
           });
-          
+
           return result;
         }
 
@@ -374,14 +374,14 @@ export class AgentOrchestrator {
             metadata: { errorReason: ErrorReason.Denied },
             durationMs: 0,
           };
-          
+
           await this.events?.emit({
             type: AgentEventTypes.ToolResult,
             conversationId,
             messageId,
             result,
           });
-          
+
           return result;
         }
 
@@ -409,14 +409,14 @@ export class AgentOrchestrator {
           metadata: { errorReason: ErrorReason.ValidationFailed },
           durationMs: 0,
         };
-        
+
         await this.events?.emit({
           type: AgentEventTypes.ToolResult,
           conversationId,
           messageId,
           result,
         });
-        
+
         return result;
       }
 
@@ -627,6 +627,8 @@ export class AgentOrchestrator {
         timestamp: this.clock.iso(),
         usage: result.usage,
       };
+      if (result.reasoning) assistantMsg.reasoning = result.reasoning;
+      if (result.thinking_blocks) assistantMsg.thinking_blocks = result.thinking_blocks;
       await this.memory.append(convo, [assistantMsg]);
       finalResponseSaved = true;
 
@@ -661,7 +663,7 @@ export class AgentOrchestrator {
 
       // 1. Enrich tool calls with per-tool approval info
       const enrichedToolCalls = result.tool_calls.map((tc) => {
-        const requiresApproval = this.cfg.requireToolApproval !== false && 
+        const requiresApproval = this.cfg.requireToolApproval !== false &&
                                   !this.shouldBypassApproval(tc.function.name);
         return {
           ...tc,
@@ -672,12 +674,12 @@ export class AgentOrchestrator {
 
       // 2. Pre-register pending approvals BEFORE emitting event
       // This prevents race condition where UI tries to approve before orchestrator is ready
-      const approvalPromises = new Map<string, { 
-        promise: Promise<PerToolApprovalResult>; 
+      const approvalPromises = new Map<string, {
+        promise: Promise<PerToolApprovalResult>;
         resolve: (result: PerToolApprovalResult) => void;
         reject: (err: Error) => void;
       }>();
-      
+
       for (const tc of enrichedToolCalls) {
         if (tc.requiresApproval && tc.approvalId) {
           let resolveApproval: (result: PerToolApprovalResult) => void;
@@ -686,10 +688,10 @@ export class AgentOrchestrator {
             resolveApproval = resolve;
             rejectApproval = reject;
           });
-          approvalPromises.set(tc.approvalId, { 
-            promise, 
-            resolve: resolveApproval!, 
-            reject: rejectApproval! 
+          approvalPromises.set(tc.approvalId, {
+            promise,
+            resolve: resolveApproval!,
+            reject: rejectApproval!
           });
           this.pendingApprovals.set(tc.approvalId, {
             resolve: resolveApproval!,
@@ -740,6 +742,8 @@ export class AgentOrchestrator {
         tool_calls: enrichedToolCalls,
         usage: result.usage,
       };
+      if (result.reasoning) assistantMsg.reasoning = result.reasoning;
+      if (result.thinking_blocks) assistantMsg.thinking_blocks = result.thinking_blocks;
 
       // Build tool result messages
       const toolResultMsgs: Message[] = [];
@@ -858,6 +862,8 @@ export class AgentOrchestrator {
           timestamp: this.clock.iso(),
           usage: result.usage,
         };
+        if (result.reasoning) assistantMsg.reasoning = result.reasoning;
+        if (result.thinking_blocks) assistantMsg.thinking_blocks = result.thinking_blocks;
         await this.memory.append(convo, [assistantMsg]);
         finalResponseSaved = true;
 

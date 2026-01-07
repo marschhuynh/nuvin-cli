@@ -28,7 +28,9 @@ type AnthropicContentPart =
   | { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }
   | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'tool_result'; tool_use_id: string; content: string };
+  | { type: 'tool_result'; tool_use_id: string; content: string }
+  | { type: 'thinking'; thinking: string; signature?: string }
+  | { type: 'redacted_thinking'; data: string };
 
 type AnthropicMessage = {
   role: 'user' | 'assistant';
@@ -57,7 +59,8 @@ type AnthropicRequestBody = {
 
 type AnthropicContentBlock =
   | { type: 'text'; text: string }
-  | { type: 'thinking'; thinking: string }
+  | { type: 'thinking'; thinking: string; signature?: string }
+  | { type: 'redacted_thinking'; data: string }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> };
 
 type AnthropicUsage = {
@@ -81,7 +84,7 @@ type AnthropicResponse = {
 type AnthropicStreamEvent =
   | { type: 'message_start'; message: Partial<AnthropicResponse> }
   | { type: 'content_block_start'; index: number; content_block: AnthropicContentBlock }
-  | { type: 'content_block_delta'; index: number; delta: { type: 'text_delta'; text: string } | { type: 'thinking_delta'; thinking: string } | { type: 'input_json_delta'; partial_json: string } }
+  | { type: 'content_block_delta'; index: number; delta: { type: 'text_delta'; text: string } | { type: 'thinking_delta'; thinking: string } | { type: 'signature_delta'; signature: string } | { type: 'input_json_delta'; partial_json: string } }
   | { type: 'content_block_stop'; index: number }
   | { type: 'message_delta'; delta: { stop_reason: string }; usage?: Partial<AnthropicUsage> }
   | { type: 'message_stop' }
@@ -175,6 +178,21 @@ export class GenericAnthropicLLM implements LLMPort {
 
       if (msg.role === 'assistant') {
         const content: AnthropicContentPart[] = [];
+
+        const thinkingBlocks = (msg as Record<string, unknown>).thinking_blocks as AnthropicContentBlock[] | undefined;
+        const reasoning = (msg as Record<string, unknown>).reasoning as string | undefined;
+
+        if (thinkingBlocks && thinkingBlocks.length > 0) {
+          for (const block of thinkingBlocks) {
+            if (block.type === 'thinking') {
+              content.push({ type: 'thinking', thinking: block.thinking, ...(block.signature && { signature: block.signature }) });
+            } else if (block.type === 'redacted_thinking') {
+              content.push({ type: 'redacted_thinking', data: block.data });
+            }
+          }
+        } else if (reasoning) {
+          content.push({ type: 'thinking', thinking: reasoning });
+        }
 
         if (typeof msg.content === 'string' && msg.content) {
           content.push({ type: 'text', text: msg.content });
@@ -287,12 +305,16 @@ export class GenericAnthropicLLM implements LLMPort {
     let content = '';
     let reasoning = '';
     const toolCalls: ToolCall[] = [];
+    const thinkingBlocks: AnthropicContentBlock[] = [];
 
     for (const block of response.content) {
       if (block.type === 'text') {
         content += block.text;
       } else if (block.type === 'thinking') {
         reasoning += block.thinking;
+        thinkingBlocks.push(block);
+      } else if (block.type === 'redacted_thinking') {
+        thinkingBlocks.push(block);
       } else if (block.type === 'tool_use') {
         toolCalls.push({
           id: block.id,
@@ -308,6 +330,7 @@ export class GenericAnthropicLLM implements LLMPort {
     return {
       content,
       ...(reasoning && { reasoning }),
+      ...(thinkingBlocks.length > 0 && { thinking_blocks: thinkingBlocks }),
       ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
       usage: this.transformUsage(response.usage),
     };
@@ -406,6 +429,7 @@ export class GenericAnthropicLLM implements LLMPort {
     let reasoning = '';
     const toolCalls: ToolCall[] = [];
     const toolCallArgs: Map<number, string> = new Map();
+    const thinkingBlocksMap: Map<number, { type: 'thinking'; thinking: string; signature?: string } | { type: 'redacted_thinking'; data: string }> = new Map();
     let usage: UsageData | undefined;
     let stopReason: string | undefined;
 
@@ -444,6 +468,10 @@ export class GenericAnthropicLLM implements LLMPort {
               toolCalls.push(tc);
               toolCallArgs.set(evt.index, '');
               handlers.onToolCallDelta?.(tc);
+            } else if (evt.content_block.type === 'thinking') {
+              thinkingBlocksMap.set(evt.index, { type: 'thinking', thinking: '' });
+            } else if (evt.content_block.type === 'redacted_thinking') {
+              thinkingBlocksMap.set(evt.index, { type: 'redacted_thinking', data: evt.content_block.data });
             }
             break;
 
@@ -454,6 +482,15 @@ export class GenericAnthropicLLM implements LLMPort {
             } else if (evt.delta.type === 'thinking_delta') {
               reasoning += evt.delta.thinking;
               handlers.onReasoningChunk?.(evt.delta.thinking);
+              const block = thinkingBlocksMap.get(evt.index);
+              if (block && block.type === 'thinking') {
+                block.thinking += evt.delta.thinking;
+              }
+            } else if (evt.delta.type === 'signature_delta') {
+              const block = thinkingBlocksMap.get(evt.index);
+              if (block && block.type === 'thinking') {
+                block.signature = evt.delta.signature;
+              }
             } else if (evt.delta.type === 'input_json_delta') {
               const currentArgs = toolCallArgs.get(evt.index) ?? '';
               const newArgs = currentArgs + evt.delta.partial_json;
@@ -507,9 +544,12 @@ export class GenericAnthropicLLM implements LLMPort {
 
     if (buffer.trim()) processEvent(buffer);
 
+    const thinkingBlocks = Array.from(thinkingBlocksMap.values());
+
     return {
       content,
       ...(reasoning && { reasoning }),
+      ...(thinkingBlocks.length > 0 && { thinking_blocks: thinkingBlocks }),
       ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
       ...(usage && { usage }),
     };
