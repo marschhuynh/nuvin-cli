@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.29.0
+
+### Minor Changes
+
+- [`b215ecb`](https://github.com/marschhuynh/nuvin-space/commit/b215ecb1911833416710868d86ef59004b5f1cb5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Support dynamic custom provider configuration for models command
+
 ## 1.28.0
 
 ### Minor Changes
