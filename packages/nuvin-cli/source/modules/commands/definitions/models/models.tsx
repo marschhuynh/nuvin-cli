@@ -9,10 +9,9 @@ import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/
 
 import { PROVIDER_MODELS, type ProviderKey } from '@/const.js';
 import { buildProviderOptions, getProviderLabel } from '@/config/providers.js';
+import type { ProviderConfig } from '@/config/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useModelsCommandState } from './hooks/useModelsCommandState.js';
-
-const providerOptions = buildProviderOptions();
 
 type AuthNavigationPromptProps = {
   onNavigate: () => void;
@@ -110,6 +109,7 @@ const getModalTitle = (stage: string, selectedProvider: ProviderKey | null): str
 
 const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandComponentProps) => {
   const { theme } = useTheme();
+  const providerOptions = buildProviderOptions(context.config.get<Record<string, ProviderConfig>>('providers'));
 
   const llmFactory = context.orchestratorManager?.getLLMFactory();
 

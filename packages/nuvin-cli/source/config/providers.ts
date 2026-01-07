@@ -1,4 +1,5 @@
 import { getAvailableProviders, getProviderLabel as getCoreProviderLabel } from '@nuvin/nuvin-core';
+import type { ProviderConfig } from './types.js';
 
 const SPECIAL_PROVIDERS = ['github', 'anthropic'] as const;
 
@@ -6,8 +7,8 @@ type SpecialProvider = (typeof SPECIAL_PROVIDERS)[number];
 
 export type ProviderKey = string;
 
-export function getAllProviders(): string[] {
-  const factoryProviders = getAvailableProviders();
+export function getAllProviders(customProviders?: Record<string, ProviderConfig>): string[] {
+  const factoryProviders = getAvailableProviders(customProviders);
   return [...factoryProviders, ...SPECIAL_PROVIDERS];
 }
 
@@ -31,8 +32,8 @@ export function getProviderLabel(provider: string): string {
     .join(' ');
 }
 
-export function buildProviderOptions(): ProviderItem[] {
-  const allProviders = getAllProviders();
+export function buildProviderOptions(customProviders?: Record<string, ProviderConfig>): ProviderItem[] {
+  const allProviders = getAllProviders(customProviders);
   return allProviders.map((provider) => ({
     label: getProviderLabel(provider),
     value: provider,
