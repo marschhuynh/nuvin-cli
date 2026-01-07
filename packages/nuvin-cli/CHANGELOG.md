@@ -1,5 +1,18 @@
 # @nuvin/nuvin-cli
 
+## 1.28.0
+
+### Minor Changes
+
+- [`795a2cd`](https://github.com/marschhuynh/nuvin-space/commit/795a2cd2c258bbd623576f570522a5321e929038) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor tool approval to per-tool granularity. Each tool now gets its own approval flow: bypass tools execute immediately, approval-required tools wait for individual user decisions. Added new `ui:toolCalls` event for real-time tool tracking. Removed batch approval model in favor of individual tool approvals.
+
+### Patch Changes
+
+- [`d2b7725`](https://github.com/marschhuynh/nuvin-space/commit/d2b77257c787c42d7697e60cedf58797cc001bbb) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix `/summary` command to use correct conversation ID from ConversationContext instead of hardcoded 'cli' key
+
+- Updated dependencies [[`795a2cd`](https://github.com/marschhuynh/nuvin-space/commit/795a2cd2c258bbd623576f570522a5321e929038)]:
+  - @nuvin/nuvin-core@1.14.0
+
 ## 1.27.1
 
 ### Patch Changes

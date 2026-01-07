@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.14.0
+
+### Minor Changes
+
+- [`795a2cd`](https://github.com/marschhuynh/nuvin-space/commit/795a2cd2c258bbd623576f570522a5321e929038) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor tool approval to per-tool granularity. Each tool now gets its own approval flow: bypass tools execute immediately, approval-required tools wait for individual user decisions. Added new `ui:toolCalls` event for real-time tool tracking. Removed batch approval model in favor of individual tool approvals.
+
 ## 1.13.5
 
 ### Patch Changes
