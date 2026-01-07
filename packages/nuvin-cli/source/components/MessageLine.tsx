@@ -49,7 +49,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       case 'assistant': {
         if (isStreaming && !altMode) {
           return (
-            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={rows - 10} flexShrink={0}>
+            <Box flexDirection="column" marginY={1} maxHeight={'100%'} width={'100%'} flexShrink={0}>
               <Box flexShrink={0} marginRight={1} position="sticky" top={0}>
                 <Text color={theme.messageTypes.assistant} bold>
                   ● [assistant]
@@ -143,7 +143,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
         if (hasRunningToolCall) {
           return (
-            <Box flexDirection="column" maxHeight={rows - 10} paddingTop={1} flexShrink={0}>
+            <Box flexDirection="column" maxHeight="100%" paddingTop={1} flexShrink={0}>
               <AutoScrollBox mousePriority={100} showScrollbar maxHeight="100%">
                 {_render}
               </AutoScrollBox>
@@ -250,6 +250,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       width="100%"
       flexShrink={0}
       backgroundColor={backgroundColor}
+      // maxHeight="100%"
       {...(liveMessage
         ? {
             borderStyle: 'single',

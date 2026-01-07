@@ -121,7 +121,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
       }
       rightTitle={<ToolProgressInfo currentIndex={currentIndex} totalTools={pendingApprovalBatchTotal} />}
     >
-      <Box flexDirection="column" width="100%">
+      <Box flexDirection="column" width="100%" flexShrink={0}>
         <ToolParameters toolCall={currentTool} />
         <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginTop={1}>
           <ToolActions onActionExecute={handleActionExecute} />

@@ -209,7 +209,9 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         ) : (
-          <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
+          <Box flexShrink={0}>
+            <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
+          </Box>
         );
 
       case 'command':
@@ -218,7 +220,9 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ActiveCommand />
           </Box>
         ) : (
-          <ActiveCommand />
+          <Box flexShrink={0}>
+            <ActiveCommand />
+          </Box>
         );
 
       default:

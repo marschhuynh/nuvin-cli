@@ -25,11 +25,11 @@ function normalizeToLF(text: string): string {
 function calculateLineNumbers(originalText: string, oldText: string, matchIndex: number, newText: string): LineNumbers {
   const textBeforeMatch = originalText.slice(0, matchIndex);
   const oldStartLine = textBeforeMatch.split('\n').length;
-  
+
   const oldTextTrimmed = oldText.replace(/\n$/, '');
   const oldLineCount = oldTextTrimmed.length === 0 ? 0 : oldTextTrimmed.split('\n').length;
   const oldEndLine = oldStartLine + oldLineCount - 1;
-  
+
   const newTextTrimmed = newText.replace(/\n$/, '');
   const newLineCount = newTextTrimmed.length === 0 ? 0 : newTextTrimmed.split('\n').length;
   const newStartLine = oldStartLine;

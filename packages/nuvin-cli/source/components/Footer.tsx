@@ -50,7 +50,7 @@ const FooterComponent: React.FC<FooterProps> = ({
   const currentProfile = getCurrentProfile?.();
 
   return (
-    <Box justifyContent="space-between" flexDirection="column">
+    <Box justifyContent="space-between" flexDirection="column" flexShrink={0}>
       <Box justifyContent="space-between" flexWrap="wrap">
         {notification ? (
           <Text color={theme.tokens.yellow}>{notification || ''}</Text>
