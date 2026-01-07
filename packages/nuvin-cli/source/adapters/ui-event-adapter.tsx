@@ -66,8 +66,8 @@ export class UIEventAdapter extends PersistingConsoleEventPort {
       updateLine: this.updateLine,
       updateLineMetadata: this.updateLineMetadata,
       streamingEnabled: this.streamingEnabled,
-      onToolApprovalRequired: (event) => {
-        eventBus.emit('ui:toolApprovalRequired', event);
+      onToolCalls: (event) => {
+        eventBus.emit('ui:toolCalls', event);
       },
     };
   }

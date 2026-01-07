@@ -8,16 +8,12 @@ import type { OrchestratorManager } from '@/services/OrchestratorManager';
 interface ToolApprovalState {
   toolApprovalMode: boolean;
   setToolApprovalMode: (value: boolean | ((prevState: boolean) => boolean)) => void;
-  pendingApproval: {
-    toolCalls: ToolCall[];
-    approvalId: string;
-    conversationId: string;
-    messageId: string;
-  } | null;
+  pendingApprovalTools: ToolCall[];
+  pendingApprovalBatchTotal: number;
   sessionApprovedTools: Set<string>;
   addSessionApprovedTool: (toolName: string) => void;
   clearSessionApprovedTools: () => void;
-  handleApprovalResponse: (decision: ToolApprovalDecision, approvedCalls?: ToolCall[], editInstruction?: string) => void;
+  handleSingleToolApproval: (approvalId: string, decision: ToolApprovalDecision, editInstruction?: string) => void;
 }
 
 const ToolApprovalContext = createContext<ToolApprovalState | undefined>(undefined);
@@ -34,18 +30,9 @@ export function ToolApprovalProvider({
   children: React.ReactNode;
 }) {
   const [isToolApprovalMode, setToolApprovalMode] = useState(requireToolApproval);
-  const [pendingApproval, setPendingApproval] = useState<{
-    toolCalls: ToolCall[];
-    approvalId: string;
-    conversationId: string;
-    messageId: string;
-  } | null>(null);
+  const [pendingApprovalTools, setPendingApprovalTools] = useState<ToolCall[]>([]);
+  const [pendingApprovalBatchTotal, setPendingApprovalBatchTotal] = useState(0);
   const [sessionApprovedTools, setSessionApprovedTools] = useState<Set<string>>(new Set());
-  // const orchestratorRef = useRef<AgentOrchestrator | null>(orchestrator);
-
-  // const setOrchestrator = useCallback((orchestrator: AgentOrchestrator | null) => {
-  //   orchestratorRef.current = orchestrator;
-  // }, []);
 
   const addSessionApprovedTool = useCallback((toolName: string) => {
     setSessionApprovedTools((prev) => new Set(prev).add(toolName));
@@ -53,28 +40,25 @@ export function ToolApprovalProvider({
 
   const clearSessionApprovedTools = useCallback(() => {
     setSessionApprovedTools(new Set());
+    setPendingApprovalTools([]);
+    setPendingApprovalBatchTotal(0);
   }, []);
 
-  const handleApprovalResponse = useCallback(
-    (decision: ToolApprovalDecision, approvedCalls?: ToolCall[], editInstruction?: string) => {
-      if (!pendingApproval || !orchestratorManager?.getOrchestrator()) {
+  const handleSingleToolApproval = useCallback(
+    (approvalId: string, decision: ToolApprovalDecision, editInstruction?: string) => {
+      if (!orchestratorManager?.getOrchestrator()) {
         return;
       }
 
       try {
-        orchestratorManager?.getOrchestrator()?.handleToolApproval(
-          pendingApproval.approvalId,
-          decision,
-          approvedCalls,
-          editInstruction,
-        );
-        setPendingApproval(null);
+        orchestratorManager.getOrchestrator()?.handleToolApproval(approvalId, decision, editInstruction);
+        setPendingApprovalTools((prev) => prev.filter((tc) => tc.approvalId !== approvalId));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         onError(`Failed to respond to tool approval: ${message}`);
       }
     },
-    [pendingApproval, onError, orchestratorManager?.getOrchestrator],
+    [onError, orchestratorManager],
   );
 
   const sessionApprovedToolsRef = useRef(sessionApprovedTools);
@@ -84,41 +68,37 @@ export function ToolApprovalProvider({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    const onToolApprovalRequired = async (event: {
-      toolCalls: ToolCall[];
-      approvalId: string;
-      conversationId: string;
-      messageId: string;
-    }) => {
+    const onToolCalls = async (event: { toolCalls: ToolCall[] }) => {
       try {
         const enrichedToolCalls = await enrichToolCallsWithLineNumbers(event.toolCalls);
 
-        const autoApprovedTools: ToolCall[] = [];
-        const needsApprovalTools: ToolCall[] = [];
+        const toolsNeedingApproval: ToolCall[] = [];
 
         for (const tool of enrichedToolCalls) {
-          if (sessionApprovedToolsRef.current.has(tool.function.name)) {
-            autoApprovedTools.push(tool);
-          } else {
-            needsApprovalTools.push(tool);
+          if (tool.requiresApproval && tool.approvalId) {
+            if (sessionApprovedToolsRef.current.has(tool.function.name)) {
+              try {
+                orchestratorManager?.getOrchestrator()?.handleToolApproval(tool.approvalId, 'approve');
+              } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                onErrorRef.current(`Failed to auto-approve session tool: ${message}`);
+              }
+            } else {
+              toolsNeedingApproval.push(tool);
+            }
           }
         }
 
-        if (autoApprovedTools.length > 0 && orchestratorManager?.getOrchestrator()) {
-          try {
-            orchestratorManager?.getOrchestrator()?.handleToolApproval(event.approvalId, 'approve', autoApprovedTools);
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            onErrorRef.current(`Failed to auto-approve session tools: ${message}`);
-          }
-        }
-
-        if (needsApprovalTools.length > 0) {
-          setPendingApproval({ ...event, toolCalls: needsApprovalTools });
+        if (toolsNeedingApproval.length > 0) {
+          setPendingApprovalTools((prev) => {
+            const newTools = [...prev, ...toolsNeedingApproval];
+            setPendingApprovalBatchTotal(newTools.length);
+            return newTools;
+          });
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        onErrorRef.current(`Failed to process tool approval: ${message}`);
+        onErrorRef.current(`Failed to process tool calls: ${message}`);
       }
     };
 
@@ -130,34 +110,36 @@ export function ToolApprovalProvider({
       clearSessionApprovedTools();
     };
 
-    eventBus.on('ui:toolApprovalRequired', onToolApprovalRequired);
+    eventBus.on('ui:toolCalls', onToolCalls);
     eventBus.on('conversation:created', onNewConversation);
     eventBus.on('ui:lines:clear', onClearChat);
 
     return () => {
-      eventBus.off('ui:toolApprovalRequired', onToolApprovalRequired);
+      eventBus.off('ui:toolCalls', onToolCalls);
       eventBus.off('conversation:created', onNewConversation);
       eventBus.off('ui:lines:clear', onClearChat);
     };
-  }, [clearSessionApprovedTools, orchestratorManager?.getOrchestrator]);
+  }, [clearSessionApprovedTools, orchestratorManager]);
 
   const value = useMemo(
     () => ({
       toolApprovalMode: isToolApprovalMode,
       setToolApprovalMode,
-      pendingApproval,
+      pendingApprovalTools,
+      pendingApprovalBatchTotal,
       sessionApprovedTools,
       addSessionApprovedTool,
       clearSessionApprovedTools,
-      handleApprovalResponse,
+      handleSingleToolApproval,
     }),
     [
       isToolApprovalMode,
-      pendingApproval,
+      pendingApprovalTools,
+      pendingApprovalBatchTotal,
       sessionApprovedTools,
       addSessionApprovedTool,
       clearSessionApprovedTools,
-      handleApprovalResponse,
+      handleSingleToolApproval,
     ],
   );
 

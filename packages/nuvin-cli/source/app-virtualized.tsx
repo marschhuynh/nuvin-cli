@@ -60,7 +60,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
   const [vimMode, setVimMode] = useState<'insert' | 'normal'>('insert');
   const [isExiting, setIsExiting] = useState(false);
 
-  const { toolApprovalMode, setToolApprovalMode, pendingApproval } = useToolApproval();
+  const { toolApprovalMode, setToolApprovalMode, pendingApprovalTools } = useToolApproval();
   const { activeCommand, execute: executeCommand } = useCommand();
 
   const [headerKey, setHeaderKey] = useState<number>(1);
@@ -276,7 +276,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
 
   useGlobalKeyboard({
     busy,
-    pendingApproval,
+    hasPendingApproval: pendingApprovalTools.length > 0,
     inputAreaRef,
     onNotification: setNotification,
   });

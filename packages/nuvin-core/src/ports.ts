@@ -33,7 +33,11 @@ export type ToolCall = {
     arguments: string; // JSON string per OpenAI-style schema
   };
   editInstruction?: string;
+  // Per-tool approval tracking
+  approvalId?: string;        // Unique ID for this tool's approval (if needs approval)
+  requiresApproval?: boolean; // true if this tool needs user approval before execution
 };
+
 
 export type TextContentPart = {
   type: 'text';

@@ -9,14 +9,14 @@ declare global {
 
 type UseGlobalKeyboardProps = {
   busy: boolean;
-  pendingApproval: unknown;
+  hasPendingApproval: boolean;
   inputAreaRef: React.RefObject<InputAreaHandle | null>;
   onNotification: (message: string | null, duration?: number) => void;
 };
 
 export const useGlobalKeyboard = ({
   busy,
-  pendingApproval,
+  hasPendingApproval,
   inputAreaRef,
   onNotification,
 }: UseGlobalKeyboardProps): void => {
@@ -63,7 +63,7 @@ export const useGlobalKeyboard = ({
   }, [onNotification]);
 
   const handlePaste = useCallback(async () => {
-    if (busy || pendingApproval) {
+    if (busy || hasPendingApproval) {
       return;
     }
 
@@ -101,7 +101,7 @@ export const useGlobalKeyboard = ({
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       onNotification(`Failed to paste from clipboard: ${errorMsg}`, 2000);
     }
-  }, [busy, pendingApproval, onNotification, inputAreaRef]);
+  }, [busy, hasPendingApproval, onNotification, inputAreaRef]);
 
   useEffect(() => {
     eventBus.on('ui:keyboard:ctrlc', handleCtrlC);

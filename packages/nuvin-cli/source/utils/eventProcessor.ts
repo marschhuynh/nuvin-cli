@@ -11,12 +11,7 @@ export interface EventProcessorCallbacks {
   appendLine: (line: MessageLine) => void;
   updateLine?: (id: string, content: string) => void;
   updateLineMetadata?: (id: string, metadata: Partial<LineMetadata>) => void;
-  onToolApprovalRequired?: (event: {
-    toolCalls: ToolCall[];
-    approvalId: string;
-    conversationId: string;
-    messageId: string;
-  }) => void;
+  onToolCalls?: (event: { toolCalls: ToolCall[] }) => void;
   renderUserMessages?: boolean;
   streamingEnabled?: boolean;
 }
@@ -106,6 +101,10 @@ export function processAgentEvent(
           },
           color: theme.tokens.blue,
         });
+
+        // Emit event for ToolApprovalContext to handle per-tool approvals
+        // Note: enrichedToolCalls may have requiresApproval and approvalId from orchestrator
+        callbacks.onToolCalls?.({ toolCalls: enrichedToolCalls });
 
         // Store tool calls by ID for later correlation with results
         const newToolCalls = new Map(state.recentToolCalls);
@@ -308,16 +307,6 @@ export function processAgentEvent(
         streamingMessageId: null,
         reasoningMessageId: null,
       };
-    }
-
-    case AgentEventTypes.ToolApprovalRequired: {
-      callbacks.onToolApprovalRequired?.({
-        toolCalls: event.toolCalls,
-        approvalId: event.approvalId,
-        conversationId: event.conversationId,
-        messageId: event.messageId,
-      });
-      return state;
     }
 
     case AgentEventTypes.SubAgentStarted: {

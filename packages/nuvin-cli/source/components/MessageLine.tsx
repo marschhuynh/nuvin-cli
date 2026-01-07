@@ -28,13 +28,13 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
   const streamingContent = message.content;
-  const { pendingApproval } = useToolApproval();
+  const { pendingApprovalTools } = useToolApproval();
 
   const renderMessage = () => {
     switch (message.type) {
       case 'user':
         return (
-          <Box flexDirection="column" marginY={1}>
+          <Box flexDirection="column" marginY={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.user} bold>
                 ❯ [you]
@@ -49,7 +49,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       case 'assistant': {
         if (isStreaming && !altMode) {
           return (
-            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={rows - 10}>
+            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={rows - 10} flexShrink={0}>
               <Box flexShrink={0} marginRight={1} position="sticky" top={0}>
                 <Text color={theme.messageTypes.assistant} bold>
                   ● [assistant]
@@ -65,7 +65,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         }
 
         return (
-          <Box flexDirection="column" marginY={1}>
+          <Box flexDirection="column" marginY={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.assistant} bold>
                 ● [assistant]
@@ -88,10 +88,10 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         const hasRunningToolCall = toolCalls.some((toolCall) => !toolResultsByCallId?.has(toolCall.id));
 
         const _render = (
-          <Box flexDirection="column">
+          <Box flexDirection="column" flexShrink={0}>
             {toolCalls.length > 0 ? (
               toolCalls.map((toolCall: ToolCall, callIndex: number) => {
-                const isAwaitingApproval = pendingApproval?.toolCalls.some((tc) => tc.id === toolCall.id) ?? false;
+                const isAwaitingApproval = pendingApprovalTools.some((tc) => tc.id === toolCall.id);
 
                 if (isAwaitingApproval) {
                   return null;
@@ -143,7 +143,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
         if (hasRunningToolCall) {
           return (
-            <Box flexDirection="column" maxHeight={rows - 9}>
+            <Box flexDirection="column" maxHeight={rows - 10} paddingTop={1} flexShrink={0}>
               <AutoScrollBox mousePriority={100} showScrollbar maxHeight="100%">
                 {_render}
               </AutoScrollBox>
@@ -160,7 +160,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'error':
         return (
-          <Box flexDirection="row" marginTop={1}>
+          <Box flexDirection="row" marginTop={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.error} bold>
                 ●
@@ -172,7 +172,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'warning':
         return (
-          <Box flexDirection="row" marginTop={1}>
+          <Box flexDirection="row" marginTop={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.warning} bold>
                 ●
@@ -184,7 +184,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'info':
         return (
-          <Box flexDirection="row" marginTop={1}>
+          <Box flexDirection="row" marginTop={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={message.color || theme.messageTypes.info} bold>
                 ●
@@ -196,7 +196,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'system':
         return (
-          <Box flexDirection="row" marginTop={1}>
+          <Box flexDirection="row" marginTop={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.system} bold>
                 ●
@@ -209,7 +209,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       case 'thinking': {
         if (isStreaming && !altMode) {
           return (
-            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={rows - 10}>
+            <Box flexDirection="column" marginY={1} width={'100%'} maxHeight={rows - 10} flexShrink={0}>
               <Box flexShrink={0} marginRight={1} position="sticky" top={0}>
                 <Text color={theme.messageTypes.thinking} bold>
                   ● [thinking]
@@ -225,7 +225,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         }
 
         return (
-          <Box flexDirection="column" marginY={1}>
+          <Box flexDirection="column" marginY={1} flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.thinking} bold>
                 ● [thinking]
@@ -248,6 +248,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
   return (
     <Box
       width="100%"
+      flexShrink={0}
       backgroundColor={backgroundColor}
       {...(liveMessage
         ? {

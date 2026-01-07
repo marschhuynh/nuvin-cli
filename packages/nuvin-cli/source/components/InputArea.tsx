@@ -261,7 +261,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     };
 
     return (
-      <Box flexDirection="column" position="relative" {...inputProps}>
+      <Box flexDirection="column" position="relative" {...inputProps} flexShrink={0}>
         <Box flexShrink={0} minWidth={1}>
           {!busy ? (
             <Text color={theme.input.prompt} bold>

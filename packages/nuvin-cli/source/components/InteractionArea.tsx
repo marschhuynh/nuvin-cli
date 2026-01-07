@@ -48,9 +48,11 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   ref,
 ) {
   const { commands } = useCommand();
-  const { pendingApproval, toolApprovalMode, handleApprovalResponse } = useToolApproval();
+  const { pendingApprovalTools, toolApprovalMode } = useToolApproval();
   const { theme } = useTheme();
   const { altMode } = useAltMode();
+
+  const hasPendingApproval = pendingApprovalTools.length > 0;
 
   const escStageRef = useRef<'none' | 'armed-clear' | 'armed-stop'>('none');
   const [queuedMessages, setQueuedMessages] = useState<string[]>([]);
@@ -87,7 +89,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   useInput(
     (_input, key) => {
       if (key.escape) {
-        if (pendingApproval) {
+        if (hasPendingApproval) {
           return;
         }
 
@@ -186,7 +188,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
         }
       }
     },
-    { isActive: !hasActiveCommand && !pendingApproval },
+    { isActive: !hasActiveCommand && !hasPendingApproval },
   );
 
   const commandItems = useMemo(
@@ -194,25 +196,25 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
     [commands],
   );
 
-  const mode = pendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
+  const mode = hasPendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
 
   const renderDynamicContent = () => {
     switch (mode) {
       case 'approval':
-        if (!pendingApproval || !toolApprovalMode) {
+        if (!hasPendingApproval || !toolApprovalMode) {
           return null;
         }
         return altMode ? (
-          <Box position="absolute" bottom={2} zIndex={20}>
-            <ToolApprovalPrompt toolCalls={pendingApproval.toolCalls} onApproval={handleApprovalResponse} />
+          <Box position="absolute" bottom={2} zIndex={20} flexShrink={0}>
+            <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         ) : (
-          <ToolApprovalPrompt toolCalls={pendingApproval.toolCalls} onApproval={handleApprovalResponse} />
+          <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
         );
 
       case 'command':
         return altMode ? (
-          <Box position="absolute" bottom={2} zIndex={10}>
+          <Box position="absolute" bottom={2} zIndex={10} flexShrink={0}>
             <ActiveCommand />
           </Box>
         ) : (
@@ -239,7 +241,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
               ref={ref}
               busy={busy}
               messageQueueLength={messageQueueLength}
-              showToolApproval={!!pendingApproval}
+              showToolApproval={hasPendingApproval}
               commandItems={commandItems}
               vimModeEnabled={vimModeEnabled}
               memory={memory}

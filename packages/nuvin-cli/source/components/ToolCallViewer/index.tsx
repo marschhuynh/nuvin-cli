@@ -17,9 +17,9 @@ type ToolCallProps = {
 
 export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, messageId }) => {
   const { theme } = useTheme();
-  const { pendingApproval } = useToolApproval();
+  const { pendingApprovalTools } = useToolApproval();
 
-  const isAwaitingApproval = pendingApproval?.toolCalls.some((tc) => tc.id === toolCall.id) ?? false;
+  const isAwaitingApproval = pendingApprovalTools.some((tc) => tc.id === toolCall.id);
 
   if (isAwaitingApproval) {
     return null;

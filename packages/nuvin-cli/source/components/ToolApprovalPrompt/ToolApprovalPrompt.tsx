@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { Box, Text } from 'ink';
-import type { ToolCall, ToolApprovalDecision } from '@nuvin/nuvin-core';
+import type { ToolCall } from '@nuvin/nuvin-core';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { AppModal } from '@/components/AppModal.js';
@@ -13,73 +13,45 @@ import { ToolEditInput, type ToolEditInputHandle } from './ToolEditInput.js';
 
 type Props = {
   toolCalls: ToolCall[];
-  onApproval: (decision: ToolApprovalDecision, approvedCalls?: ToolCall[], editInstruction?: string) => void;
   onCancel?: () => void;
 };
 
-function ToolApprovalPromptContent({
-  toolCalls,
-  onApproval,
-}: {
-  toolCalls: ToolCall[];
-  onApproval: (decision: ToolApprovalDecision, approvedCalls?: ToolCall[], editInstruction?: string) => void;
-}) {
-  const { addSessionApprovedTool } = useToolApproval();
+function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
+  const { addSessionApprovedTool, handleSingleToolApproval, pendingApprovalBatchTotal } = useToolApproval();
   const editInputRef = useRef<ToolEditInputHandle>(null);
-  const [currentToolIndex, setCurrentToolIndex] = useState(0);
-  const [approvedCalls, setApprovedCalls] = useState<ToolCall[]>([]);
-  const [_deniedCalls, setDeniedCalls] = useState<ToolCall[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editValue, setEditValue] = useState('');
 
-  const currentTool = toolCalls[currentToolIndex];
-  const isLastTool = currentToolIndex === toolCalls.length - 1;
+  const currentTool = toolCalls[0];
+  const currentIndex = pendingApprovalBatchTotal - toolCalls.length;
 
   const handleToolDecision = useCallback(
     (decision: 'approve' | 'deny' | 'approve_session') => {
+      if (!currentTool?.approvalId) return;
+
       if (decision === 'approve') {
-        setApprovedCalls((prev) => [...prev, currentTool]);
+        handleSingleToolApproval(currentTool.approvalId, 'approve');
       } else if (decision === 'deny') {
-        setDeniedCalls((prev) => [...prev, currentTool]);
+        handleSingleToolApproval(currentTool.approvalId, 'deny');
       } else if (decision === 'approve_session') {
         addSessionApprovedTool(currentTool.function.name);
 
         const currentToolName = currentTool.function.name;
-        const toolsWithSameName = toolCalls
-          .slice(currentToolIndex)
-          .filter((tool) => tool.function.name === currentToolName);
+        const toolsWithSameName = toolCalls.filter((tool) => tool.function.name === currentToolName);
 
-        setApprovedCalls((prev) => [...prev, ...toolsWithSameName]);
-
-        const nextDifferentToolIndex = toolCalls
-          .slice(currentToolIndex + 1)
-          .findIndex((tool) => tool.function.name !== currentToolName);
-
-        if (nextDifferentToolIndex === -1) {
-          onApproval('approve', [...approvedCalls, ...toolsWithSameName]);
-          return;
+        for (const tool of toolsWithSameName) {
+          if (tool.approvalId) {
+            handleSingleToolApproval(tool.approvalId, 'approve');
+          }
         }
-
-        setCurrentToolIndex(currentToolIndex + 1 + nextDifferentToolIndex);
-        return;
-      }
-
-      if (isLastTool) {
-        const finalApproved = decision === 'approve' ? [...approvedCalls, currentTool] : approvedCalls;
-        if (finalApproved.length > 0) {
-          onApproval('approve', finalApproved);
-        } else {
-          onApproval('deny');
-        }
-      } else {
-        setCurrentToolIndex((prev) => prev + 1);
       }
     },
-    [currentTool, toolCalls, currentToolIndex, approvedCalls, isLastTool, onApproval, addSessionApprovedTool],
+    [currentTool, toolCalls, addSessionApprovedTool, handleSingleToolApproval],
   );
 
   const toolTitle = useMemo(() => {
-    const toolName = currentTool.function.name;
+    const toolName = currentTool?.function.name;
+    if (!toolName) return '';
 
     if (toolName === 'file_new' || toolName === 'file_edit') {
       try {
@@ -101,8 +73,10 @@ function ToolApprovalPromptContent({
   }, [currentTool]);
 
   const handleEditSubmit = (value: string) => {
-    if (value.trim().length === 0) return;
-    onApproval('edit', undefined, value.trim());
+    if (value.trim().length === 0 || !currentTool?.approvalId) return;
+    handleSingleToolApproval(currentTool.approvalId, 'edit', value.trim());
+    setIsEditMode(false);
+    setEditValue('');
   };
 
   const handleEditCancel = () => {
@@ -130,6 +104,10 @@ function ToolApprovalPromptContent({
     { isActive: true },
   );
 
+  if (!currentTool) {
+    return null;
+  }
+
   const footerText = isEditMode ? 'Enter Submit • Esc Cancel' : 'Tab/Ctrl+N/P Cycle Focus • 1/2/3 Quick Select';
 
   return (
@@ -141,7 +119,7 @@ function ToolApprovalPromptContent({
           <Text color={theme.toolApproval.description}>{footerText}</Text>
         </Box>
       }
-      rightTitle={<ToolProgressInfo currentIndex={currentToolIndex} totalTools={toolCalls.length} />}
+      rightTitle={<ToolProgressInfo currentIndex={currentIndex} totalTools={pendingApprovalBatchTotal} />}
     >
       <Box flexDirection="column" width="100%">
         <ToolParameters toolCall={currentTool} />
@@ -162,10 +140,10 @@ function ToolApprovalPromptContent({
   );
 }
 
-export function ToolApprovalPrompt({ toolCalls, onApproval }: Props) {
+export function ToolApprovalPrompt({ toolCalls }: Props) {
   return (
     <FocusProvider>
-      <ToolApprovalPromptContent toolCalls={toolCalls} onApproval={onApproval} />
+      <ToolApprovalPromptContent toolCalls={toolCalls} />
     </FocusProvider>
   );
 }

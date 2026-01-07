@@ -122,13 +122,23 @@ const resolveDisplayText = (text: string, attachments: UserAttachment[], provide
   return result;
 };
 
-type ToolApprovalResult = ToolCall[] | { editInstruction: string };
+// Per-tool approval: each tool gets its own Promise
+type PerToolApprovalResult = {
+  approved: boolean;
+  editInstruction?: string;
+};
 
 export class AgentOrchestrator {
+  // Per-tool approval map: approvalId -> { resolve, toolCall }
   private pendingApprovals = new Map<
     string,
-    { resolve: (result: ToolApprovalResult) => void; reject: (error: Error) => void }
+    { 
+      resolve: (result: PerToolApprovalResult) => void; 
+      reject: (error: Error) => void;
+      toolCall: ToolCall;
+    }
   >();
+
 
   private context: ContextBuilder = new SimpleContextBuilder();
   private ids: IdGenerator = new SimpleId();
@@ -255,147 +265,161 @@ export class AgentOrchestrator {
     return readOnlyTools.includes(toolName) || todoTools.includes(toolName);
   }
 
-  private async handleToolDenial(
-    denialMessage: string,
+
+  /**
+   * Process tool approval with per-tool granularity.
+   * - Bypass tools (requiresApproval=false) execute immediately
+   * - Non-bypass tools wait for their individual approval
+   * - All tools run in parallel, each waiting only for its own approval
+   * - ToolResult events emitted immediately when each tool completes
+   * 
+   * @param enrichedToolCalls - Tool calls already enriched with approvalId and requiresApproval
+   */
+  private async processToolApproval(
+    enrichedToolCalls: ToolCall[],
+    approvalPromises: Map<string, {
+      promise: Promise<PerToolApprovalResult>;
+      resolve: (result: PerToolApprovalResult) => void;
+      reject: (err: Error) => void;
+    }>,
     conversationId: string,
     messageId: string,
-    accumulatedMessages: ChatMessage[],
-    turnHistory: Message[],
-    originalToolCalls: ToolCall[],
-    assistantContent: string | null,
-    usage?: UsageData,
-    bypassToolCalls?: ToolCall[],
-    bypassResults?: ToolExecutionResult[],
-  ): Promise<void> {
-    // Include both denied and bypass tool calls in assistant message
-    const allToolCalls = [...originalToolCalls, ...(bypassToolCalls || [])];
-
-    const assistantMsg: Message = {
-      id: this.ids.uuid(),
-      role: 'assistant',
-      content: assistantContent ?? null,
-      timestamp: this.clock.iso(),
-      tool_calls: allToolCalls,
-      usage,
-    };
-
-    accumulatedMessages.push({
-      role: 'assistant',
-      content: assistantContent ?? null,
-      tool_calls: allToolCalls,
-    });
-    turnHistory.push(assistantMsg);
-
-    const toolResultMsgs: Message[] = [];
-    for (const toolCall of originalToolCalls) {
-      const toolDenialResult = 'Tool execution denied by user';
-
-      accumulatedMessages.push({
-        role: 'tool',
-        content: toolDenialResult,
-        tool_call_id: toolCall.id,
-        name: toolCall.function.name,
-      });
-
-      const toolMsg: Message = {
-        id: toolCall.id,
-        role: 'tool',
-        content: toolDenialResult,
-        timestamp: this.clock.iso(),
-        tool_call_id: toolCall.id,
-        name: toolCall.function.name,
-        status: 'error',
-        durationMs: 0,
-        metadata: { errorReason: ErrorReason.Denied },
+    _accumulatedMessages: ChatMessage[],
+    _turnHistory: Message[],
+    _assistantContent: string | null,
+    _usage?: UsageData,
+    signal?: AbortSignal,
+  ): Promise<{ results: ToolExecutionResult[] }> {
+    
+    // Setup abort handlers for all approval promises
+    if (signal) {
+      const abortHandler = () => {
+        for (const [approvalId, { reject }] of approvalPromises) {
+          if (this.pendingApprovals.has(approvalId)) {
+            this.pendingApprovals.delete(approvalId);
+            reject(new Error('Aborted'));
+          }
+        }
       };
-      turnHistory.push(toolMsg);
-      toolResultMsgs.push(toolMsg);
-
-      await this.events?.emit({
-        type: AgentEventTypes.ToolResult,
-        conversationId,
-        messageId,
-        result: {
-          id: toolCall.id,
-          name: toolCall.function.name,
-          status: 'error',
-          type: 'text',
-          result: toolDenialResult,
-          durationMs: 0,
-          metadata: { errorReason: ErrorReason.Denied },
-        },
-      });
+      signal.addEventListener('abort', abortHandler, { once: true });
     }
 
-    // Add bypass tool results (successful executions)
-    const bypassToolResultMsgs: Message[] = [];
-    if (bypassResults) {
-      for (const tr of bypassResults) {
-        let contentStr: string;
-        if (tr.status === 'error') {
-          contentStr = tr.result as string;
-        } else if (tr.type === 'text') {
-          contentStr = tr.result as string;
-        } else {
-          contentStr = JSON.stringify(tr.result, null, 2);
+    // Execute a single tool, waiting for approval if needed
+    // Emits ToolResult immediately when this tool completes
+    const executeToolWithApproval = async (toolCall: ToolCall): Promise<ToolExecutionResult> => {
+      let result: ToolExecutionResult;
+
+      // If needs approval, wait for the pre-created approval promise
+      if (toolCall.requiresApproval && toolCall.approvalId) {
+        const approvalEntry = approvalPromises.get(toolCall.approvalId);
+        if (!approvalEntry) {
+          throw new Error(`No approval promise found for ${toolCall.approvalId}`);
         }
 
-        bypassToolResultMsgs.push({
-          id: tr.id,
-          role: 'tool',
-          content: contentStr,
-          timestamp: this.clock.iso(),
-          tool_call_id: tr.id,
-          name: tr.name,
-          status: tr.status,
-          durationMs: tr.durationMs,
-          metadata: tr.metadata,
-        });
+        let approvalResult: PerToolApprovalResult;
+        try {
+          approvalResult = await approvalEntry.promise;
+        } catch (err) {
+          // Aborted
+          result = {
+            id: toolCall.id,
+            name: toolCall.function.name,
+            status: 'error',
+            type: 'text',
+            result: 'Aborted',
+            metadata: { errorReason: ErrorReason.Aborted },
+            durationMs: 0,
+          };
+          
+          await this.events?.emit({
+            type: AgentEventTypes.ToolResult,
+            conversationId,
+            messageId,
+            result,
+          });
+          
+          return result;
+        }
+        
+        // Check abort immediately after approval received
+        if (signal?.aborted) {
+          result = {
+            id: toolCall.id,
+            name: toolCall.function.name,
+            status: 'error',
+            type: 'text',
+            result: 'Aborted',
+            metadata: { errorReason: ErrorReason.Aborted },
+            durationMs: 0,
+          };
+          
+          await this.events?.emit({
+            type: AgentEventTypes.ToolResult,
+            conversationId,
+            messageId,
+            result,
+          });
+          
+          return result;
+        }
+
+        if (!approvalResult.approved) {
+          // Tool was denied - emit result immediately
+          result = {
+            id: toolCall.id,
+            name: toolCall.function.name,
+            status: 'error',
+            type: 'text',
+            result: 'Tool execution denied by user',
+            metadata: { errorReason: ErrorReason.Denied },
+            durationMs: 0,
+          };
+          
+          await this.events?.emit({
+            type: AgentEventTypes.ToolResult,
+            conversationId,
+            messageId,
+            result,
+          });
+          
+          return result;
+        }
+
+        // Apply edit instruction if provided
+        if (approvalResult.editInstruction) {
+          toolCall.editInstruction = approvalResult.editInstruction;
+        }
       }
-    }
 
-    await this.memory.append(conversationId, [assistantMsg, ...toolResultMsgs, ...bypassToolResultMsgs]);
-
-    await this.events?.emit({
-      type: AgentEventTypes.AssistantMessage,
-      conversationId,
-      messageId,
-      content: denialMessage,
-      usage: undefined,
-    });
-  }
-
-  private async processToolApproval(
-    toolCalls: ToolCall[],
-    conversationId: string,
-    messageId: string,
-    accumulatedMessages: ChatMessage[],
-    turnHistory: Message[],
-    assistantContent: string | null,
-    usage?: UsageData,
-    signal?: AbortSignal,
-  ): Promise<{ approvedCalls: ToolCall[]; bypassCalls: ToolCall[]; bypassResults: ToolExecutionResult[]; wasDenied: boolean; denialMessage?: string }> {
-    if (this.cfg.requireToolApproval === false) {
-      return { approvedCalls: toolCalls, bypassCalls: [], bypassResults: [], wasDenied: false };
-    }
-
-    const callsNeedingApproval = toolCalls.filter((call) => !this.shouldBypassApproval(call.function.name));
-    const callsToAutoApprove = toolCalls.filter((call) => this.shouldBypassApproval(call.function.name));
-
-    if (callsNeedingApproval.length === 0) {
-      return { approvedCalls: callsToAutoApprove, bypassCalls: [], bypassResults: [], wasDenied: false };
-    }
-
-    // Execute bypass (read-only) tools in parallel while waiting for approval
-    const executeBypassTools = async (): Promise<ToolExecutionResult[]> => {
-      if (callsToAutoApprove.length === 0) return [];
-      
+      // Execute the tool (bypass or approved)
       const availableTools = this.getAvailableToolNames();
-      const conversionResult = convertToolCallsWithErrorHandling(callsToAutoApprove, {
+      const conversionResult = convertToolCallsWithErrorHandling([toolCall], {
         strict: this.cfg.strictToolValidation ?? false,
         availableTools,
       });
-      
+
+      if (conversionResult.errors && conversionResult.errors.length > 0) {
+        const err = conversionResult.errors[0];
+        result = {
+          id: err.id,
+          name: err.name,
+          status: 'error',
+          type: 'text',
+          result: `Tool call validation failed (${err.errorType}): ${err.error}`,
+          metadata: { errorReason: ErrorReason.ValidationFailed },
+          durationMs: 0,
+        };
+        
+        await this.events?.emit({
+          type: AgentEventTypes.ToolResult,
+          conversationId,
+          messageId,
+          result,
+        });
+        
+        return result;
+      }
+
       const results = await this.tools.executeToolCalls(
         conversionResult.invocations,
         {
@@ -404,67 +428,39 @@ export class AgentOrchestrator {
           messageId,
           eventPort: this.events,
         },
-        this.cfg.maxToolConcurrency ?? 3,
+        1, // Execute single tool
         signal,
       );
-      
-      // Emit tool results for bypass tools
-      for (const tr of results) {
-        await this.events?.emit({
-          type: AgentEventTypes.ToolResult,
-          conversationId,
-          messageId,
-          result: tr,
-        });
-      }
-      
-      return results;
-    };
 
+      result = results[0] || {
+        id: toolCall.id,
+        name: toolCall.function.name,
+        status: 'error',
+        type: 'text',
+        result: 'Unknown execution error',
+        durationMs: 0,
+      };
 
-    // Execute bypass (read-only) tools immediately, before waiting for approval
-    let bypassResults: ToolExecutionResult[] = [];
-    if (callsToAutoApprove.length > 0) {
-      bypassResults = await executeBypassTools();
-    }
-
-    try {
-      // Wait for approval of non-bypass tools
-      const approvalResult = await this.waitForToolApproval(callsNeedingApproval, conversationId, messageId);
-
-      if ('editInstruction' in approvalResult) {
-        const editInstruction = approvalResult.editInstruction;
-        // Only apply edit to non-bypass tools (bypass already executed)
-        const editedCalls = callsNeedingApproval.map((call) => ({
-          ...call,
-          editInstruction,
-        }));
-        return { approvedCalls: editedCalls, bypassCalls: callsToAutoApprove, bypassResults, wasDenied: false };
-      }
-
-      return { approvedCalls: approvalResult, bypassCalls: callsToAutoApprove, bypassResults, wasDenied: false };
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Tool approval failed';
-      const denialMessage = `Tool execution was not approved: ${errorMsg}`;
-
-      // Only deny the tools that needed approval - bypass tools already executed successfully
-      await this.handleToolDenial(
-        denialMessage,
+      // Emit result immediately when this tool completes
+      await this.events?.emit({
+        type: AgentEventTypes.ToolResult,
         conversationId,
         messageId,
-        accumulatedMessages,
-        turnHistory,
-        callsNeedingApproval,  // Only deny non-bypass tools
-        assistantContent,  
-        usage,
-        callsToAutoApprove,  // Include bypass tool calls
-        bypassResults,  // Include bypass results
-      );
+        result,
+      });
 
-      // Return bypass results even though approval was denied - they executed successfully
-      return { approvedCalls: [], bypassCalls: callsToAutoApprove, bypassResults, wasDenied: true, denialMessage };
-    }
+      return result;
+    };
+
+    // Run all tools in parallel - bypass tools start immediately,
+    // tools needing approval start when their approval comes in.
+    // Each tool emits its ToolResult immediately upon completion.
+    const results = await Promise.all(enrichedToolCalls.map(executeToolWithApproval));
+
+    return { results };
   }
+
+
 
   async send(content: UserMessagePayload, opts: SendMessageOptions = {}): Promise<MessageResponse> {
     const convo = opts.conversationId ?? 'default';
@@ -663,16 +659,59 @@ export class AgentOrchestrator {
 
       if (opts.signal?.aborted) throw new Error('Aborted');
 
+      // 1. Enrich tool calls with per-tool approval info
+      const enrichedToolCalls = result.tool_calls.map((tc) => {
+        const requiresApproval = this.cfg.requireToolApproval !== false && 
+                                  !this.shouldBypassApproval(tc.function.name);
+        return {
+          ...tc,
+          requiresApproval,
+          approvalId: requiresApproval ? this.ids.uuid() : undefined,
+        };
+      });
+
+      // 2. Pre-register pending approvals BEFORE emitting event
+      // This prevents race condition where UI tries to approve before orchestrator is ready
+      const approvalPromises = new Map<string, { 
+        promise: Promise<PerToolApprovalResult>; 
+        resolve: (result: PerToolApprovalResult) => void;
+        reject: (err: Error) => void;
+      }>();
+      
+      for (const tc of enrichedToolCalls) {
+        if (tc.requiresApproval && tc.approvalId) {
+          let resolveApproval: (result: PerToolApprovalResult) => void;
+          let rejectApproval: (err: Error) => void;
+          const promise = new Promise<PerToolApprovalResult>((resolve, reject) => {
+            resolveApproval = resolve;
+            rejectApproval = reject;
+          });
+          approvalPromises.set(tc.approvalId, { 
+            promise, 
+            resolve: resolveApproval!, 
+            reject: rejectApproval! 
+          });
+          this.pendingApprovals.set(tc.approvalId, {
+            resolve: resolveApproval!,
+            reject: rejectApproval!,
+            toolCall: tc,
+          });
+        }
+      }
+
+      // 3. Emit ToolCalls event - UI can now safely call handleToolApproval
       await this.events?.emit({
         type: AgentEventTypes.ToolCalls,
         conversationId: convo,
         messageId: msgId,
-        toolCalls: result.tool_calls,
+        toolCalls: enrichedToolCalls,
         usage: result.usage,
       });
 
-      const approvalResult = await this.processToolApproval(
-        result.tool_calls,
+      // 4. Process tools - each executes when approved (or immediately if bypass)
+      const { results: toolResults } = await this.processToolApproval(
+        enrichedToolCalls,
+        approvalPromises,
         convo,
         msgId,
         accumulatedMessages,
@@ -682,69 +721,29 @@ export class AgentOrchestrator {
         opts.signal,
       );
 
-      if (approvalResult.wasDenied) {
-        denialMessage = approvalResult.denialMessage || '';
+      // Check if all tools were denied
+      const allDenied = toolResults.every(
+        (tr) => tr.status === 'error' && tr.metadata?.errorReason === ErrorReason.Denied
+      );
+      if (allDenied) {
         toolApprovalDenied = true;
+        denialMessage = 'All tools were denied by user';
         break;
       }
 
-      const approvedCalls = approvalResult.approvedCalls;
-      const bypassCalls = approvalResult.bypassCalls;
-      const bypassResults = approvalResult.bypassResults;
-      const availableTools = this.getAvailableToolNames();
-      const conversionResult = convertToolCallsWithErrorHandling(approvedCalls, {
-        strict: this.cfg.strictToolValidation ?? false,
-        availableTools,
-      });
-
-      const validationErrors: ToolExecutionResult[] = [];
-      const validInvocations = conversionResult.invocations;
-
-      if (conversionResult.errors) {
-        for (const err of conversionResult.errors) {
-          validationErrors.push({
-            id: err.id,
-            name: err.name,
-            status: 'error',
-            type: 'text',
-            result: `Tool call validation failed (${err.errorType}): ${err.error}`,
-            metadata: { errorReason: ErrorReason.ValidationFailed },
-            durationMs: 0,
-          });
-        }
-      }
-
-      if (opts.signal?.aborted) throw new Error('Aborted');
-
-      const executionToolResults = await this.tools.executeToolCalls(
-        validInvocations,
-        {
-          conversationId: convo,
-          agentId: this.cfg.id,
-          messageId: msgId,
-          eventPort: this.events,
-        },
-        this.cfg.maxToolConcurrency ?? 3,
-        opts.signal,
-      );
-
-      // Merge bypass results (pre-executed) with approved tool results
-      const allToolResults = [...bypassResults, ...validationErrors, ...executionToolResults];
-
-      // Include both approved and bypass calls for complete history
-      const allToolCalls = [...approvedCalls, ...bypassCalls];
-
+      // Build assistant message with enriched tool calls
       const assistantMsg: Message = {
         id: this.ids.uuid(),
         role: 'assistant',
         content: result.content ?? null,
         timestamp: this.clock.iso(),
-        tool_calls: allToolCalls,
+        tool_calls: enrichedToolCalls,
         usage: result.usage,
       };
 
+      // Build tool result messages
       const toolResultMsgs: Message[] = [];
-      for (const tr of allToolResults) {
+      for (const tr of toolResults) {
         let contentStr: string;
         if (tr.status === 'error') {
           contentStr = tr.result as string;
@@ -767,30 +766,19 @@ export class AgentOrchestrator {
         });
 
         this.metrics?.recordToolCall?.();
-
-        // Only emit ToolResult for non-bypass tools (bypass already emitted in processToolApproval)
-        const isBypassResult = bypassResults.some(br => br.id === tr.id);
-        if (!isBypassResult) {
-          await this.events?.emit({
-            type: AgentEventTypes.ToolResult,
-            conversationId: convo,
-            messageId: msgId,
-            result: tr,
-          });
-        }
       }
 
       await this.memory.append(convo, [assistantMsg, ...toolResultMsgs]);
 
+      // Update accumulated messages for next LLM call
       const { usage: _usage, ...extraField } = result;
-      // TODO: revisit the logic here
       accumulatedMessages.push({
         ...extraField,
         role: 'assistant',
         content: result.content ?? null,
-        tool_calls: allToolCalls,
+        tool_calls: enrichedToolCalls,
       });
-      for (const tr of allToolResults) {
+      for (const tr of toolResults) {
         let contentStr: string;
         if (tr.status === 'error') {
           contentStr = tr.result as string;
@@ -937,30 +925,13 @@ export class AgentOrchestrator {
     return resp;
   }
 
-  private async waitForToolApproval(
-    toolCalls: ToolCall[],
-    conversationId: string,
-    messageId: string,
-  ): Promise<ToolApprovalResult> {
-    const approvalId = this.ids.uuid();
-
-    return new Promise((resolve, reject) => {
-      this.pendingApprovals.set(approvalId, { resolve, reject });
-
-      this.events?.emit({
-        type: AgentEventTypes.ToolApprovalRequired,
-        conversationId,
-        messageId,
-        toolCalls,
-        approvalId,
-      });
-    });
-  }
-
+  /**
+   * Handles a single tool's approval decision.
+   * Called by UI per-tool (not batch).
+   */
   public handleToolApproval(
     approvalId: string,
     decision: ToolApprovalDecision,
-    approvedCalls?: ToolCall[],
     editInstruction?: string,
   ): void {
     const approval = this.pendingApprovals.get(approvalId);
@@ -972,11 +943,17 @@ export class AgentOrchestrator {
     this.pendingApprovals.delete(approvalId);
 
     if (decision === 'deny') {
-      approval.reject(new Error('Tool execution denied by user'));
-    } else if (decision === 'edit' && editInstruction) {
-      approval.resolve({ editInstruction });
+      approval.resolve({ approved: false });
+    } else if (decision === 'edit') {
+      if (!editInstruction) {
+        console.warn(`[Orchestrator] Edit decision received without editInstruction for ${approvalId}, treating as denied`);
+        approval.resolve({ approved: false });
+      } else {
+        approval.toolCall.editInstruction = editInstruction;
+        approval.resolve({ approved: true, editInstruction });
+      }
     } else if (decision === 'approve_all' || decision === 'approve') {
-      approval.resolve(approvedCalls || []);
+      approval.resolve({ approved: true });
     } else {
       approval.reject(new Error(`Invalid approval decision: ${decision}`));
     }

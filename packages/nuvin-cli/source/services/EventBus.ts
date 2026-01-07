@@ -5,11 +5,8 @@ import type { ToolCall } from '@nuvin/nuvin-core';
 type EventMap = {
   'ui:line': MessageLine;
   'ui:error': string;
-  'ui:toolApprovalRequired': {
+  'ui:toolCalls': {
     toolCalls: ToolCall[];
-    approvalId: string;
-    conversationId: string;
-    messageId: string;
   };
   'ui:keyboard:ctrlc': undefined;
   'ui:keyboard:paste': undefined;

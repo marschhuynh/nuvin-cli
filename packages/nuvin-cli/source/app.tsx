@@ -58,7 +58,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
   const [vimMode, setVimMode] = useState<'insert' | 'normal'>('insert');
   const [isExiting, setIsExiting] = useState(false);
 
-  const { toolApprovalMode, setToolApprovalMode, pendingApproval } = useToolApproval();
+  const { toolApprovalMode, setToolApprovalMode, pendingApprovalTools } = useToolApproval();
   const { activeCommand, execute: executeCommand } = useCommand();
 
   const [headerKey, setHeaderKey] = useState<number>(1);
@@ -263,7 +263,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
 
   useGlobalKeyboard({
     busy,
-    pendingApproval,
+    hasPendingApproval: pendingApprovalTools.length > 0,
     inputAreaRef,
     onNotification: setNotification,
   });
@@ -415,7 +415,8 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
         </Box>
       }
     >
-      <Box flexDirection="column" maxHeight={rows - 1}>
+      <Box flexDirection="column" maxHeight={rows} flexShrink={0}>
+        <Box height={1} flexShrink={0} />
         <ChatDisplay
           key={`chat-display-${headerKey}`}
           messages={messages}
