@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import type { MetricsSnapshot } from '@/services/SessionMetricsService.js';
 import type { ProviderKey } from '@/const.js';
+import type { LspStatusInfo, LspServerStatus } from '@/services/EventBus.js';
 import { useNotification } from '@/hooks/useNotification.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { THINKING_LEVELS } from '@/config/types.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useConfig } from '@/contexts/ConfigContext.js';
+import { eventBus } from '@/services/EventBus.js';
 import { formatTokens, formatCost, formatDirectory, getUsageColor, getGitBranchAsync } from '@/utils/formatters.js';
 
 type FooterProps = {
@@ -32,6 +34,7 @@ const FooterComponent: React.FC<FooterProps> = ({
   const { toolApprovalMode } = useToolApproval();
   const { get, getCurrentProfile } = useConfig();
   const [gitBranch, setGitBranch] = useState<string | null>(null);
+  const [lspServers, setLspServers] = useState<Map<string, LspServerStatus>>(new Map());
 
   useEffect(() => {
     if (!workingDirectory) return;
@@ -43,6 +46,29 @@ const FooterComponent: React.FC<FooterProps> = ({
       cancelled = true;
     };
   }, [workingDirectory]);
+
+  useEffect(() => {
+    const handleLspStatus = (info: LspStatusInfo) => {
+      setLspServers((prev) => {
+        const next = new Map(prev);
+        if (info.status === 'disconnected') {
+          next.delete(info.serverId);
+        } else {
+          next.set(info.serverId, info.status);
+        }
+        return next;
+      });
+    };
+
+    eventBus.on('lsp:status', handleLspStatus);
+    return () => {
+      eventBus.off('lsp:status', handleLspStatus);
+    };
+  }, []);
+
+  const lspConnected = Array.from(lspServers.values()).filter((s) => s === 'connected').length;
+  const lspConnecting = Array.from(lspServers.values()).filter((s) => s === 'connecting').length;
+  const lspTotal = lspServers.size;
 
   const thinking = get<string>('thinking');
   const provider = get<ProviderKey>('activeProvider');
@@ -122,6 +148,17 @@ const FooterComponent: React.FC<FooterProps> = ({
               <Text color={theme.tokens.cyan} dimColor>
                 {' '}
                 | ${formatCost(metrics.totalCost)}
+              </Text>
+            )}
+            {lspTotal > 0 && (
+              <Text
+                color={
+                  lspConnected > 0 ? theme.tokens.green : lspConnecting > 0 ? theme.tokens.yellow : theme.tokens.gray
+                }
+                dimColor
+              >
+                {' '}
+                | LSP: {lspConnected}/{lspTotal}
               </Text>
             )}
           </Box>
