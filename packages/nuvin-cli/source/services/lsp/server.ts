@@ -19,14 +19,14 @@ async function findFileUp(startDir: string, filename: string): Promise<string | 
 	return undefined;
 }
 
-async function findNearestNodeModules(startDir: string): Promise<string | undefined> {
+async function findTypescriptLanguageServer(startDir: string): Promise<string | undefined> {
 	let dir = startDir;
 	const root = path.parse(dir).root;
 
 	while (dir !== root) {
-		const candidate = path.join(dir, 'node_modules', '.bin');
+		const candidate = path.join(dir, 'node_modules', '.bin', 'typescript-language-server');
 		try {
-			await fs.promises.access(candidate);
+			await fs.promises.access(candidate, fs.constants.X_OK);
 			return candidate;
 		} catch {
 			dir = path.dirname(dir);
@@ -50,23 +50,20 @@ export const TypeScriptServer: LSPServerInfo = {
 	},
 
 	async spawn(root: string): Promise<LSPServerHandle | undefined> {
-		const binDir = await findNearestNodeModules(root);
 		let command: string;
 		let args: string[];
 
-		if (binDir) {
-			const localTsServer = path.join(binDir, 'typescript-language-server');
-			try {
-				await fs.promises.access(localTsServer);
-				command = localTsServer;
-				args = ['--stdio'];
-			} catch {
-				command = 'npx';
-				args = ['-y', 'typescript-language-server', '--stdio'];
-			}
+		const localBinary = await findTypescriptLanguageServer(root);
+		if (localBinary) {
+			command = localBinary;
+			args = ['--stdio'];
 		} else {
 			command = 'npx';
 			args = ['-y', 'typescript-language-server', '--stdio'];
+		}
+
+		if (process.env.NUVIN_LSP_DEBUG) {
+			console.error(`[LSP] Spawning TypeScript server: ${command} ${args.join(' ')}`);
 		}
 
 		try {
