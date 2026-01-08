@@ -4,44 +4,134 @@ This file provides guidance to Nuvin cli when working with code in this reposito
 
 ## Common Development Commands
 
-- Build the project: `pnpm build`
-- Run in development mode with watch: `pnpm dev`
-- Run CLI in development: `pnpm run:dev`
-- Run tests: `pnpm test`
-- Run a single test: `pnpm test <path/to/test.file>`
-- Lint code: `pnpm lint`
-- Format code: `pnpm format`
+```bash
+# Build the project
+pnpm build
+
+# Development mode with watch
+pnpm dev
+
+# Run CLI in development (uses tsx for hot reload)
+pnpm run:dev
+
+# Run tests
+pnpm test                    # Run all tests
+pnpm test -- --watch         # Watch mode
+pnpm test <testname>         # Run tests matching pattern (e.g., pnpm test eventProcessor)
+
+# Lint and format
+pnpm lint                    # Check code style with Biome
+pnpm format                  # Auto-fix formatting issues
+```
 
 ## High-Level Architecture
 
-This is a React/Ink-based terminal user interface (TUI) application for an AI-powered CLI assistant.
+This is a React/Ink-based terminal TUI application. The CLI uses a layered architecture with React components managing UI state while business logic lives in services that interface with `@nuvin/nuvin-core`.
 
-### Core Structure
-- **React/Ink Framework**: Used for rich terminal UI components and interactions
-- **TypeScript**: Full TypeScript implementation with strict typing
-- **@nuvin/nuvin-core**: Core orchestrator engine providing LLM provider support and tool execution
+### Entry Flow (`cli.tsx`)
+1. `meow` parses CLI flags early
+2. `ConfigManager` loads layered config (global < local < explicit < env < direct)
+3. Environment variables are processed into the `env` config scope
+4. Providers are registered (environment variables → CLI flags)
+5. React/Ink renders the App component with nested context providers
 
-### Modular Architecture
-The application follows a modular architecture organized into:
-- **Components**: React components for the UI, including adapters, modals, and renderers
-- **Contexts**: React contexts for state management (config, notifications, tool approval, themes, etc.)
-- **Hooks**: Custom hooks for reactive logic and effects
-- **Services**: Business logic services (orchestrator manager, agent creator, session metrics, etc.)
-- **Utils**: Utility functions for common operations
+### Component Hierarchy
+```
+<ThemeProvider>
+  <AltModeProvider>
+    <StdoutDimensionsProvider>
+      <InputProvider>
+        <ConfigProvider>
+          <NotificationProvider>
+            <ToolApprovalProvider>
+              <CommandProvider>
+                <ConfigBridge>
+                  <App>  (or AppVirtualized)
+                    <ChatDisplay>
+                    <InteractionArea>
+                    <Footer>
+```
 
-### Key Systems
-- **Multi-Agent System**: Supports delegation to specialist AI agents for complex tasks, with independent conversation contexts
-- **Event-Driven Communication**: Uses EventBus for component communication
-- **Command System**: Extensible command registry supporting both function and component-based commands
-- **Model Context Protocol (MCP) Integration**: Extensible tool integration for external services
-- **Layered Configuration System**: Configuration hierarchy (global, local, explicit, environment variables, CLI flags)
-- **Theme System**: Customizable terminal themes with color schemes
+### Key Services
 
-### Build and Test Infrastructure
-- **tsup**: Used for TypeScript bundling and compilation
-- **Vitest**: Test runner with React component testing support
-- **Biome**: Code linting and formatting tool
+| Service | Responsibility |
+|---------|---------------|
+| `OrchestratorManager` | Main orchestrator lifecycle, session management, LLM factory, context window monitoring |
+| `MCPServerManager` | MCP server lifecycle, tool discovery, reconnection logic |
+| `SessionMetricsService` | Token usage, cost tracking, response time metrics |
+| `LLMFactory` | Creates LLM instances per provider with auth resolution |
+| `EventBus` | Typed event emitter for cross-component communication |
+
+### Event-Driven Communication (`eventBus`)
+
+The `eventBus` (a `TypedEventBus` wrapping Node's `EventEmitter`) enables loose coupling between components. Key events:
+
+- `ui:line` / `ui:lines:set` / `ui:lines:clear` - Chat message updates
+- `ui:keyboard:ctrlc` / `ui:keyboard:paste` - Keyboard shortcuts
+- `conversation:created` - New session created (after /new or summary)
+- `ui:header:refresh` - Force header re-render (terminal resize)
+- `command:sudo:toggle` - Sudo mode state change
+- `custom-command:execute` - User-defined command execution
+- `mcp:serversChanged` - MCP server config changed
+
+### Configuration System
+
+Priority order (later overrides earlier):
+1. Global: `~/.nuvin-cli/config.{yaml,json}`
+2. Workspace: `./.nuvin-cli/config.{yaml,json}`
+3. Explicit: `--config path/to/file`
+4. Environment: `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.
+5. Direct: CLI flags (`--provider`, `--model`, etc.)
+
+The `ConfigManager` singleton provides `load()`, `loadConfig()`, and `getConfig()` for accessing merged configuration.
+
+### Command System
+
+Commands are registered in `modules/commands/definitions/index.ts`. Each command:
+- Has a handler function that receives the orchestrator and input
+- Can be function-based or component-based (rendering UI)
+- Is accessible via `/commandName` syntax
+
+Core commands: `/new`, `/clear`, `/exit`, `/help`, `/history`, `/export`, `/model`, `/auth`, `/sudo`, `/thinking`, `/mcp`, `/agent`, `/command`, `/summary`, `/vim`.
+
+### Memory and Sessions
+
+- Default: In-memory until first explicit session
+- Lazy initialization: Persisted session created on first user message when `memPersist: true`
+- Session dir: `~/.nuvin-cli/sessions/<sessionId>/`
+- Each agent (main + specialists) has separate `history.<agentId>.json` files
+
+### Orchestrator Lifecycle (`OrchestratorStatus`)
+
+```
+INITIALIZING → READY ↔ ERROR
+```
+
+The orchestrator is initialized via `orchestratorManager.init(config, handlers)`. UI hooks (`useOrchestrator`) subscribe to status changes.
+
+### Multi-Agent Delegation
+
+Specialist agents (code-reviewer, quality-tester, etc.) are:
+- Loaded from agent registry (`~/.nuvin-cli/agents/`)
+- Configured via `agentsEnabled` in config
+- Each gets isolated memory and conversation context
+- Delegated via `assign_task` tool or `/agent` command
 
 ## Providers and Authentication
 
-Supported AI providers include OpenRouter, Anthropic, GitHub Models, ZAI, and Echo (for testing). Authentication can be configured via environment variables or CLI flags.
+Supported providers: `openrouter`, `anthropic`, `github`, `zai`, `deepinfra`, `echo` (testing).
+
+Auth methods: API key (via `auth[].api-key` or env vars), OAuth (Anthropic).
+
+## Build System
+
+- **tsup**: Bundles TypeScript to ESM `dist/` with minification
+- **Biome**: Linting and formatting (configured in `biome.json`)
+- **Vitest**: Test runner with React component testing via `ink-testing-library`
+- **Path alias**: `@` → `./source` (configured in tsup, vitest, and tsconfig)
+
+## Key Type Definitions
+
+- `OrchestratorConfig`: `{ memPersist?, sessionId?, sessionDir?, streamingChunks? }`
+- `UIHandlers`: `{ appendLine, updateLine, updateLineMetadata, handleError }`
+- `MessageLine`: `{ id, type: 'user'|'assistant'|'system'|'error', content, metadata? }`

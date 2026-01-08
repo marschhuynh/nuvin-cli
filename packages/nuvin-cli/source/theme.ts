@@ -115,14 +115,15 @@ export const theme = {
   // Message line type colors
   messageTypes: {
     user: COLOR_TOKENS.cyan,
-    assistant: COLOR_TOKENS.green,
+    // assistant: COLOR_TOKENS.green,
+    assistant: COLOR_TOKENS.yellow,
     tool: COLOR_TOKENS.green,
     tool_result: COLOR_TOKENS.green,
     system: COLOR_TOKENS.gray,
     warning: COLOR_TOKENS.yellow,
     error: COLOR_TOKENS.red,
     info: COLOR_TOKENS.cyan,
-    thinking: COLOR_TOKENS.yellow,
+    thinking: COLOR_TOKENS.gray,
   },
 
   // Command and help colors

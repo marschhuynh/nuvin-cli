@@ -6,6 +6,7 @@ import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { theme } from '@/theme.js';
+import { getToolDisplayName } from '@/components/toolRegistry.js';
 import { ToolParameters } from './ToolParameters.js';
 import { ToolProgressInfo } from './ToolProgressInfo.js';
 import { ToolActions } from './ToolActions.js';
@@ -53,23 +54,31 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     const toolName = currentTool?.function.name;
     if (!toolName) return '';
 
+    let args: Record<string, unknown> = {};
+    try {
+      args = JSON.parse(currentTool.function.arguments);
+    } catch {}
+
+    const displayName =
+      args.description && typeof args.description === 'string' && args.description.trim()
+        ? args.description
+        : getToolDisplayName(toolName);
+
     if (toolName === 'file_new' || toolName === 'file_edit') {
-      try {
-        const args = JSON.parse(currentTool.function.arguments) as { file_path?: string };
-        if (args.file_path) {
-          return (
-            <>
-              <Text color={theme.modal.title} bold>{`${toolName}: `}</Text>
-              <Text bold={false} color={theme.modal.subtitle}>
-                {args.file_path}
-              </Text>
-            </>
-          );
-        }
-      } catch {}
+      const filePath = args.file_path as string | undefined;
+      if (filePath) {
+        return (
+          <>
+            <Text color={theme.modal.title} bold>{`${displayName}: `}</Text>
+            <Text bold={false} color={theme.modal.subtitle}>
+              {filePath}
+            </Text>
+          </>
+        );
+      }
     }
 
-    return toolName;
+    return displayName;
   }, [currentTool]);
 
   const handleEditSubmit = (value: string) => {
@@ -113,13 +122,12 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
   return (
     <AppModal
       visible
-      title={<Text>{toolTitle}</Text>}
+      title={<><Text>{toolTitle}</Text> (<ToolProgressInfo currentIndex={currentIndex} totalTools={pendingApprovalBatchTotal} />)</>}
       footer={
         <Box marginLeft={1} flexGrow={1} marginRight={1}>
           <Text color={theme.toolApproval.description}>{footerText}</Text>
         </Box>
       }
-      rightTitle={<ToolProgressInfo currentIndex={currentIndex} totalTools={pendingApprovalBatchTotal} />}
     >
       <Box flexDirection="column" width="100%" flexShrink={0}>
         <ToolParameters toolCall={currentTool} />
