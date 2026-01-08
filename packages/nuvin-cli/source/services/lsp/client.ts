@@ -34,7 +34,7 @@ import type {
 } from './types.js';
 import { getLanguageId } from './language.js';
 
-const INITIALIZE_TIMEOUT = 30000;
+const INITIALIZE_TIMEOUT = 60000;
 const DIAGNOSTICS_TIMEOUT = 5000;
 
 export async function createClient(input: {

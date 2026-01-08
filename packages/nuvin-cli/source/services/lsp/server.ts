@@ -62,11 +62,11 @@ export const TypeScriptServer: LSPServerInfo = {
 				args = ['--stdio'];
 			} catch {
 				command = 'npx';
-				args = ['typescript-language-server', '--stdio'];
+				args = ['-y', 'typescript-language-server', '--stdio'];
 			}
 		} else {
 			command = 'npx';
-			args = ['typescript-language-server', '--stdio'];
+			args = ['-y', 'typescript-language-server', '--stdio'];
 		}
 
 		try {
@@ -76,8 +76,19 @@ export const TypeScriptServer: LSPServerInfo = {
 				env: { ...process.env, NODE_OPTIONS: '' },
 			});
 
+			let spawnError: Error | null = null;
+
 			proc.on('error', (err) => {
+				spawnError = err;
 				console.error(`[LSP] TypeScript server error:`, err.message);
+			});
+
+			proc.on('exit', (code, signal) => {
+				if (code !== null && code !== 0) {
+					console.error(`[LSP] TypeScript server exited with code ${code}`);
+				} else if (signal) {
+					console.error(`[LSP] TypeScript server killed by signal ${signal}`);
+				}
 			});
 
 			proc.stderr?.on('data', (data) => {
@@ -85,6 +96,12 @@ export const TypeScriptServer: LSPServerInfo = {
 					console.error(`[LSP-TS] ${data.toString()}`);
 				}
 			});
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			if (spawnError || proc.killed || proc.exitCode !== null) {
+				console.error(`[LSP] TypeScript server failed to start`);
+				return undefined;
+			}
 
 			return {
 				process: proc,
