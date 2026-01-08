@@ -17,6 +17,7 @@ import { registerClearCommand } from './clear.js';
 import { registerNewCommand } from './new.js';
 import { registerVimCommand } from './vim.js';
 import { registerSummaryCommand } from './summary/index.js';
+import { registerStatCommand } from './stat.js';
 
 export async function registerCommands(orchestratorManager: OrchestratorManager) {
   commandRegistry.setOrchestrator(orchestratorManager);
@@ -35,6 +36,7 @@ export async function registerCommands(orchestratorManager: OrchestratorManager)
   registerNewCommand(commandRegistry);
   registerVimCommand(commandRegistry);
   registerSummaryCommand(commandRegistry);
+  registerStatCommand(commandRegistry);
 
   await loadAndRegisterCustomCommands(commandRegistry);
 }
