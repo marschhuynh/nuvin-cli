@@ -1,7 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import type { LSPServerInfo, LSPServerHandle } from './types.js';
+
+const LSP_BIN_DIR = path.join(process.env.HOME || '~', '.nuvin', 'lsp', 'bin');
 
 async function findFileUp(startDir: string, filename: string): Promise<string | undefined> {
 	let dir = startDir;
@@ -19,12 +21,18 @@ async function findFileUp(startDir: string, filename: string): Promise<string | 
 	return undefined;
 }
 
-async function findTypescriptLanguageServer(startDir: string): Promise<string | undefined> {
+async function findExecutable(name: string, startDir: string): Promise<string | undefined> {
+	const nuvinBin = path.join(LSP_BIN_DIR, name);
+	try {
+		await fs.promises.access(nuvinBin, fs.constants.X_OK);
+		return nuvinBin;
+	} catch {}
+
 	let dir = startDir;
 	const root = path.parse(dir).root;
 
 	while (dir !== root) {
-		const candidate = path.join(dir, 'node_modules', '.bin', 'typescript-language-server');
+		const candidate = path.join(dir, 'node_modules', '.bin', name);
 		try {
 			await fs.promises.access(candidate, fs.constants.X_OK);
 			return candidate;
@@ -32,7 +40,32 @@ async function findTypescriptLanguageServer(startDir: string): Promise<string | 
 			dir = path.dirname(dir);
 		}
 	}
+
 	return undefined;
+}
+
+async function installPackage(packageName: string): Promise<boolean> {
+	if (process.env.NUVIN_DISABLE_LSP_DOWNLOAD === 'true') {
+		console.error(`[LSP] Auto-install disabled. Install ${packageName} manually.`);
+		return false;
+	}
+
+	console.error(`[LSP] Installing ${packageName}...`);
+
+	try {
+		await fs.promises.mkdir(LSP_BIN_DIR, { recursive: true });
+
+		execSync(`npm install --prefix "${path.dirname(LSP_BIN_DIR)}" ${packageName}`, {
+			stdio: process.env.NUVIN_LSP_DEBUG ? 'inherit' : 'pipe',
+			timeout: 60000,
+		});
+
+		console.error(`[LSP] Successfully installed ${packageName}`);
+		return true;
+	} catch (err) {
+		console.error(`[LSP] Failed to install ${packageName}:`, err instanceof Error ? err.message : err);
+		return false;
+	}
 }
 
 export const TypeScriptServer: LSPServerInfo = {
@@ -50,24 +83,26 @@ export const TypeScriptServer: LSPServerInfo = {
 	},
 
 	async spawn(root: string): Promise<LSPServerHandle | undefined> {
-		let command: string;
-		let args: string[];
+		let binary = await findExecutable('typescript-language-server', root);
 
-		const localBinary = await findTypescriptLanguageServer(root);
-		if (localBinary) {
-			command = localBinary;
-			args = ['--stdio'];
-		} else {
-			command = 'npx';
-			args = ['-y', 'typescript-language-server', '--stdio'];
+		if (!binary) {
+			const installed = await installPackage('typescript-language-server');
+			if (installed) {
+				binary = path.join(LSP_BIN_DIR, 'typescript-language-server');
+			}
+		}
+
+		if (!binary) {
+			console.error('[LSP] typescript-language-server not found and could not be installed');
+			return undefined;
 		}
 
 		if (process.env.NUVIN_LSP_DEBUG) {
-			console.error(`[LSP] Spawning TypeScript server: ${command} ${args.join(' ')}`);
+			console.error(`[LSP] Spawning TypeScript server: ${binary} --stdio`);
 		}
 
 		try {
-			const proc = spawn(command, args, {
+			const proc = spawn(binary, ['--stdio'], {
 				cwd: root,
 				stdio: ['pipe', 'pipe', 'pipe'],
 				env: { ...process.env, NODE_OPTIONS: '' },
