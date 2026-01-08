@@ -26,6 +26,7 @@ import { GlobTool } from './tools/GlobTool.js';
 import { GrepTool } from './tools/GrepTool.js';
 import { AgentRegistry } from './agent-registry.js';
 import { AssignTool } from './tools/AssignTool.js';
+import { LspTool, type LspService } from './tools/LspTool.js';
 import { AgentManagerCommandRunner, DelegationServiceFactory } from './delegation/index.js';
 
 export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorAwareToolPort {
@@ -34,6 +35,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
   private agentRegistry: AgentRegistry;
   private delegationServiceFactory?: DelegationServiceFactory;
   private assignTool?: AssignTool;
+  private lspTool?: LspTool;
   private enabledAgentsConfig: Record<string, boolean> = {};
 
   // Stored for re-initialization when memory changes (lazy session init)
@@ -47,6 +49,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     toolsMemory?: MemoryPort<string>;
     agentRegistry?: AgentRegistry;
     delegationServiceFactory?: DelegationServiceFactory;
+    enableLsp?: boolean;
   }) {
     this.toolsMemory = opts?.toolsMemory || new InMemoryMemory();
     this.agentRegistry = opts?.agentRegistry || new AgentRegistry();
@@ -70,7 +73,19 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     for (const tool of toolInstances) {
       this.tools.set(tool.name, tool);
     }
+
+    if (opts?.enableLsp) {
+      this.lspTool = new LspTool();
+      this.tools.set(this.lspTool.name, this.lspTool as FunctionTool<unknown, unknown>);
+    }
+
     void this.persistToolNames();
+  }
+
+  setLspService(service: LspService): void {
+    if (this.lspTool) {
+      this.lspTool.setLspService(service);
+    }
   }
 
   private async persistToolNames() {

@@ -55,6 +55,7 @@ export { NoopReminders } from './reminders.js';
 export { ToolRegistry } from './tools.js';
 export { CompositeToolPort } from './tools-composite.js';
 export { BashTool } from './tools/BashTool.js';
+export { LspTool, type LspService } from './tools/LspTool.js';
 export type {
   ExecResult,
   ExecResultSuccess,

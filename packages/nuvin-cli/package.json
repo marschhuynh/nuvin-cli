@@ -50,6 +50,9 @@
 	},
 	"dependencies": {
 		"@nuvin/nuvin-core": "workspace:^",
+		"vscode-jsonrpc": "^8.2.0",
+		"vscode-languageserver-protocol": "^3.17.5",
+		"vscode-languageserver-types": "^3.17.5",
 		"ansi-escapes": "^7.2.0",
 		"ansi-regex": "^6.2.2",
 		"chalk": "^5.6.2",

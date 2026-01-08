@@ -48,6 +48,7 @@ import { OrchestratorStatus } from '@/types/orchestrator.js';
 import { modelLimitsCache } from './ModelLimitsCache.js';
 import { sessionMetricsService } from './SessionMetricsService.js';
 import { theme } from '@/theme.js';
+import { LSP } from './lsp/index.js';
 
 // Directory paths will be resolved dynamically based on active profile
 const defaultModels: Record<ProviderKey, string> = {
@@ -61,7 +62,7 @@ const defaultModels: Record<ProviderKey, string> = {
 export type { ProviderKey } from '@/config/providers.js';
 export { OrchestratorStatus } from '@/types/orchestrator.js';
 
-const enabledTools: string[] = [
+const baseEnabledTools: string[] = [
   'bash_tool',
   'ls_tool',
   'glob_tool',
@@ -74,6 +75,14 @@ const enabledTools: string[] = [
   'web_fetch',
   'assign_task',
 ];
+
+function getEnabledTools(): string[] {
+  const tools = [...baseEnabledTools];
+  if (process.env.NUVIN_EXPERIMENTAL_LSP === 'true') {
+    tools.push('lsp');
+  }
+  return tools;
+}
 
 class SessionBoundMetricsPort implements MetricsPort {
   constructor(
@@ -285,7 +294,14 @@ export class OrchestratorManager {
       const agentRegistry = new AgentRegistry({ filePersistence: agentFilePersistence });
       await agentRegistry.waitForLoad();
 
-      const toolRegistry = new ToolRegistry({ agentRegistry });
+      const enableLsp = process.env.NUVIN_EXPERIMENTAL_LSP === 'true';
+      const toolRegistry = new ToolRegistry({ agentRegistry, enableLsp });
+
+      if (enableLsp) {
+        await LSP.init();
+        toolRegistry.setLspService(LSP);
+      }
+
       const agentTools: ToolPort = toolRegistry;
 
       // Create LLM factory adapter for sub-agents
@@ -366,7 +382,7 @@ export class OrchestratorManager {
         temperature: 1,
         topP: 1,
         model: currentConfig.model,
-        enabledTools,
+        enabledTools: getEnabledTools(),
         maxToolConcurrency: 10,
         requireToolApproval: currentConfig.requireToolApproval,
         reasoningEffort: currentConfig.reasoningEffort,
@@ -485,7 +501,7 @@ export class OrchestratorManager {
       }
 
       // Update orchestrator's enabled tools list
-      const nonMcpTools = enabledTools; // Base tools from initialization
+      const nonMcpTools = getEnabledTools(); // Base tools from initialization
       const updatedEnabledTools = [...nonMcpTools, ...mcpEnabledTools];
 
       this.orchestrator.updateConfig({
@@ -507,7 +523,7 @@ export class OrchestratorManager {
         mcpEnabledTools.push(...server.allowedTools);
       }
 
-      const nonMcpTools = enabledTools;
+      const nonMcpTools = getEnabledTools();
       const updatedEnabledTools = [...nonMcpTools, ...mcpEnabledTools];
 
       this.orchestrator.updateConfig({
@@ -531,7 +547,7 @@ export class OrchestratorManager {
         mcpEnabledTools.push(...server.allowedTools);
       }
 
-      const nonMcpTools = enabledTools;
+      const nonMcpTools = getEnabledTools();
       const updatedEnabledTools = [...nonMcpTools, ...mcpEnabledTools];
 
       this.orchestrator.updateConfig({
@@ -556,6 +572,7 @@ export class OrchestratorManager {
 
   async cleanup() {
     await this.mcpManager?.disconnectAllServers?.();
+    await LSP.shutdown();
   }
 
   private async initializeMCPServersInBackground(mcpManager: MCPServerManager, handlers: UIHandlers): Promise<void> {
@@ -573,7 +590,7 @@ export class OrchestratorManager {
           // Update the orchestrator's tools and enabled tools list
           this.orchestrator.setTools(compositeTools);
 
-          const updatedEnabledTools = [...enabledTools, ...mcpEnabledTools];
+          const updatedEnabledTools = [...getEnabledTools(), ...mcpEnabledTools];
           this.orchestrator.updateConfig({
             enabledTools: updatedEnabledTools,
           });
