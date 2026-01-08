@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.29.1
+
+### Patch Changes
+
+- [`5f7e5ac`](https://github.com/marschhuynh/nuvin-space/commit/5f7e5accbce99569775122822fce681689fe0bb7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix: handle nullish children in Markdown component
+
 ## 1.29.0
 
 ### Minor Changes
