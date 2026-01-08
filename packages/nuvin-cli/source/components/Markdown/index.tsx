@@ -63,10 +63,10 @@ export const Markdown: React.FC<MarkdownProps> = ({
 
   const renderedContent = useMemo(() => {
     if (disableMarkdown) {
-      return children;
+      return children ?? '';
     }
 
-    return parseMarkdown(children).trimEnd();
+    return parseMarkdown(children ?? '').trimEnd();
   }, [children, disableMarkdown, parseMarkdown]);
 
   return <Text wrap="wrap">{renderedContent}</Text>;
