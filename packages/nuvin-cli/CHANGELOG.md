@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.30.0
+
+### Minor Changes
+
+- [`7f3cad5`](https://github.com/marschhuynh/nuvin-space/commit/7f3cad51cd98cf70856f365353e69027949f96a4) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): enable LSP tool by default and add UI margin
+
+### Patch Changes
+
+- Updated dependencies [[`7f3cad5`](https://github.com/marschhuynh/nuvin-space/commit/7f3cad51cd98cf70856f365353e69027949f96a4)]:
+  - @nuvin/nuvin-core@1.15.0
+
 ## 1.29.1
 
 ### Patch Changes
