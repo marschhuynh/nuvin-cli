@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.30.1
+
+### Patch Changes
+
+- [`1411183`](https://github.com/marschhuynh/nuvin-space/commit/1411183beaf6b73e00cbdd1a5d7815c0401d2b9c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(lsp): add .js extension to vscode-jsonrpc/node import for ESM
+
 ## 1.30.0
 
 ### Minor Changes
