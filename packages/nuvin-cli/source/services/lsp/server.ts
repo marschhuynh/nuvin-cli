@@ -3,7 +3,8 @@ import * as path from 'node:path';
 import { spawn, execSync } from 'node:child_process';
 import type { LSPServerInfo, LSPServerHandle } from './types.js';
 
-const LSP_BIN_DIR = path.join(process.env.HOME || '~', '.nuvin', 'lsp', 'bin');
+const LSP_DIR = path.join(process.env.HOME || '~', '.nuvin', 'lsp');
+const LSP_BIN_DIR = path.join(LSP_DIR, 'node_modules', '.bin');
 
 async function findFileUp(startDir: string, filename: string): Promise<string | undefined> {
 	let dir = startDir;
@@ -22,12 +23,6 @@ async function findFileUp(startDir: string, filename: string): Promise<string | 
 }
 
 async function findExecutable(name: string, startDir: string): Promise<string | undefined> {
-	const nuvinBin = path.join(LSP_BIN_DIR, name);
-	try {
-		await fs.promises.access(nuvinBin, fs.constants.X_OK);
-		return nuvinBin;
-	} catch {}
-
 	let dir = startDir;
 	const root = path.parse(dir).root;
 
@@ -41,30 +36,43 @@ async function findExecutable(name: string, startDir: string): Promise<string | 
 		}
 	}
 
+	const nuvinBin = path.join(LSP_BIN_DIR, name);
+	try {
+		await fs.promises.access(nuvinBin, fs.constants.X_OK);
+		return nuvinBin;
+	} catch {}
+
 	return undefined;
 }
 
-async function installPackage(packageName: string): Promise<boolean> {
+async function installPackage(packageName: string): Promise<string | undefined> {
 	if (process.env.NUVIN_DISABLE_LSP_DOWNLOAD === 'true') {
 		console.error(`[LSP] Auto-install disabled. Install ${packageName} manually.`);
-		return false;
+		return undefined;
 	}
 
 	console.error(`[LSP] Installing ${packageName}...`);
 
 	try {
-		await fs.promises.mkdir(LSP_BIN_DIR, { recursive: true });
+		await fs.promises.mkdir(LSP_DIR, { recursive: true });
 
-		execSync(`npm install --prefix "${path.dirname(LSP_BIN_DIR)}" ${packageName}`, {
+		execSync(`npm install --prefix "${LSP_DIR}" ${packageName}`, {
 			stdio: process.env.NUVIN_LSP_DEBUG ? 'inherit' : 'pipe',
 			timeout: 60000,
 		});
 
-		console.error(`[LSP] Successfully installed ${packageName}`);
-		return true;
+		const binPath = path.join(LSP_BIN_DIR, packageName);
+		try {
+			await fs.promises.access(binPath, fs.constants.X_OK);
+			console.error(`[LSP] Successfully installed ${packageName}`);
+			return binPath;
+		} catch {
+			console.error(`[LSP] Installed ${packageName} but binary not found at ${binPath}`);
+			return undefined;
+		}
 	} catch (err) {
 		console.error(`[LSP] Failed to install ${packageName}:`, err instanceof Error ? err.message : err);
-		return false;
+		return undefined;
 	}
 }
 
@@ -86,10 +94,7 @@ export const TypeScriptServer: LSPServerInfo = {
 		let binary = await findExecutable('typescript-language-server', root);
 
 		if (!binary) {
-			const installed = await installPackage('typescript-language-server');
-			if (installed) {
-				binary = path.join(LSP_BIN_DIR, 'typescript-language-server');
-			}
+			binary = await installPackage('typescript-language-server');
 		}
 
 		if (!binary) {
