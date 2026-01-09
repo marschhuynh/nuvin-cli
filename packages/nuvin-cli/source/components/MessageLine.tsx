@@ -5,7 +5,6 @@ import type { ToolCall } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { SubAgentState } from '@/utils/eventProcessor.js';
-import { useStdoutDimensions } from '@/hooks/useStdoutDimensions';
 import { useAltMode } from '@/contexts/AltModeContext';
 import { useToolApproval } from '@/contexts/ToolApprovalContext';
 import { ToolCallViewer } from './ToolCallViewer';
