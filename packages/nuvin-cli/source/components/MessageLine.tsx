@@ -264,18 +264,4 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
   );
 };
 
-export const MessageLine = React.memo(MessageLineComponent, (prevProps, nextProps) => {
-  if (prevProps.message.id !== nextProps.message.id) return false;
-  if (prevProps.message.content !== nextProps.message.content) return false;
-  if (prevProps.message.metadata?.isStreaming !== nextProps.message.metadata?.isStreaming) return false;
-  if (prevProps.backgroundColor !== nextProps.backgroundColor) return false;
-  if (prevProps.liveMessage !== nextProps.liveMessage) return false;
-
-  const prevMeta = prevProps.message.metadata;
-  const nextMeta = nextProps.message.metadata;
-  if (prevMeta?.toolCalls !== nextMeta?.toolCalls) return false;
-  if (prevMeta?.toolResultsByCallId !== nextMeta?.toolResultsByCallId) return false;
-  if (prevMeta?.timestamp !== nextMeta?.timestamp) return false;
-
-  return true;
-});
+export const MessageLine = MessageLineComponent

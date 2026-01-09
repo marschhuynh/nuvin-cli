@@ -13,7 +13,6 @@ import { ToolResultView } from './ToolResultView';
 import { ToolTimer } from '../../ToolTimer';
 import { GradientRunText } from '../../Gradient';
 import { formatCost, formatTokens } from '@/utils/formatters';
-import { AutoScrollBox } from '../../AutoScrollBox';
 
 type SubAgentActivityProps = {
   toolCall: ToolCall;
@@ -162,8 +161,14 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      {/* Header: [Agent Name] */}
-      <Box flexDirection="row">
+      {/* Header: [Agent Name] - sticky with background to cover scrolled content */}
+      <Box
+        flexDirection="row"
+        flexShrink={0}
+        top={0}
+        position="sticky"
+        backgroundColor={theme.colors.background}
+      >
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
             »
@@ -173,7 +178,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
       </Box>
 
       {/* Parameters: agent and task */}
-      <Box flexDirection="column" marginLeft={2}>
+      <Box flexDirection="column" marginLeft={2} width="100%">
         <Box
           flexDirection="column"
           borderStyle="single"
@@ -183,50 +188,49 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
           borderRight={false}
           borderTop={false}
           paddingLeft={2}
+          flexShrink={0}
         >
-          <AutoScrollBox maxHeight={5} showScrollbar={false}>
-            {subAgentState.toolCalls.map((toolCall) => {
-              let argsDisplay = '';
+          {subAgentState.toolCalls.slice(-3).map((toolCall) => {
+            let argsDisplay = '';
 
-              if (toolCall.arguments) {
-                try {
-                  const args = parseToolArguments(toolCall.arguments);
-                  const relevantValue = extractRelevantParameter(toolCall.name, args);
+            if (toolCall.arguments) {
+              try {
+              const args = parseToolArguments(toolCall.arguments);
+              const relevantValue = extractRelevantParameter(toolCall.name, args);
 
-                  if (relevantValue) {
-                    argsDisplay = ` ${relevantValue}`;
-                  }
-                } catch {
-                  // Ignore parse errors
-                }
+              if (relevantValue) {
+                argsDisplay = ` ${relevantValue}`;
               }
-
-              // Determine status icon and color
-              let statusIcon = '  ';
-              let statusIconColor = theme.colors.textDim;
-              if (toolCall.status === 'success') {
-                statusIcon = '✓ ';
-                statusIconColor = theme.status.success;
-              } else if (toolCall.status === 'error') {
-                statusIcon = '✗ ';
-                statusIconColor = theme.status.error;
+              } catch {
+              // Ignore parse errors
               }
+            }
 
-              return (
-                <Box key={toolCall.id} flexDirection="column">
-                  <Box flexDirection="row" height={1}>
-                    {statusIcon ? <Text color={statusIconColor}>{statusIcon}</Text> : null}
-                    <Box flexWrap="nowrap">
-                      <Text dimColor>{toolCall.name}</Text>
-                      <Text dimColor wrap="truncate-end">
-                        {argsDisplay}
-                      </Text>
-                    </Box>
-                  </Box>
+            // Determine status icon and color
+            let statusIcon = '  ';
+            let statusIconColor = theme.colors.textDim;
+            if (toolCall.status === 'success') {
+              statusIcon = '✓ ';
+              statusIconColor = theme.status.success;
+            } else if (toolCall.status === 'error') {
+              statusIcon = '✗ ';
+              statusIconColor = theme.status.error;
+            }
+
+            return (
+              <Box key={toolCall.id} flexDirection="column" width={'100%'}>
+              <Box flexDirection="row" height={1}>
+                {statusIcon ? <Text color={statusIconColor}>{statusIcon}</Text> : null}
+                <Box flexWrap="nowrap">
+                <Text dimColor>{toolCall.name}</Text>
+                <Text dimColor wrap="truncate-end">
+                  {argsDisplay}
+                </Text>
                 </Box>
-              );
-            })}
-          </AutoScrollBox>
+              </Box>
+              </Box>
+            );
+          })}
         </Box>
       </Box>
 

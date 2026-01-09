@@ -352,79 +352,113 @@ export function processAgentEvent(
       const subAgent = state.subAgents.get(event.agentId);
       if (!subAgent) return state;
 
-      // Update status to running and add tool call
-      subAgent.status = 'running';
-      subAgent.toolCalls.push({
-        id: event.toolCallId,
-        name: event.toolName,
-        arguments: event.toolArguments,
-      });
+      // Create new sub-agent state with updated tool calls (immutable update)
+      const updatedSubAgent = {
+        ...subAgent,
+        status: 'running' as const,
+        toolCalls: [
+          ...subAgent.toolCalls,
+          {
+            id: event.toolCallId,
+            name: event.toolName,
+            arguments: event.toolArguments,
+          },
+        ],
+      };
+
+      // Update state map with new object
+      const newSubAgents = new Map(state.subAgents);
+      newSubAgents.set(event.agentId, updatedSubAgent);
 
       // Update the tool call message metadata using the dynamic key
-      if (subAgent.toolCallMessageId && subAgent.toolCallId) {
-        callbacks.updateLineMetadata?.(subAgent.toolCallMessageId, {
-          [`subAgentState_${subAgent.toolCallId}`]: subAgent,
+      if (updatedSubAgent.toolCallMessageId && updatedSubAgent.toolCallId) {
+        callbacks.updateLineMetadata?.(updatedSubAgent.toolCallMessageId, {
+          [`subAgentState_${updatedSubAgent.toolCallId}`]: updatedSubAgent,
         });
       }
 
-      return state;
+      return { ...state, subAgents: newSubAgents };
     }
 
     case AgentEventTypes.SubAgentToolResult: {
       const subAgent = state.subAgents.get(event.agentId);
       if (!subAgent) return state;
 
-      // Find and update the tool call with duration and status
-      const toolCall = subAgent.toolCalls.find((tc) => tc.id === event.toolCallId);
-      if (toolCall) {
-        toolCall.durationMs = event.durationMs;
-        toolCall.status = event.status;
-      }
+      // Create new tool calls array with updated tool call (immutable update)
+      const updatedToolCalls = subAgent.toolCalls.map((tc) =>
+        tc.id === event.toolCallId
+          ? { ...tc, durationMs: event.durationMs, status: event.status }
+          : tc
+      );
+
+      const updatedSubAgent = {
+        ...subAgent,
+        toolCalls: updatedToolCalls,
+      };
+
+      // Update state map with new object
+      const newSubAgents = new Map(state.subAgents);
+      newSubAgents.set(event.agentId, updatedSubAgent);
 
       // Update the tool call message metadata using the dynamic key
-      if (subAgent.toolCallMessageId && subAgent.toolCallId) {
-        callbacks.updateLineMetadata?.(subAgent.toolCallMessageId, {
-          [`subAgentState_${subAgent.toolCallId}`]: subAgent,
+      if (updatedSubAgent.toolCallMessageId && updatedSubAgent.toolCallId) {
+        callbacks.updateLineMetadata?.(updatedSubAgent.toolCallMessageId, {
+          [`subAgentState_${updatedSubAgent.toolCallId}`]: updatedSubAgent,
         });
       }
 
-      return state;
+      return { ...state, subAgents: newSubAgents };
     }
 
     case AgentEventTypes.SubAgentCompleted: {
       const subAgent = state.subAgents.get(event.agentId);
       if (!subAgent) return state;
 
-      // Update sub-agent state with final results
-      subAgent.status = 'completed';
-      subAgent.finalStatus = event.status;
-      subAgent.resultMessage = event.resultMessage;
-      subAgent.totalDurationMs = event.totalDurationMs;
+      // Create new sub-agent state with final results (immutable update)
+      const updatedSubAgent = {
+        ...subAgent,
+        status: 'completed' as const,
+        finalStatus: event.status,
+        resultMessage: event.resultMessage,
+        totalDurationMs: event.totalDurationMs,
+      };
+
+      // Update state map with new object
+      const newSubAgents = new Map(state.subAgents);
+      newSubAgents.set(event.agentId, updatedSubAgent);
 
       // Update the tool call message metadata using the dynamic key
-      if (subAgent.toolCallMessageId && subAgent.toolCallId) {
-        callbacks.updateLineMetadata?.(subAgent.toolCallMessageId, {
-          [`subAgentState_${subAgent.toolCallId}`]: subAgent,
+      if (updatedSubAgent.toolCallMessageId && updatedSubAgent.toolCallId) {
+        callbacks.updateLineMetadata?.(updatedSubAgent.toolCallMessageId, {
+          [`subAgentState_${updatedSubAgent.toolCallId}`]: updatedSubAgent,
         });
       }
 
-      return state;
+      return { ...state, subAgents: newSubAgents };
     }
 
     case AgentEventTypes.SubAgentMetrics: {
       const subAgent = state.subAgents.get(event.agentId);
       if (!subAgent) return state;
 
-      subAgent.metrics = event.metrics;
+      // Create new sub-agent state with metrics (immutable update)
+      const updatedSubAgent = {
+        ...subAgent,
+        metrics: event.metrics,
+      };
+
+      // Update state map with new object
+      const newSubAgents = new Map(state.subAgents);
+      newSubAgents.set(event.agentId, updatedSubAgent);
 
       // Update the tool call message metadata using the dynamic key
-      if (subAgent.toolCallMessageId && subAgent.toolCallId) {
-        callbacks.updateLineMetadata?.(subAgent.toolCallMessageId, {
-          [`subAgentState_${subAgent.toolCallId}`]: subAgent,
+      if (updatedSubAgent.toolCallMessageId && updatedSubAgent.toolCallId) {
+        callbacks.updateLineMetadata?.(updatedSubAgent.toolCallMessageId, {
+          [`subAgentState_${updatedSubAgent.toolCallId}`]: updatedSubAgent,
         });
       }
 
-      return state;
+      return { ...state, subAgents: newSubAgents };
     }
 
     default:
