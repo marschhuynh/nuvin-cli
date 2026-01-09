@@ -74,13 +74,11 @@ const baseEnabledTools: string[] = [
   'web_search',
   'web_fetch',
   'assign_task',
+  'lsp'
 ];
 
 function getEnabledTools(): string[] {
   const tools = [...baseEnabledTools];
-  if (process.env.NUVIN_EXPERIMENTAL_LSP === 'true') {
-    tools.push('lsp');
-  }
   return tools;
 }
 

@@ -209,7 +209,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         ) : (
-          <Box flexShrink={0}>
+          <Box flexShrink={0} marginTop={1}>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         );
@@ -254,7 +254,6 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
               onInputSubmit={handleInputSubmit}
               onVimModeToggle={onVimModeToggle}
               onVimModeChanged={onVimModeChanged}
-              // disabled={mode === 'approval' || mode === 'command'}
             />
           </Box>
         );

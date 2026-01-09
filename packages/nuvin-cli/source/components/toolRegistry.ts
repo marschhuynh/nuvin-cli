@@ -95,6 +95,12 @@ const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     paramRenderer: AssignTaskParamRender,
     collapsedByDefault: true,
   },
+  lsp: {
+    displayName: 'Language server',
+    statusStrategy: defaultStrategy,
+    paramRenderer: DefaultParamRender,
+    collapsedByDefault: false,
+  },
 };
 
 const DEFAULT_METADATA: ToolMetadata = {
