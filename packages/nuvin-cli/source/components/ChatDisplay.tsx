@@ -189,7 +189,7 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey,
   }, [mergedMessages, staticItems]);
 
   return (
-    <Box flexDirection="column" flexShrink={1} overflow="hidden">
+    <Box flexDirection="column" flexShrink={1} overflow="hidden" width="100%">
       {staticItemsWithHeader.length > 0 && (
         <Box height={0} flexDirection="column">
           <Static items={staticItemsWithHeader}>

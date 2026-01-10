@@ -9,7 +9,6 @@ interface UseAgentModalKeyboardProps {
   actions: AgentModalActions;
   onClose: () => void;
   onAgentStatusChange?: (agentId: string, enabled: boolean) => void;
-  onAgentBatchStatusChange?: (config: Record<string, boolean>) => void;
   onAgentCreate?: () => void;
   onAgentDelete?: (agentId: string) => void;
   onAgentEdit?: (agentId: string) => void;
@@ -22,7 +21,6 @@ export const useAgentModalKeyboard = ({
   actions,
   onClose,
   onAgentStatusChange,
-  onAgentBatchStatusChange,
   onAgentCreate,
   onAgentDelete,
   onAgentEdit,
@@ -69,20 +67,6 @@ export const useAgentModalKeyboard = ({
           actions.toggleAgent(currentAgent.id);
           onAgentStatusChange?.(currentAgent.id, newValue);
         }
-        return;
-      }
-
-      // A - Enable all agents
-      if (input === 'a' || input === 'A') {
-        const updatedConfig = actions.enableAllAgents(agents);
-        onAgentBatchStatusChange?.(updatedConfig);
-        return;
-      }
-
-      // D - Disable all agents
-      if (input === 'd' || input === 'D') {
-        const updatedConfig = actions.disableAllAgents(agents);
-        onAgentBatchStatusChange?.(updatedConfig);
         return;
       }
 

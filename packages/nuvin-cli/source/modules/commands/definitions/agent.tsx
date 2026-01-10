@@ -190,25 +190,6 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
     [context.config, context.orchestratorManager?.getOrchestrator],
   );
 
-  const handleBatchAgentStatusChange = useCallback(
-    async (config: Record<string, boolean>) => {
-      try {
-        const updatedConfig = { ...config };
-        await context.config.set('agentsEnabled', updatedConfig, 'global');
-        setEnabledAgents(updatedConfig);
-
-        const tools = context.orchestratorManager?.getOrchestrator()?.getTools?.();
-        const orchestratorAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
-        if (orchestratorAwareTools?.setEnabledAgents) {
-          orchestratorAwareTools.setEnabledAgents(updatedConfig);
-        }
-      } catch (error) {
-        console.error('Failed to save batch agent statuses:', error);
-      }
-    },
-    [context.config, context.orchestratorManager?.getOrchestrator],
-  );
-
   const handleAgentCreate = useCallback(() => {
     setEditingAgentId(null);
     setCreationMode(true);
@@ -646,7 +627,6 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       initialSelectedIndex={initialSelectedIndex}
       onClose={deactivate}
       onAgentStatusChange={handleAgentStatusChange}
-      onAgentBatchStatusChange={handleBatchAgentStatusChange}
       onAgentCreate={handleAgentCreate}
       onAgentDelete={handleAgentDelete}
       onAgentEdit={handleAgentEdit}

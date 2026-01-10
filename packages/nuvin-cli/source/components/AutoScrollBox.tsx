@@ -236,9 +236,14 @@ export function AutoScrollBox({
     updateScrollInfoThrottled();
   }, [children, updateScrollInfoThrottled]);
 
+  const scrollbarElement = needsScrollbar && (
+    <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} />
+  );
+
   return (
     <Box
       flexDirection="row"
+      width="100%"
       {...(maxHeight !== undefined ? { maxHeight } : {})}
       overflow="hidden"
       backgroundColor={isFocused ? theme.tokens.dim : undefined}
@@ -248,7 +253,8 @@ export function AutoScrollBox({
           {children}
         </Box>
       </Box>
-      {needsScrollbar && <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} />}
+      <Box flexGrow={1} />
+      {scrollbarElement}
     </Box>
   );
 }
