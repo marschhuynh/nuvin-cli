@@ -1,5 +1,15 @@
 # @nuvin/nuvin-cli
 
+## 1.30.2
+
+### Patch Changes
+
+- [`9c8f57a`](https://github.com/marschhuynh/nuvin-space/commit/9c8f57acd5645eea59327fdb9bfdbe3491ca2d5f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add ScrollableSelectList and refactor AgentModal with dynamic sizing
+
+- [`f582077`](https://github.com/marschhuynh/nuvin-space/commit/f582077f76138ee9fa495fd4b4d711b405bfb973) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(cli): modular AgentCreation forms, enhanced TextInput viewport support, simplified ScrollableSelectList
+
+- [`3ce518b`](https://github.com/marschhuynh/nuvin-space/commit/3ce518b8af4c203b1dcb91140936aa4dd55409a5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix: sub-agent state immutability and UI fixes
+
 ## 1.30.1
 
 ### Patch Changes
