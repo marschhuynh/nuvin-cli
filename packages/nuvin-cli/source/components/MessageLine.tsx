@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Box, Text } from 'ink';
 import { Markdown } from './Markdown';
 import type { ToolCall } from '@nuvin/nuvin-core';

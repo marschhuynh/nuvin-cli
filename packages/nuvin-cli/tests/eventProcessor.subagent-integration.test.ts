@@ -104,7 +104,7 @@ describe('eventProcessor - SubAgent Integration Flow', () => {
       }],
     };
     
-    let result = processAgentEvent(toolCallsEvent, state, callbacks);
+    const result = processAgentEvent(toolCallsEvent, state, callbacks);
     state = result instanceof Promise ? await result : result;
     
     const messageId = state.toolCallToMessageMap.get(toolCallId);

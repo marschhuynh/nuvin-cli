@@ -34,6 +34,7 @@ export const FileReadRenderer: React.FC<FileReadRendererProps> = ({
     return (
       <Box flexDirection="column" width={cols - LAYOUT.CONTENT_MARGIN}>
         {linesToRender.map((line, idx) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: stable file content lines
           <Text key={`${messageId}-line-${idx}`} dimColor color={detailColor}>
             {line}
           </Text>

@@ -82,7 +82,7 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
     };
 
     loadHistory();
-  }, [memory]);
+  }, [memory, conversationId]);
 
   const navigatePrev = useCallback((): string | null => {
     const currentMessages = messagesRef.current;

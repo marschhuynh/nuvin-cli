@@ -1,22 +1,22 @@
 import { Box, Text } from 'ink';
-import { useInput } from '@/contexts/InputContext/index.js';
+import Gradient from 'ink-gradient';
 import { useState, useEffect, useCallback } from 'react';
-import SelectInput from './SelectInput/index.js';
-import TextInput from './TextInput/index.js';
-import { ComboBox } from './ComboBox/index.js';
+import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useConfig } from '@/contexts/ConfigContext.js';
-import Gradient from 'ink-gradient';
 import { getVersion } from '@/utils/version.js';
 import type { ProviderKey } from '@/config/const.js';
 import { buildProviderOptions, type ProviderItem } from '@/config/providers.js';
 import { getProviderAuthMethods, getProviderModels, type AuthMethod, type AuthMethodItem } from '@/const.js';
 import { exchangeCodeForToken, createApiKey } from '@/modules/commands/definitions/auth/anthropic-oauth.js';
-import { DeviceFlowUI, OAuthUI, TokenInputUI } from './Auth/index.js';
 import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
 import { useOAuth } from '@/hooks/useOAuth.js';
 import { useAuthStorage } from '@/hooks/useAuthStorage.js';
 import type { LLMFactoryInterface } from '@/services/LLMFactory.js';
+import { DeviceFlowUI, OAuthUI, TokenInputUI } from './Auth/index.js';
+import { ComboBox } from './ComboBox/index.js';
+import SelectInput from './SelectInput/index.js';
+import TextInput from './TextInput/index.js';
 
 const LOGO = `Welcome to
 ███╗   ██╗ ██╗   ██╗ ██╗   ██╗ ██╗ ███╗   ██╗

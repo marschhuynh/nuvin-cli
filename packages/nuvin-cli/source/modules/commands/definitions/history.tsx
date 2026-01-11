@@ -136,6 +136,7 @@ const HistoryCommandComponent = ({ context, deactivate }: CommandComponentProps)
     currentProfile,
     context.orchestratorManager?.switchToSession,
     context.orchestratorManager?.getOrchestrator,
+    context.orchestratorManager?.getConversationContext,
     theme.tokens.green,
     theme.tokens.red,
     theme.tokens.yellow,

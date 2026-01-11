@@ -86,6 +86,7 @@ const sections = [
 ].sort(() => Math.random() - 0.5);
 
 function parseMouseEvent(data: string): { type: 'wheel-up' | 'wheel-down' | 'other'; x: number; y: number } | null {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence for mouse events
   const sgrMatch = data.match(/\x1b\[<(\d+);(\d+);(\d+)([Mm])/);
   if (sgrMatch) {
     const button = parseInt(sgrMatch[1] ?? '0', 10);

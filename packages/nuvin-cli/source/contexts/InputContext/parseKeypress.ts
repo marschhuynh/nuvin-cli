@@ -120,9 +120,12 @@ const isCtrlKey = (code: string) => {
   return ['Oa', 'Ob', 'Oc', 'Od', 'Oe', '[2^', '[3^', '[5^', '[6^', '[7^', '[8^'].includes(code);
 };
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence parsing
 const metaKeyCodeRe = /^(?:\x1b)([a-zA-Z0-9])$/;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence parsing
 const fnKeyRe = /^(?:\x1b+)(O|N|\[|\[\[)(?:(\d+)(?:;(\d+))?([~^$])|(?:1;)?(\d+)?([a-zA-Z]))/;
 
+// biome-ignore lint/suspicious/noControlCharactersInRegex: Kitty keyboard protocol
 const KITTY_CSI_U_RE = /^\x1b\[(\d+)(?:;(\d+))?u$/;
 
 const KITTY_KEYCODE_MAP: Record<number, keyof Key> = {
@@ -208,13 +211,21 @@ export const parseKeypress = (data: string): ParseResult => {
   } else if (s.length === 1 && s >= 'A' && s <= 'Z') {
     key.shift = true;
     return { input: s, key };
-  } else if ((parts = metaKeyCodeRe.exec(s))) {
+  }
+
+  parts = metaKeyCodeRe.exec(s);
+  if (parts) {
     key.meta = true;
     key.shift = /^[A-Z]$/.test(parts[1] ?? '');
     return { input: parts[1] ?? '', key };
-  } else if (s.startsWith('\x1b[200~') || s.startsWith('[200~')) {
+  }
+
+  if (s.startsWith('\x1b[200~') || s.startsWith('[200~')) {
     return { input: data, key };
-  } else if ((parts = fnKeyRe.exec(s))) {
+  }
+
+  parts = fnKeyRe.exec(s);
+  if (parts) {
     const segs = [...s];
 
     if (segs[0] === '\u001b' && segs[1] === '\u001b') {
@@ -261,15 +272,15 @@ export function parseMouseEvent(data: string): MouseParseResult {
     return { mouse: null, consumed: false };
   }
 
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence for mouse events
   const sgrRegex = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
-  let match: RegExpExecArray | null;
   let wheelUpCount = 0;
   let wheelDownCount = 0;
   let lastMouse: MouseEvent | null = null;
   let lastX = 0;
   let lastY = 0;
 
-  while ((match = sgrRegex.exec(data)) !== null) {
+  for (const match of data.matchAll(sgrRegex)) {
     const button = parseInt(match[1] ?? '0', 10);
     const x = parseInt(match[2] ?? '0', 10);
     const y = parseInt(match[3] ?? '0', 10);

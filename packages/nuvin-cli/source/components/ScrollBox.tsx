@@ -58,6 +58,7 @@ type ScrollBoxProps = {
 };
 
 function parseMouseEvent(data: string): MouseEvent | null {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence for mouse events
   const sgrMatch = data.match(/\x1b\[<(\d+);(\d+);(\d+)([Mm])/);
   if (sgrMatch) {
     const button = parseInt(sgrMatch[1], 10);

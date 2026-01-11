@@ -83,6 +83,7 @@ export const AgentList: React.FC<AgentListProps> = ({
             <>
               <Text dimColor> - </Text>
               {params.map((param, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: params have stable internal keys
                 <Text key={i}>
                   {param}
                   {i < params.length - 1 && <Text dimColor> - </Text>}

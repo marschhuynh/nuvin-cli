@@ -74,8 +74,6 @@ export const useAgentCreationKeyboard = ({
           eventBus.emit('ui:focus:cycle', 'backward');
           return;
         }
-
-        return;
       }
     },
     { isActive: visible },

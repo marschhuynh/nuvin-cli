@@ -44,7 +44,7 @@ function TextInput({
   maxHeight: maxHeightProp,
   scrollable = false,
 }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: ink internal node reference
   const containerNodeRef = useRef<any>(null);
   const [measuredHeight, setMeasuredHeight] = useState<number | undefined>(undefined);
 
@@ -180,6 +180,16 @@ function TextInput({
       }
 
       if (key.ctrl) {
+        if (input === 'a' && showCursor) {
+          const lineInfo = getLineInfo(currentValue, currentCursorOffset);
+          moveCursorRef.current(lineInfo.lineStart);
+          return true;
+        }
+        if (input === 'e' && showCursor) {
+          const lineInfo = getLineInfo(currentValue, currentCursorOffset);
+          moveCursorRef.current(lineInfo.lineEnd);
+          return true;
+        }
         return;
       }
 
