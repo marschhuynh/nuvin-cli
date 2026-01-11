@@ -89,7 +89,7 @@ describe('Models Command Authentication Navigation', () => {
 
     expect(command).toBeDefined();
     expect(command?.id).toBe('/model');
-    expect(command?.description).toBe('Select AI provider and model configuration.');
+    expect(command?.description).toBe('Select model from all authenticated providers.');
     expect(command?.category).toBe('config');
   });
 
