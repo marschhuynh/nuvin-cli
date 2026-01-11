@@ -416,7 +416,11 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
       }
     >
       <Box
-        flexDirection="column" maxHeight={rows - 2} flexShrink={0} overflow='hidden' borderBottom={false} borderRight={false} borderLeft={false} borderStyle={"single"} borderColor={theme.colors.textDim}>
+        flexDirection="column"
+        maxHeight={rows - 2}
+        flexShrink={0}
+        overflow="hidden"
+      >
         <ChatDisplay
           key={`chat-display-${headerKey}`}
           messages={messages}
