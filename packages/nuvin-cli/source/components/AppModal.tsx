@@ -63,7 +63,7 @@ export const AppModal: FC<AppModalProps> = ({
 
   return (
     <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.modal.background}>
-      <Box flexWrap="wrap" justifyContent="space-between" backgroundColor={globalTheme.modal.titleBackground}>
+      <Box flexWrap="wrap" justifyContent="space-between" backgroundColor={globalTheme.modal.titleBackground} flexShrink={0}>
         {title ? (
           <Box>
             <Text color={finalTitleColor}>{` + `}</Text>
@@ -81,7 +81,7 @@ export const AppModal: FC<AppModalProps> = ({
           </Box>
         ) : null}
       </Box>
-      <Box flexDirection="column" width={'100%'} marginTop={1}>
+      <Box flexDirection="column" width={'100%'} marginTop={1} flexGrow={1} overflow="hidden">
         <Box
           flexDirection="column"
           width={'100%'}
@@ -89,12 +89,14 @@ export const AppModal: FC<AppModalProps> = ({
           paddingY={paddingY}
           marginX={marginX}
           marginY={marginY}
+          flexGrow={1}
+          overflow="hidden"
         >
           {children}
         </Box>
         {footer ? (
           <Box
-            flexGrow={1}
+            flexShrink={0}
             backgroundColor={theme.modal.footerBackground}
           >
             {footer}

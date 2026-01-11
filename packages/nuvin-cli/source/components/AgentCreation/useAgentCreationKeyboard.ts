@@ -26,6 +26,10 @@ export const useAgentCreationKeyboard = ({
 
       if (key.escape) {
         if (state.isEditing) {
+          if (state.editFormView === 'systemPrompt') {
+            actions.navigateToBasicForm();
+            return;
+          }
           if (state.mode === 'edit') {
             onCancel();
             return;
@@ -49,6 +53,15 @@ export const useAgentCreationKeyboard = ({
         if (key.ctrl && input === 's') {
           actions.handleSaveEditing();
           onConfirm?.(actions.getUpdatedPreview());
+          return;
+        }
+
+        if (key.ctrl && input === 'p') {
+          if (state.editFormView === 'basic') {
+            actions.navigateToSystemPrompt();
+          } else {
+            actions.navigateToBasicForm();
+          }
           return;
         }
 

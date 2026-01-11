@@ -10,6 +10,7 @@ interface AgentListProps {
   isAgentEnabled: (agentId: string) => boolean;
   onAgentSelect: (index: number) => void;
   maxHeight?: number;
+  flexGrow?: number;
   focus?: boolean;
 }
 
@@ -19,6 +20,7 @@ export const AgentList: React.FC<AgentListProps> = ({
   isAgentEnabled,
   onAgentSelect,
   maxHeight,
+  flexGrow,
   focus = true,
 }) => {
   const { theme } = useTheme();
@@ -99,8 +101,8 @@ export const AgentList: React.FC<AgentListProps> = ({
   };
 
   return (
-    <Box flexDirection="column" width="100%">
-      <Box marginBottom={1}>
+    <Box flexDirection="column" width="100%" flexGrow={flexGrow} overflow="hidden">
+      <Box marginBottom={1} flexShrink={0}>
         <Text color={theme.tokens.cyan} bold>
           Agents ({getEnabledCount()}/{agents.length})
         </Text>
@@ -113,6 +115,7 @@ export const AgentList: React.FC<AgentListProps> = ({
         renderItem={renderItem}
         focus={focus}
         maxHeight={maxHeight}
+        flexGrow={!maxHeight ? 1 : undefined}
       />
     </Box>
   );

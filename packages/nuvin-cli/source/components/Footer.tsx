@@ -81,7 +81,7 @@ const FooterComponent: React.FC<FooterProps> = ({
         {notification ? (
           <Text color={theme.tokens.yellow}>{notification || ''}</Text>
         ) : (
-          <Box alignSelf="flex-end">
+          <Box>
             {vimModeEnabled && (
               <Text color={theme.footer.status} dimColor>
                 {vimMode === 'insert' ? '-- INSERT --' : '-- NORMAL --'}
@@ -165,7 +165,7 @@ const FooterComponent: React.FC<FooterProps> = ({
         ) : null}
       </Box>
       {workingDirectory && (
-        <Box paddingTop={0} justifyContent="space-between" flexWrap="wrap" overflow="hidden">
+        <Box paddingTop={0} justifyContent="space-between" flexWrap="wrap">
           <Box>
             <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory)}</Text>
             <Text dimColor color={theme.footer.gitBranch}>
@@ -175,8 +175,7 @@ const FooterComponent: React.FC<FooterProps> = ({
           <Box alignSelf="flex-end" flexGrow={1} justifyContent="flex-end">
             <Text dimColor>
               <Text color={theme.colors.accent}>/</Text> command{' · '}
-              <Text color={theme.colors.accent}>ESC×2</Text> stop{' · '}
-              <Text color={theme.colors.accent}>Ctrl+E</Text> show detail
+              <Text color={theme.colors.accent}>ESC×2</Text> stop
             </Text>
           </Box>
         </Box>

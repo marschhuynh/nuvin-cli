@@ -1,8 +1,8 @@
 import type React from 'react';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Box, Text, measureElement, type BoxRef } from 'ink';
-import { useInput, useMouse, type MouseEvent } from '@/contexts/InputContext/index.js';
-import { useTheme } from '@/contexts/ThemeContext.js';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, measureElement, type BoxRef } from 'ink';
+import { useInput } from '@/contexts/InputContext/index.js';
+import { AutoScrollBox, type AutoScrollBoxHandle } from '@/components/AutoScrollBox.js';
 
 export interface ScrollableSelectItem<T = unknown> {
   key: string;
@@ -17,57 +17,8 @@ export interface ScrollableSelectListProps<T> {
   renderItem: (item: T, isSelected: boolean, index: number) => React.ReactNode;
   focus?: boolean;
   enableRotation?: boolean;
-  scrollStep?: number;
-  showScrollbar?: boolean;
   maxHeight?: number;
-}
-
-function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
-  let lastCall = 0;
-  return ((...args: unknown[]) => {
-    const now = Date.now();
-    if (now - lastCall >= ms) {
-      lastCall = now;
-      fn(...args);
-    }
-  }) as T;
-}
-
-function Scrollbar({
-  scrollY,
-  containerHeight,
-  contentHeight,
-  color,
-  trackColor,
-}: {
-  scrollY: number;
-  containerHeight: number;
-  contentHeight: number;
-  color: string;
-  trackColor: string;
-}) {
-  if (contentHeight <= containerHeight) return null;
-
-  const trackHeight = containerHeight;
-  const thumbHeight = Math.max(1, Math.round((containerHeight / contentHeight) * trackHeight));
-  const maxScrollY = contentHeight - containerHeight;
-  const scrollRatio = maxScrollY > 0 ? scrollY / maxScrollY : 0;
-  const thumbPosition = Math.round(scrollRatio * (trackHeight - thumbHeight));
-
-  const track: string[] = [];
-  for (let i = 0; i < trackHeight; i++) {
-    track.push(i >= thumbPosition && i < thumbPosition + thumbHeight ? '┃' : '│');
-  }
-
-  return (
-    <Box flexDirection="column" flexShrink={0} marginLeft={1}>
-      {track.map((char, i) => (
-        <Text key={`track-${i}`} color={char === '┃' ? color : trackColor}>
-          {char}
-        </Text>
-      ))}
-    </Box>
-  );
+  flexGrow?: number;
 }
 
 export function ScrollableSelectList<T>({
@@ -78,67 +29,44 @@ export function ScrollableSelectList<T>({
   renderItem,
   focus = true,
   enableRotation = true,
-  scrollStep = 1,
-  showScrollbar = true,
   maxHeight,
+  flexGrow,
 }: ScrollableSelectListProps<T>) {
-  const { theme } = useTheme();
   const [internalIndex, setInternalIndex] = useState(controlledIndex);
   const selectedIndex = controlledIndex !== undefined ? controlledIndex : internalIndex;
 
-  const containerRef = useRef<BoxRef>(null);
-  const contentRef = useRef<BoxRef>(null);
+  const scrollBoxRef = useRef<AutoScrollBoxHandle>(null);
   const itemRefs = useRef<Map<number, BoxRef>>(new Map());
-  const [scrollY, setScrollY] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
   const isKeyboardNavRef = useRef(false);
-
-  const updateMeasurements = useCallback(() => {
-    if (containerRef.current && contentRef.current) {
-      const containerDim = measureElement(containerRef.current);
-      const contentDim = measureElement(contentRef.current);
-      setContainerHeight(containerDim.height);
-      setContentHeight(contentDim.height);
-    }
-  }, []);
-
-  const updateMeasurementsThrottled = useMemo(() => throttle(updateMeasurements, 50), [updateMeasurements]);
-
-  useEffect(() => {
-    updateMeasurementsThrottled();
-  }, [items, updateMeasurementsThrottled]);
+  const [containerHeight, setContainerHeight] = useState(0);
 
   const scrollToIndex = useCallback(
     (index: number) => {
-      if (!containerRef.current || !contentRef.current || containerHeight === 0 || items.length === 0) return;
+      if (!scrollBoxRef.current || containerHeight === 0 || items.length === 0) return;
 
       const itemRef = itemRefs.current.get(index);
-      if (itemRef) {
-        const itemDim = measureElement(itemRef);
-        let itemTop = 0;
-        for (let i = 0; i < index; i++) {
-          const ref = itemRefs.current.get(i);
-          if (ref) {
-            itemTop += measureElement(ref).height;
-          }
-        }
-        const itemBottom = itemTop + itemDim.height;
+      if (!itemRef) return;
 
-        let newScrollY = scrollY;
-        if (itemTop < scrollY) {
-          newScrollY = itemTop;
-        } else if (itemBottom > scrollY + containerHeight) {
-          newScrollY = itemBottom - containerHeight;
-        }
-
-        if (newScrollY !== scrollY) {
-          setScrollY(newScrollY);
-          containerRef.current.scrollTo({ x: 0, y: newScrollY });
+      const itemDim = measureElement(itemRef);
+      let itemTop = 0;
+      for (let i = 0; i < index; i++) {
+        const ref = itemRefs.current.get(i);
+        if (ref) {
+          itemTop += measureElement(ref).height;
         }
       }
+      const itemBottom = itemTop + itemDim.height;
+
+      const scrollInfo = scrollBoxRef.current.getScrollInfo();
+      const scrollY = scrollInfo.scrollY;
+
+      if (itemTop < scrollY) {
+        scrollBoxRef.current.scrollTo(itemTop);
+      } else if (itemBottom > scrollY + containerHeight) {
+        scrollBoxRef.current.scrollTo(itemBottom - containerHeight);
+      }
     },
-    [containerHeight, items.length, scrollY],
+    [containerHeight, items.length],
   );
 
   useEffect(() => {
@@ -197,28 +125,9 @@ export function ScrollableSelectList<T>({
     { isActive: focus },
   );
 
-  const handleMouse = useCallback(
-    (event: MouseEvent) => {
-      if (event.type === 'wheel-up') {
-        const newY = Math.max(0, scrollY - scrollStep);
-        setScrollY(newY);
-        containerRef.current?.scrollTo({ x: 0, y: newY });
-        return true;
-      }
-      if (event.type === 'wheel-down') {
-        const maxScroll = Math.max(0, contentHeight - containerHeight);
-        const newY = Math.min(maxScroll, scrollY + scrollStep);
-        setScrollY(newY);
-        containerRef.current?.scrollTo({ x: 0, y: newY });
-        return true;
-      }
-    },
-    [scrollStep, contentHeight, containerHeight, scrollY],
-  );
-
-  useMouse(handleMouse, { isActive: focus && contentHeight > containerHeight });
-
-  const needsScrollbar = showScrollbar && contentHeight > containerHeight;
+  const handleScrollChange = useCallback((info: { containerHeight: number }) => {
+    setContainerHeight(info.containerHeight);
+  }, []);
 
   const setItemRef = useCallback((index: number, ref: BoxRef | null) => {
     if (ref) {
@@ -229,32 +138,22 @@ export function ScrollableSelectList<T>({
   }, []);
 
   return (
-    <Box flexDirection="row" width="100%" {...(maxHeight ? { maxHeight } : {})} overflow="hidden">
-      <Box
-        ref={containerRef}
-        flexDirection="column"
-        flexGrow={1}
-        overflow="scroll"
-        {...(maxHeight ? { maxHeight } : {})}
-      >
-        <Box ref={contentRef} flexDirection="column" flexShrink={0}>
-          {items.map((item, index) => (
-            <Box key={item.key} flexDirection="column" ref={(ref) => setItemRef(index, ref)}>
-              {renderItem(item.value, index === selectedIndex, index)}
-            </Box>
-          ))}
+    <AutoScrollBox
+      ref={scrollBoxRef}
+      maxHeight={maxHeight}
+      flexGrow={flexGrow}
+      enableKeyboardScroll={false}
+      enableMouseScroll={true}
+      manualFocus={true}
+      focus={false}
+      onScrollChange={handleScrollChange}
+    >
+      {items.map((item, index) => (
+        <Box key={item.key} flexDirection="column" ref={(ref) => setItemRef(index, ref)}>
+          {renderItem(item.value, index === selectedIndex, index)}
         </Box>
-      </Box>
-      {needsScrollbar && (
-        <Scrollbar
-          scrollY={scrollY}
-          containerHeight={containerHeight}
-          contentHeight={contentHeight}
-          color={theme.tokens.cyan}
-          trackColor={theme.tokens.dim}
-        />
-      )}
-    </Box>
+      ))}
+    </AutoScrollBox>
   );
 }
 

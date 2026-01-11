@@ -3,7 +3,7 @@ import { Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import type { AgentTemplate, ToolPort, AgentAwareToolPort } from '@nuvin/nuvin-core';
 import { AppModal } from '@/components/AppModal.js';
-import AgentModal, { type AgentInfo } from '@/components/AgentModal/AgentModal.js';
+import AgentConfigurationModal, { type AgentInfo } from '@/components/AgentModal/AgentModal.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AgentCreator } from '@/services/AgentCreator.js';
@@ -66,14 +66,6 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       preservedState: null,
     }));
   }, []);
-
-  // const transitionToNone = useCallback(() => {
-  //   setNavigationState({
-  //     activeView: 'none',
-  //     navigationSource: null,
-  //     preservedState: null,
-  //   });
-  // }, []);
 
   useInput(
     (_input, key) => {
@@ -620,7 +612,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       : undefined;
 
   return (
-    <AgentModal
+    <AgentConfigurationModal
       visible={showAgentModal}
       agents={agents}
       enabledAgents={enabledAgents}

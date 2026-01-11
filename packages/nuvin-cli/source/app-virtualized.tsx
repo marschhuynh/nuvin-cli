@@ -72,20 +72,12 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
   const historyLoadedRef = useRef(false);
   const { cycleFocus } = useFocusCycle();
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.tab && !key.shift) {
       cycleFocus('forward');
       return true;
     }
     if (key.shift && key.tab) {
-      cycleFocus('backward');
-      return true;
-    }
-    if (key.ctrl && input === 'n') {
-      cycleFocus('forward');
-      return true;
-    }
-    if (key.ctrl && input === 'p') {
       cycleFocus('backward');
       return true;
     }

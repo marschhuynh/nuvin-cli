@@ -4,7 +4,8 @@ import { useAgentCreationState } from './useAgentCreationState.js';
 import { useAgentCreationKeyboard } from './useAgentCreationKeyboard.js';
 import { AgentDescriptionInput } from './AgentDescriptionInput.js';
 import { AgentPreview } from './AgentPreview.js';
-import { AgentForm } from './AgentForm.js';
+import { AgentBasicForm } from './AgentBasicForm.js';
+import { AgentSystemPromptForm } from './AgentSystemPromptForm.js';
 import { AgentLoading } from './AgentLoading.js';
 import { AgentError } from './AgentError.js';
 
@@ -57,8 +58,21 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
   }
 
   if (state.isEditing && preview) {
+    if (state.editFormView === 'systemPrompt') {
+      return (
+        <AgentSystemPromptForm
+          mode={mode}
+          preview={preview}
+          editedSystemPrompt={state.editedSystemPrompt}
+          error={error}
+          onSystemPromptChange={state.setEditedSystemPrompt}
+          onNavigateBack={state.navigateToBasicForm}
+        />
+      );
+    }
+
     return (
-      <AgentForm
+      <AgentBasicForm
         mode={mode}
         preview={preview}
         availableTools={availableTools}
@@ -67,7 +81,6 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         editedDescription={state.editedDescription}
         editedTools={state.editedTools}
         editedTemperature={state.editedTemperature}
-        editedSystemPrompt={state.editedSystemPrompt}
         editedModel={state.editedModel}
         error={error}
         onFieldChange={(field, value) => {
@@ -90,6 +103,7 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
           }
         }}
         onToolsChange={state.setEditedTools}
+        onNavigateToSystemPrompt={state.navigateToSystemPrompt}
       />
     );
   }

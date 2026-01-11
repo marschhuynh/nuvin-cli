@@ -8,10 +8,9 @@ import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { HelpText } from '@/components/HelpText.js';
-import { AutoScrollBox } from '@/components/AutoScrollBox.js';
 import { Focusable } from '@/components/Focusable/index.js';
 
-interface AgentFormProps {
+interface AgentBasicFormProps {
   mode: 'create' | 'edit';
   preview: Partial<AgentTemplate> & { systemPrompt: string };
   availableTools: string[];
@@ -20,11 +19,11 @@ interface AgentFormProps {
   editedDescription: string;
   editedTools: string[];
   editedTemperature: string;
-  editedSystemPrompt: string;
   editedModel: string;
   error?: string;
   onFieldChange: (field: string, value: string) => void;
   onToolsChange: (tools: string[]) => void;
+  onNavigateToSystemPrompt: () => void;
 }
 
 const ResponsiveBox: React.FC<BoxProps & { children: React.ReactNode }> = ({ children, ...rest }) => {
@@ -42,8 +41,7 @@ const FormTextInput: React.FC<{
   value: string;
   onChange: (value: string) => void;
   autoFocus?: boolean;
-  placeHolder?: string;
-}> = ({ label, value, onChange, autoFocus, placeHolder }) => {
+}> = ({ label, value, onChange, autoFocus }) => {
   const { theme } = useTheme();
   return (
     <Focusable autoFocus={autoFocus}>
@@ -52,14 +50,14 @@ const FormTextInput: React.FC<{
           <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
             {label}
           </Text>
-          <TextInput value={value} onChange={onChange} focus={isFocused} placeholder={placeHolder} />
+          <TextInput value={value} onChange={onChange} focus={isFocused} />
         </Box>
       )}
     </Focusable>
   );
 };
 
-const AgentFormContent: React.FC<AgentFormProps> = ({
+const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
   mode,
   preview,
   availableTools,
@@ -72,6 +70,7 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
   error,
   onFieldChange,
   onToolsChange,
+  onNavigateToSystemPrompt: _onNavigateToSystemPrompt,
 }) => {
   const { cols } = useStdoutDimensions();
   const { theme } = useTheme();
@@ -82,11 +81,13 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
     <Box marginLeft={1} flexGrow={1} marginRight={1}>
       <HelpText
         segments={[
-          { text: 'tab', highlight: true },
+          { text: 'Tab', highlight: true },
           { text: ' cycle fields • ' },
-          { text: 'ctrl+S', highlight: true },
+          { text: 'Ctrl+P', highlight: true },
+          { text: ' edit system prompt • ' },
+          { text: 'Ctrl+S', highlight: true },
           { text: ' save • ' },
-          { text: 'esc', highlight: true },
+          { text: 'ESC', highlight: true },
           { text: mode === 'edit' ? ' cancel' : ' back to preview' },
         ]}
       />
@@ -127,7 +128,7 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
           </Box>
 
           <Box flexGrow={1} width={cols / 4}>
-            <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} placeHolder="(inherited)" />
+            <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} />
           </Box>
 
           <Box flexGrow={1} width={cols / 4}>
@@ -150,28 +151,15 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
             onChange={(value) => onFieldChange('description', value)}
           />
         </Box>
-
-        <Focusable>
-          {({ isFocused }) => (
-            <Box flexDirection="column" marginBottom={1}>
-              <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
-                System Prompt:
-              </Text>
-              <AutoScrollBox maxHeight={14} enableMouseScroll={false} focus={isFocused} manualFocus>
-                <Text color={theme.modal.subtitle}>{preview.systemPrompt}</Text>
-              </AutoScrollBox>
-            </Box>
-          )}
-        </Focusable>
       </Box>
     </AppModal>
   );
 };
 
-export const AgentForm: React.FC<AgentFormProps> = (props) => {
+export const AgentBasicForm: React.FC<AgentBasicFormProps> = (props) => {
   return (
     <FocusProvider>
-      <AgentFormContent {...props} />
+      <AgentBasicFormContent {...props} />
     </FocusProvider>
   );
 };

@@ -37,7 +37,7 @@ export const AgentDescriptionInput: React.FC<AgentDescriptionInputProps> = ({ de
           Press Enter to generate, ESC to cancel
         </Text>
 
-        <Box marginTop={1}>
+        <Box marginY={1}>
           <Text color="yellow" dimColor>
             Example: "A security specialist that audits code for vulnerabilities and provides remediation steps"
           </Text>

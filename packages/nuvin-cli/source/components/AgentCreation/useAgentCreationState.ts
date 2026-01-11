@@ -3,12 +3,14 @@ import type { AgentTemplate } from '@nuvin/nuvin-core';
 
 type EditingField = 'name' | 'id' | 'description' | 'systemPrompt' | 'tools' | 'model' | 'temperature';
 type ViewMode = 'input' | 'preview' | 'editing' | 'loading' | 'error';
+type EditFormView = 'basic' | 'systemPrompt';
 
 const editingSequence: EditingField[] = ['name', 'id', 'model', 'temperature', 'tools', 'description'];
 
 export interface AgentCreationState {
   mode: 'create' | 'edit';
   viewMode: ViewMode;
+  editFormView: EditFormView;
   description: string;
   showPreview: boolean;
   isEditing: boolean;
@@ -35,6 +37,9 @@ export interface AgentCreationActions {
   setEditedSystemPrompt: (systemPrompt: string) => void;
   setEditedModel: (model: string) => void;
   setViewMode: (mode: ViewMode) => void;
+  setEditFormView: (view: EditFormView) => void;
+  navigateToSystemPrompt: () => void;
+  navigateToBasicForm: () => void;
   initializeEditingState: (preview?: Partial<AgentTemplate> & { systemPrompt: string }) => void;
   handleStartEditing: () => void;
   handleCancelEditing: () => void;
@@ -53,6 +58,7 @@ export const useAgentCreationState = (
 ) => {
   const [description, setDescription] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('input');
+  const [editFormView, setEditFormView] = useState<EditFormView>('basic');
   const [showPreview, setShowPreview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [activeField, setActiveField] = useState<EditingField>('name');
@@ -63,6 +69,14 @@ export const useAgentCreationState = (
   const [editedTemperature, setEditedTemperature] = useState('');
   const [editedSystemPrompt, setEditedSystemPrompt] = useState('');
   const [editedModel, setEditedModel] = useState('');
+
+  const navigateToSystemPrompt = useCallback(() => {
+    setEditFormView('systemPrompt');
+  }, []);
+
+  const navigateToBasicForm = useCallback(() => {
+    setEditFormView('basic');
+  }, []);
 
   const initializeEditingState = useCallback(() => {
     if (!preview) return;
@@ -92,6 +106,7 @@ export const useAgentCreationState = (
       setIsEditing(true);
       setShowPreview(false);
       setActiveField('name');
+      setEditFormView('basic');
       return;
     }
 
@@ -108,6 +123,7 @@ export const useAgentCreationState = (
     setActiveField('name');
     setIsEditing(true);
     setShowPreview(false);
+    setEditFormView('basic');
   }, [initializeEditingState, preview]);
 
   const handleCancelEditing = useCallback(() => {
@@ -263,6 +279,7 @@ export const useAgentCreationState = (
   return {
     mode,
     viewMode,
+    editFormView,
     description,
     showPreview,
     isEditing,
@@ -286,6 +303,9 @@ export const useAgentCreationState = (
     setEditedSystemPrompt,
     setEditedModel,
     setViewMode,
+    setEditFormView,
+    navigateToSystemPrompt,
+    navigateToBasicForm,
     initializeEditingState,
     handleStartEditing,
     handleCancelEditing,

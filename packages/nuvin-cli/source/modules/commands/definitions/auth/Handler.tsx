@@ -14,7 +14,7 @@ import { buildProviderOptions, getProviderLabel } from '@/config/providers.js';
 
 import { exchangeCodeForToken, createApiKey } from './anthropic-oauth.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { DeviceFlowUI, OAuthUI, TokenInputUI } from '@/components/auth/index.js';
+import { DeviceFlowUI, OAuthUI, TokenInputUI } from '@/components/Auth/index.js';
 import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
 import { useOAuth } from '@/hooks/useOAuth.js';
 import { useAuthStorage } from '@/hooks/useAuthStorage.js';

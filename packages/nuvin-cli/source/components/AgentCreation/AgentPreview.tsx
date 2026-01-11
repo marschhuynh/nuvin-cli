@@ -47,9 +47,23 @@ const ActionButton: React.FC<ActionButtonProps> = ({ label, onExecute, autoFocus
 
 const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onEdit }) => {
   const { theme } = useTheme();
+  const footerContent = (
+    <Box marginLeft={1} flexGrow={1} marginRight={1}>
+      <HelpText
+        segments={[
+          { text: 'Tab', highlight: true },
+          { text: ' to cycle • ' },
+          { text: 'Enter', highlight: true },
+          { text: ' to select • ' },
+          { text: 'ESC', highlight: true },
+          { text: ' to cancel' },
+        ]}
+      />
+    </Box>
+  );
 
   return (
-    <AppModal visible={true} title="Preview Generated Agent">
+    <AppModal visible={true} title="Preview Generated Agent" footer={footerContent}>
       <Box flexDirection="column" marginTop={1}>
         <Box marginBottom={1}>
           <Text color={theme.colors.primary} bold>
@@ -85,22 +99,9 @@ const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onE
           <Text>{preview.temperature ?? 0.7}</Text>
         </Box>
 
-        <Box flexDirection="row" gap={2} marginTop={1}>
+        <Box flexDirection="row" gap={2} marginY={1}>
           <ActionButton label="Save" onExecute={onSave} autoFocus />
           <ActionButton label="Edit" onExecute={onEdit} />
-        </Box>
-
-        <Box marginTop={1}>
-          <HelpText
-            segments={[
-              { text: 'Tab', highlight: true },
-              { text: ' to cycle • ' },
-              { text: 'Enter', highlight: true },
-              { text: ' to select • ' },
-              { text: 'ESC', highlight: true },
-              { text: ' to cancel' },
-            ]}
-          />
         </Box>
       </Box>
     </AppModal>

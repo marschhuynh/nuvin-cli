@@ -209,7 +209,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         ) : (
-          <Box flexShrink={0} marginTop={1}>
+          <Box flexShrink={0} marginTop={1} zIndex={20}>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         );
@@ -220,7 +220,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ActiveCommand />
           </Box>
         ) : (
-          <Box flexShrink={0}>
+          <Box flexShrink={1} zIndex={10}>
             <ActiveCommand />
           </Box>
         );

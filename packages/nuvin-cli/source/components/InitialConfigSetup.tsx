@@ -12,7 +12,7 @@ import type { ProviderKey } from '@/config/const.js';
 import { buildProviderOptions, type ProviderItem } from '@/config/providers.js';
 import { getProviderAuthMethods, getProviderModels, type AuthMethod, type AuthMethodItem } from '@/const.js';
 import { exchangeCodeForToken, createApiKey } from '@/modules/commands/definitions/auth/anthropic-oauth.js';
-import { DeviceFlowUI, OAuthUI, TokenInputUI } from './auth/index.js';
+import { DeviceFlowUI, OAuthUI, TokenInputUI } from './Auth/index.js';
 import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
 import { useOAuth } from '@/hooks/useOAuth.js';
 import { useAuthStorage } from '@/hooks/useAuthStorage.js';

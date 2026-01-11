@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { Text } from 'ink';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { Box, Text, measureElement } from 'ink';
 import type { Except } from 'type-fest';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { moveCursorVertically, getLineInfo } from '@/utils/textNavigation.js';
@@ -10,6 +10,7 @@ import { useVimMode } from './useVimMode.js';
 import { usePaste } from './usePaste.js';
 import { useCursorRenderer } from './useCursorRenderer.js';
 import { useEditorState } from './useEditorState.js';
+import { useViewport } from './useViewport.js';
 
 export type Props = {
   readonly placeholder?: string;
@@ -24,6 +25,8 @@ export type Props = {
   readonly onVimModeChange?: (mode: 'insert' | 'normal') => void;
   readonly onUpArrow?: (lineInfo: LineInfo) => void;
   readonly onDownArrow?: (lineInfo: LineInfo) => void;
+  readonly maxHeight?: number;
+  readonly scrollable?: boolean;
 };
 
 function TextInput({
@@ -38,7 +41,36 @@ function TextInput({
   onVimModeChange,
   onUpArrow,
   onDownArrow,
+  maxHeight: maxHeightProp,
+  scrollable = false,
 }: Props) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const containerNodeRef = useRef<any>(null);
+  const [measuredHeight, setMeasuredHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (!scrollable || maxHeightProp) return;
+
+    const measureContainer = () => {
+      if (containerNodeRef.current) {
+        try {
+          const { height } = measureElement(containerNodeRef.current);
+          if (height > 0 && height !== measuredHeight) {
+            setMeasuredHeight(height);
+          }
+        } catch {
+          // Element not ready for measurement
+        }
+      }
+    };
+
+    measureContainer();
+    const interval = setInterval(measureContainer, 100);
+    return () => clearInterval(interval);
+  }, [scrollable, maxHeightProp, measuredHeight]);
+
+  const maxHeight = maxHeightProp ?? (scrollable ? measuredHeight : undefined);
+
   const {
     mode: vimMode,
     handleVimInput,
@@ -61,6 +93,12 @@ function TextInput({
 
   const { processPaste } = usePaste();
   const { renderWithCursor } = useCursorRenderer();
+
+  const { getVisibleContent, hasScrolling } = useViewport({
+    value: editorState.value,
+    cursorOffset: editorState.cursorOffset,
+    maxHeight,
+  });
 
   // Use refs to access current state in callbacks without recreating them
   const editorStateRef = useRef(editorState);
@@ -141,19 +179,12 @@ function TextInput({
         return true;
       }
 
-      if (key.ctrl && input === 's') {
+      if (key.ctrl) {
         return;
       }
 
-      if (
-        (key.ctrl && input === 'c') ||
-        (key.ctrl && input === 'v') ||
-        key.tab ||
-        (key.shift && key.tab) ||
-        (key.ctrl && input === 'n') ||
-        (key.ctrl && input === 'p')
-      ) {
-        return true;
+      if (key.tab || (key.shift && key.tab)) {
+        return;
       }
 
       if (key.return) {
@@ -183,13 +214,13 @@ function TextInput({
           }
         }
         return true;
-      } else if (key.home || (key.ctrl && input === 'a')) {
+      } else if (key.home) {
         if (showCursor) {
           const lineInfo = getLineInfo(currentValue, currentCursorOffset);
           moveCursorRef.current(lineInfo.lineStart);
         }
         return true;
-      } else if (key.end || (key.ctrl && input === 'e')) {
+      } else if (key.end) {
         if (showCursor) {
           const lineInfo = getLineInfo(currentValue, currentCursorOffset);
           moveCursorRef.current(lineInfo.lineEnd);
@@ -265,6 +296,60 @@ function TextInput({
   useInput(handleInput, { isActive: focus });
 
   const value = mask ? mask.repeat(editorState.value.length) : editorState.value;
+
+  if (maxHeight && hasScrolling) {
+    const {
+      visibleValue,
+      cursorOffsetInView,
+      showTopIndicator,
+      showBottomIndicator,
+      linesAbove,
+      linesBelow,
+    } = getVisibleContent();
+    const maskedVisibleValue = mask ? mask.repeat(visibleValue.length) : visibleValue;
+    const { renderedValue, renderedPlaceholder } = renderWithCursor(
+      maskedVisibleValue,
+      cursorOffsetInView,
+      placeholder,
+      showCursor,
+      focus,
+    );
+
+    return (
+      <Box ref={containerNodeRef} flexDirection="column" height={maxHeightProp ?? undefined} flexGrow={scrollable ? 1 : undefined}>
+        {showTopIndicator && (
+          <Box>
+            <Text dimColor>↑ {linesAbove} more line{linesAbove !== 1 ? 's' : ''} above</Text>
+          </Box>
+        )}
+        <Box flexDirection="column" flexGrow={1} overflow='hidden'>
+          <Text>{placeholder ? (visibleValue.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}</Text>
+        </Box>
+        {showBottomIndicator && (
+          <Box>
+            <Text dimColor>↓ {linesBelow} more line{linesBelow !== 1 ? 's' : ''} below</Text>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  if (scrollable && !maxHeight) {
+    const { renderedValue, renderedPlaceholder } = renderWithCursor(
+      value,
+      editorState.cursorOffset,
+      placeholder,
+      showCursor,
+      focus,
+    );
+
+    return (
+      <Box ref={containerNodeRef} flexDirection="column" flexGrow={1}>
+        <Text>{placeholder ? (value.length > 0 ? renderedValue : renderedPlaceholder) : renderedValue}</Text>
+      </Box>
+    );
+  }
+
   const { renderedValue, renderedPlaceholder } = renderWithCursor(
     value,
     editorState.cursorOffset,

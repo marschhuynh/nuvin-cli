@@ -1,10 +1,16 @@
 import { type BoxRef, Box, type BoxProps, measureElement, Text } from 'ink';
-import { useRef, useEffect, useCallback, useState, useMemo, type ReactNode } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo, type ReactNode, useImperativeHandle, forwardRef } from 'react';
 import { useMouse, useInput, useFocus, type MouseEvent, type Key } from '../contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 
+export type AutoScrollBoxHandle = {
+  scrollTo: (y: number) => void;
+  scrollBy: (delta: number) => void;
+  getScrollInfo: () => ScrollInfo;
+};
+
 type AutoScrollBoxProps = {
-  maxHeight: number | string | undefined;
+  maxHeight?: number | string;
   children: ReactNode;
   scrollStep?: number;
   enableMouseScroll?: boolean;
@@ -16,6 +22,8 @@ type AutoScrollBoxProps = {
   focus?: boolean;
   manualFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  onScrollChange?: (scrollInfo: ScrollInfo) => void;
+  flexGrow?: number;
 } & Omit<BoxProps, 'ref' | 'overflow' | 'height'>;
 
 type ScrollInfo = {
@@ -90,7 +98,7 @@ function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
   }) as T;
 }
 
-export function AutoScrollBox({
+export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>(function AutoScrollBox({
   maxHeight,
   children,
   scrollStep = 1,
@@ -103,8 +111,10 @@ export function AutoScrollBox({
   focus: externalFocus,
   manualFocus = false,
   onFocusChange,
+  onScrollChange,
+  flexGrow,
   ...boxProps
-}: AutoScrollBoxProps) {
+}: AutoScrollBoxProps, ref) {
   const { theme } = useTheme();
   const boxRef = useRef<BoxRef>(null);
   const contentRef = useRef<BoxRef>(null);
@@ -236,6 +246,23 @@ export function AutoScrollBox({
     updateScrollInfoThrottled();
   }, [children, updateScrollInfoThrottled]);
 
+  useEffect(() => {
+    onScrollChange?.(scrollInfo);
+  }, [scrollInfo, onScrollChange]);
+
+  const scrollToPosition = useCallback((y: number) => {
+    if (!boxRef.current) return;
+    boxRef.current.scrollTo({ x: 0, y: Math.max(0, y) });
+    isUserScrolledRef.current = true;
+    updateScrollInfoThrottled();
+  }, [updateScrollInfoThrottled]);
+
+  useImperativeHandle(ref, () => ({
+    scrollTo: scrollToPosition,
+    scrollBy,
+    getScrollInfo: () => scrollInfo,
+  }), [scrollToPosition, scrollBy, scrollInfo]);
+
   const scrollbarElement = needsScrollbar && (
     <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} />
   );
@@ -245,6 +272,7 @@ export function AutoScrollBox({
       flexDirection="row"
       width="100%"
       {...(maxHeight !== undefined ? { maxHeight } : {})}
+      {...(flexGrow !== undefined ? { flexGrow } : {})}
       overflow="hidden"
       backgroundColor={isFocused ? theme.tokens.dim : undefined}
     >
@@ -253,8 +281,7 @@ export function AutoScrollBox({
           {children}
         </Box>
       </Box>
-      <Box flexGrow={1} />
       {scrollbarElement}
     </Box>
   );
-}
+});

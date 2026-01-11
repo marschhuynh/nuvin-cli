@@ -4,6 +4,7 @@ import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useFocus } from '@/contexts/InputContext/FocusContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
+import { HelpText } from '../HelpText';
 
 interface ToolSelectInputProps {
   availableTools: string[];
@@ -89,8 +90,22 @@ export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools
 
   return (
     <Box flexDirection="column">
-      <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
-        Tools:
+      <Text>
+        <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>Tools: </Text>
+        <Text color={theme.tokens.dim}>
+          (
+          <HelpText
+            segments={[
+              { text: '←/→', },
+              { text: ' cycle fields • ' },
+              { text: 'Space', },
+              { text: ' toggle • ' },
+              { text: 'Tab', },
+              { text: ' continue' },
+            ]}
+          />
+          )
+        </Text>
       </Text>
       <Box flexDirection="row" alignItems="center" paddingX={1} flexWrap="wrap">
         {combinedTools.map((toolName, index) => {
@@ -108,11 +123,6 @@ export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools
             </Box>
           );
         })}
-      </Box>
-      <Box marginTop={1}>
-        <Text color={theme.modal.help} dimColor>
-          ↑/↓/←/→ Navigate • Space Toggle • Tab Continue
-        </Text>
       </Box>
     </Box>
   );

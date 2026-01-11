@@ -16,7 +16,7 @@ export const AgentLoading: React.FC<AgentLoadingProps> = ({ mode }) => {
 
   return (
     <AppModal visible={true} title={loadingTitle}>
-      <Box marginTop={1}>
+      <Box marginY={1}>
         <Text color={loadingColor}>{loadingMessage}</Text>
       </Box>
     </AppModal>

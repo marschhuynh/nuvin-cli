@@ -117,7 +117,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     return null;
   }
 
-  const footerText = isEditMode ? 'Enter Submit • Esc Cancel' : 'Tab/Ctrl+N/P Cycle Focus • 1/2/3 Quick Select';
+  const footerText = isEditMode ? 'Enter Submit • Esc Cancel' : 'Tab Cycle Focus • 1/2/3 Quick Select';
 
   return (
     <AppModal

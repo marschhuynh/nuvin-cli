@@ -25,7 +25,7 @@ interface AgentModalProps {
   onAgentEdit?: (agentId: string) => void;
 }
 
-export const AgentModal: React.FC<AgentModalProps> = ({
+export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
   visible,
   agents,
   enabledAgents = {},
@@ -55,10 +55,10 @@ export const AgentModal: React.FC<AgentModalProps> = ({
 
   if (!visible) return null;
 
-  const listMaxHeight = Math.max(10, rows - 10);
+  const modalHeight = rows - 4;
 
   const footerContent = (
-    <Box marginLeft={1} flexGrow={1} marginRight={1}>
+    <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>
       <HelpText
         segments={[
           { text: '↑↓' },
@@ -82,11 +82,11 @@ export const AgentModal: React.FC<AgentModalProps> = ({
     <AppModal
       visible={visible}
       title="Agent Configuration"
-      onClose={undefined}
       closeOnEscape={false}
       paddingX={2}
       paddingY={1}
       footer={footerContent}
+      height={modalHeight}
     >
       {agents.length === 0 ? (
         <Box marginTop={1}>
@@ -98,7 +98,7 @@ export const AgentModal: React.FC<AgentModalProps> = ({
           selectedAgentIndex={state.selectedAgentIndex}
           isAgentEnabled={state.isAgentEnabled}
           onAgentSelect={state.setSelectedAgentIndex}
-          maxHeight={listMaxHeight}
+          flexGrow={1}
           focus={true}
         />
       )}
@@ -106,4 +106,4 @@ export const AgentModal: React.FC<AgentModalProps> = ({
   );
 };
 
-export default AgentModal;
+export default AgentConfigurationModal;
