@@ -1,16 +1,21 @@
 import type React from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Box, Text } from 'ink';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Box, Text, measureElement, type BoxRef } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import chalk from 'chalk';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
-import { ScrollableSelectList, type ScrollableSelectItem } from '@/components/ScrollableSelectList/index.js';
+import { AutoScrollBox, type AutoScrollBoxHandle } from '@/components/AutoScrollBox.js';
 
 export type ComboBoxItem = {
   label: string;
   value: string;
+  group?: string;
 };
+
+type ListItem =
+  | { type: 'header'; group: string }
+  | { type: 'item'; item: ComboBoxItem; originalIndex: number };
 
 export type ComboBoxProps = {
   items: ComboBoxItem[];
@@ -26,7 +31,6 @@ export type ComboBoxProps = {
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
   items,
-  maxDisplayItems,
   placeholder = 'Type to search...',
   enableRotation = false,
   showSearchInput = true,
@@ -37,22 +41,93 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
 }) => {
   const { theme } = useTheme();
   const [input, setInput] = useState('');
-  const [filteredItems, setFilteredItems] = useState<ComboBoxItem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const pasteStateRef = useRef<PasteState>(createPasteState());
+  const scrollBoxRef = useRef<AutoScrollBoxHandle>(null);
+  const itemRefs = useRef<Map<number, BoxRef>>(new Map());
 
-  useEffect(() => {
-    const filtered = input.trim()
-      ? items.filter((item) => item.label.toLowerCase().includes(input.toLowerCase()))
-      : items;
-
-    setFilteredItems(filtered);
+  const filteredItems = useMemo(() => {
+    if (!input.trim()) return items;
+    return items.filter((item) => item.label.toLowerCase().includes(input.toLowerCase()));
   }, [input, items]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const { listItems, selectableIndices } = useMemo(() => {
+    const result: ListItem[] = [];
+    const selectable: number[] = [];
+    let lastGroup: string | undefined;
+
+    for (let i = 0; i < filteredItems.length; i++) {
+      const item = filteredItems[i];
+      if (item.group && item.group !== lastGroup) {
+        result.push({ type: 'header', group: item.group });
+        lastGroup = item.group;
+      }
+      selectable.push(result.length);
+      result.push({ type: 'item', item, originalIndex: i });
+    }
+
+    return { listItems: result, selectableIndices: selectable };
+  }, [filteredItems]);
+
+  const hasGroups = listItems.some((item) => item.type === 'header');
+
   useEffect(() => {
     setSelectedIndex(0);
-  }, [filteredItems]);
+  }, [input]);
+
+  const scrollToSelected = useCallback((index: number) => {
+    if (selectableIndices.length === 0 || index < 0 || index >= selectableIndices.length) return;
+
+    const listIndex = selectableIndices[index];
+    const targetIndex = listItems[listIndex - 1]?.type === 'header' ? listIndex - 1 : listIndex;
+    const itemRef = itemRefs.current.get(targetIndex);
+
+    if (itemRef && scrollBoxRef.current) {
+      const scrollInfo = scrollBoxRef.current.getScrollInfo();
+      const itemDim = measureElement(itemRef);
+
+      let itemTop = 0;
+      for (let i = 0; i < targetIndex; i++) {
+        const ref = itemRefs.current.get(i);
+        if (ref) {
+          itemTop += measureElement(ref).height;
+        }
+      }
+
+      const itemBottom = itemTop + itemDim.height;
+      const { scrollY, containerHeight } = scrollInfo;
+
+      if (itemTop < scrollY) {
+        scrollBoxRef.current.scrollTo(itemTop);
+      } else if (itemBottom > scrollY + containerHeight) {
+        scrollBoxRef.current.scrollTo(itemBottom - containerHeight);
+      }
+    }
+  }, [selectableIndices, listItems]);
+
+  useEffect(() => {
+    scrollToSelected(selectedIndex);
+  }, [selectedIndex, scrollToSelected]);
+
+  const navigate = useCallback(
+    (direction: 'up' | 'down') => {
+      setSelectedIndex((prev) => {
+        if (selectableIndices.length === 0) return 0;
+
+        if (direction === 'up') {
+          if (enableRotation) {
+            return prev <= 0 ? selectableIndices.length - 1 : prev - 1;
+          }
+          return Math.max(0, prev - 1);
+        }
+        if (enableRotation) {
+          return prev >= selectableIndices.length - 1 ? 0 : prev + 1;
+        }
+        return Math.min(selectableIndices.length - 1, prev + 1);
+      });
+    },
+    [selectableIndices.length, enableRotation],
+  );
 
   useInput(
     (inputChar, key) => {
@@ -68,8 +143,12 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       }
 
       if (key.return) {
-        if (filteredItems.length > 0) {
-          onSelect(filteredItems[selectedIndex]);
+        if (selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
+          const listIndex = selectableIndices[selectedIndex];
+          const listItem = listItems[listIndex];
+          if (listItem?.type === 'item') {
+            onSelect(listItem.item);
+          }
         }
         return;
       }
@@ -79,7 +158,13 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         return;
       }
 
-      if (key.upArrow || key.downArrow) {
+      if (key.upArrow) {
+        navigate('up');
+        return;
+      }
+
+      if (key.downArrow) {
+        navigate('down');
         return;
       }
 
@@ -92,33 +177,44 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         setInput((prev) => prev + inputChar);
       }
     },
-    { isActive: showSearchInput },
+    { isActive: focus },
   );
 
-  const scrollableItems: ScrollableSelectItem<ComboBoxItem>[] = filteredItems.map((item) => ({
-    key: item.value,
-    value: item,
-  }));
-
-  const handleSelect = useCallback((item: ScrollableSelectItem<ComboBoxItem>) => {
-    onSelect(item.value);
-  }, [onSelect]);
-
-  const handleHighlight = useCallback((_: ScrollableSelectItem<ComboBoxItem>, index: number) => {
-    setSelectedIndex(index);
+  const setItemRef = useCallback((index: number, ref: BoxRef | null) => {
+    if (ref) {
+      itemRefs.current.set(index, ref);
+    } else {
+      itemRefs.current.delete(index);
+    }
   }, []);
 
-  const renderItem = useCallback((item: ComboBoxItem, isSelected: boolean) => (
-    <Box>
-      <Text>{isSelected ? '❯ ' : '  '}</Text>
-      <Text
-        color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
-        bold={isSelected}
-      >
-        {item.label}
-      </Text>
-    </Box>
-  ), [theme]);
+  const renderListItem = useCallback(
+    (listItem: ListItem, listIndex: number) => {
+      if (listItem.type === 'header') {
+        return (
+          <Text color={theme.colors.muted} bold>
+            {listItem.group}
+          </Text>
+        );
+      }
+
+      const selectablePosition = selectableIndices.indexOf(listIndex);
+      const isSelected = selectablePosition === selectedIndex;
+
+      return (
+        <Box overflow='hidden'>
+          <Text>{isSelected ? '❯ ' : '  '}</Text>
+          <Text
+            color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
+            bold={isSelected}
+          >
+            {listItem.item.label}
+          </Text>
+        </Box>
+      );
+    },
+    [selectedIndex, selectableIndices, theme],
+  );
 
   const renderedInput = input ? (
     <>
@@ -152,16 +248,29 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
             </Box>
           )}
 
-          <ScrollableSelectList
-            items={scrollableItems}
-            selectedIndex={selectedIndex}
-            onSelect={handleSelect}
-            onHighlight={handleHighlight}
-            renderItem={renderItem}
-            focus={focus}
-            enableRotation={enableRotation}
-            maxHeight={maxDisplayItems}
-          />
+          <AutoScrollBox
+            ref={scrollBoxRef}
+            flexGrow={1}
+            enableKeyboardScroll={false}
+            enableMouseScroll={true}
+            manualFocus={true}
+            focus={false}
+            autoScrollToBottom={false}
+            showScrollbar={true}
+          >
+            {listItems.map((listItem, index) => (
+              <Box
+                key={listItem.type === 'header' ? `header-${listItem.group}` : `item-${listItem.item.value}-${index}`}
+                flexShrink={0}
+                ref={(ref) => setItemRef(index, ref)}
+                position={hasGroups && listItem.type === 'header' ? 'sticky' : undefined}
+                top={hasGroups && listItem.type === 'header' ? 0 : undefined}
+                backgroundColor={hasGroups && listItem.type === 'header' ? theme.tokens.dim : undefined}
+              >
+                {renderListItem(listItem, index)}
+              </Box>
+            ))}
+          </AutoScrollBox>
         </Box>
       )}
     </Box>

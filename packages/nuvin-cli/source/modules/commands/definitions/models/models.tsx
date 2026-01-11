@@ -1,292 +1,260 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Box, Text } from 'ink';
-import { useInput } from '@/contexts/InputContext/index.js';
 import { AppModal } from '@/components/AppModal.js';
-import TextInput from '@/components/TextInput/index.js';
-import { ComboBox } from '@/components/ComboBox/index.js';
-import { ScrollableSelectList, type ScrollableSelectItem } from '@/components/ScrollableSelectList/index.js';
+import { ComboBox, type ComboBoxItem } from '@/components/ComboBox/ComboBox.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
-
-import { PROVIDER_MODELS, type ProviderKey } from '@/const.js';
-import { buildProviderOptions, getProviderLabel, type ProviderItem } from '@/config/providers.js';
-import type { ProviderConfig } from '@/config/types.js';
+import { getAllProviders, getProviderLabel } from '@/config/providers.js';
+import type { ProviderConfig, AuthMethod } from '@/config/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
-import { useModelsCommandState } from './hooks/useModelsCommandState.js';
+import { PROVIDER_MODELS } from '@/const.js';
 
-type AuthNavigationPromptProps = {
-  onNavigate: () => void;
-  onCancel: () => void;
+type ProviderModelsCache = {
+  models: string[];
+  fetchedAt: number;
 };
 
-const AuthNavigationPrompt = ({ onNavigate, onCancel }: AuthNavigationPromptProps) => {
-  const [selectedAction, setSelectedAction] = useState(0); // 0=Yes, 1=No
-  const { theme } = useTheme();
+const MODEL_CACHE_TTL = 5 * 60 * 1000;
+const RECENT_MODELS_KEY = 'recentModels';
+const MAX_RECENT_MODELS = 5;
 
-  useInput((input, key) => {
-    if (key.tab || key.leftArrow || key.rightArrow) {
-      setSelectedAction((prev) => (prev === 0 ? 1 : 0));
-      return;
-    }
+const modelsCache = new Map<string, ProviderModelsCache>();
 
-    if (key.return) {
-      if (selectedAction === 0) {
-        onNavigate();
-      } else {
-        onCancel();
-      }
-      return;
-    }
+function getProvidersWithAuth(
+  allProviders: string[],
+  providersConfig: Record<string, ProviderConfig> | undefined,
+): string[] {
+  if (!providersConfig) return [];
 
-    if (input === '1' || input.toLowerCase() === 'y') {
-      onNavigate();
-      return;
-    }
+  return allProviders.filter((provider) => {
+    const providerLower = provider.toLowerCase();
+    const config = providersConfig[providerLower] || providersConfig[provider];
+    if (!config) return false;
 
-    if (input === '2' || input.toLowerCase() === 'n') {
-      onCancel();
-      return;
-    }
+    const auth = config.auth;
+    if (!Array.isArray(auth) || auth.length === 0) return false;
+
+    return auth.some((a: AuthMethod) => {
+      if (a.type === 'api-key' && a['api-key']) return true;
+      if (a.type === 'oauth' && a.access) return true;
+      return false;
+    });
   });
+}
 
-  return (
-    <Box flexDirection="column">
-      <Text color={theme.model.subtitle} dimColor>
-        Would you like to configure authentication now?
-      </Text>
-      <Box marginTop={1} flexDirection="row" gap={2}>
-        <Box alignItems="center">
-          <Text color={selectedAction === 0 ? theme.toolApproval?.actionSelected || theme.tokens.cyan : undefined} bold>
-            {selectedAction === 0 ? '❯ ' : '  '}
-          </Text>
-          <Text
-            dimColor={selectedAction !== 0}
-            color={selectedAction === 0 ? theme.toolApproval?.actionApprove || theme.tokens.green : theme.tokens.white}
-            bold
-          >
-            Yes
-          </Text>
-        </Box>
-        <Box alignItems="center">
-          <Text color={selectedAction === 1 ? theme.toolApproval?.actionSelected || theme.tokens.cyan : undefined} bold>
-            {selectedAction === 1 ? '❯ ' : '  '}
-          </Text>
-          <Text
-            dimColor={selectedAction !== 1}
-            color={
-              selectedAction === 1
-                ? theme.toolApproval?.actionSelected || theme.tokens.cyan
-                : theme.toolApproval?.actionDeny || theme.tokens.red
-            }
-            bold
-          >
-            No
-          </Text>
-        </Box>
-      </Box>
-      <Box marginTop={1}>
-        <Text color={theme.model.help || theme.colors?.muted} dimColor>
-          Tab/←→ Navigate • Enter Select • 1/2 or Y/N Quick Select
-        </Text>
-      </Box>
-    </Box>
-  );
-};
+function getCachedModels(provider: string): string[] | null {
+  const cached = modelsCache.get(provider);
+  if (!cached) return null;
 
-const getModalTitle = (stage: string, selectedProvider: ProviderKey | null): string => {
-  switch (stage) {
-    case 'provider':
-      return 'Select AI Provider';
-    case 'loading':
-      return 'Loading Models...';
-    case 'model':
-      return `Select Model for ${selectedProvider ? getProviderLabel(selectedProvider) : 'Unknown Provider'}`;
-    case 'custom':
-      return 'Enter Custom Model Name';
-    default:
-      return 'Model Configuration';
+  if (Date.now() - cached.fetchedAt > MODEL_CACHE_TTL) {
+    modelsCache.delete(provider);
+    return null;
   }
+
+  return cached.models;
+}
+
+function setCachedModels(provider: string, models: string[]): void {
+  modelsCache.set(provider, {
+    models,
+    fetchedAt: Date.now(),
+  });
+}
+
+type RecentModel = {
+  provider: string;
+  model: string;
+  usedAt: number;
 };
 
-const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandComponentProps) => {
+function getRecentModels(config: CommandComponentProps['context']['config']): RecentModel[] {
+  const recent = config.get<RecentModel[]>(RECENT_MODELS_KEY) || [];
+  return recent.slice(0, MAX_RECENT_MODELS);
+}
+
+async function addRecentModel(
+  config: CommandComponentProps['context']['config'],
+  provider: string,
+  model: string,
+): Promise<void> {
+  const recent = config.get<RecentModel[]>(RECENT_MODELS_KEY) || [];
+  const filtered = recent.filter((r) => !(r.provider === provider && r.model === model));
+  const updated = [{ provider, model, usedAt: Date.now() }, ...filtered].slice(0, MAX_RECENT_MODELS);
+  await config.set(RECENT_MODELS_KEY, updated, 'global');
+}
+
+const ModelsV2CommandComponent = ({ context, deactivate, isActive }: CommandComponentProps) => {
   const { theme } = useTheme();
   const { rows } = useStdoutDimensions();
-  const providerOptions = buildProviderOptions(context.config.get<Record<string, ProviderConfig>>('providers'));
+
+  const providersConfigRef = useRef(context.config.get<Record<string, ProviderConfig>>('providers'));
+  const providersConfig = providersConfigRef.current;
+
+  const allProvidersRef = useRef(getAllProviders(providersConfig));
+  const authenticatedProvidersRef = useRef(getProvidersWithAuth(allProvidersRef.current, providersConfig));
+  const authenticatedProviders = authenticatedProvidersRef.current;
+
+  const [providerModels, setProviderModels] = useState<Record<string, string[]>>({});
+  const [loadingProviders, setLoadingProviders] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const recentModelsRef = useRef(getRecentModels(context.config));
+  const recentModels = recentModelsRef.current;
 
   const llmFactory = context.orchestratorManager?.getLLMFactory();
 
-  const {
-    state,
-    selectProvider,
-    selectModel,
-    goToCustomInput,
-    goBack,
-    setCustomModelInput,
-    submitCustomModel,
-    clearError,
-    navigateToAuth,
-  } = useModelsCommandState(context.config, llmFactory, deactivate, deactivate, context);
+  const fetchStartedRef = useRef(false);
+  useEffect(() => {
+    if (authenticatedProviders.length === 0 || fetchStartedRef.current) return;
+    fetchStartedRef.current = true;
 
-  const [providerIndex, setProviderIndex] = useState(0);
+    const abortController = new AbortController();
 
-  const modalHeight = Math.min(rows - 4, 20);
-
-  const providerItems: ScrollableSelectItem<ProviderItem>[] = useMemo(
-    () => providerOptions.map((opt) => ({ key: opt.value, value: opt })),
-    [providerOptions],
-  );
-
-  useInput(
-    (_input, key) => {
-      if (key.escape && !state.showAuthPrompt) {
-        goBack();
+    const fetchModelsForProvider = async (provider: string) => {
+      const cached = getCachedModels(provider);
+      if (cached) {
+        setProviderModels((prev) => ({ ...prev, [provider]: cached }));
+        return;
       }
-    },
-    { isActive: isActive && !state.showAuthPrompt },
-  );
 
-  const handleProviderSelect = async (item: ScrollableSelectItem<ProviderItem>) => {
-    const provider = item.value.value as ProviderKey;
-    selectProvider(provider);
-  };
+      setLoadingProviders((prev) => ({ ...prev, [provider]: true }));
 
-  const handleModelSelect = async (item: ScrollableSelectItem<{ label: string; value: string }>) => {
-    if (item.value.value === 'custom') {
-      goToCustomInput();
-      return;
+      try {
+        if (llmFactory) {
+          const models = await llmFactory.getModels(provider, abortController.signal);
+          if (models.length > 0) {
+            setCachedModels(provider, models);
+            setProviderModels((prev) => ({ ...prev, [provider]: models }));
+          } else {
+            const fallback = PROVIDER_MODELS[provider] || [];
+            setProviderModels((prev) => ({ ...prev, [provider]: fallback }));
+          }
+        } else {
+          const fallback = PROVIDER_MODELS[provider] || [];
+          setProviderModels((prev) => ({ ...prev, [provider]: fallback }));
+        }
+      } catch {
+        const fallback = PROVIDER_MODELS[provider] || [];
+        setProviderModels((prev) => ({ ...prev, [provider]: fallback }));
+      } finally {
+        setLoadingProviders((prev) => ({ ...prev, [provider]: false }));
+      }
+    };
+
+    for (const provider of authenticatedProviders) {
+      fetchModelsForProvider(provider);
     }
-    await selectModel(item.value.value);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [authenticatedProviders, llmFactory]);
+
+  const comboBoxItems = useMemo<ComboBoxItem[]>(() => {
+    const items: ComboBoxItem[] = [];
+
+    const validRecentModels = recentModels.filter((r) => authenticatedProviders.includes(r.provider));
+    for (const recent of validRecentModels) {
+      const providerLabel = getProviderLabel(recent.provider);
+      items.push({
+        label: `${recent.model} (${providerLabel})`,
+        value: `${recent.provider}::${recent.model}`,
+        group: '⏱ Recent',
+      });
+    }
+
+    for (const provider of authenticatedProviders) {
+      const providerLabel = getProviderLabel(provider);
+      const models = providerModels[provider] || [];
+      const isLoading = loadingProviders[provider];
+
+      if (isLoading && models.length === 0) {
+        items.push({
+          label: 'Loading...',
+          value: `__loading__::${provider}`,
+          group: providerLabel,
+        });
+      } else {
+        for (const model of models) {
+          const isRecent = validRecentModels.some((r) => r.provider === provider && r.model === model);
+          if (!isRecent) {
+            items.push({
+              label: model,
+              value: `${provider}::${model}`,
+              group: providerLabel,
+            });
+          }
+        }
+      }
+    }
+
+    return items;
+  }, [recentModels, authenticatedProviders, providerModels, loadingProviders]);
+
+  const handleSelect = async (item: ComboBoxItem) => {
+    if (item.value.startsWith('__loading__::')) return;
+
+    const [provider, model] = item.value.split('::');
+    if (!provider || !model) return;
+
+    try {
+      await context.config.set('activeProvider', provider, 'global');
+      await context.config.set('model', model, 'global');
+      await context.config.set(`providers.${provider}.model`, model, 'global');
+      await addRecentModel(context.config, provider, model);
+      deactivate();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save model');
+    }
   };
 
-  const handleCustomModelSubmit = async (value: string) => {
-    await submitCustomModel(value);
-  };
+  const modalHeight = Math.min(rows - 4, 24);
 
-  const renderProviderItem = (item: ProviderItem, isSelected: boolean) => (
-    <Box>
-      <Text color={isSelected ? theme.colors.accent : undefined}>
-        {isSelected ? '❯ ' : '  '}
-      </Text>
-      <Text color={isSelected ? theme.colors.accent : undefined} bold={isSelected}>
-        {item.label}
-      </Text>
-    </Box>
-  );
-
-  const renderContent = () => {
-    if (state.stage === 'provider') {
-      return (
-        <Box flexDirection="column" flexGrow={1} overflow="hidden">
-          <Text color={theme.model.subtitle} dimColor>
-            Choose the AI provider for your models
+  if (authenticatedProviders.length === 0) {
+    return (
+      <AppModal
+        visible={true}
+        title="Select Model"
+        onClose={deactivate}
+        closeOnEscape={true}
+        height={8}
+      >
+        <Box flexDirection="column">
+          <Text color="yellow">No providers configured.</Text>
+          <Text color={theme.colors.muted} dimColor>
+            Run /auth to configure a provider first.
           </Text>
-          <Box marginY={1} flexGrow={1} overflow="hidden">
-            <ScrollableSelectList
-              items={providerItems}
-              selectedIndex={providerIndex}
-              onHighlight={(_, index) => setProviderIndex(index)}
-              onSelect={handleProviderSelect}
-              renderItem={renderProviderItem}
-              focus={isActive}
-            />
-          </Box>
         </Box>
-      );
-    }
-
-    if (state.stage === 'loading') {
-      return (
-        <Box marginBottom={1}>
-          <Text color={theme.model.subtitle} dimColor>
-            Fetching available models from{' '}
-            {state.selectedProvider ? getProviderLabel(state.selectedProvider) : 'selected provider'}...
-          </Text>
-        </Box>
-      );
-    }
-
-    if (state.stage === 'model' && state.selectedProvider) {
-      const fallbackModels = PROVIDER_MODELS[state.selectedProvider] || [];
-      const models = state.availableModels.length > 0 ? state.availableModels : fallbackModels;
-      const modelOptions = [
-        ...models.map((model) => ({ label: model, value: model })),
-        { label: '🎯 Enter custom model name...', value: 'custom' },
-      ];
-      const hasAuthError = state.showAuthPrompt;
-
-      return (
-        <Box flexDirection="column" overflow="hidden">
-          {state.error && (
-            <Box marginBottom={1} flexDirection="column" flexShrink={0}>
-              <Text color="red">{state.error}</Text>
-            </Box>
-          )}
-
-          {!hasAuthError && (
-            <Text color={theme.model.subtitle} dimColor>
-              {state.availableModels.length === 0 && 'Choose a model or enter a custom model name'}
-            </Text>
-          )}
-
-          <Box overflow="hidden">
-            {hasAuthError ? (
-              <AuthNavigationPrompt onNavigate={navigateToAuth} onCancel={clearError} />
-            ) : (
-              <ComboBox
-                showItemCount={false}
-                items={modelOptions}
-                placeholder="Type to search models..."
-                enableRotation={true}
-                onSelect={(item) => handleModelSelect({ key: item.value, value: item })}
-                onCancel={goBack}
-              />
-            )}
-          </Box>
-        </Box>
-      );
-    }
-
-    if (state.stage === 'custom') {
-      return (
-        <>
-          <Text color={theme.model.subtitle} dimColor>
-            Type the exact model name for{' '}
-            {state.selectedProvider ? getProviderLabel(state.selectedProvider) : 'selected provider'}
-          </Text>
-          <Box marginTop={1}>
-            <Text color={theme.model.label}>Model: </Text>
-            <TextInput
-              value={state.customModel}
-              onChange={setCustomModelInput}
-              onSubmit={handleCustomModelSubmit}
-              placeholder="e.g., anthropic/claude-3-opus-20240229"
-            />
-          </Box>
-          <Box marginTop={1}>
-            <Text color={theme.model.help} dimColor>
-              Press Enter to save, Esc to cancel
-            </Text>
-          </Box>
-        </>
-      );
-    }
-
-    return null;
-  };
-
-  const content = renderContent();
-  if (!content) return null;
+      </AppModal>
+    );
+  }
 
   return (
     <AppModal
       visible={true}
-      title={getModalTitle(state.stage, state.selectedProvider)}
+      title="Select Model"
       onClose={deactivate}
       closeOnEscape={false}
       closeOnEnter={false}
       height={modalHeight}
     >
-      {content}
+      <Box flexDirection="column" flexGrow={1} overflow="hidden">
+        {error && (
+          <Box marginBottom={1}>
+            <Text color="red">{error}</Text>
+          </Box>
+        )}
+
+        <ComboBox
+          items={comboBoxItems}
+          placeholder="Type to search models..."
+          enableRotation={true}
+          showItemCount={false}
+          focus={isActive}
+          onSelect={handleSelect}
+          onCancel={deactivate}
+        />
+      </Box>
     </AppModal>
   );
 };
@@ -295,8 +263,8 @@ export function registerModelsCommand(registry: CommandRegistry) {
   registry.register({
     id: '/model',
     type: 'component',
-    description: 'Select AI provider and model configuration.',
+    description: 'Select model from all authenticated providers.',
     category: 'config',
-    component: ModelsCommandComponent,
+    component: ModelsV2CommandComponent,
   });
 }
