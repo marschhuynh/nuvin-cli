@@ -31,7 +31,7 @@ const StatModal = ({ deactivate, context }: CommandComponentProps) => {
 
   return (
     <AppModal visible={true} title="Session Statistics" onClose={deactivate} closeOnEscape={true} closeOnEnter={true}>
-      <Box flexDirection="column" gap={1}>
+      <Box flexDirection="column" gap={1} paddingBottom={1}>
         <Box flexDirection="column">
           <Text color={theme.tokens.yellow} bold>
             Model

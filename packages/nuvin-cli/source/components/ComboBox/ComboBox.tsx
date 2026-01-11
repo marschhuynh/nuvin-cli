@@ -1,11 +1,11 @@
 import type React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import chalk from 'chalk';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
-import { SelectInput, type SelectInputItem, type SelectInputHandle } from '@/components/SelectInput/SelectInput.js';
+import { ScrollableSelectList, type ScrollableSelectItem } from '@/components/ScrollableSelectList/index.js';
 
 export type ComboBoxItem = {
   label: string;
@@ -26,7 +26,7 @@ export type ComboBoxProps = {
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
   items,
-  maxDisplayItems = 10,
+  maxDisplayItems,
   placeholder = 'Type to search...',
   enableRotation = false,
   showSearchInput = true,
@@ -38,8 +38,8 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   const { theme } = useTheme();
   const [input, setInput] = useState('');
   const [filteredItems, setFilteredItems] = useState<ComboBoxItem[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const pasteStateRef = useRef<PasteState>(createPasteState());
-  const selectInputRef = useRef<SelectInputHandle>(null);
 
   useEffect(() => {
     const filtered = input.trim()
@@ -49,12 +49,10 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     setFilteredItems(filtered);
   }, [input, items]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only reset index when the input changed
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (selectInputRef.current) {
-      selectInputRef.current.setSelectedIndex(0);
-    }
-  }, [input]);
+    setSelectedIndex(0);
+  }, [filteredItems]);
 
   useInput(
     (inputChar, key) => {
@@ -70,8 +68,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       }
 
       if (key.return) {
-        if (filteredItems.length > 0 && selectInputRef.current) {
-          const selectedIndex = selectInputRef.current.getSelectedIndex();
+        if (filteredItems.length > 0) {
           onSelect(filteredItems[selectedIndex]);
         }
         return;
@@ -98,11 +95,30 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     { isActive: showSearchInput },
   );
 
-  const selectInputItems: SelectInputItem<ComboBoxItem>[] = filteredItems.map((item) => ({
+  const scrollableItems: ScrollableSelectItem<ComboBoxItem>[] = filteredItems.map((item) => ({
     key: item.value,
-    label: item.label,
     value: item,
   }));
+
+  const handleSelect = useCallback((item: ScrollableSelectItem<ComboBoxItem>) => {
+    onSelect(item.value);
+  }, [onSelect]);
+
+  const handleHighlight = useCallback((_: ScrollableSelectItem<ComboBoxItem>, index: number) => {
+    setSelectedIndex(index);
+  }, []);
+
+  const renderItem = useCallback((item: ComboBoxItem, isSelected: boolean) => (
+    <Box>
+      <Text>{isSelected ? '❯ ' : '  '}</Text>
+      <Text
+        color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
+        bold={isSelected}
+      >
+        {item.label}
+      </Text>
+    </Box>
+  ), [theme]);
 
   const renderedInput = input ? (
     <>
@@ -116,9 +132,9 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   );
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1} overflow="hidden">
       {showSearchInput && (
-        <Box marginBottom={1}>
+        <Box marginBottom={1} flexShrink={0}>
           <Text color={theme.model?.label || 'cyan'}>Search: </Text>
           {renderedInput}
         </Box>
@@ -129,30 +145,22 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
           <Text color="yellow">No matches found</Text>
         </Box>
       ) : (
-        <Box flexDirection="column">
+        <Box flexDirection="column" flexGrow={1} overflow="hidden">
           {showItemCount && (
-            <Box marginBottom={1}>
+            <Box marginBottom={1} flexShrink={0}>
               <Text dimColor>Showing {filteredItems.length} matches (↑↓ to navigate, Enter to select)</Text>
             </Box>
           )}
 
-          <SelectInput
-            ref={selectInputRef}
-            items={selectInputItems}
-            limit={maxDisplayItems}
-            enableRotation={enableRotation}
+          <ScrollableSelectList
+            items={scrollableItems}
+            selectedIndex={selectedIndex}
+            onSelect={handleSelect}
+            onHighlight={handleHighlight}
+            renderItem={renderItem}
             focus={focus}
-            showScrollIndicators={true}
-            onSelect={(item) => onSelect(item.value)}
-            itemComponent={({ isSelected, label }) => (
-              <Text
-                color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
-                bold={isSelected}
-              >
-                {label}
-              </Text>
-            )}
-            indicatorComponent={({ isSelected }) => <Text>{isSelected ? '❯ ' : '  '}</Text>}
+            enableRotation={enableRotation}
+            maxHeight={maxDisplayItems}
           />
         </Box>
       )}

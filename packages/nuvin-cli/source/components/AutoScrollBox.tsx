@@ -24,6 +24,7 @@ type AutoScrollBoxProps = {
   onFocusChange?: (focused: boolean) => void;
   onScrollChange?: (scrollInfo: ScrollInfo) => void;
   flexGrow?: number;
+  autoScrollToBottom?: boolean;
 } & Omit<BoxProps, 'ref' | 'overflow' | 'height'>;
 
 type ScrollInfo = {
@@ -113,6 +114,7 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
   onFocusChange,
   onScrollChange,
   flexGrow,
+  autoScrollToBottom = true,
   ...boxProps
 }: AutoScrollBoxProps, ref) {
   const { theme } = useTheme();
@@ -238,13 +240,13 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
 
   useEffect(() => {
     if (prevChildrenRef.current !== children) {
-      if (!isUserScrolledRef.current) {
+      if (autoScrollToBottom && !isUserScrolledRef.current) {
         boxRef.current?.scrollToBottom();
       }
       prevChildrenRef.current = children;
     }
     updateScrollInfoThrottled();
-  }, [children, updateScrollInfoThrottled]);
+  }, [children, updateScrollInfoThrottled, autoScrollToBottom]);
 
   useEffect(() => {
     onScrollChange?.(scrollInfo);

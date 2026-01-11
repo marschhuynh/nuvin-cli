@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
-import SelectInput from '@/components/SelectInput/index.js';
 import { AppModal } from '@/components/AppModal.js';
 import TextInput from '@/components/TextInput/index.js';
 import { ComboBox } from '@/components/ComboBox/index.js';
+import { ScrollableSelectList, type ScrollableSelectItem } from '@/components/ScrollableSelectList/index.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 
 import { PROVIDER_MODELS, type ProviderKey } from '@/const.js';
-import { buildProviderOptions, getProviderLabel } from '@/config/providers.js';
+import { buildProviderOptions, getProviderLabel, type ProviderItem } from '@/config/providers.js';
 import type { ProviderConfig } from '@/config/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useModelsCommandState } from './hooks/useModelsCommandState.js';
 
 type AuthNavigationPromptProps = {
@@ -109,6 +110,7 @@ const getModalTitle = (stage: string, selectedProvider: ProviderKey | null): str
 
 const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandComponentProps) => {
   const { theme } = useTheme();
+  const { rows } = useStdoutDimensions();
   const providerOptions = buildProviderOptions(context.config.get<Record<string, ProviderConfig>>('providers'));
 
   const llmFactory = context.orchestratorManager?.getLLMFactory();
@@ -125,6 +127,15 @@ const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandCompon
     navigateToAuth,
   } = useModelsCommandState(context.config, llmFactory, deactivate, deactivate, context);
 
+  const [providerIndex, setProviderIndex] = useState(0);
+
+  const modalHeight = Math.min(rows - 4, 20);
+
+  const providerItems: ScrollableSelectItem<ProviderItem>[] = useMemo(
+    () => providerOptions.map((opt) => ({ key: opt.value, value: opt })),
+    [providerOptions],
+  );
+
   useInput(
     (_input, key) => {
       if (key.escape && !state.showAuthPrompt) {
@@ -134,34 +145,52 @@ const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandCompon
     { isActive: isActive && !state.showAuthPrompt },
   );
 
-  const handleProviderSelect = async (item: { label: string; value: string }) => {
-    const provider = item.value as ProviderKey;
+  const handleProviderSelect = async (item: ScrollableSelectItem<ProviderItem>) => {
+    const provider = item.value.value as ProviderKey;
     selectProvider(provider);
   };
 
-  const handleModelSelect = async (item: { label: string; value: string }) => {
-    if (item.value === 'custom') {
+  const handleModelSelect = async (item: ScrollableSelectItem<{ label: string; value: string }>) => {
+    if (item.value.value === 'custom') {
       goToCustomInput();
       return;
     }
-    await selectModel(item.value);
+    await selectModel(item.value.value);
   };
 
   const handleCustomModelSubmit = async (value: string) => {
     await submitCustomModel(value);
   };
 
+  const renderProviderItem = (item: ProviderItem, isSelected: boolean) => (
+    <Box>
+      <Text color={isSelected ? theme.colors.accent : undefined}>
+        {isSelected ? '❯ ' : '  '}
+      </Text>
+      <Text color={isSelected ? theme.colors.accent : undefined} bold={isSelected}>
+        {item.label}
+      </Text>
+    </Box>
+  );
+
   const renderContent = () => {
     if (state.stage === 'provider') {
       return (
-        <>
+        <Box flexDirection="column" flexGrow={1} overflow="hidden">
           <Text color={theme.model.subtitle} dimColor>
             Choose the AI provider for your models
           </Text>
-          <Box marginTop={1}>
-            <SelectInput items={providerOptions} onSelect={handleProviderSelect} />
+          <Box marginY={1} flexGrow={1} overflow="hidden">
+            <ScrollableSelectList
+              items={providerItems}
+              selectedIndex={providerIndex}
+              onHighlight={(_, index) => setProviderIndex(index)}
+              onSelect={handleProviderSelect}
+              renderItem={renderProviderItem}
+              focus={isActive}
+            />
           </Box>
-        </>
+        </Box>
       );
     }
 
@@ -179,14 +208,16 @@ const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandCompon
     if (state.stage === 'model' && state.selectedProvider) {
       const fallbackModels = PROVIDER_MODELS[state.selectedProvider] || [];
       const models = state.availableModels.length > 0 ? state.availableModels : fallbackModels;
-      const modelOptions = models.map((model) => ({ label: model, value: model }));
-      const shouldUseAutocomplete = state.availableModels.length > 10;
+      const modelOptions = [
+        ...models.map((model) => ({ label: model, value: model })),
+        { label: '🎯 Enter custom model name...', value: 'custom' },
+      ];
       const hasAuthError = state.showAuthPrompt;
 
       return (
-        <>
+        <Box flexDirection="column" overflow="hidden">
           {state.error && (
-            <Box marginBottom={1} flexDirection="column">
+            <Box marginBottom={1} flexDirection="column" flexShrink={0}>
               <Text color="red">{state.error}</Text>
             </Box>
           )}
@@ -197,30 +228,21 @@ const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandCompon
             </Text>
           )}
 
-          <Box>
+          <Box overflow="hidden">
             {hasAuthError ? (
               <AuthNavigationPrompt onNavigate={navigateToAuth} onCancel={clearError} />
-            ) : shouldUseAutocomplete ? (
+            ) : (
               <ComboBox
                 showItemCount={false}
                 items={modelOptions}
                 placeholder="Type to search models..."
-                maxDisplayItems={10}
                 enableRotation={true}
-                onSelect={(item) => handleModelSelect({ label: item.label, value: item.value })}
+                onSelect={(item) => handleModelSelect({ key: item.value, value: item })}
                 onCancel={goBack}
-              />
-            ) : (
-              <SelectInput
-                items={[
-                  ...modelOptions.map((m) => ({ label: m.label, value: m.value })),
-                  { label: '🎯 Enter custom model name...', value: 'custom' },
-                ]}
-                onSelect={(item) => handleModelSelect({ label: item.label, value: item.value })}
               />
             )}
           </Box>
-        </>
+        </Box>
       );
     }
 
@@ -262,7 +284,7 @@ const ModelsCommandComponent = ({ context, deactivate, isActive }: CommandCompon
       onClose={deactivate}
       closeOnEscape={false}
       closeOnEnter={false}
-      height={18}
+      height={modalHeight}
     >
       {content}
     </AppModal>

@@ -9,6 +9,7 @@ import { registerHistoryCommand } from './history.js';
 import { registerSudoCommand } from './sudo.js';
 import { registerThinkingCommand } from './thinking.js';
 import { registerModelsCommand } from './models/models.js';
+import { registerModelsV2Command } from './models/modelv2.js';
 import { registerExportCommand } from './export.js';
 import { registerMCPCommand } from './mcp.js';
 import { registerAgentCommand } from './agent.js';
@@ -28,6 +29,7 @@ export async function registerCommands(orchestratorManager: OrchestratorManager)
   registerSudoCommand(commandRegistry);
   registerThinkingCommand(commandRegistry);
   registerModelsCommand(commandRegistry);
+  registerModelsV2Command(commandRegistry);
   registerExportCommand(commandRegistry);
   registerMCPCommand(commandRegistry);
   registerAgentCommand(commandRegistry);

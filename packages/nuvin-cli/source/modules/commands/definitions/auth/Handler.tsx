@@ -1,12 +1,11 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Box, Text } from 'ink';
-import SelectInput from '@/components/SelectInput/index.js';
+import { ScrollableSelectList, type ScrollableSelectItem } from '@/components/ScrollableSelectList/index.js';
 import { AppModal } from '@/components/AppModal.js';
 import type { CommandComponentProps } from '@/modules/commands/types.js';
 import {
   getProviderAuthMethods,
   type ProviderKey,
-  type AuthMethod,
   type ProviderItem,
   type AuthMethodItem,
 } from '@/const.js';
@@ -19,6 +18,7 @@ import { useDeviceFlow } from '@/hooks/useDeviceFlow.js';
 import { useOAuth } from '@/hooks/useOAuth.js';
 import { useAuthStorage } from '@/hooks/useAuthStorage.js';
 import { useNotification } from '@/hooks/useNotification.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { theme } from '@/theme.js';
 
 type Stage = 'provider' | 'method' | 'tokenEntry' | 'deviceFlow' | 'oauthMax' | 'oauthConsole';
@@ -42,6 +42,7 @@ const getColorForStatus = (status: StatusMessage) => {
 
 export const AuthCommandComponent = ({ context, deactivate }: CommandComponentProps) => {
   const { theme } = useTheme();
+  const { rows } = useStdoutDimensions();
 
   // Parse provider from command arguments (e.g., "/auth anthropic" or "/auth anthropic --return-to-model")
   const args = context.rawInput.trim().split(/\s+/);
@@ -52,7 +53,12 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
   const [provider, setProvider] = useState<ProviderKey | null>(initialProvider);
   const [tokenValue, setTokenValue] = useState('');
   const [status, setStatus] = useState<StatusMessage>(null);
+  const [providerIndex, setProviderIndex] = useState(0);
+  const [methodIndex, setMethodIndex] = useState(0);
   const { setNotification } = useNotification();
+
+  const modalHeight = Math.min(rows - 4, 20);
+  const listMaxHeight = modalHeight - 6;
 
   const { state: deviceFlowState, openAndPoll: openDeviceFlow } = useDeviceFlow(
     stage === 'deviceFlow' && provider === 'github',
@@ -71,6 +77,17 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
     if (!provider) return [];
     return getProviderAuthMethods(provider);
   }, [provider]);
+
+  const providerOptions = useMemo(() => buildProviderOptions(), []);
+  const providerItems: ScrollableSelectItem<ProviderItem>[] = useMemo(
+    () => providerOptions.map((opt) => ({ key: opt.value, value: opt })),
+    [providerOptions],
+  );
+
+  const methodScrollItems: ScrollableSelectItem<AuthMethodItem>[] = useMemo(
+    () => methodItems.map((item) => ({ key: item.value, value: item })),
+    [methodItems],
+  );
 
   // Handle initial provider selection
   useEffect(() => {
@@ -101,21 +118,22 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
     [setNotification, deactivate, shouldReturnToModel, provider, context],
   );
 
-  const handleProviderSelect = useCallback((item: ProviderItem) => {
-    setProvider(item.value);
+  const handleProviderSelect = useCallback((item: ScrollableSelectItem<ProviderItem>) => {
+    setProvider(item.value.value);
     setStage('method');
     setStatus(null);
     setTokenValue('');
+    setMethodIndex(0);
   }, []);
 
   const handleMethodSelect = useCallback(
-    (item: AuthMethodItem) => {
+    (item: ScrollableSelectItem<AuthMethodItem>) => {
       if (!provider) return;
 
       setStatus(null);
       setTokenValue('');
 
-      switch (item.value) {
+      switch (item.value.value) {
         case 'token':
           setStage('tokenEntry');
           return;
@@ -248,28 +266,53 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
     }
   }, [deviceFlowState, stage, provider, saveApiKeyAuth, resetToProviderStage]);
 
+  const renderSelectItem = (item: { label: string }, isSelected: boolean) => (
+    <Box>
+      <Text color={isSelected ? theme.colors.accent : undefined}>
+        {isSelected ? '❯ ' : '  '}
+      </Text>
+      <Text color={isSelected ? theme.colors.accent : undefined} bold={isSelected}>
+        {item.label}
+      </Text>
+    </Box>
+  );
+
   const renderStage = () => {
     switch (stage) {
       case 'provider':
         return (
-          <Box flexDirection="column">
+          <Box flexDirection="column" flexGrow={1} overflow="hidden">
             <Text>Select provider:</Text>
-            <Box marginTop={1}>
-              <SelectInput<ProviderKey> items={buildProviderOptions()} onSelect={handleProviderSelect} />
+            <Box marginTop={1} flexGrow={1} overflow="hidden">
+              <ScrollableSelectList
+                items={providerItems}
+                selectedIndex={providerIndex}
+                onHighlight={(_, index) => setProviderIndex(index)}
+                onSelect={handleProviderSelect}
+                renderItem={renderSelectItem}
+                maxHeight={listMaxHeight}
+              />
             </Box>
           </Box>
         );
       case 'method':
         return (
-          <Box flexDirection="column">
+          <Box flexDirection="column" flexGrow={1} overflow="hidden">
             {provider ? (
               <Text>
                 Provider: <Text color={theme.auth.provider}>{getProviderLabel(provider)}</Text>
               </Text>
             ) : null}
             <Text>Select method:</Text>
-            <Box marginTop={1}>
-              <SelectInput<AuthMethod> items={methodItems} onSelect={handleMethodSelect} />
+            <Box marginTop={1} flexGrow={1} overflow="hidden">
+              <ScrollableSelectList
+                items={methodScrollItems}
+                selectedIndex={methodIndex}
+                onHighlight={(_, index) => setMethodIndex(index)}
+                onSelect={handleMethodSelect}
+                renderItem={renderSelectItem}
+                maxHeight={listMaxHeight}
+              />
             </Box>
           </Box>
         );
@@ -348,7 +391,7 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
       onClose={stage === 'provider' ? deactivate : () => resetToProviderStage()}
       closeOnEscape={true}
       closeOnEnter={false}
-      height={18}
+      height={modalHeight}
     >
       {renderStage()}
 

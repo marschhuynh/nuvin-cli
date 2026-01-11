@@ -35,7 +35,7 @@ export const AppModal: FC<AppModalProps> = ({
   onClose,
   closeOnEscape = true,
   closeOnEnter = false,
-  paddingX = 2,
+  paddingX = 1,
   paddingY = 0,
   marginX = 1,
   marginY = 0,

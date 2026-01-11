@@ -74,13 +74,7 @@ export class GenericLLM extends BaseLLM implements LLMPort {
   }
 
   protected createTransport() {
-    const base = new FetchTransport({
-      persistFile: this.opts.httpLogFile,
-      logLevel: 'INFO',
-      enableConsoleLog: false,
-      maxFileSize: 5 * 1024 * 1024,
-      captureResponseBody: true,
-    });
+    const base = new FetchTransport({});
     const authTransport = createTransport(
       base,
       this.apiUrl,
