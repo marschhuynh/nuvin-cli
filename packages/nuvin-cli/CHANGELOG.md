@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.30.3
+
+### Patch Changes
+
+- [`d53cfdf`](https://github.com/marschhuynh/nuvin-space/commit/d53cfdf3ad4c21095b3b77078ef5588ec9eb287f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(cli): migrate from SelectInput to ScrollableSelectList, add stdout dimension hooks for dynamic sizing
+
 ## 1.30.2
 
 ### Patch Changes
