@@ -9,6 +9,7 @@ interface UseAgentCreationKeyboardProps {
   actions: AgentCreationActions;
   onCancel: () => void;
   onConfirm?: (nextPreview?: Partial<AgentTemplate> & { systemPrompt: string }) => void;
+  onDelete?: () => void;
   loading?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const useAgentCreationKeyboard = ({
   actions,
   onCancel,
   onConfirm,
+  onDelete,
   loading = false,
 }: UseAgentCreationKeyboardProps) => {
   useInput(
@@ -62,6 +64,11 @@ export const useAgentCreationKeyboard = ({
           } else {
             actions.navigateToBasicForm();
           }
+          return;
+        }
+
+        if (key.return && state.isEditing && state.editFormView === 'basic' && onDelete) {
+          onDelete();
           return;
         }
 

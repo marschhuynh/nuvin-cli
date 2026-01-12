@@ -3,12 +3,12 @@ import { Box, type BoxProps, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import TextInput from '@/components/TextInput/index.js';
-import { ToolSelectInput } from './ToolSelectInput.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { HelpText } from '@/components/HelpText.js';
 import { Focusable } from '@/components/Focusable/index.js';
+import { ToolSelectInput } from './ToolSelectInput.js';
 
 interface AgentBasicFormProps {
   mode: 'create' | 'edit';
@@ -21,9 +21,11 @@ interface AgentBasicFormProps {
   editedTemperature: string;
   editedModel: string;
   error?: string;
+  isDefault?: boolean;
   onFieldChange: (field: string, value: string) => void;
   onToolsChange: (tools: string[]) => void;
   onNavigateToSystemPrompt: () => void;
+  onDelete?: () => void;
 }
 
 const ResponsiveBox: React.FC<BoxProps & { children: React.ReactNode }> = ({ children, ...rest }) => {
@@ -68,9 +70,11 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
   editedTemperature,
   editedModel,
   error,
+  isDefault,
   onFieldChange,
   onToolsChange,
   onNavigateToSystemPrompt: _onNavigateToSystemPrompt,
+  onDelete,
 }) => {
   const { cols } = useStdoutDimensions();
   const { theme } = useTheme();
@@ -151,6 +155,23 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
             onChange={(value) => onFieldChange('description', value)}
           />
         </Box>
+
+        {mode === 'edit' && !isDefault && onDelete && (
+          <Box marginY={1}>
+            <Focusable>
+              {({ isFocused }) => (
+                <Box
+                  backgroundColor={isFocused ? theme.colors.error : theme.tokens.dim}
+                  paddingX={2}
+                >
+                  <Text color={isFocused ? theme.tokens.white : theme.colors.muted} bold={isFocused}>
+                    Delete Agent
+                  </Text>
+                </Box>
+              )}
+            </Focusable>
+          </Box>
+        )}
       </Box>
     </AppModal>
   );

@@ -181,9 +181,8 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
       } catch (error) {
         resetToProviderStage({
           type: 'error',
-          message: `Failed to save ${getProviderLabel(provider)} API key: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          message: `Failed to save ${getProviderLabel(provider)} API key: ${error instanceof Error ? error.message : String(error)
+            }`,
         });
       }
     },

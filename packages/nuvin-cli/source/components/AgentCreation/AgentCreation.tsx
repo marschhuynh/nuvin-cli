@@ -16,11 +16,13 @@ interface AgentCreationProps {
   onConfirm?: (nextPreview?: Partial<AgentTemplate> & { systemPrompt: string }) => void;
   onEditPreview?: () => void;
   onUpdatePreview?: (nextPreview: Partial<AgentTemplate> & { systemPrompt: string }) => void;
+  onDelete?: () => void;
   availableTools?: string[];
   loading?: boolean;
   error?: string;
   preview?: Partial<AgentTemplate> & { systemPrompt: string };
   mode?: 'create' | 'edit';
+  isDefault?: boolean;
   navigationSource?: 'agent-config' | 'direct';
 }
 
@@ -30,11 +32,13 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
   onCancel,
   onConfirm,
   onUpdatePreview,
+  onDelete,
   availableTools = [],
   loading = false,
   error,
   preview,
   mode = 'create',
+  isDefault = false,
 }) => {
   const state = useAgentCreationState(mode, preview, onUpdatePreview, onConfirm);
 
@@ -44,6 +48,7 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
     actions: state,
     onCancel,
     onConfirm,
+    onDelete: mode === 'edit' && !isDefault ? onDelete : undefined,
     loading,
   });
 
@@ -83,6 +88,7 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         editedTemperature={state.editedTemperature}
         editedModel={state.editedModel}
         error={error}
+        isDefault={isDefault}
         onFieldChange={(field, value) => {
           switch (field) {
             case 'name':
@@ -104,6 +110,7 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         }}
         onToolsChange={state.setEditedTools}
         onNavigateToSystemPrompt={state.navigateToSystemPrompt}
+        onDelete={onDelete}
       />
     );
   }

@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useCallback } from 'react';
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { CompleteAgent } from '@nuvin/nuvin-core';
@@ -6,7 +7,6 @@ import { AppModal } from '@/components/AppModal.js';
 import { HelpText } from '@/components/HelpText.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useAgentModalState } from './useAgentModalState.js';
-import { useAgentModalKeyboard } from './useAgentModalKeyboard.js';
 import { AgentList } from './AgentList.js';
 
 export interface AgentInfo extends CompleteAgent {
@@ -33,7 +33,6 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
   onClose,
   onAgentStatusChange,
   onAgentCreate,
-  onAgentDelete,
   onAgentEdit,
 }) => {
   const { theme } = useTheme();
@@ -41,17 +40,21 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
 
   const state = useAgentModalState(agents, enabledAgents, initialSelectedIndex);
 
-  useAgentModalKeyboard({
-    visible,
-    agents,
-    state,
-    actions: state,
-    onClose,
-    onAgentStatusChange,
-    onAgentCreate,
-    onAgentDelete,
-    onAgentEdit,
-  });
+  const handleToggle = useCallback(
+    (agentId: string) => {
+      const newValue = state.localEnabledAgents[agentId] === false;
+      state.toggleAgent(agentId);
+      onAgentStatusChange?.(agentId, newValue);
+    },
+    [state, onAgentStatusChange],
+  );
+
+  const handleEdit = useCallback(
+    (agentId: string) => {
+      onAgentEdit?.(agentId);
+    },
+    [onAgentEdit],
+  );
 
   if (!visible) return null;
 
@@ -63,14 +66,12 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
         segments={[
           { text: '↑↓' },
           { text: ' navigate • ' },
-          { text: 'Space/Enter' },
+          { text: 'Space' },
           { text: ' toggle • ' },
-          { text: 'N', highlight: true },
-          { text: ' new • ' },
-          { text: 'E', highlight: true },
+          { text: 'Enter' },
           { text: ' edit • ' },
-          { text: 'X', highlight: true },
-          { text: ' delete • ' },
+          { text: 'Ctrl+N', highlight: true },
+          { text: ' new • ' },
           { text: 'ESC', highlight: true },
           { text: ' exit' },
         ]}
@@ -82,7 +83,9 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
     <AppModal
       visible={visible}
       title="Agent Configuration"
-      closeOnEscape={false}
+      closeOnEscape={true}
+      closeOnEnter={false}
+      onClose={onClose}
       paddingX={2}
       paddingY={1}
       footer={footerContent}
@@ -95,9 +98,11 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
       ) : (
         <AgentList
           agents={agents}
-          selectedAgentIndex={state.selectedAgentIndex}
           isAgentEnabled={state.isAgentEnabled}
           onAgentSelect={state.setSelectedAgentIndex}
+          onToggle={handleToggle}
+          onEdit={handleEdit}
+          onNew={onAgentCreate}
           flexGrow={1}
           focus={true}
         />

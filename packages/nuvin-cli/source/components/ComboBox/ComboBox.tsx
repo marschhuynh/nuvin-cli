@@ -25,8 +25,12 @@ export type ComboBoxProps = {
   showSearchInput?: boolean;
   showItemCount?: boolean;
   focus?: boolean;
+  renderItem?: (item: ComboBoxItem, isSelected: boolean) => React.ReactNode;
   onSelect: (item: ComboBoxItem) => void;
   onCancel?: () => void;
+  onHighlight?: (item: ComboBoxItem | null, index: number) => void;
+  onSpace?: (item: ComboBoxItem) => void;
+  onNew?: () => void;
 };
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
@@ -36,8 +40,12 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   showSearchInput = true,
   showItemCount = true,
   focus = true,
+  renderItem,
   onSelect,
   onCancel,
+  onHighlight,
+  onSpace,
+  onNew,
 }) => {
   const { theme } = useTheme();
   const [input, setInput] = useState('');
@@ -71,10 +79,6 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
 
   const hasGroups = listItems.some((item) => item.type === 'header');
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [input]);
-
   const scrollToSelected = useCallback((index: number) => {
     if (selectableIndices.length === 0 || index < 0 || index >= selectableIndices.length) return;
 
@@ -84,6 +88,8 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
 
     if (itemRef && scrollBoxRef.current) {
       const scrollInfo = scrollBoxRef.current.getScrollInfo();
+      if (scrollInfo.containerHeight === 0) return;
+
       const itemDim = measureElement(itemRef);
 
       let itemTop = 0;
@@ -108,6 +114,25 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   useEffect(() => {
     scrollToSelected(selectedIndex);
   }, [selectedIndex, scrollToSelected]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: -- We only want to reset when input changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [input]);
+
+  useEffect(() => {
+    if (onHighlight && selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
+      const listIndex = selectableIndices[selectedIndex];
+      const listItem = listItems[listIndex];
+      if (listItem?.type === 'item') {
+        onHighlight(listItem.item, listItem.originalIndex);
+      } else {
+        onHighlight(null, selectedIndex);
+      }
+    } else if (onHighlight) {
+      onHighlight(null, selectedIndex);
+    }
+  }, [selectedIndex, selectableIndices, listItems, onHighlight]);
 
   const navigate = useCallback(
     (direction: 'up' | 'down') => {
@@ -168,6 +193,22 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         return;
       }
 
+      if (inputChar === ' ' && onSpace) {
+        if (selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
+          const listIndex = selectableIndices[selectedIndex];
+          const listItem = listItems[listIndex];
+          if (listItem?.type === 'item') {
+            onSpace(listItem.item);
+          }
+        }
+        return;
+      }
+
+      if (key.ctrl && (inputChar === 'n' || inputChar === 'N') && onNew) {
+        onNew();
+        return;
+      }
+
       if (key.backspace || key.delete) {
         setInput((prev) => prev.slice(0, -1));
         return;
@@ -201,6 +242,10 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       const selectablePosition = selectableIndices.indexOf(listIndex);
       const isSelected = selectablePosition === selectedIndex;
 
+      if (renderItem) {
+        return renderItem(listItem.item, isSelected);
+      }
+
       return (
         <Box overflow='hidden'>
           <Text>{isSelected ? '❯ ' : '  '}</Text>
@@ -213,7 +258,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         </Box>
       );
     },
-    [selectedIndex, selectableIndices, theme],
+    [selectedIndex, selectableIndices, theme, renderItem],
   );
 
   const renderedInput = input ? (

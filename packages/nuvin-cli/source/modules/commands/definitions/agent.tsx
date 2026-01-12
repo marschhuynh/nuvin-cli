@@ -555,6 +555,9 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
 
   // Show creation input if in creation mode
   if (creationMode) {
+    const editingAgent = editingAgentId ? agents.find((a) => a.id === editingAgentId) : null;
+    const isEditingDefault = editingAgent?.isDefault ?? false;
+
     return (
       <AgentCreation
         visible={true}
@@ -564,10 +567,12 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         onConfirm={handleCreationConfirm}
         onEditPreview={handlePreviewEdit}
         onUpdatePreview={handlePreviewUpdate}
+        onDelete={editingAgentId && !isEditingDefault ? () => handleAgentDelete(editingAgentId) : undefined}
         availableTools={availableTools}
         loading={creationLoading}
         error={creationError}
         preview={creationPreview}
+        isDefault={isEditingDefault}
         navigationSource={navigationState.navigationSource || 'direct'}
       />
     );
