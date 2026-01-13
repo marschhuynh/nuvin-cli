@@ -1,5 +1,15 @@
 # @nuvin/nuvin-cli
 
+## 1.31.0
+
+### Minor Changes
+
+- [`b54b49e`](https://github.com/marschhuynh/nuvin-space/commit/b54b49e528d81840fc5b09f1728c38d399f16ebd) Thanks [@marschhuynh](https://github.com/marschhuynh)! - add Button component and improve modal UI consistency
+
+### Patch Changes
+
+- [`9c88dd7`](https://github.com/marschhuynh/nuvin-space/commit/9c88dd7ce656a087a51153138d2564b464adb81a) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor TextInput scroll using Box overflow with visual row rendering
+
 ## 1.30.4
 
 ### Patch Changes
