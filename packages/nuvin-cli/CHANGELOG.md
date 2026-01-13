@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.30.4
+
+### Patch Changes
+
+- [`512c02f`](https://github.com/marschhuynh/nuvin-space/commit/512c02f8cbb6e01eb63f58500a8dc54785147c3c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - add edit mode preview support in AgentCreation
+
 ## 1.30.3
 
 ### Patch Changes
