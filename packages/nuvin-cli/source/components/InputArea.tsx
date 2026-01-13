@@ -283,6 +283,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
               onVimModeChange={handleVimModeChange}
               onUpArrow={handleTextInputUpArrow}
               onDownArrow={handleTextInputDownArrow}
+              maxLines={10}
             />
           </Box>
         </Box>

@@ -6,7 +6,6 @@ export type CursorRenderResult = {
   renderedPlaceholder?: string;
 };
 
-// Shared cursor blink store to avoid multiple intervals
 let cursorVisible = true;
 let lastActivityTime = Date.now();
 const subscribers = new Set<() => void>();
@@ -44,7 +43,51 @@ function resetActivity() {
   }
 }
 
-// Helper function to compute cursor rendering - pure function, no state updates
+function findCursorLine(
+  value: string,
+  cursorOffset: number,
+  lineStarts?: number[],
+): { lineIndex: number; columnInLine: number; lineStart: number } {
+  if (lineStarts && lineStarts.length > 0) {
+    let low = 0;
+    let high = lineStarts.length - 1;
+
+    while (low < high) {
+      const mid = Math.ceil((low + high + 1) / 2);
+      if (lineStarts[mid] <= cursorOffset) {
+        low = mid;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return {
+      lineIndex: low,
+      columnInLine: cursorOffset - lineStarts[low],
+      lineStart: lineStarts[low],
+    };
+  }
+
+  let currentPos = 0;
+  let lineIndex = 0;
+
+  for (let i = 0; i < value.length; i++) {
+    if (cursorOffset <= currentPos + (value.indexOf('\n', currentPos) === -1 ? value.length - currentPos : value.indexOf('\n', currentPos) - currentPos)) {
+      break;
+    }
+    const nextNewline = value.indexOf('\n', currentPos);
+    if (nextNewline === -1) break;
+    currentPos = nextNewline + 1;
+    lineIndex++;
+  }
+
+  return {
+    lineIndex,
+    columnInLine: cursorOffset - currentPos,
+    lineStart: currentPos,
+  };
+}
+
 function computeRenderedOutput(
   value: string,
   cursorOffset: number,
@@ -52,6 +95,7 @@ function computeRenderedOutput(
   showCursor: boolean,
   focus: boolean,
   shouldShowCursor: boolean,
+  lineStarts?: number[],
 ): CursorRenderResult {
   let renderedValue = value;
   let renderedPlaceholder = placeholder ? chalk.grey(placeholder) : undefined;
@@ -62,7 +106,8 @@ function computeRenderedOutput(
 
   renderedPlaceholder =
     placeholder.length > 0
-      ? (shouldShowCursor ? chalk.inverse(placeholder[0]) : chalk.grey(placeholder[0])) + chalk.grey(placeholder.slice(1))
+      ? (shouldShowCursor ? chalk.inverse(placeholder[0]) : chalk.grey(placeholder[0])) +
+        chalk.grey(placeholder.slice(1))
       : shouldShowCursor
         ? chalk.inverse(' ')
         : ' ';
@@ -72,34 +117,35 @@ function computeRenderedOutput(
     return { renderedValue, renderedPlaceholder };
   }
 
-  const lines = value.split('\n');
-  let currentPos = 0;
-  let currentLine = 0;
-  let columnInLine = 0;
+  const { lineIndex, columnInLine, lineStart } = findCursorLine(value, cursorOffset, lineStarts);
 
-  for (let i = 0; i < lines.length; i++) {
-    const lineEnd = currentPos + lines[i].length;
-    if (cursorOffset <= lineEnd) {
-      currentLine = i;
-      columnInLine = cursorOffset - currentPos;
-      break;
-    }
-    currentPos = lineEnd + 1;
+  const lineEnd =
+    lineStarts && lineIndex < lineStarts.length - 1
+      ? lineStarts[lineIndex + 1] - 1
+      : value.indexOf('\n', lineStart) === -1
+        ? value.length
+        : value.indexOf('\n', lineStart);
+
+  const currentLineContent = value.slice(lineStart, lineEnd);
+
+  let renderedLine: string;
+  if (columnInLine >= 0 && columnInLine < currentLineContent.length) {
+    const cursorChar = shouldShowCursor
+      ? chalk.inverse(currentLineContent[columnInLine])
+      : currentLineContent[columnInLine];
+    renderedLine =
+      currentLineContent.slice(0, columnInLine) + cursorChar + currentLineContent.slice(columnInLine + 1);
+  } else {
+    renderedLine = currentLineContent + (shouldShowCursor ? chalk.inverse(' ') : '');
   }
 
-  renderedValue = lines
-    .map((line, idx) => {
-      if (idx === currentLine) {
-        if (columnInLine >= 0 && columnInLine < line.length) {
-          const cursorChar = shouldShowCursor ? chalk.inverse(line[columnInLine]) : line[columnInLine];
-          return line.slice(0, columnInLine) + cursorChar + line.slice(columnInLine + 1);
-        } else {
-          return line + (shouldShowCursor ? chalk.inverse(' ') : '');
-        }
-      }
-      return line;
-    })
-    .join('\n');
+  if (!value.includes('\n')) {
+    renderedValue = renderedLine;
+  } else {
+    const beforeLine = lineStart > 0 ? value.slice(0, lineStart) : '';
+    const afterLine = lineEnd < value.length ? value.slice(lineEnd) : '';
+    renderedValue = beforeLine + renderedLine + afterLine;
+  }
 
   return { renderedValue, renderedPlaceholder };
 }
@@ -109,39 +155,40 @@ export function useCursorRenderer() {
   const lastValueRef = useRef<string>('');
   const lastOffsetRef = useRef<number>(0);
 
-  // Effect to reset activity when input changes - runs after render
   useEffect(() => {
     return () => {
-      // Cleanup: reset refs on unmount
       lastValueRef.current = '';
       lastOffsetRef.current = 0;
     };
   }, []);
 
-  const renderWithCursor = useCallback((
-    value: string,
-    cursorOffset: number,
-    placeholder: string,
-    showCursor: boolean,
-    focus: boolean,
-  ): CursorRenderResult => {
-    // Check if input changed and reset activity (no state updates here)
-    if (value !== lastValueRef.current || cursorOffset !== lastOffsetRef.current) {
-      lastValueRef.current = value;
-      lastOffsetRef.current = cursorOffset;
-      // Schedule activity reset for next tick to avoid state update during render
-      queueMicrotask(resetActivity);
-    }
+  const renderWithCursor = useCallback(
+    (
+      value: string,
+      cursorOffset: number,
+      placeholder: string,
+      showCursor: boolean,
+      focus: boolean,
+      lineStarts?: number[],
+    ): CursorRenderResult => {
+      if (value !== lastValueRef.current || cursorOffset !== lastOffsetRef.current) {
+        lastValueRef.current = value;
+        lastOffsetRef.current = cursorOffset;
+        queueMicrotask(resetActivity);
+      }
 
-    return computeRenderedOutput(
-      value,
-      cursorOffset,
-      placeholder,
-      showCursor,
-      focus,
-      cursorVisibleState,
-    );
-  }, [cursorVisibleState]);
+      return computeRenderedOutput(
+        value,
+        cursorOffset,
+        placeholder,
+        showCursor,
+        focus,
+        cursorVisibleState,
+        lineStarts,
+      );
+    },
+    [cursorVisibleState],
+  );
 
   return { renderWithCursor };
 }

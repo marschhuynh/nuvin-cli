@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { getLineInfo } from '@/utils/textNavigation.js';
+import type { LineIndex } from './useLineIndex.js';
 
 export type ViewportState = {
   scrollOffset: number;
@@ -11,96 +11,62 @@ export type ViewportState = {
 export type UseViewportOptions = {
   value: string;
   cursorOffset: number;
-  maxHeight?: number;
+  maxLines?: number;
+  lineIndex: LineIndex;
 };
 
-export function useViewport({ value, cursorOffset, maxHeight }: UseViewportOptions) {
+export function useViewport({ value, cursorOffset, maxLines, lineIndex }: UseViewportOptions) {
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  const lines = useMemo(() => value.split('\n'), [value]);
-  const totalLines = lines.length;
+  const { lineStarts, lineCount: totalLines, getLineInfo, getLineRange } = lineIndex;
 
-  const needsScrolling = maxHeight !== undefined && totalLines > maxHeight;
+  const needsScrolling = maxLines !== undefined && totalLines > maxLines;
+  const visibleLines = maxLines ?? totalLines;
 
-  const contentHeight = useMemo(() => {
-    if (!maxHeight || !needsScrolling) {
-      return totalLines;
-    }
-    let reserved = 0;
-    if (scrollOffset > 0) reserved += 1;
-    if (scrollOffset + (maxHeight - reserved) < totalLines) reserved += 1;
-    return Math.max(1, maxHeight - reserved);
-  }, [maxHeight, needsScrolling, scrollOffset, totalLines]);
-
-  const lineInfo = getLineInfo(value, cursorOffset);
-  const cursorLine = lineInfo.lineIndex;
+  const cursorLine = useMemo(() => {
+    return getLineInfo(cursorOffset).lineIndex;
+  }, [getLineInfo, cursorOffset]);
 
   useEffect(() => {
-    if (!maxHeight || !needsScrolling) {
+    if (!needsScrolling) {
       setScrollOffset(0);
       return;
     }
 
     setScrollOffset((currentOffset) => {
-      const hasTopIndicator = currentOffset > 0;
-      const effectiveHeight = hasTopIndicator ? maxHeight - 2 : maxHeight - 1;
-
       if (cursorLine < currentOffset) {
         return cursorLine;
       }
 
-      if (cursorLine >= currentOffset + effectiveHeight) {
-        const newOffset = cursorLine - effectiveHeight + 1;
-        const maxScroll = Math.max(0, totalLines - (maxHeight - 1));
-        return Math.min(newOffset, maxScroll);
+      if (cursorLine >= currentOffset + visibleLines) {
+        return cursorLine - visibleLines + 1;
       }
 
       return currentOffset;
     });
-  }, [cursorLine, maxHeight, needsScrolling, totalLines]);
+  }, [cursorLine, visibleLines, needsScrolling]);
 
-  const getVisibleContent = useCallback((): {
-    visibleValue: string;
-    cursorOffsetInView: number;
-    visibleStartLine: number;
-    visibleEndLine: number;
-    showTopIndicator: boolean;
-    showBottomIndicator: boolean;
-    linesAbove: number;
-    linesBelow: number;
-  } => {
-    if (!maxHeight || !needsScrolling) {
+  const visibleContent = useMemo(() => {
+    if (!needsScrolling) {
       return {
         visibleValue: value,
         cursorOffsetInView: cursorOffset,
         visibleStartLine: 0,
         visibleEndLine: totalLines - 1,
-        showTopIndicator: false,
-        showBottomIndicator: false,
         linesAbove: 0,
         linesBelow: 0,
+        visibleStartChar: 0,
+        visibleEndChar: value.length,
       };
     }
 
-    const showTopIndicator = scrollOffset > 0;
-    const availableForContent = showTopIndicator ? maxHeight - 1 : maxHeight;
-    
     const startLine = scrollOffset;
-    const tentativeEndLine = Math.min(startLine + availableForContent, totalLines);
-    const showBottomIndicator = tentativeEndLine < totalLines;
-    
-    const endLine = showBottomIndicator 
-      ? Math.min(startLine + availableForContent - 1, totalLines)
-      : tentativeEndLine;
+    const endLine = Math.min(startLine + visibleLines, totalLines);
 
-    const visibleLines_ = lines.slice(startLine, endLine);
-    const visibleValue = visibleLines_.join('\n');
+    const visibleValue = getLineRange(startLine, endLine - 1);
 
-    let charsBeforeStartLine = 0;
-    for (let i = 0; i < startLine; i++) {
-      charsBeforeStartLine += lines[i].length + 1;
-    }
-
+    const charsBeforeStartLine = lineStarts[startLine] ?? 0;
+    const charsAtEndLine = lineStarts[endLine] ?? value.length;
     const cursorOffsetInView = Math.max(0, cursorOffset - charsBeforeStartLine);
 
     return {
@@ -108,35 +74,58 @@ export function useViewport({ value, cursorOffset, maxHeight }: UseViewportOptio
       cursorOffsetInView,
       visibleStartLine: startLine,
       visibleEndLine: endLine - 1,
-      showTopIndicator,
-      showBottomIndicator,
       linesAbove: scrollOffset,
-      linesBelow: totalLines - endLine,
+      linesBelow: Math.max(0, totalLines - endLine),
+      visibleStartChar: charsBeforeStartLine,
+      visibleEndChar: charsAtEndLine,
     };
-  }, [value, cursorOffset, maxHeight, needsScrolling, scrollOffset, lines, totalLines]);
+  }, [value, cursorOffset, needsScrolling, scrollOffset, visibleLines, totalLines, lineStarts, getLineRange]);
 
-  const scrollTo = useCallback((line: number) => {
-    if (!maxHeight) return;
-    const maxScroll = Math.max(0, totalLines - contentHeight);
-    setScrollOffset(Math.max(0, Math.min(line, maxScroll)));
-  }, [maxHeight, totalLines, contentHeight]);
+  const scrollRatio = useMemo(() => {
+    if (!needsScrolling || value.length === 0) return 0;
+    const { visibleStartChar } = visibleContent;
+    const maxScrollChar = Math.max(0, value.length - (visibleContent.visibleEndChar - visibleContent.visibleStartChar));
+    return maxScrollChar > 0 ? visibleStartChar / maxScrollChar : 0;
+  }, [needsScrolling, value.length, visibleContent]);
 
-  const scrollBy = useCallback((delta: number) => {
-    if (!maxHeight) return;
-    setScrollOffset((current) => {
-      const maxScroll = Math.max(0, totalLines - contentHeight);
-      return Math.max(0, Math.min(current + delta, maxScroll));
-    });
-  }, [maxHeight, totalLines, contentHeight]);
+  const visibleRatio = useMemo(() => {
+    if (value.length === 0) return 1;
+    const visibleChars = visibleContent.visibleEndChar - visibleContent.visibleStartChar;
+    return Math.min(1, visibleChars / value.length);
+  }, [value.length, visibleContent]);
+
+  const getVisibleContent = useCallback(() => visibleContent, [visibleContent]);
+
+  const scrollTo = useCallback(
+    (line: number) => {
+      if (!needsScrolling) return;
+      const maxScroll = Math.max(0, totalLines - visibleLines);
+      setScrollOffset(Math.max(0, Math.min(line, maxScroll)));
+    },
+    [needsScrolling, totalLines, visibleLines],
+  );
+
+  const scrollBy = useCallback(
+    (delta: number) => {
+      if (!needsScrolling) return;
+      setScrollOffset((current) => {
+        const maxScroll = Math.max(0, totalLines - visibleLines);
+        return Math.max(0, Math.min(current + delta, maxScroll));
+      });
+    },
+    [needsScrolling, totalLines, visibleLines],
+  );
 
   return {
     scrollOffset,
     totalLines,
-    visibleLines: contentHeight,
+    visibleLines,
     cursorLine,
     getVisibleContent,
     scrollTo,
     scrollBy,
     hasScrolling: needsScrolling,
+    scrollRatio,
+    visibleRatio,
   };
 }

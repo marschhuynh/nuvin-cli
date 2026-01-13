@@ -46,11 +46,11 @@ const AgentSystemPromptFormContent: React.FC<AgentSystemPromptFormProps> = ({
     </Box>
   );
 
-  const maxHeight = Math.max(5, rows - 10);
+  const maxLines = Math.max(5, rows - 10);
 
   return (
     <AppModal visible={true} title={title} footer={footerContent}>
-      <Box flexDirection="column" marginTop={1} flexGrow={1} maxHeight={maxHeight}>
+      <Box flexDirection="column" flexGrow={1}>
         {error ? (
           <Box marginBottom={1}>
             <Text color={theme.colors.error}>{error}</Text>
@@ -74,7 +74,8 @@ const AgentSystemPromptFormContent: React.FC<AgentSystemPromptFormProps> = ({
                 value={editedSystemPrompt}
                 onChange={onSystemPromptChange}
                 focus={isFocused}
-                scrollable
+                maxLines={maxLines}
+                showScrollbar
               />
             </Box>
           )}
