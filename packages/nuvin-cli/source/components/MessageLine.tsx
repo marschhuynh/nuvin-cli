@@ -251,12 +251,12 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       // maxHeight="100%"
       {...(liveMessage
         ? {
-            borderStyle: 'single',
-            borderColor: theme.colors.accent,
-            borderBottom: false,
-            borderTop: false,
-            borderLeft: false,
-          }
+          borderStyle: 'single',
+          borderColor: theme.colors.accent,
+          borderBottom: false,
+          borderTop: false,
+          borderLeft: false,
+        }
         : {})}
     >
       {renderMessage()}

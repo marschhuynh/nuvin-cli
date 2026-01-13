@@ -131,8 +131,44 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
     );
   }
 
-  if (mode === 'edit') {
-    return null;
+  if (mode === 'edit' && preview) {
+    return (
+      <AgentBasicForm
+        mode={mode}
+        preview={preview}
+        availableTools={availableTools}
+        editedName={state.editedName}
+        editedId={state.editedId}
+        editedDescription={state.editedDescription}
+        editedTools={state.editedTools}
+        editedTemperature={state.editedTemperature}
+        editedModel={state.editedModel}
+        error={error}
+        isDefault={isDefault}
+        onFieldChange={(field, value) => {
+          switch (field) {
+            case 'name':
+              state.setEditedName(value);
+              break;
+            case 'id':
+              state.setEditedId(value);
+              break;
+            case 'model':
+              state.setEditedModel(value);
+              break;
+            case 'temperature':
+              state.setEditedTemperature(value);
+              break;
+            case 'description':
+              state.setEditedDescription(value);
+              break;
+          }
+        }}
+        onToolsChange={state.setEditedTools}
+        onNavigateToSystemPrompt={state.navigateToSystemPrompt}
+        onDelete={onDelete}
+      />
+    );
   }
 
   return (
