@@ -64,11 +64,11 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
     <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>
       <HelpText
         segments={[
-          { text: '↑↓' },
+          { text: '↑↓', highlight: true },
           { text: ' navigate • ' },
-          { text: 'Space' },
+          { text: 'Space', highlight: true },
           { text: ' toggle • ' },
-          { text: 'Enter' },
+          { text: 'Enter', highlight: true },
           { text: ' edit • ' },
           { text: 'Ctrl+N', highlight: true },
           { text: ' new • ' },
@@ -86,8 +86,8 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
       closeOnEscape={true}
       closeOnEnter={false}
       onClose={onClose}
-      paddingX={2}
-      paddingY={1}
+      paddingX={1}
+      paddingY={0}
       footer={footerContent}
       height={modalHeight}
     >

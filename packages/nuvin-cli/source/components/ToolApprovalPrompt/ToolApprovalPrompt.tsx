@@ -11,6 +11,7 @@ import { ToolParameters } from './ToolParameters.js';
 import { ToolProgressInfo } from './ToolProgressInfo.js';
 import { ToolActions } from './ToolActions.js';
 import { ToolEditInput, type ToolEditInputHandle } from './ToolEditInput.js';
+import { HelpText } from '@/components/HelpText.js';
 
 type Props = {
   toolCalls: ToolCall[];
@@ -57,7 +58,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(currentTool.function.arguments);
-    } catch {}
+    } catch { }
 
     const displayName =
       args.description && typeof args.description === 'string' && args.description.trim()
@@ -117,17 +118,40 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     return null;
   }
 
-  const footerText = isEditMode ? 'Enter Submit • Esc Cancel' : 'Tab Cycle Focus • 1/2/3 Quick Select';
+  const footerContent = (
+    <Box marginLeft={1} flexGrow={1} marginRight={1}>
+      {isEditMode ? (
+        <HelpText
+          segments={[
+            { text: 'Enter', highlight: true },
+            { text: ' submit • ' },
+            { text: 'Esc', highlight: true },
+            { text: ' cancel' },
+          ]}
+        />
+      ) : (
+        <HelpText
+          segments={[
+            { text: 'Tab', highlight: true },
+            { text: ' cycle focus • ' },
+            { text: '1', highlight: true },
+            { text: ' approve • ' },
+            { text: '2', highlight: true },
+            { text: ' deny • ' },
+            { text: '3', highlight: true },
+            { text: ' approve session' },
+          ]}
+        />
+      )}
+    </Box>
+  );
 
   return (
     <AppModal
       visible
-      title={<><Text>{toolTitle}</Text> (<ToolProgressInfo currentIndex={currentIndex} totalTools={pendingApprovalBatchTotal} />)</>}
-      footer={
-        <Box marginLeft={1} flexGrow={1} marginRight={1}>
-          <Text color={theme.toolApproval.description}>{footerText}</Text>
-        </Box>
-      }
+      title={<Text>{toolTitle}</Text>}
+      rightTitle={<ToolProgressInfo currentIndex={currentIndex} totalTools={pendingApprovalBatchTotal} />}
+      footer={footerContent}
     >
       <Box flexDirection="column" width="100%" flexShrink={0}>
         <ToolParameters toolCall={currentTool} />

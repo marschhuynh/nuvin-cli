@@ -37,7 +37,7 @@ export const COLOR_TOKENS = {
   dimYellow: '#a28152',
   blue: '#81a2be',
   magenta: '#ff79c6',
-  white: '#ffffff',
+  white: '#e6e6e6',
   gray: '#9b9b9b',
   black: '#2b2c2e',
   dim: '#303030',
@@ -137,6 +137,8 @@ export const theme = {
     help: COLOR_TOKENS.gray,
     background: COLOR_TOKENS.black,
     footerBackground: COLOR_TOKENS.gray,
+    footerDimText: COLOR_TOKENS.gray,
+    footerText: COLOR_TOKENS.black,
   },
 
   // Command and help colors
@@ -194,7 +196,7 @@ export const theme = {
     description: COLOR_TOKENS.gray,
     paramKey: COLOR_TOKENS.cyan,
     paramValue: COLOR_TOKENS.white,
-    statusText: COLOR_TOKENS.gray,
+    statusText: COLOR_TOKENS.black,
     approved: COLOR_TOKENS.green,
     denied: COLOR_TOKENS.red,
     actionSelected: COLOR_TOKENS.green,

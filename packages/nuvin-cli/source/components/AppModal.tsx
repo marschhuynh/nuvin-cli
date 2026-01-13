@@ -101,7 +101,7 @@ export const AppModal: FC<AppModalProps> = ({
           >
             {footer}
           </Box>
-        ) : null}
+        ) : <Box height={1} backgroundColor={theme.modal.footerBackground}></Box>}
       </Box>
     </Box>
   );

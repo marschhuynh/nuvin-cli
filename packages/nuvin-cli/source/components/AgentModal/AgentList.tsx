@@ -102,11 +102,13 @@ export const AgentList: React.FC<AgentListProps> = ({
               </>
             )}
           </Box>
-          <Box marginLeft={4}>
-            <Text dimColor wrap="wrap">
-              └─ {agent.description}
-            </Text>
-          </Box>
+          {isSelected && (
+            <Box marginLeft={4}>
+              <Text dimColor wrap="wrap">
+                └─ {agent.description}
+              </Text>
+            </Box>
+          )}
         </Box>
       );
     },

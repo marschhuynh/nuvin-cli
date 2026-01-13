@@ -52,9 +52,9 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       preservedState:
         source === 'agent-config'
           ? {
-              selectedAgentId: agentId,
-              selectedAgentIndex,
-            }
+            selectedAgentId: agentId,
+            selectedAgentIndex,
+          }
           : null,
     });
   }, []);
@@ -257,11 +257,18 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
 
         // Reload agents list (this will also re-sync enabledAgents from config)
         await loadAgents();
+
+        // Navigate back to agent list
+        transitionToConfig();
+        setCreationMode(false);
+        setCreationError(undefined);
+        setCreationPreview(undefined);
+        setEditingAgentId(null);
       } catch (error) {
         setError(`Failed to delete agent: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
-    [context.config, loadAgents, context.orchestratorManager?.getOrchestrator],
+    [context.config, loadAgents, context.orchestratorManager?.getOrchestrator, transitionToConfig],
   );
 
   // Handle agent creation

@@ -2,6 +2,7 @@ import type React from 'react';
 import { Box, type BoxProps, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AppModal } from '@/components/AppModal.js';
+import { Button } from '@/components/Button.js';
 import TextInput from '@/components/TextInput/index.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
@@ -100,7 +101,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
 
   return (
     <AppModal visible={true} title={editingTitle} footer={footerContent}>
-      <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column">
         {error ? (
           <Box marginBottom={1}>
             <Text color={theme.colors.error}>{error}</Text>
@@ -158,18 +159,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
 
         {mode === 'edit' && !isDefault && onDelete && (
           <Box marginY={1}>
-            <Focusable>
-              {({ isFocused }) => (
-                <Box
-                  backgroundColor={isFocused ? theme.colors.error : theme.tokens.dim}
-                  paddingX={2}
-                >
-                  <Text color={isFocused ? theme.tokens.white : theme.colors.muted} bold={isFocused}>
-                    Delete Agent
-                  </Text>
-                </Box>
-              )}
-            </Focusable>
+            <Button label="Delete Agent" onSubmit={onDelete} variant="danger" />
           </Box>
         )}
       </Box>
