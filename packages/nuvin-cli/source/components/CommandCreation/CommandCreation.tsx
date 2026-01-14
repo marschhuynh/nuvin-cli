@@ -1,8 +1,9 @@
 import type React from 'react';
-import { useInput } from '@/contexts/InputContext/index.js';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
 import { CommandForm } from './CommandForm.js';
+import { CommandPromptForm } from './CommandPromptForm.js';
 import { useCommandCreationState } from './useCommandCreationState.js';
+import { useCommandCreationKeyboard } from './useCommandCreationKeyboard.js';
 
 interface CommandCreationProps {
   visible: boolean;
@@ -12,6 +13,7 @@ interface CommandCreationProps {
   activeProfile?: string;
   onSave: (command: CustomCommandTemplate) => void;
   onCancel: () => void;
+  onDelete?: () => void;
 }
 
 export const CommandCreation: React.FC<CommandCreationProps> = ({
@@ -22,6 +24,7 @@ export const CommandCreation: React.FC<CommandCreationProps> = ({
   activeProfile,
   onSave,
   onCancel,
+  onDelete,
 }) => {
   const state = useCommandCreationState({
     mode,
@@ -29,50 +32,34 @@ export const CommandCreation: React.FC<CommandCreationProps> = ({
     availableScopes,
   });
 
-  useInput(
-    (input, key) => {
-      if (!visible) return;
+  const handleSave = () => {
+    if (state.validate()) {
+      onSave(state.getCommand());
+    }
+  };
 
-      if (key.escape) {
-        onCancel();
-        return;
-      }
-
-      if (key.ctrl && input === 's') {
-        if (state.validate()) {
-          onSave(state.getCommand());
-        }
-        return;
-      }
-
-      if (key.tab) {
-        if (key.shift) {
-          state.prevField();
-        } else {
-          state.nextField();
-        }
-        return;
-      }
-
-      if (state.activeField === 'scope') {
-        if (key.leftArrow) {
-          state.handleScopeChange('left');
-          return;
-        }
-        if (key.rightArrow) {
-          state.handleScopeChange('right');
-          return;
-        }
-        if (key.return) {
-          state.nextField();
-          return;
-        }
-      }
-    },
-    { isActive: visible },
-  );
+  useCommandCreationKeyboard({
+    visible,
+    state,
+    actions: state,
+    onCancel,
+    onSave: handleSave,
+    onDelete: mode === 'edit' ? onDelete : undefined,
+  });
 
   if (!visible) return null;
+
+  if (state.formView === 'prompt') {
+    return (
+      <CommandPromptForm
+        mode={mode}
+        commandName={state.editedName}
+        editedPrompt={state.editedPrompt}
+        error={state.error}
+        onPromptChange={(value) => state.handleFieldChange('prompt', value)}
+      />
+    );
+  }
 
   return (
     <CommandForm
@@ -80,14 +67,14 @@ export const CommandCreation: React.FC<CommandCreationProps> = ({
       command={initialCommand || {}}
       availableScopes={availableScopes}
       activeProfile={activeProfile}
-      activeField={state.activeField}
       editedName={state.editedName}
       editedDescription={state.editedDescription}
       editedScope={state.editedScope}
-      editedPrompt={state.editedPrompt}
       error={state.error}
       onFieldChange={state.handleFieldChange}
-      onFieldSubmit={state.handleFieldSubmit}
+      onScopeChange={state.handleScopeChange}
+      onNavigateToPrompt={state.navigateToPrompt}
+      onDelete={mode === 'edit' ? onDelete : undefined}
     />
   );
 };

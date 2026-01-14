@@ -199,6 +199,7 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
 
   if (navState.activeView === 'edit' && navState.editingCommandId) {
     const editingCommand = registry?.get(navState.editingCommandId);
+    const commandIdToDelete = navState.editingCommandId;
     return (
       <CommandCreation
         visible={true}
@@ -208,6 +209,7 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
         activeProfile={activeProfile}
         onSave={handleSave}
         onCancel={handleCancel}
+        onDelete={() => handleDelete(commandIdToDelete)}
       />
     );
   }

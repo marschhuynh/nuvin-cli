@@ -1,13 +1,13 @@
 import type React from 'react';
+import { useCallback } from 'react';
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { CompleteCustomCommand } from '@nuvin/nuvin-core';
 import { AppModal } from '@/components/AppModal.js';
 import { HelpText } from '@/components/HelpText.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useCommandModalState } from './useCommandModalState.js';
-import { useCommandModalKeyboard } from './useCommandModalKeyboard.js';
 import { CommandList } from './CommandList.js';
-import { CommandDetails } from './CommandDetails.js';
 
 interface CommandModalProps {
   visible: boolean;
@@ -33,79 +33,78 @@ export const CommandModal: React.FC<CommandModalProps> = ({
   getShadowedCommands,
 }) => {
   const { theme } = useTheme();
+  const { rows } = useStdoutDimensions();
 
   const state = useCommandModalState(commands, initialSelectedIndex);
 
-  useCommandModalKeyboard({
-    visible,
-    commands,
-    state,
-    onClose,
-    onCreate,
-    onEdit,
-    onDelete,
-  });
+  const handleEdit = useCallback(
+    (commandId: string) => {
+      onEdit?.(commandId);
+    },
+    [onEdit],
+  );
+
+  const handleDelete = useCallback(
+    (commandId: string) => {
+      onDelete?.(commandId);
+    },
+    [onDelete],
+  );
 
   if (!visible) return null;
 
-  const currentCommand = commands[state.selectedIndex];
-  const shadowedCommands = currentCommand ? getShadowedCommands(currentCommand.id) : [];
+  const modalHeight = rows - 4;
 
   const title = activeProfile && activeProfile !== 'default'
     ? `Custom Commands (Profile: ${activeProfile})`
     : 'Custom Commands';
 
+  const footerContent = (
+    <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>
+      <HelpText
+        segments={[
+          { text: '↑↓', highlight: true },
+          { text: ' navigate • ' },
+          { text: 'Enter', highlight: true },
+          { text: ' edit • ' },
+          { text: 'Ctrl+N', highlight: true },
+          { text: ' new • ' },
+          { text: 'X', highlight: true },
+          { text: ' delete • ' },
+          { text: 'ESC', highlight: true },
+          { text: ' exit' },
+        ]}
+      />
+    </Box>
+  );
+
   return (
     <AppModal
       visible={visible}
       title={title}
-      onClose={undefined}
-      closeOnEscape={false}
-      paddingX={2}
-      paddingY={1}
+      closeOnEscape={true}
+      closeOnEnter={false}
+      onClose={onClose}
+      paddingX={1}
+      paddingY={0}
+      footer={footerContent}
+      height={modalHeight}
     >
-      <Box marginBottom={1} flexDirection="column">
-        <Text color={theme.history.help} dimColor>
-          ↑↓ navigate • ESC exit
-        </Text>
-        <Box>
-          <HelpText
-            segments={[
-              { text: 'N', highlight: true },
-              { text: ' new • ' },
-              { text: 'E', highlight: true },
-              { text: ' edit • ' },
-              { text: 'X', highlight: true },
-              { text: ' delete' },
-            ]}
-          />
-        </Box>
-        <Box marginTop={1}>
-          <Text color={theme.history.help} dimColor>
-            [G] Global • [P] Profile • [L] Local
-          </Text>
-        </Box>
-      </Box>
-
       {commands.length === 0 ? (
         <Box marginTop={1}>
-          <Text color={theme.history.help}>
-            No custom commands found. Press N to create a new command.
-          </Text>
+          <Text color={theme.history.help}>No custom commands found. Press Ctrl+N to create a new command.</Text>
         </Box>
       ) : (
-        <Box flexDirection="row">
-          <CommandList
-            commands={commands}
-            selectedIndex={state.selectedIndex}
-          />
-
-          <CommandDetails
-            command={currentCommand}
-            shadowedCommands={shadowedCommands}
-            activeProfile={activeProfile}
-          />
-        </Box>
+        <CommandList
+          commands={commands}
+          onCommandSelect={state.setSelectedIndex}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={onCreate}
+          getShadowedCommands={getShadowedCommands}
+          flexGrow={1}
+          focus={true}
+        />
       )}
     </AppModal>
   );

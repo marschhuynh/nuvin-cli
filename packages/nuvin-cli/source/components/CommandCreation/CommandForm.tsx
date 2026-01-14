@@ -2,24 +2,26 @@ import type React from 'react';
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AppModal } from '@/components/AppModal.js';
-import TextInput from '@/components/TextInput/index.js';
+import { HelpText } from '@/components/HelpText.js';
+import { Button } from '@/components/Button.js';
+import { FormTextInput } from '@/components/FormTextInput.js';
+import { FocusProvider, useFocus } from '@/contexts/InputContext/FocusContext.js';
+import { useInput } from '@/contexts/InputContext/index.js';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
-
-type EditingField = 'name' | 'description' | 'scope' | 'prompt';
 
 interface CommandFormProps {
   mode: 'create' | 'edit';
   command: Partial<CustomCommandTemplate>;
   availableScopes: CommandSource[];
   activeProfile?: string;
-  activeField: EditingField;
   editedName: string;
   editedDescription: string;
   editedScope: CommandSource;
-  editedPrompt: string;
   error?: string;
-  onFieldChange: (field: EditingField, value: string) => void;
-  onFieldSubmit: (field: EditingField) => void;
+  onFieldChange: (field: string, value: string) => void;
+  onScopeChange: (direction: 'left' | 'right') => void;
+  onNavigateToPrompt: () => void;
+  onDelete?: () => void;
 }
 
 const SCOPE_LABELS: Record<CommandSource, string> = {
@@ -28,22 +30,25 @@ const SCOPE_LABELS: Record<CommandSource, string> = {
   local: 'Local',
 };
 
-export const CommandForm: React.FC<CommandFormProps> = ({
-  mode,
-  availableScopes,
-  activeProfile,
-  activeField,
-  editedName,
-  editedDescription,
-  editedScope,
-  editedPrompt,
-  error,
-  onFieldChange,
-  onFieldSubmit,
-}) => {
+const ScopeSelector: React.FC<{
+  availableScopes: CommandSource[];
+  editedScope: CommandSource;
+  activeProfile?: string;
+  onScopeChange: (direction: 'left' | 'right') => void;
+}> = ({ availableScopes, editedScope, activeProfile, onScopeChange }) => {
   const { theme } = useTheme();
+  const { isFocused } = useFocus({ active: true });
 
-  const title = mode === 'edit' ? 'Edit Command' : 'Create Command';
+  useInput(
+    (_input, key) => {
+      if (key.leftArrow) {
+        onScopeChange('left');
+      } else if (key.rightArrow) {
+        onScopeChange('right');
+      }
+    },
+    { isActive: isFocused },
+  );
 
   const getScopeLabel = (scope: CommandSource): string => {
     if (scope === 'profile' && activeProfile) {
@@ -53,85 +58,114 @@ export const CommandForm: React.FC<CommandFormProps> = ({
   };
 
   return (
-    <AppModal visible={true} title={title}>
-      <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column">
+      <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
+        Scope:{isFocused ? ' (←/→ to change)' : ''}
+      </Text>
+      <Box flexDirection="row" gap={2}>
+        {availableScopes.map((scope) => (
+          <Box key={scope}>
+            <Text
+              color={editedScope === scope ? theme.tokens.cyan : theme.history.unselected}
+              bold={editedScope === scope}
+            >
+              {editedScope === scope ? '(●)' : '( )'} {getScopeLabel(scope)}
+            </Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+const CommandFormContent: React.FC<CommandFormProps> = ({
+  mode,
+  availableScopes,
+  activeProfile,
+  editedName,
+  editedDescription,
+  editedScope,
+  error,
+  onFieldChange,
+  onScopeChange,
+  onDelete,
+}) => {
+  const { theme } = useTheme();
+
+  const title = mode === 'edit' ? 'Edit Command' : 'Create Command';
+
+  const footerContent = (
+    <Box marginLeft={1} flexGrow={1} marginRight={1}>
+      <HelpText
+        segments={[
+          { text: 'Tab', highlight: true },
+          { text: ' cycle fields • ' },
+          { text: 'Ctrl+P', highlight: true },
+          { text: ' edit prompt • ' },
+          { text: 'Ctrl+S', highlight: true },
+          { text: ' save • ' },
+          { text: 'ESC', highlight: true },
+          { text: ' cancel' },
+        ]}
+      />
+    </Box>
+  );
+
+  return (
+    <AppModal visible={true} title={title} footer={footerContent}>
+      <Box flexDirection="column">
         {error && (
           <Box marginBottom={1}>
             <Text color={theme.colors.error}>{error}</Text>
           </Box>
         )}
 
-        <Box flexDirection="column" marginBottom={1}>
-          <Text color={theme.modal.help} dimColor>
-            Command Name (without /):
+        <Box marginBottom={1}>
+          <Text color={theme.colors.primary} bold>
+            /{editedName || 'command-name'}
           </Text>
-          <TextInput
+        </Box>
+
+        <Box flexDirection="column" marginBottom={1}>
+          <FormTextInput
+            label="Command Name (without /):"
             value={editedName}
             onChange={(value) => onFieldChange('name', value)}
-            focus={activeField === 'name'}
-            onSubmit={() => onFieldSubmit('name')}
+            autoFocus
           />
-          <Text color={theme.history.help} dimColor>
-            Will be available as /{editedName || 'command-name'}
-          </Text>
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
-          <Text color={theme.modal.help} dimColor>
-            Description:
-          </Text>
-          <TextInput
+          <FormTextInput
+            label="Description:"
             value={editedDescription}
             onChange={(value) => onFieldChange('description', value)}
-            focus={activeField === 'description'}
-            onSubmit={() => onFieldSubmit('description')}
           />
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
-          <Text color={theme.modal.help} dimColor>
-            Scope:
-          </Text>
-          <Box flexDirection="row" gap={2}>
-            {availableScopes.map((scope) => (
-              <Box key={scope}>
-                <Text
-                  color={editedScope === scope ? theme.tokens.cyan : theme.history.unselected}
-                  bold={editedScope === scope}
-                >
-                  {editedScope === scope ? '(●)' : '( )'} {getScopeLabel(scope)}
-                </Text>
-              </Box>
-            ))}
-          </Box>
-          {activeField === 'scope' && (
-            <Text color={theme.history.help} dimColor>
-              Use ←/→ arrows to change scope, Enter to continue
-            </Text>
-          )}
+          <ScopeSelector
+            availableScopes={availableScopes}
+            editedScope={editedScope}
+            activeProfile={activeProfile}
+            onScopeChange={onScopeChange}
+          />
         </Box>
 
-        <Box flexDirection="column" marginBottom={1}>
-          <Text color={theme.modal.help} dimColor>
-            Prompt Template:
-          </Text>
-          <Box borderStyle="single" borderColor={theme.history.help} paddingX={1} minHeight={5}>
-            <TextInput
-              value={editedPrompt}
-              onChange={(value) => onFieldChange('prompt', value)}
-              focus={activeField === 'prompt'}
-              onSubmit={() => onFieldSubmit('prompt')}
-            />
+        {mode === 'edit' && onDelete && (
+          <Box marginY={1}>
+            <Button label="Delete Command" onSubmit={onDelete} variant="danger" />
           </Box>
-          <Text color={theme.history.help} dimColor>
-            Use {'{{user_prompt}}'} where user input should appear
-          </Text>
-        </Box>
-
-        <Box marginTop={1}>
-          <Text color={theme.tokens.green}>Tab/Enter to navigate fields • Ctrl+S to save • ESC to cancel</Text>
-        </Box>
+        )}
       </Box>
     </AppModal>
+  );
+};
+
+export const CommandForm: React.FC<CommandFormProps> = (props) => {
+  return (
+    <FocusProvider>
+      <CommandFormContent {...props} />
+    </FocusProvider>
   );
 };

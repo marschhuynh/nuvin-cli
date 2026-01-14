@@ -3,12 +3,11 @@ import { Box, type BoxProps, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import { Button } from '@/components/Button.js';
-import TextInput from '@/components/TextInput/index.js';
+import { FormTextInput } from '@/components/FormTextInput.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { HelpText } from '@/components/HelpText.js';
-import { Focusable } from '@/components/Focusable/index.js';
 import { ToolSelectInput } from './ToolSelectInput.js';
 
 interface AgentBasicFormProps {
@@ -36,27 +35,6 @@ const ResponsiveBox: React.FC<BoxProps & { children: React.ReactNode }> = ({ chi
     <Box flexDirection={cols < 80 ? 'column' : 'row'} gap={2} {...rest}>
       {children}
     </Box>
-  );
-};
-
-const FormTextInput: React.FC<{
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  autoFocus?: boolean;
-}> = ({ label, value, onChange, autoFocus }) => {
-  const { theme } = useTheme();
-  return (
-    <Focusable autoFocus={autoFocus}>
-      {({ isFocused }) => (
-        <Box flexDirection="column">
-          <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
-            {label}
-          </Text>
-          <TextInput value={value} onChange={onChange} focus={isFocused} />
-        </Box>
-      )}
-    </Focusable>
   );
 };
 

@@ -29,7 +29,7 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
   onSkillEdit,
 }) => {
   const { theme } = useTheme();
-  const { rows } = useStdoutDimensions();
+  useStdoutDimensions();
 
   const state = useSkillModalState(skills, enabledSkills, initialSelectedIndex);
 

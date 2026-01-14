@@ -8,7 +8,6 @@ import { skillsService } from '@/services/SkillsService.js';
 import type { SkillInfo, Skill, SkillDiscoveryError } from '@/types/skills.js';
 import { SkillConfigurationModal } from '@/components/SkillModal/SkillModal.js';
 import { AutoScrollBox } from '@/components/AutoScrollBox.js';
-import { Markdown } from '@/components/Markdown/index.js';
 import { HelpText } from '@/components/HelpText.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
