@@ -1,5 +1,24 @@
 # @nuvin/nuvin-cli
 
+## 1.32.0
+
+### Minor Changes
+
+- [`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add skills system with SkillModal, SkillsService and skills command
+
+- [`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add agent deletion support, refactor AgentList with ComboBox
+
+- [`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(cli): extract keyboard handling and improve command creation UI
+
+- [`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(cli): adopt ScrollableSelectList across components
+
+- [`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(cli): refactor ComboBox with AutoScrollBox, add group support, consolidate model definitions
+
+### Patch Changes
+
+- Updated dependencies [[`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019)]:
+  - @nuvin/nuvin-core@1.16.0
+
 ## 1.31.0
 
 ### Minor Changes
