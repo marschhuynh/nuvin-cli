@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.16.0
+
+### Minor Changes
+
+- [`1d3786f`](https://github.com/marschhuynh/nuvin-space/commit/1d3786f6d4b825d3f1251ea4d1d3965df9660019) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(core): add SkillTool for agent skill management
+
 ## 1.15.0
 
 ### Minor Changes
