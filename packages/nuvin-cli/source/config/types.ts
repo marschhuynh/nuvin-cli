@@ -71,6 +71,17 @@ export interface MCPSettings {
   defaultTimeoutMs?: number;
 }
 
+export interface SkillsSettings {
+  /** Enable/disable skills feature (default: true) */
+  enabled?: boolean;
+  /** Additional directories to search for skills */
+  directories?: string[];
+  /** Skill names to exclude */
+  exclude?: string[];
+  /** Per-skill permission: 'allow' | 'ask' | 'deny' */
+  permissions?: Record<string, 'allow' | 'ask' | 'deny'>;
+}
+
 export interface CLIConfig {
   /** Currently active provider */
   activeProvider?: ProviderKey;
@@ -84,6 +95,8 @@ export interface CLIConfig {
   apiKey?: string;
   /** MCP configuration */
   mcp?: MCPSettings;
+  /** Skills configuration */
+  skills?: SkillsSettings;
   /** Session persistence options */
   session?: {
     memPersist?: boolean;

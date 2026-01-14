@@ -22,7 +22,7 @@ export interface AppModalProps {
   paddingY?: number;
   marginX?: number;
   marginY?: number;
-  height?: number;
+  height?: number | string;
 }
 
 export const AppModal: FC<AppModalProps> = ({
@@ -62,7 +62,7 @@ export const AppModal: FC<AppModalProps> = ({
   if (!visible) return null;
 
   return (
-    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.modal.background}>
+    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.modal.background} flexGrow={1}>
       <Box flexWrap="wrap" justifyContent="space-between" backgroundColor={globalTheme.modal.titleBackground} flexShrink={0}>
         {title ? (
           <Box>
@@ -94,15 +94,16 @@ export const AppModal: FC<AppModalProps> = ({
         >
           {children}
         </Box>
-        {footer ? (
-          <Box
-            flexShrink={0}
-            backgroundColor={theme.modal.footerBackground}
-          >
-            {footer}
-          </Box>
-        ) : <Box height={1} backgroundColor={theme.modal.footerBackground}></Box>}
       </Box>
+      {footer ? (
+        <Box
+          flexShrink={0}
+          backgroundColor={theme.modal.footerBackground}
+          zIndex={20}
+        >
+          {footer}
+        </Box>
+      ) : <Box zIndex={20} height={1} backgroundColor={theme.modal.footerBackground}></Box>}
     </Box>
   );
 };

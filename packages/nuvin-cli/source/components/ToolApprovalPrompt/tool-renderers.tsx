@@ -4,6 +4,7 @@ import { isTodoWriteArgs, parseToolArguments, type ToolCall } from '@nuvin/nuvin
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { FileEditToolContent } from './ToolContentRenderer/TooFileEdit.js';
 import { FileNewToolContent } from './ToolContentRenderer/ToolFileNew.js';
+import { SkillToolContent } from './ToolContentRenderer/ToolSkill.js';
 
 export type ToolRendererProps = {
   toolCall: ToolCall;
@@ -47,6 +48,11 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
 
   file_new: {
     customRenderer: ({ toolCall }: ToolRendererProps) => <FileNewToolContent call={toolCall} />,
+    showDefaultParams: false,
+  },
+
+  skill: {
+    customRenderer: ({ toolCall }: ToolRendererProps) => <SkillToolContent call={toolCall} />,
     showDefaultParams: false,
   },
 

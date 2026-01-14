@@ -13,7 +13,7 @@ export const ToolParameters: React.FC<ToolParametersProps> = ({ toolCall }) => {
   const maxHeight = Math.max(5, rows - 16);
 
   return (
-    <AutoScrollBox maxHeight={maxHeight} mousePriority={100}>
+    <AutoScrollBox maxHeight={maxHeight} mousePriority={100} flexGrow={1}>
       <ToolRenderer toolCall={toolCall} />
     </AutoScrollBox>
   );

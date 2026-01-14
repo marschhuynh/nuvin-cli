@@ -24,6 +24,7 @@ import { BashTool } from './tools/BashTool.js';
 import { LsTool } from './tools/LsTool.js';
 import { GlobTool } from './tools/GlobTool.js';
 import { GrepTool } from './tools/GrepTool.js';
+import { SkillTool, type SkillProvider } from './tools/SkillTool.js';
 import { AgentRegistry } from './agent-registry.js';
 import { AssignTool } from './tools/AssignTool.js';
 import { LspTool, type LspService } from './tools/LspTool.js';
@@ -36,6 +37,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
   private delegationServiceFactory?: DelegationServiceFactory;
   private assignTool?: AssignTool;
   private lspTool?: LspTool;
+  private skillTool?: SkillTool;
   private enabledAgentsConfig: Record<string, boolean> = {};
 
   // Stored for re-initialization when memory changes (lazy session init)
@@ -50,6 +52,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     agentRegistry?: AgentRegistry;
     delegationServiceFactory?: DelegationServiceFactory;
     enableLsp?: boolean;
+    enableSkills?: boolean;
   }) {
     this.toolsMemory = opts?.toolsMemory || new InMemoryMemory();
     this.agentRegistry = opts?.agentRegistry || new AgentRegistry();
@@ -79,12 +82,29 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       this.tools.set(this.lspTool.name, this.lspTool as FunctionTool<unknown, unknown>);
     }
 
+    if (opts?.enableSkills !== false) {
+      this.skillTool = new SkillTool();
+      this.tools.set(this.skillTool.name, this.skillTool as FunctionTool<unknown, unknown>);
+    }
+
     void this.persistToolNames();
   }
 
   setLspService(service: LspService): void {
     if (this.lspTool) {
       this.lspTool.setLspService(service);
+    }
+  }
+
+  setSkillProvider(provider: SkillProvider): void {
+    if (this.skillTool) {
+      this.skillTool.setProvider(provider);
+    }
+  }
+
+  updateSkillToolDescription(): void {
+    if (this.skillTool) {
+      this.skillTool.updateDescription();
     }
   }
 

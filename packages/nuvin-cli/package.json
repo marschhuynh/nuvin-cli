@@ -72,7 +72,8 @@
 		"vscode-jsonrpc": "^8.2.0",
 		"vscode-languageserver-protocol": "^3.17.5",
 		"vscode-languageserver-types": "^3.17.5",
-		"yaml": "^2.8.2"
+		"yaml": "^2.8.2",
+		"zod": "^4.2.1"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",

@@ -151,6 +151,8 @@ export type {
 export type { WebFetchResult, WebFetchSuccessResult, WebFetchParams } from './tools/WebFetchTool.js';
 export type { TodoWriteResult, TodoWriteSuccessResult } from './tools/TodoWriteTool.js';
 export type { AssignResult, AssignSuccessResult, AssignErrorResult } from './tools/AssignTool.js';
+export { SkillTool, type SkillProvider, type SkillInfo as SkillToolInfo } from './tools/SkillTool.js';
+export type { SkillParams, SkillResult, SkillSuccessResult, SkillErrorResult, SkillMetadata } from './tools/SkillTool.js';
 export type {
   TaskOutputParams,
   TaskOutputResult,

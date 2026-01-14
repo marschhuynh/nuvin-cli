@@ -49,6 +49,7 @@ import { modelLimitsCache } from './ModelLimitsCache.js';
 import { sessionMetricsService } from './SessionMetricsService.js';
 import { theme } from '@/theme.js';
 import { LSP } from './lsp/index.js';
+import { skillsService } from './SkillsService.js';
 
 // Directory paths will be resolved dynamically based on active profile
 const defaultModels: Record<ProviderKey, string> = {
@@ -74,7 +75,8 @@ const baseEnabledTools: string[] = [
   'web_search',
   'web_fetch',
   'assign_task',
-  'lsp'
+  'lsp',
+  'skill'
 ];
 
 function getEnabledTools(): string[] {
@@ -293,11 +295,24 @@ export class OrchestratorManager {
       await agentRegistry.waitForLoad();
 
       const enableLsp = process.env.NUVIN_EXPERIMENTAL_LSP === 'true';
-      const toolRegistry = new ToolRegistry({ agentRegistry, enableLsp });
+      const skillsConfig = currentConfig.config.skills;
+      const enableSkills = skillsConfig?.enabled !== false;
+      const toolRegistry = new ToolRegistry({ agentRegistry, enableLsp, enableSkills });
 
       if (enableLsp) {
         await LSP.init();
         toolRegistry.setLspService(LSP);
+      }
+
+      if (enableSkills) {
+        skillsService.setConfig({
+          enabled: skillsConfig?.enabled,
+          directories: skillsConfig?.directories,
+          exclude: skillsConfig?.exclude,
+          permissions: skillsConfig?.permissions,
+        });
+        await skillsService.discover(process.cwd());
+        toolRegistry.setSkillProvider(skillsService);
       }
 
       const agentTools: ToolPort = toolRegistry;

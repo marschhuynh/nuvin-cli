@@ -1,6 +1,7 @@
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { skillsService } from '@/services/SkillsService.js';
 
 export type LineNumbers = {
   oldStartLine: number;
@@ -11,9 +12,17 @@ export type LineNumbers = {
   newLineCount: number;
 };
 
+export type SkillMetadata = {
+  name: string;
+  description: string;
+  content: string;
+  location: string;
+};
+
 export type EnrichedToolCall = ToolCall & {
   metadata?: {
     lineNumbers?: LineNumbers;
+    skill?: SkillMetadata;
     [key: string]: unknown;
   };
 };
@@ -76,11 +85,44 @@ async function enrichFileEditToolCall(toolCall: ToolCall): Promise<EnrichedToolC
   }
 }
 
+async function enrichSkillToolCall(toolCall: ToolCall): Promise<EnrichedToolCall> {
+  try {
+    const args = toolCall.function.arguments ? JSON.parse(toolCall.function.arguments) : {};
+    if (!args.name) {
+      return toolCall;
+    }
+
+    await skillsService.discover(process.cwd());
+    const skill = await skillsService.loadFull(args.name);
+
+    if (!skill) {
+      return toolCall;
+    }
+
+    return {
+      ...toolCall,
+      metadata: {
+        skill: {
+          name: skill.name,
+          description: skill.description,
+          content: skill.content,
+          location: skill.location,
+        },
+      },
+    };
+  } catch {
+    return toolCall;
+  }
+}
+
 export async function enrichToolCallsWithLineNumbers(toolCalls: ToolCall[]): Promise<EnrichedToolCall[]> {
   return Promise.all(
     toolCalls.map((call) => {
       if (call.function.name === 'file_edit') {
         return enrichFileEditToolCall(call);
+      }
+      if (call.function.name === 'skill') {
+        return enrichSkillToolCall(call);
       }
       return call;
     }),
