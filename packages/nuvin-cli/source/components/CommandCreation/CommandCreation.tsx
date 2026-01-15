@@ -1,7 +1,6 @@
 import type React from 'react';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
 import { CommandForm } from './CommandForm.js';
-import { CommandPromptForm } from './CommandPromptForm.js';
 import { useCommandCreationState } from './useCommandCreationState.js';
 import { useCommandCreationKeyboard } from './useCommandCreationKeyboard.js';
 
@@ -40,26 +39,12 @@ export const CommandCreation: React.FC<CommandCreationProps> = ({
 
   useCommandCreationKeyboard({
     visible,
-    state,
-    actions: state,
     onCancel,
     onSave: handleSave,
     onDelete: mode === 'edit' ? onDelete : undefined,
   });
 
   if (!visible) return null;
-
-  if (state.formView === 'prompt') {
-    return (
-      <CommandPromptForm
-        mode={mode}
-        commandName={state.editedName}
-        editedPrompt={state.editedPrompt}
-        error={state.error}
-        onPromptChange={(value) => state.handleFieldChange('prompt', value)}
-      />
-    );
-  }
 
   return (
     <CommandForm
@@ -70,10 +55,10 @@ export const CommandCreation: React.FC<CommandCreationProps> = ({
       editedName={state.editedName}
       editedDescription={state.editedDescription}
       editedScope={state.editedScope}
+      editedPrompt={state.editedPrompt}
       error={state.error}
       onFieldChange={state.handleFieldChange}
       onScopeChange={state.handleScopeChange}
-      onNavigateToPrompt={state.navigateToPrompt}
       onDelete={mode === 'edit' ? onDelete : undefined}
     />
   );

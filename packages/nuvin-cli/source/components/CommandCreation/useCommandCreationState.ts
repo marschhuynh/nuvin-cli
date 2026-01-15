@@ -2,8 +2,6 @@ import { useState, useCallback } from 'react';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
 import { sanitizeCommandId } from '@nuvin/nuvin-core';
 
-export type FormView = 'basic' | 'prompt';
-
 export interface UseCommandCreationStateOptions {
   mode: 'create' | 'edit';
   initialCommand?: Partial<CustomCommandTemplate>;
@@ -11,7 +9,6 @@ export interface UseCommandCreationStateOptions {
 }
 
 export interface CommandCreationState {
-  formView: FormView;
   editedName: string;
   editedDescription: string;
   editedScope: CommandSource;
@@ -28,8 +25,6 @@ export interface CommandCreationActions {
   setError: (error?: string) => void;
   handleFieldChange: (field: string, value: string) => void;
   handleScopeChange: (direction: 'left' | 'right') => void;
-  navigateToPrompt: () => void;
-  navigateToBasic: () => void;
   validate: () => boolean;
   getCommand: () => CustomCommandTemplate;
 }
@@ -39,7 +34,6 @@ export const useCommandCreationState = (
 ): CommandCreationState & CommandCreationActions => {
   const { mode, initialCommand, availableScopes } = options;
 
-  const [formView, setFormView] = useState<FormView>('basic');
   const [editedName, setEditedName] = useState(initialCommand?.id || '');
   const [editedDescription, setEditedDescription] = useState(initialCommand?.description || '');
   const [editedScope, setEditedScope] = useState<CommandSource>(
@@ -77,37 +71,25 @@ export const useCommandCreationState = (
     if (newScope) setEditedScope(newScope);
   }, [editedScope, availableScopes]);
 
-  const navigateToPrompt = useCallback(() => {
-    setFormView('prompt');
-  }, []);
-
-  const navigateToBasic = useCallback(() => {
-    setFormView('basic');
-  }, []);
-
   const validate = useCallback((): boolean => {
     if (!editedName.trim()) {
       setError('Command name is required');
-      setFormView('basic');
       return false;
     }
 
     const sanitized = sanitizeCommandId(editedName);
     if (!sanitized) {
       setError('Invalid command name. Use lowercase letters, numbers, and hyphens.');
-      setFormView('basic');
       return false;
     }
 
     if (!editedDescription.trim()) {
       setError('Description is required');
-      setFormView('basic');
       return false;
     }
 
     if (!editedPrompt.trim()) {
       setError('Prompt template is required');
-      setFormView('prompt');
       return false;
     }
 
@@ -125,7 +107,6 @@ export const useCommandCreationState = (
   }, [editedName, editedDescription, editedPrompt, editedScope]);
 
   return {
-    formView,
     editedName,
     editedDescription,
     editedScope,
@@ -139,8 +120,6 @@ export const useCommandCreationState = (
     setError,
     handleFieldChange,
     handleScopeChange,
-    navigateToPrompt,
-    navigateToBasic,
     validate,
     getCommand,
   };

@@ -7,6 +7,9 @@ import { Button } from '@/components/Button.js';
 import { FormTextInput } from '@/components/FormTextInput.js';
 import { FocusProvider, useFocus } from '@/contexts/InputContext/FocusContext.js';
 import { useInput } from '@/contexts/InputContext/index.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
+import TextInput from '@/components/TextInput/index.js';
+import { Focusable } from '@/components/Focusable/index.js';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
 
 interface CommandFormProps {
@@ -17,10 +20,10 @@ interface CommandFormProps {
   editedName: string;
   editedDescription: string;
   editedScope: CommandSource;
+  editedPrompt: string;
   error?: string;
   onFieldChange: (field: string, value: string) => void;
   onScopeChange: (direction: 'left' | 'right') => void;
-  onNavigateToPrompt: () => void;
   onDelete?: () => void;
 }
 
@@ -85,12 +88,14 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
   editedName,
   editedDescription,
   editedScope,
+  editedPrompt,
   error,
   onFieldChange,
   onScopeChange,
   onDelete,
 }) => {
   const { theme } = useTheme();
+  const { rows } = useStdoutDimensions();
 
   const title = mode === 'edit' ? 'Edit Command' : 'Create Command';
 
@@ -100,8 +105,6 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
         segments={[
           { text: 'Tab', highlight: true },
           { text: ' cycle fields • ' },
-          { text: 'Ctrl+P', highlight: true },
-          { text: ' edit prompt • ' },
           { text: 'Ctrl+S', highlight: true },
           { text: ' save • ' },
           { text: 'ESC', highlight: true },
@@ -110,6 +113,8 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
       />
     </Box>
   );
+
+  const promptMaxLines = Math.max(3, rows - 22);
 
   return (
     <AppModal visible={true} title={title} footer={footerContent}>
@@ -150,6 +155,30 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             activeProfile={activeProfile}
             onScopeChange={onScopeChange}
           />
+        </Box>
+
+        <Box flexDirection="column" marginBottom={1}>
+          <Focusable>
+            {({ isFocused }) => (
+              <Box flexDirection="column">
+                <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
+                  Prompt Template:
+                </Text>
+                <TextInput
+                  value={editedPrompt}
+                  onChange={(value) => onFieldChange('prompt', value)}
+                  focus={isFocused}
+                  maxLines={promptMaxLines}
+                  showScrollbar
+                />
+                <Box marginTop={1}>
+                  <Text color={theme.history.help} dimColor>
+                    Use {'{{user_prompt}}'} where user input should appear
+                  </Text>
+                </Box>
+              </Box>
+            )}
+          </Focusable>
         </Box>
 
         {mode === 'edit' && onDelete && (

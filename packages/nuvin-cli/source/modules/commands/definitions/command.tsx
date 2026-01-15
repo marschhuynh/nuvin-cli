@@ -129,12 +129,13 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
       const updatedCommands = registry.list({ includeHidden: true });
       setCommands(updatedCommands);
       
-      if (navState.selectedIndex >= updatedCommands.length) {
-        setNavState(prev => ({
-          ...prev,
-          selectedIndex: Math.max(0, updatedCommands.length - 1),
-        }));
-      }
+      const newSelectedIndex = Math.min(navState.selectedIndex, Math.max(0, updatedCommands.length - 1));
+      
+      setNavState({
+        activeView: 'list',
+        editingCommandId: null,
+        selectedIndex: newSelectedIndex,
+      });
 
       await reloadCustomCommands(commandRegistry);
       eventBus.emit('ui:commands:refresh');
@@ -143,10 +144,22 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
     }
   }, [registry, navState.selectedIndex]);
 
-  const handleSave = useCallback(async (command: CustomCommandTemplate) => {
+  const handleSave = useCallback(async (
+    command: CustomCommandTemplate,
+    originalCommandId?: string,
+    originalSource?: CommandSource
+  ) => {
     if (!registry) return;
 
     try {
+      // If editing and ID or source changed, delete the old command first
+      const idChanged = originalCommandId && originalCommandId !== command.id;
+      const sourceChanged = originalSource && originalSource !== command.source;
+      
+      if (originalCommandId && (idChanged || sourceChanged)) {
+        await registry.deleteFromFile(originalCommandId, originalSource || command.source);
+      }
+
       await registry.saveToFile({
         ...command,
         enabled: true,
@@ -191,7 +204,7 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
         mode="create"
         availableScopes={availableScopes}
         activeProfile={activeProfile}
-        onSave={handleSave}
+        onSave={(command) => handleSave(command)}
         onCancel={handleCancel}
       />
     );
@@ -199,7 +212,8 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
 
   if (navState.activeView === 'edit' && navState.editingCommandId) {
     const editingCommand = registry?.get(navState.editingCommandId);
-    const commandIdToDelete = navState.editingCommandId;
+    const originalCommandId = navState.editingCommandId;
+    const originalSource = editingCommand?.source;
     return (
       <CommandCreation
         visible={true}
@@ -207,9 +221,9 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
         initialCommand={editingCommand}
         availableScopes={availableScopes}
         activeProfile={activeProfile}
-        onSave={handleSave}
+        onSave={(command) => handleSave(command, originalCommandId, originalSource)}
         onCancel={handleCancel}
-        onDelete={() => handleDelete(commandIdToDelete)}
+        onDelete={() => handleDelete(originalCommandId)}
       />
     );
   }

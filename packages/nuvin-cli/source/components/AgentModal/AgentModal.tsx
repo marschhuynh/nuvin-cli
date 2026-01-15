@@ -8,6 +8,7 @@ import { HelpText } from '@/components/HelpText.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useAgentModalState } from './useAgentModalState.js';
 import { AgentList } from './AgentList.js';
+import { useInput } from '@/contexts/InputContext/index.js';
 
 export interface AgentInfo extends CompleteAgent {
   isDefault: boolean;
@@ -39,6 +40,15 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
   const { rows } = useStdoutDimensions();
 
   const state = useAgentModalState(agents, enabledAgents, initialSelectedIndex);
+
+  useInput(
+    (input, key) => {
+      if (key.ctrl && (input === 'n' || input === 'N') && agents.length === 0) {
+        onAgentCreate?.();
+      }
+    },
+    { isActive: visible && agents.length === 0 },
+  );
 
   const handleToggle = useCallback(
     (agentId: string) => {
@@ -93,7 +103,7 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
     >
       {agents.length === 0 ? (
         <Box marginTop={1}>
-          <Text color={theme.history.help}>No agents configured. Press N to create a new agent.</Text>
+          <Text color={theme.history.help}>No agents configured. Press Ctrl+N to create a new agent.</Text>
         </Box>
       ) : (
         <AgentList
