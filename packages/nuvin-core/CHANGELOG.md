@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.16.1
+
+### Patch Changes
+
+- [`7ce583d`](https://github.com/marschhuynh/nuvin-space/commit/7ce583de849fdc1a38bfa44c6d8403480ae3a4cf) Thanks [@marschhuynh](https://github.com/marschhuynh)! - chore(core): remove deprecated zai provider configuration
+
 ## 1.16.0
 
 ### Minor Changes
