@@ -3,3 +3,4 @@ dist
 .history*events.json
 nuvin.log
 .nuvin-cli/
+.nuvin/
