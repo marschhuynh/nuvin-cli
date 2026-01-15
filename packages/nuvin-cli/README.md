@@ -1,17 +1,25 @@
 # @nuvin/nuvin-cli
 
-Interactive AI coding assistant CLI powered by Nuvin core. Transform your natural language requests into automated coding tasks with intelligent AI agent workflows.
+Interactive AI coding assistant for the terminal.
+Your terminal, your choice of model, your rules—nothing hidden.
 
 ## Features
 
-- **🤖 Multi-Provider AI Support** - GitHub Models, OpenRouter, ZAI, Anthropic, and Echo providers
-- **👥 Multi-Agent System** - Delegate tasks to specialist agents (code reviewer, tester, architect, etc.)
-- **🛠️ Rich Toolset** - File operations, web search, bash execution, and MCP integration
-- **💬 Memory Management** - Conversation history persistence and in-memory context
-- **🔧 Configuration Management** - Layered config system with CLI overrides (global, local, explicit, env, direct)
-- **🎯 Tool Approval** - Optional manual approval before executing tools (sudo mode)
-- **📝 Built-in Commands** - Session management, auth, history, agents, and more
-- **🎨 Theme System** - Customizable terminal themes
+**Provider Freedom** — Use any LLM provider without lock-in. Supports OpenRouter, Anthropic, GitHub Models, DeepInfra, ZAI, Moonshot, Kimi, MiniMax out of the box. Switch models mid-conversation.
+
+**Multi-Agent Delegation** — Spawn specialist agents for focused tasks like security audits or code investigation. Each agent runs in isolated context with session resumption support.
+
+**Native Code Intelligence** — Built-in LSP integration for go-to-definition, find references, hover information, and real-time diagnostics. Understand your codebase, not just pattern match.
+
+**Modern TUI** — React/Ink-based terminal interface with vim mode, virtualized rendering for large outputs, and session statistics.
+
+**Configuration Profiles** — Maintain separate configurations for different projects, teams, or workflows. Layer global, workspace, and CLI settings.
+
+**MCP Extensibility** — Extend capabilities with Model Context Protocol servers. Add custom tools without modifying core code.
+
+**Session Persistence** — Resume previous conversations with full context. Export, browse, and manage conversation history.
+
+**Controlled Execution** — Optional sudo mode for manual tool approval. Review and approve file edits, bash commands, and web requests before execution.
 
 ## Installation
 

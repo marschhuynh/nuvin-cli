@@ -174,4 +174,4 @@ pnpm release
 
 ## License
 
-MIT © Marsch Huynh
+Apache-2.0 © Marsch Huynh

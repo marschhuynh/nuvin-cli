@@ -45,7 +45,7 @@ providers:
       - type: api-key
         api-key: sk-ant-xxxxxxxx
     current-auth: api-key
-    defaultModel: claude-sonnet-4
+    defaultModel: claude-sonnet-4-5
 
 session:
   memPersist: true
@@ -68,9 +68,11 @@ Environment variables are automatically detected and loaded at CLI startup. They
 # AI Provider Authentication
 OPENROUTER_API_KEY=sk-or-xxxxxxxx
 ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
-ZAI_API_KEY=your_zai_key
-DEEPINFRA_API_KEY=your_deepinfra_key
 GITHUB_ACCESS_TOKEN=ghp_xxxxxxxxxxxx
+DEEPINFRA_API_KEY=your_deepinfra_key
+ZAI_API_KEY=your_zai_key
+MOONSHOT_API_KEY=your_moonshot_key
+MINIMAX_API_KEY=your_minimax_key
 
 # Optional Tool Configuration
 GOOGLE_CSE_KEY=your_google_cse_key      # For web_search tool
@@ -83,7 +85,7 @@ GOOGLE_CSE_CX=your_search_engine_id     # For web_search tool
 
 ```
 Configuration Options
-  --provider NAME     Choose AI provider: openrouter | github | zai | anthropic | echo
+  --provider NAME     Choose AI provider: openrouter | anthropic | github | deepinfra | zai | moonshot | minimax | echo
   --config PATH       Merge configuration from file (JSON or YAML)
   --model NAME        Specify model (e.g., gpt-4o, claude-sonnet-4)
   --api-key KEY       Your API key for authentication (OpenRouter, Zai, Anthropic)
