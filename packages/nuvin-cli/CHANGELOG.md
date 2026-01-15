@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.33.0
+
+### Minor Changes
+
+- [`91bd298`](https://github.com/marschhuynh/nuvin-space/commit/91bd298e6f9599a18babb38de29bb9c2da771a4d) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Consolidate config directory from `.nuvin-cli` to `.nuvin` with automatic migration
+
 ## 1.32.0
 
 ### Minor Changes
