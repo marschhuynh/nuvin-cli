@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.33.1
+
+### Patch Changes
+
+- [`e7e28b6`](https://github.com/marschhuynh/nuvin-space/commit/e7e28b6d2fb8150891005d5010b71e69fb335b6d) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): improve AutoScrollBox rendering and update ink to 6.6.4
+
 ## 1.33.0
 
 ### Minor Changes
