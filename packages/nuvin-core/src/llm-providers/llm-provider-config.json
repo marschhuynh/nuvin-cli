@@ -29,20 +29,6 @@
     },
     {
       "key": "zai",
-      "type": "openai-compat",
-      "baseUrl": "https://api.z.ai/api/coding/paas/v4",
-      "defaultModels": [
-        "glm-4.7",
-        "glm-4.6",
-        "glm-4.5"
-      ],
-      "features": {
-        "promptCaching": false,
-        "getModels": false
-      }
-    },
-    {
-      "key": "zai-anthropic",
       "type": "anthropic-compat",
       "baseUrl": "https://api.z.ai/api/anthropic/v1",
       "defaultModels": [
