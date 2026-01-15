@@ -1,5 +1,5 @@
 import { type BoxRef, Box, type BoxProps, measureElement, Text } from 'ink';
-import { useRef, useEffect, useCallback, useState, useMemo, type ReactNode, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo, type ReactNode, useImperativeHandle, forwardRef } from 'react';
 import { useMouse, useInput, useFocus, type MouseEvent, type Key } from '../contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 
@@ -33,16 +33,29 @@ type ScrollInfo = {
   contentHeight: number;
 };
 
-function Scrollbar({
-  scrollInfo,
-  color = 'gray',
-  trackColor = 'dim',
-}: {
+type ScrollbarProps = {
   scrollInfo: ScrollInfo;
   color?: string;
   trackColor?: string;
-}) {
+};
+
+function calculateThumbPosition(scrollInfo: ScrollInfo): number {
   const { scrollY, containerHeight, contentHeight } = scrollInfo;
+  if (contentHeight <= containerHeight) return 0;
+
+  const trackHeight = containerHeight;
+  const thumbHeight = Math.max(1, Math.round((containerHeight / contentHeight) * trackHeight));
+  const maxScrollY = contentHeight - containerHeight;
+  const scrollRatio = maxScrollY > 0 ? scrollY / maxScrollY : 0;
+  return Math.round(scrollRatio * (trackHeight - thumbHeight));
+}
+
+function ScrollbarComponent({
+  scrollInfo,
+  color = 'gray',
+  trackColor = 'dim',
+}: ScrollbarProps) {
+  const { containerHeight, contentHeight } = scrollInfo;
 
   if (contentHeight <= containerHeight) {
     return null;
@@ -50,54 +63,73 @@ function Scrollbar({
 
   const trackHeight = containerHeight;
   const thumbHeight = Math.max(1, Math.round((containerHeight / contentHeight) * trackHeight));
-  const maxScrollY = contentHeight - containerHeight;
-  const scrollRatio = maxScrollY > 0 ? scrollY / maxScrollY : 0;
-  const thumbPosition = Math.round(scrollRatio * (trackHeight - thumbHeight));
+  const thumbPosition = calculateThumbPosition(scrollInfo);
 
-  const track: string[] = [];
-  for (let i = 0; i < trackHeight; i++) {
-    if (i >= thumbPosition && i < thumbPosition + thumbHeight) {
-      track.push('┃');
-    } else {
-      track.push('│');
-    }
-  }
+  const beforeThumb = thumbPosition;
+  const afterThumb = trackHeight - thumbPosition - thumbHeight;
 
   return (
     <Box flexDirection="column" flexShrink={0}>
-      {track.map((char, i) => (
-        <Text key={`track-${i}-${char}`} color={char === '┃' ? color : trackColor}>
-          {char}
-        </Text>
-      ))}
+      {beforeThumb > 0 && (
+        <Box flexDirection="column">
+          {Array.from({ length: beforeThumb }, (_, i) => (
+            <Text key={`before-${i}`} color={trackColor}>│</Text>
+          ))}
+        </Box>
+      )}
+      <Box flexDirection="column">
+        {Array.from({ length: thumbHeight }, (_, i) => (
+          <Text key={`thumb-${i}`} color={color}>┃</Text>
+        ))}
+      </Box>
+      {afterThumb > 0 && (
+        <Box flexDirection="column">
+          {Array.from({ length: afterThumb }, (_, i) => (
+            <Text key={`after-${i}`} color={trackColor}>│</Text>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }
 
-function throttle<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
-  let lastCall = 0;
+const Scrollbar = React.memo(ScrollbarComponent, (prev, next) => {
+  const prevThumbPos = calculateThumbPosition(prev.scrollInfo);
+  const nextThumbPos = calculateThumbPosition(next.scrollInfo);
+  return (
+    prevThumbPos === nextThumbPos &&
+    prev.scrollInfo.containerHeight === next.scrollInfo.containerHeight &&
+    prev.scrollInfo.contentHeight === next.scrollInfo.contentHeight &&
+    prev.color === next.color &&
+    prev.trackColor === next.trackColor
+  );
+});
+
+function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T & { cancel: () => void } {
   let timeoutId: NodeJS.Timeout | null = null;
-  let lastArgs: unknown[] | null = null;
 
-  return ((...args: unknown[]) => {
-    const now = Date.now();
-    lastArgs = args;
-
-    if (now - lastCall >= ms) {
-      lastCall = now;
-      fn(...args);
-    } else if (!timeoutId) {
-      timeoutId = setTimeout(
-        () => {
-          lastCall = Date.now();
-          timeoutId = null;
-          if (lastArgs) fn(...lastArgs);
-        },
-        ms - (now - lastCall),
-      );
+  const debounced = ((...args: unknown[]) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
     }
-  }) as T;
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      fn(...args);
+    }, ms);
+  }) as T & { cancel: () => void };
+
+  debounced.cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  return debounced;
 }
+
+const SCROLL_BATCH_MS = 48;
+const SCROLL_INFO_DEBOUNCE_MS = 80;
 
 export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>(function AutoScrollBox({
   maxHeight,
@@ -129,6 +161,9 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     contentHeight: 0,
   });
 
+  const pendingScrollDelta = useRef(0);
+  const scrollBatchTimer = useRef<NodeJS.Timeout | null>(null);
+
   const needsScrollbar = showScrollbar && scrollInfo.contentHeight > scrollInfo.containerHeight;
   const internalFocus = useFocus({ active: needsScrollbar && !manualFocus });
   const isFocused = externalFocus !== undefined ? externalFocus : internalFocus.isFocused;
@@ -145,32 +180,97 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     return cachedDimensionsRef.current;
   }, []);
 
-  const updateScrollInfoThrottled = useMemo(
+  const updateScrollInfoDebounced = useMemo(
     () =>
-      throttle(() => {
+      debounce(() => {
         if (!boxRef.current || !contentRef.current) return;
         const pos = boxRef.current.getScrollPosition();
-        const dims = measureDimensions();
+        const dims = cachedDimensionsRef.current;
         if (!dims) return;
         setScrollInfo({
           scrollY: pos?.y ?? 0,
           containerHeight: dims.container.height,
           contentHeight: dims.content.height,
         });
-      }, 32),
-    [measureDimensions],
+      }, SCROLL_INFO_DEBOUNCE_MS),
+    [],
   );
+
+  const updateScrollInfoImmediate = useCallback(() => {
+    if (!boxRef.current || !contentRef.current) return;
+    const pos = boxRef.current.getScrollPosition();
+    const dims = measureDimensions();
+    if (!dims) return;
+    setScrollInfo({
+      scrollY: pos?.y ?? 0,
+      containerHeight: dims.container.height,
+      contentHeight: dims.content.height,
+    });
+  }, [measureDimensions]);
+
+  const applyBatchedScroll = useCallback(() => {
+    if (!boxRef.current) return;
+
+    const delta = pendingScrollDelta.current;
+    pendingScrollDelta.current = 0;
+    scrollBatchTimer.current = null;
+
+    if (delta === 0) return;
+
+    const currentPos = boxRef.current.getScrollPosition();
+    if (!currentPos) return;
+
+    const newY = Math.max(0, currentPos.y + delta);
+    boxRef.current.scrollTo({ x: 0, y: newY });
+
+    const actualPos = boxRef.current.getScrollPosition();
+    if (actualPos) {
+      const dims = cachedDimensionsRef.current;
+      if (dims) {
+        const maxScrollY = dims.content.height - dims.container.height;
+        const isAtBottom = actualPos.y >= maxScrollY - 1;
+        if (isAtBottom) {
+          isUserScrolledRef.current = false;
+        } else if (actualPos.y > 0) {
+          isUserScrolledRef.current = true;
+        }
+      }
+    }
+
+    updateScrollInfoDebounced();
+  }, [updateScrollInfoDebounced]);
 
   const scrollBy = useCallback(
     (delta: number) => {
       if (!boxRef.current || !contentRef.current) return;
+
+      pendingScrollDelta.current += delta;
+
+      if (!scrollBatchTimer.current) {
+        scrollBatchTimer.current = setTimeout(applyBatchedScroll, SCROLL_BATCH_MS);
+      }
+    },
+    [applyBatchedScroll],
+  );
+
+  const scrollByImmediate = useCallback(
+    (delta: number) => {
+      if (!boxRef.current || !contentRef.current) return;
+
+      if (scrollBatchTimer.current) {
+        clearTimeout(scrollBatchTimer.current);
+        scrollBatchTimer.current = null;
+      }
+      pendingScrollDelta.current = 0;
+
       const currentPos = boxRef.current.getScrollPosition();
       if (!currentPos) return;
       const newY = Math.max(0, currentPos.y + delta);
       boxRef.current.scrollTo({ x: 0, y: newY });
+
       const actualPos = boxRef.current.getScrollPosition();
       if (actualPos) {
-        const dims = cachedDimensionsRef.current || measureDimensions();
+        const dims = cachedDimensionsRef.current;
         if (dims) {
           const maxScrollY = dims.content.height - dims.container.height;
           const isAtBottom = actualPos.y >= maxScrollY - 1;
@@ -181,10 +281,20 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
           }
         }
       }
-      updateScrollInfoThrottled();
+
+      updateScrollInfoDebounced();
     },
-    [measureDimensions, updateScrollInfoThrottled],
+    [updateScrollInfoDebounced],
   );
+
+  useEffect(() => {
+    return () => {
+      if (scrollBatchTimer.current) {
+        clearTimeout(scrollBatchTimer.current);
+      }
+      updateScrollInfoDebounced.cancel();
+    };
+  }, [updateScrollInfoDebounced]);
 
   const handleMouseEvent = useCallback(
     (event: MouseEvent) => {
@@ -211,28 +321,28 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
       }
 
       if (input === 'j') {
-        scrollBy(scrollStep);
+        scrollByImmediate(scrollStep);
         return true;
       }
       if (input === 'k') {
-        scrollBy(-scrollStep);
+        scrollByImmediate(-scrollStep);
         return true;
       }
       if (input === 'g') {
         if (!boxRef.current || !contentRef.current) return;
         boxRef.current.scrollTo({ x: 0, y: 0 });
         isUserScrolledRef.current = true;
-        updateScrollInfoThrottled();
+        updateScrollInfoDebounced();
         return true;
       }
       if (input === 'G') {
         boxRef.current?.scrollToBottom();
         isUserScrolledRef.current = false;
-        updateScrollInfoThrottled();
+        updateScrollInfoDebounced();
         return true;
       }
     },
-    [isFocused, scrollBy, scrollStep, needsScrollbar, updateScrollInfoThrottled, enableKeyboardScroll],
+    [isFocused, scrollByImmediate, scrollStep, needsScrollbar, updateScrollInfoDebounced, enableKeyboardScroll],
   );
 
   useMouse(handleMouseEvent, { isActive: enableMouseScroll && needsScrollbar, priority: mousePriority });
@@ -240,13 +350,14 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
 
   useEffect(() => {
     if (prevChildrenRef.current !== children) {
+      measureDimensions();
       if (autoScrollToBottom && !isUserScrolledRef.current) {
         boxRef.current?.scrollToBottom();
       }
       prevChildrenRef.current = children;
     }
-    updateScrollInfoThrottled();
-  }, [children, updateScrollInfoThrottled, autoScrollToBottom]);
+    updateScrollInfoImmediate();
+  }, [children, measureDimensions, updateScrollInfoImmediate, autoScrollToBottom]);
 
   useEffect(() => {
     onScrollChange?.(scrollInfo);
@@ -256,14 +367,14 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     if (!boxRef.current) return;
     boxRef.current.scrollTo({ x: 0, y: Math.max(0, y) });
     isUserScrolledRef.current = true;
-    updateScrollInfoThrottled();
-  }, [updateScrollInfoThrottled]);
+    updateScrollInfoDebounced();
+  }, [updateScrollInfoDebounced]);
 
   useImperativeHandle(ref, () => ({
     scrollTo: scrollToPosition,
-    scrollBy,
+    scrollBy: scrollByImmediate,
     getScrollInfo: () => scrollInfo,
-  }), [scrollToPosition, scrollBy, scrollInfo]);
+  }), [scrollToPosition, scrollByImmediate, scrollInfo]);
 
   const scrollbarElement = needsScrollbar && (
     <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} />

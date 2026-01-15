@@ -83,7 +83,7 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
       height="100%"
     >
       {skills.length === 0 ? (
-        <Box marginTop={1} flexDirection="column">
+        <Box marginX={1} flexDirection="column">
           <Text color={theme.history.help}>No skills found.</Text>
           <Text color={theme.colors.muted} dimColor>
             {'\n'}Skills are discovered from:

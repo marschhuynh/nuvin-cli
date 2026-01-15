@@ -6,7 +6,8 @@ This file provides guidance to Nuvin cli when working with code in this reposito
 
 ```bash
 # Build the project
-pnpm build
+pnpm build                    # Full build with type check
+SKIP_TYPE_CHECK=1 pnpm build  # Faster build without type check
 
 # Development mode with watch
 pnpm dev
@@ -15,13 +16,19 @@ pnpm dev
 pnpm run:dev
 
 # Run tests
-pnpm test                    # Run all tests
-pnpm test -- --watch         # Watch mode
-pnpm test <testname>         # Run tests matching pattern (e.g., pnpm test eventProcessor)
+pnpm test                     # Run all tests once
+pnpm test -- --watch          # Watch mode
+pnpm test -- --ui             # Vitest UI mode
+pnpm test <pattern>           # Run tests matching pattern
+pnpm test eventProcessor      # Run all eventProcessor tests
+pnpm test OrchestratorManager # Run specific test file
 
 # Lint and format
-pnpm lint                    # Check code style with Biome
-pnpm format                  # Auto-fix formatting issues
+pnpm lint                     # Check code style with Biome
+pnpm format                   # Auto-fix formatting issues
+
+# Clean build artifacts
+pnpm clean                    # Remove dist/ directory
 ```
 
 ## CLI Entry Points and Subcommands
@@ -111,7 +118,33 @@ Commands are registered in `modules/commands/definitions/index.ts`. Each command
 - Can be function-based or component-based (rendering UI)
 - Is accessible via `/commandName` syntax
 
-Core commands: `/new`, `/clear`, `/exit`, `/help`, `/history`, `/export`, `/model`, `/auth`, `/sudo`, `/thinking`, `/mcp`, `/agent`, `/command`, `/summary`, `/vim`.
+**Command Structure:**
+```typescript
+// Function-based command
+export const command = {
+  id: 'commandName',
+  handler: async ({ orchestrator, input, args }) => {
+    // Command logic
+  }
+};
+
+// Component-based command (interactive UI)
+export const command = {
+  id: 'commandName',
+  Component: () => {
+    // Interactive component
+  }
+};
+```
+
+**Core Commands:**
+- Session: `/new`, `/clear`, `/exit`
+- Info: `/help`, `/history`, `/export`, `/summary`
+- Config: `/model`, `/auth`, `/sudo`, `/thinking`
+- Features: `/mcp`, `/agent`, `/skills`, `/command`, `/vim`
+
+**Custom Commands:**
+Users can define custom commands in `~/.nuvin/commands/` that are loaded via `CustomCommandLoader`.
 
 ### Memory and Sessions
 
@@ -120,6 +153,20 @@ Core commands: `/new`, `/clear`, `/exit`, `/help`, `/history`, `/export`, `/mode
 - Session dir: `~/.nuvin/sessions/<sessionId>/`
 - Each agent (main + specialists) has separate `history.<agentId>.json` files
 - Use `--history <path>` or `--resume` to load existing sessions
+
+**Session Lifecycle Hook (`useSessionManagement`):**
+- `loadHistoryFromFile(path)` - Load conversation from JSON file
+- `exportToFile(path, messages)` - Export current conversation
+- `createNewSession(config)` - Start fresh session with optional sessionId
+- Session info tracked via `SessionInfo[]` in state
+
+**Session Metrics:**
+`SessionMetricsService` tracks:
+- Token usage per session
+- Cost calculations
+- Response times
+- Tool execution counts
+- Subscribe to updates: `sessionMetricsService.subscribe((conversationId, snapshot) => {})`
 
 ### Orchestrator Lifecycle (`OrchestratorStatus`)
 
@@ -166,13 +213,151 @@ Auth methods: API key (via `auth[].api-key` or env vars), OAuth (Anthropic).
 
 ## Build System
 
+The build process (`scripts/build.js`) runs in stages:
+
+1. **TypeScript type check**: `npx tsc --noEmit` (skip with `SKIP_TYPE_CHECK=1`)
+2. **Bundle with tsup**: ESM output to `dist/` with minification
+3. **Code obfuscation**: JavaScript Obfuscator for production builds
+4. **Version generation**: Auto-generated version file
+5. **README copy**: README.md copied to dist for npm publication
+
+```bash
+# Standard build (includes type check)
+pnpm build
+
+# Build without type checking (faster for iteration)
+SKIP_TYPE_CHECK=1 pnpm build
+
+# Development build with watch
+pnpm dev
+```
+
+**Build Tools:**
 - **tsup**: Bundles TypeScript to ESM `dist/` with minification
-- **Biome**: Linting and formatting (configured in `biome.json`)
+- **Biome**: Linting and formatting
 - **Vitest**: Test runner with React component testing via `ink-testing-library`
-- **Path alias**: `@` → `./source` (configured in tsup, vitest, and tsconfig)
+- **Path alias**: `@` → `./source` (configured in tsup, vitest, tsconfig, and esbuild)
+- **React Compiler**: Enabled via Babel plugin (`babel-plugin-react-compiler`)
+
+**TypeScript Configuration:**
+- Strict mode enabled with all strict checks
+- Target: ES2020, Module: ESNext
+- JSX: automatic (React 19)
+- No unused locals/parameters allowed
+
+## Testing Patterns
+
+The codebase uses Vitest with `ink-testing-library` for React component testing.
+
+### Component Testing
+
+```typescript
+import { render } from 'ink-testing-library';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock child components to simplify output verification
+vi.mock('../../source/components/MessageLine.js', () => ({
+  MessageLine: ({ message }) => <Text>[Message {message.id}]</Text>,
+}));
+
+describe('ChatDisplay', () => {
+  it('renders messages correctly', () => {
+    const { lastFrame } = render(<ChatDisplay messages={messages} />);
+    expect(lastFrame()).toContain('[Message msg-1]');
+  });
+});
+```
+
+### Service Testing
+
+```typescript
+// Mock ConfigManager before importing services
+const { mockConfigManager } = vi.hoisted(() => ({
+  mockConfigManager: {
+    getConfig: vi.fn(() => ({ activeProvider: 'openrouter' })),
+    get: vi.fn(() => undefined),
+  },
+}));
+
+vi.mock('../source/config/manager.js', () => ({
+  ConfigManager: { getInstance: vi.fn(() => mockConfigManager) },
+}));
+
+import { OrchestratorManager } from '../source/services/OrchestratorManager.js';
+```
+
+### Test File Organization
+
+- `tests/components/*.test.tsx` - React/Ink component tests
+- `tests/*.test.ts` - Service and utility tests
+- Tests excluded from Vitest: `tests/inputArea.test.ts`, `tests/utils.test.ts` (these use AVA)
+
+## Service Architecture
+
+### Singleton Pattern
+
+Key services use singleton instances for application-wide state:
+
+- `orchestratorManager` - `source/services/OrchestratorManager.ts:1294`
+- `sessionMetricsService` - `source/services/SessionMetricsService.ts:72`
+- `skillsService` - `source/services/SkillsService.ts:466`
+- `eventBus` - `source/services/EventBus.ts` (TypedEventBus wrapping Node EventEmitter)
+
+### LSP Integration
+
+The LSP service (`source/services/lsp/`) provides code intelligence:
+
+- **client.ts** - JSONRPC-based LSP client
+- **server.ts** - Manages LSP server processes
+- **language.ts** - Language ID mappings
+- **index.ts** - Main LSP service with diagnostics support
+
+LSP diagnostics are emitted via `eventBus` on `lsp:diagnostics` event.
+
+### Event-Driven Best Practices
+
+When working with the event bus:
+
+1. **Always unsubscribe** in cleanup functions to prevent memory leaks
+2. **Use typed events** - all events defined in `EventMap` type
+3. **Emit with payloads** - events can include typed data for context
+
+```typescript
+useEffect(() => {
+  const handler = (payload) => { /* handle event */ };
+  eventBus.on('ui:line', handler);
+  return () => eventBus.off('ui:line', handler);
+}, []);
+```
+
+## Path Alias System
+
+The `@` alias maps to `./source` and is configured in:
+- `tsconfig.json` - TypeScript resolution
+- `vitest.config.ts` - Test module resolution
+- `tsup.config.ts` - Build-time bundling
+- `esbuildOptions` - JSX/alias resolution
+
+Usage:
+```typescript
+import { MyComponent } from '@/components/MyComponent.js';
+import { myUtil } from '@/utils/myUtil.js';
+```
+
+**Important:** Always use `.js` extensions in imports (ESM requirement).
+
+## React Compiler
+
+The project uses React Compiler (via `babel-plugin-react-compiler`) for automatic optimizations. This means:
+- Manual `useMemo`/`useCallback` are less critical
+- Component renders are automatically optimized
+- Some hooks may need `// biome-ignore` for dependency warnings (see `useOrchestrator.ts:1`)
 
 ## Key Type Definitions
 
 - `OrchestratorConfig`: `{ memPersist?, sessionId?, sessionDir?, streamingChunks? }`
 - `UIHandlers`: `{ appendLine, updateLine, updateLineMetadata, handleError }`
 - `MessageLine`: `{ id, type: 'user'|'assistant'|'system'|'error', content, metadata? }`
+- `OrchestratorStatus`: `'Initializing' | 'Ready' | 'Error'` (enum)
+- `CLIConfig`: Full configuration shape with providers, MCP, skills, session settings
+- `AuthMethod`: `{ type: 'api-key', 'api-key': string }` or `{ type: 'oauth', access, refresh, expires? }`
