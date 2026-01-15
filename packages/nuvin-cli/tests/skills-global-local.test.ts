@@ -22,9 +22,9 @@ describe('Skills Discovery - Global and Local', () => {
     await fs.rm(fakeHomeDir, { recursive: true, force: true });
   });
 
-  describe('Local skills (.nuvin-cli/skills)', () => {
-    it('should discover skills from project .nuvin-cli/skills directory', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'local-nuvin-skill');
+  describe('Local skills (.nuvin/skills)', () => {
+    it('should discover skills from project .nuvin/skills directory', async () => {
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'local-nuvin-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -43,7 +43,7 @@ Project-specific instructions.
 
       expect(result.skills['local-nuvin-skill']).toBeDefined();
       expect(result.skills['local-nuvin-skill'].description).toBe('A local Nuvin skill in project directory');
-      expect(result.skills['local-nuvin-skill'].location).toContain('.nuvin-cli/skills');
+      expect(result.skills['local-nuvin-skill'].location).toContain('.nuvin/skills');
     });
   });
 
@@ -72,9 +72,9 @@ Claude Code compatible.
     });
   });
 
-  describe('Global skills (~/.nuvin-cli/skills)', () => {
-    it('should discover skills from global ~/.nuvin-cli/skills directory', async () => {
-      const skillDir = path.join(fakeHomeDir, '.nuvin-cli', 'skills', 'global-nuvin-skill');
+  describe('Global skills (~/.nuvin/skills)', () => {
+    it('should discover skills from global ~/.nuvin/skills directory', async () => {
+      const skillDir = path.join(fakeHomeDir, '.nuvin', 'skills', 'global-nuvin-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -124,9 +124,9 @@ Claude Code compatible, global.
 
   describe('Combined local and global discovery', () => {
     it('should discover skills from all four directories simultaneously', async () => {
-      const localNuvinDir = path.join(tempDir, '.nuvin-cli', 'skills', 'local-nuvin');
+      const localNuvinDir = path.join(tempDir, '.nuvin', 'skills', 'local-nuvin');
       const localClaudeDir = path.join(tempDir, '.claude', 'skills', 'local-claude');
-      const globalNuvinDir = path.join(fakeHomeDir, '.nuvin-cli', 'skills', 'global-nuvin');
+      const globalNuvinDir = path.join(fakeHomeDir, '.nuvin', 'skills', 'global-nuvin');
       const globalClaudeDir = path.join(fakeHomeDir, '.claude', 'skills', 'global-claude');
 
       await fs.mkdir(localNuvinDir, { recursive: true });

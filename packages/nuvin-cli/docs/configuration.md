@@ -2,8 +2,8 @@
 
 The CLI uses a layered configuration system with priority resolution (later entries override earlier ones):
 
-1. **Global config** - `~/.nuvin-cli/config.yaml` or `config.json`
-2. **Workspace config** - `./.nuvin-cli/config.yaml` or `config.json` (in current directory)
+1. **Global config** - `~/.nuvin/config.yaml` or `config.json`
+2. **Workspace config** - `./.nuvin/config.yaml` or `config.json` (in current directory)
 3. **Explicit file** - `--config path/to/file.{yaml,json}`
 4. **Environment variables** - `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc. (processed at startup)
 5. **CLI flags** - `--provider`, `--model`, `--api-key`, etc. (highest priority)
@@ -28,7 +28,7 @@ nuvin config list
 ## Configuration File Example
 
 ```yaml
-# ~/.nuvin-cli/config.yaml or ./.nuvin-cli/config.yaml
+# ~/.nuvin/config.yaml or ./.nuvin/config.yaml
 activeProvider: openrouter
 model: openai/gpt-4o
 
@@ -88,7 +88,7 @@ Configuration Options
   --model NAME        Specify model (e.g., gpt-4o, claude-sonnet-4)
   --api-key KEY       Your API key for authentication (OpenRouter, Zai, Anthropic)
   --mem-persist       Enable conversation history persistence (.history/<session>/)
-  --mcp-config PATH   MCP servers configuration file (default: ~/.nuvin-cli/.nuvin_mcp.json)
+  --mcp-config PATH   MCP servers configuration file (default: ~/.nuvin/.nuvin_mcp.json)
   --reasoning-effort  Set reasoning effort for o1 models: low | medium | high (default: medium)
   --history PATH      Load conversation history from file on startup
   -v, --version       Show version information

@@ -6,13 +6,13 @@ import type { ProfileMetadata, ProfileRegistry, CreateProfileOptions, DeleteProf
 import { DEFAULT_PROFILE, PROFILES_REGISTRY_FILE, PROFILES_DIR } from './profile-types';
 
 export class ProfileManager {
-  private readonly baseDir: string; // ~/.nuvin-cli
-  private readonly profilesDir: string; // ~/.nuvin-cli/profiles
-  private readonly registryPath: string; // ~/.nuvin-cli/profiles.yaml
+  private readonly baseDir: string; // ~/.nuvin
+  private readonly profilesDir: string; // ~/.nuvin/profiles
+  private readonly registryPath: string; // ~/.nuvin/profiles.yaml
   private registry: ProfileRegistry;
 
   constructor(private readonly logger: (message: string) => void = () => {}) {
-    this.baseDir = path.join(os.homedir(), '.nuvin-cli');
+    this.baseDir = path.join(os.homedir(), '.nuvin');
     this.profilesDir = path.join(this.baseDir, PROFILES_DIR);
     this.registryPath = path.join(this.baseDir, PROFILES_REGISTRY_FILE);
     this.registry = { active: DEFAULT_PROFILE, profiles: {} };

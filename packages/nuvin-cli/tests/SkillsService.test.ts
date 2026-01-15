@@ -20,8 +20,8 @@ describe('SkillsService', () => {
   });
 
   describe('discover', () => {
-    it('should discover skills from .nuvin-cli/skills directory', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'test-skill');
+    it('should discover skills from .nuvin/skills directory', async () => {
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'test-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -66,7 +66,7 @@ description: A Claude Code compatible skill
     });
 
     it('should report error for invalid frontmatter', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'bad-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'bad-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -86,7 +86,7 @@ Missing description field.
     });
 
     it('should report error when skill name does not match directory name', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'my-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'my-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -108,8 +108,8 @@ Content
     });
 
     it('should exclude skills in exclude list', async () => {
-      const skill1Dir = path.join(tempDir, '.nuvin-cli', 'skills', 'skill-one');
-      const skill2Dir = path.join(tempDir, '.nuvin-cli', 'skills', 'skill-two');
+      const skill1Dir = path.join(tempDir, '.nuvin', 'skills', 'skill-one');
+      const skill2Dir = path.join(tempDir, '.nuvin', 'skills', 'skill-two');
       await fs.mkdir(skill1Dir, { recursive: true });
       await fs.mkdir(skill2Dir, { recursive: true });
 
@@ -159,7 +159,7 @@ description: Custom directory skill
 
   describe('get', () => {
     it('should return skill info by name', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'get-test');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'get-test');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -187,7 +187,7 @@ description: Test for get method
 
   describe('loadFull', () => {
     it('should load full skill content', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'full-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'full-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -224,7 +224,7 @@ allowed-tools: bash_tool file_read
     });
 
     it('should detect optional directories', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'dir-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'dir-skill');
       await fs.mkdir(path.join(skillDir, 'scripts'), { recursive: true });
       await fs.mkdir(path.join(skillDir, 'references'), { recursive: true });
       await fs.writeFile(
@@ -274,7 +274,7 @@ description: Skill with directories
     });
 
     it('should include available skills in XML format', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'xml-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'xml-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),

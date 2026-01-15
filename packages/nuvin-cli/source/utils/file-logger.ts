@@ -7,7 +7,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export interface FileLoggerOptions {
   /**
    * Directory where log files will be stored
-   * @default ~/.nuvin-cli/logs
+   * @default ~/.nuvin/logs
    */
   logDir?: string;
 
@@ -66,7 +66,7 @@ export class FileLogger {
   private writeStream: fs.WriteStream | null = null;
 
   constructor(options: FileLoggerOptions = {}) {
-    this.logDir = options.logDir || path.join(os.homedir(), '.nuvin-cli', 'logs');
+    this.logDir = options.logDir || path.join(os.homedir(), '.nuvin', 'logs');
     const fileName = options.logFileName || 'nuvin';
     this.logFilePath = path.join(this.logDir, `${fileName}.log`);
     this.minLevel = options.minLevel || 'error';

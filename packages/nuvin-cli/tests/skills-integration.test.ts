@@ -21,7 +21,7 @@ describe('Skills Integration', () => {
 
   describe('ToolRegistry + SkillsService integration', () => {
     it('should register skill tool and connect to SkillsService', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'test-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'test-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -52,7 +52,7 @@ description: A test skill for integration testing
     });
 
     it('should execute skill tool and return skill content', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'execute-test');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'execute-test');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -107,7 +107,7 @@ Follow these instructions carefully.
     });
 
     it('should respect skill permissions', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'denied-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'denied-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -148,7 +148,7 @@ Secret content
       let definitions = toolRegistry.getToolDefinitions(['skill']);
       expect(definitions[0].function.description).toContain('No skills are currently available');
 
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'new-skill');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'new-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -195,7 +195,7 @@ Works with both Nuvin and Claude Code.
 
   describe('Configuration', () => {
     it('should respect enabled=false configuration', async () => {
-      const skillDir = path.join(tempDir, '.nuvin-cli', 'skills', 'disabled-test');
+      const skillDir = path.join(tempDir, '.nuvin', 'skills', 'disabled-test');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
         path.join(skillDir, 'SKILL.md'),
@@ -234,8 +234,8 @@ description: From custom directory
     });
 
     it('should exclude skills in exclude list', async () => {
-      const skill1Dir = path.join(tempDir, '.nuvin-cli', 'skills', 'included');
-      const skill2Dir = path.join(tempDir, '.nuvin-cli', 'skills', 'excluded');
+      const skill1Dir = path.join(tempDir, '.nuvin', 'skills', 'included');
+      const skill2Dir = path.join(tempDir, '.nuvin', 'skills', 'excluded');
       await fs.mkdir(skill1Dir, { recursive: true });
       await fs.mkdir(skill2Dir, { recursive: true });
 

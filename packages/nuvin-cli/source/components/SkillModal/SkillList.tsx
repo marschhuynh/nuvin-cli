@@ -47,7 +47,7 @@ export const SkillList: React.FC<SkillListProps> = ({
       const statusIcon = enabled ? '✓' : '✗';
       const accentColor = theme.colors.accent;
 
-      const isGlobal = skill.location.includes('/.claude/') || skill.location.includes('/.nuvin-cli/');
+      const isGlobal = skill.location.includes('/.claude/') || skill.location.includes('/.nuvin/');
 
       return (
         <Box flexDirection="column" marginBottom={1}>

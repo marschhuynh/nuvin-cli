@@ -18,6 +18,7 @@ import { StdoutDimensionsProvider } from './contexts/StdoutDimensionsContext.js'
 import { InputProvider, defaultMiddleware } from './contexts/InputContext/index.js';
 
 import { getVersionInfo } from './utils/version.js';
+import { runConfigMigration } from './utils/config-migration.js';
 import { ConfigManager, type CLIConfig, type ProviderKey } from './config/index.js';
 import { ConfigCliHandler } from './config/cli-handler.js';
 import { orchestratorManager } from './services/OrchestratorManager.js';
@@ -61,13 +62,16 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-const nuvinCliDir = path.join(os.homedir(), '.nuvin-cli');
+// TODO: Remove migration call after v1.x release
+await runConfigMigration();
+
+const nuvinDir = path.join(os.homedir(), '.nuvin');
 try {
-  if (!fs.existsSync(nuvinCliDir)) {
-    fs.mkdirSync(nuvinCliDir, { recursive: true });
+  if (!fs.existsSync(nuvinDir)) {
+    fs.mkdirSync(nuvinDir, { recursive: true });
   }
 } catch (_error) {
-  // console.warn(`Warning: Could not create nuvin-cli directory at ${nuvinCliDir}:`, error);
+  // Silent fail
 }
 
 const cli = meow(

@@ -165,10 +165,10 @@ export class OrchestratorManager {
 
     if (!profileManager || !currentProfile) {
       // Fallback to original paths if profile manager not available
-      const nuvinCliDir = path.join(os.homedir(), '.nuvin-cli');
+      const nuvinDir = path.join(os.homedir(), '.nuvin');
       return {
-        sessionsDir: path.join(nuvinCliDir, 'sessions'),
-        agentsDir: path.join(nuvinCliDir, 'agents'),
+        sessionsDir: path.join(nuvinDir, 'sessions'),
+        agentsDir: path.join(nuvinDir, 'agents'),
       };
     }
 

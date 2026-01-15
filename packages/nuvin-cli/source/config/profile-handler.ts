@@ -257,7 +257,7 @@ Examples:
   nuvin profile show
 
 Note: The 'default' profile is reserved and cannot be deleted.
-The default profile uses the root ~/.nuvin-cli directory.
+The default profile uses the root ~/.nuvin directory.
 `);
   }
 }

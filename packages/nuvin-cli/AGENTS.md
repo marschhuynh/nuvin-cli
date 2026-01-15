@@ -89,8 +89,8 @@ The `eventBus` (a `TypedEventBus` wrapping Node's `EventEmitter`) enables loose 
 ### Configuration System
 
 Priority order (later overrides earlier):
-1. Global: `~/.nuvin-cli/config.{yaml,json}`
-2. Workspace: `./.nuvin-cli/config.{yaml,json}`
+1. Global: `~/.nuvin/config.{yaml,json}`
+2. Workspace: `./.nuvin/config.{yaml,json}`
 3. Explicit: `--config path/to/file`
 4. Environment: `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc. (processed at startup into 'env' scope)
 5. Direct: CLI flags (`--provider`, `--model`, etc.)
@@ -100,7 +100,7 @@ The `ConfigManager` singleton provides `load()`, `loadConfig()`, and `getConfig(
 ### Profile System
 
 Profiles enable switching between multiple configurations:
-- Stored in `~/.nuvin-cli/profiles/`
+- Stored in `~/.nuvin/profiles/`
 - Managed via `nuvin profile <list|create|delete|switch|show|clone>` subcommands
 - `--profile` flag overrides active profile for single session
 
@@ -117,7 +117,7 @@ Core commands: `/new`, `/clear`, `/exit`, `/help`, `/history`, `/export`, `/mode
 
 - Default: In-memory until first explicit session
 - Lazy initialization: Persisted session created on first user message when `memPersist: true`
-- Session dir: `~/.nuvin-cli/sessions/<sessionId>/`
+- Session dir: `~/.nuvin/sessions/<sessionId>/`
 - Each agent (main + specialists) has separate `history.<agentId>.json` files
 - Use `--history <path>` or `--resume` to load existing sessions
 
@@ -132,7 +132,7 @@ The orchestrator is initialized via `orchestratorManager.init(config, handlers)`
 ### Multi-Agent Delegation
 
 Specialist agents (code-reviewer, quality-tester, etc.) are:
-- Loaded from agent registry (`~/.nuvin-cli/agents/`)
+- Loaded from agent registry (`~/.nuvin/agents/`)
 - Configured via `agentsEnabled` in config
 - Each gets isolated memory and conversation context
 - Delegated via `assign_task` tool or `/agent` command
@@ -140,7 +140,7 @@ Specialist agents (code-reviewer, quality-tester, etc.) are:
 ### MCP Integration
 
 MCP servers extend available tools:
-- Configured via `~/.nuvin-cli/.nuvin_mcp.json` or inline in config.yaml
+- Configured via `~/.nuvin/.nuvin_mcp.json` or inline in config.yaml
 - Managed via `nuvin mcp <list|add|remove|show|enable|disable|test>` subcommands
 - Use `/mcp` in TUI to see connected servers and available tools
 

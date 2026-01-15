@@ -95,10 +95,10 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
             • ~/.claude/skills/ (global)
           </Text>
           <Text color={theme.colors.muted} dimColor>
-            • .nuvin-cli/skills/ (project)
+            • .nuvin/skills/ (project)
           </Text>
           <Text color={theme.colors.muted} dimColor>
-            • ~/.nuvin-cli/skills/ (global)
+            • ~/.nuvin/skills/ (global)
           </Text>
         </Box>
       ) : (

@@ -35,8 +35,8 @@ class AsyncMutex {
 
 export class ConfigManager {
   private static instance: ConfigManager | null = null;
-  globalDir = path.join(os.homedir(), '.nuvin-cli');
-  localDir: string = path.join(process.cwd(), '.nuvin-cli');
+  globalDir = path.join(os.homedir(), '.nuvin');
+  localDir: string = path.join(process.cwd(), '.nuvin');
   private scopeData: Partial<Record<ConfigScope, ConfigSource>> = {};
   public combined: CLIConfig = {};
   private profileManager?: ProfileManager;
@@ -67,7 +67,7 @@ export class ConfigManager {
 
     // Update global directory based on profile
     if (this.profileManager.isDefault(this.currentProfile)) {
-      this.globalDir = path.join(os.homedir(), '.nuvin-cli');
+      this.globalDir = path.join(os.homedir(), '.nuvin');
     } else {
       this.globalDir = this.profileManager.getProfileDir(this.currentProfile);
     }
@@ -87,7 +87,7 @@ export class ConfigManager {
     await this.initializeProfile(profileToUse);
 
     const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
-    this.localDir = path.join(cwd, '.nuvin-cli');
+    this.localDir = path.join(cwd, '.nuvin');
     this.scopeData = {};
 
     const sources: ConfigSource[] = [];

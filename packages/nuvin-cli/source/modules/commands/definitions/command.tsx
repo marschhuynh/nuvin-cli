@@ -68,8 +68,8 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
     const initRegistry = async () => {
       try {
         const configManager = ConfigManager.getInstance();
-        const globalDir = configManager.globalDir || path.join(os.homedir(), '.nuvin-cli');
-        const localDir = configManager.localDir || path.join(process.cwd(), '.nuvin-cli');
+        const globalDir = configManager.globalDir || path.join(os.homedir(), '.nuvin');
+        const localDir = configManager.localDir || path.join(process.cwd(), '.nuvin');
         
         const profile = configManager.getCurrentProfile();
         const profileManager = configManager.getProfileManager();

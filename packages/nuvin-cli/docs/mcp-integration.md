@@ -4,7 +4,7 @@ Nuvin CLI supports Model Context Protocol (MCP) for extending functionality with
 
 ## Configuration
 
-Create `~/.nuvin-cli/.nuvin_mcp.json` or configure in your main config file:
+Create `~/.nuvin/.nuvin_mcp.json` or configure in your main config file:
 
 ```json
 {

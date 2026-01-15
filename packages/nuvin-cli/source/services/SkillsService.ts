@@ -17,8 +17,8 @@ function getDefaultDirectories(homeDir: string): string[] {
   return [
     '.claude/skills',
     path.join(homeDir, '.claude', 'skills'),
-    '.nuvin-cli/skills',
-    path.join(homeDir, '.nuvin-cli', 'skills'),
+    '.nuvin/skills',
+    path.join(homeDir, '.nuvin', 'skills'),
   ];
 }
 
@@ -320,7 +320,7 @@ export class SkillsService {
     }
 
     const baseDir =
-      location === 'global' ? path.join(this.homeDir, '.nuvin-cli', 'skills') : path.join(cwd, '.nuvin-cli', 'skills');
+      location === 'global' ? path.join(this.homeDir, '.nuvin', 'skills') : path.join(cwd, '.nuvin', 'skills');
 
     const skillDir = path.join(baseDir, skill.name);
     const skillFile = path.join(skillDir, SKILL_FILE);

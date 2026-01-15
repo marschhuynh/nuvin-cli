@@ -15,7 +15,7 @@ function sessionsDir(profile?: string): string {
   const profileManager = configManager.getProfileManager();
   
   if (!profileManager) {
-    return path.join(os.homedir(), '.nuvin-cli', 'sessions');
+    return path.join(os.homedir(), '.nuvin', 'sessions');
   }
   
   const activeProfile = profile ?? configManager.getCurrentProfile();
