@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.33.2
+
+### Patch Changes
+
+- [`4a7b6e8`](https://github.com/marschhuynh/nuvin-space/commit/4a7b6e804858f2a639e924a6a980c3aae933a672) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix history recall triggering when holding up/down arrow key on multiline input
+
+- [`d8afe06`](https://github.com/marschhuynh/nuvin-space/commit/d8afe063ca111a85d597fab1ffdb98fa23ddc8ff) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve MCP URL handling and add visual cursor navigation for wrapped text
+
 ## 1.33.1
 
 ### Patch Changes
