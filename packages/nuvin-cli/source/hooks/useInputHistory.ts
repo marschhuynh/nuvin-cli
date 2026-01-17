@@ -24,6 +24,8 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
 
   const historyPrevArmedRef = useRef(false);
   const historyNextArmedRef = useRef(false);
+  const lastUpArrowTimeRef = useRef(0);
+  const lastDownArrowTimeRef = useRef(0);
   
   // Use refs to avoid recreating callbacks when these values change
   const messagesRef = useRef(messages);
@@ -141,7 +143,12 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
 
   const handleUpArrow = useCallback(
     (lineInfo: LineInfo) => {
+      const now = Date.now();
+      const timeSinceLastUp = now - lastUpArrowTimeRef.current;
+      lastUpArrowTimeRef.current = now;
+
       if (lineInfo.lineIndex !== 0) {
+        historyPrevArmedRef.current = false;
         return;
       }
 
@@ -151,14 +158,19 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
       if (!isMultiline || input.trim() === '') {
         handleHistoryPrev();
       } else if (historyPrevArmedRef.current) {
-        historyPrevArmedRef.current = false;
-        handleHistoryPrev();
+        // Require a distinct keypress (~100ms gap indicates key release+press)
+        // Key repeat is typically ~30-50ms, so 100ms gap means user released and pressed again
+        if (timeSinceLastUp > 100) {
+          historyPrevArmedRef.current = false;
+          handleHistoryPrev();
+        }
+        // If holding key (rapid repeat), ignore and keep armed
       } else {
         historyPrevArmedRef.current = true;
-        setNotification('Press ↑ again to navigate history', 1000);
+        setNotification('Press ↑ again to navigate history', 1500);
         setTimeout(() => {
           historyPrevArmedRef.current = false;
-        }, 1000);
+        }, 1500);
       }
     },
     [handleHistoryPrev, setNotification],
@@ -166,7 +178,12 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
 
   const handleDownArrow = useCallback(
     (lineInfo: LineInfo) => {
+      const now = Date.now();
+      const timeSinceLastDown = now - lastDownArrowTimeRef.current;
+      lastDownArrowTimeRef.current = now;
+
       if (lineInfo.lineIndex !== lineInfo.lines.length - 1) {
+        historyNextArmedRef.current = false;
         return;
       }
 
@@ -176,14 +193,19 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
       if (!isMultiline || input.trim() === '') {
         handleHistoryNext();
       } else if (historyNextArmedRef.current) {
-        historyNextArmedRef.current = false;
-        handleHistoryNext();
+        // Require a distinct keypress (~100ms gap indicates key release+press)
+        // Key repeat is typically ~30-50ms, so 100ms gap means user released and pressed again
+        if (timeSinceLastDown > 100) {
+          historyNextArmedRef.current = false;
+          handleHistoryNext();
+        }
+        // If holding key (rapid repeat), ignore and keep armed
       } else {
         historyNextArmedRef.current = true;
-        setNotification('Press ↓ again to navigate history', 1000);
+        setNotification('Press ↓ again to navigate history', 1500);
         setTimeout(() => {
           historyNextArmedRef.current = false;
-        }, 1000);
+        }, 1500);
       }
     },
     [handleHistoryNext, setNotification],
