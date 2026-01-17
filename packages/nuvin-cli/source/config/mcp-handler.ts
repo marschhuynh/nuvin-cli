@@ -179,6 +179,8 @@ export class MCPCliHandler {
       '--prefix', '--timeout', '--disabled',
     ]);
 
+    const isUrl = (str: string): boolean => str.startsWith('http://') || str.startsWith('https://');
+
     for (let i = 0; i < options.length; i++) {
       const flag = options[i];
       const value = options[i + 1];
@@ -248,10 +250,20 @@ export class MCPCliHandler {
       }
     }
 
-    if (positionalArgs.length > 0 && !config.command && !config.url) {
-      config.command = positionalArgs[0];
-      if (positionalArgs.length > 1) {
-        config.args = positionalArgs.slice(1);
+    if (positionalArgs.length > 0) {
+      const firstArg = positionalArgs[0];
+
+      if (isUrl(firstArg)) {
+        config.url = firstArg;
+        config.transport = 'http';
+        if (positionalArgs.length > 1) {
+          console.error('Warning: Additional positional arguments ignored when URL is provided');
+        }
+      } else if (!config.command && !config.url) {
+        config.command = firstArg;
+        if (positionalArgs.length > 1) {
+          config.args = positionalArgs.slice(1);
+        }
       }
     }
 

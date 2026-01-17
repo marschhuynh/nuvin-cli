@@ -62,6 +62,58 @@ export function moveCursorVertically(value: string, offset: number, direction: '
   return newPos + targetColumn;
 }
 
+export function moveCursorVisually(
+  value: string,
+  offset: number,
+  direction: 'up' | 'down',
+  wrapWidth: number
+): number | null {
+  if (wrapWidth <= 0) {
+    return moveCursorVertically(value, offset, direction);
+  }
+
+  const info = getLineInfo(value, offset);
+  const currentLine = info.lines[info.lineIndex] ?? '';
+  const column = info.column;
+
+  const totalWrappedRows = Math.max(1, Math.ceil(currentLine.length / wrapWidth));
+  const maxRowIndex = totalWrappedRows - 1;
+
+  let wrappedRowInLine = Math.floor(column / wrapWidth);
+  wrappedRowInLine = Math.min(wrappedRowInLine, maxRowIndex);
+
+  const rowStartCol = wrappedRowInLine * wrapWidth;
+  const visualColInRow = column - rowStartCol;
+
+  if (direction === 'up') {
+    if (wrappedRowInLine > 0) {
+      const newColumn = (wrappedRowInLine - 1) * wrapWidth + Math.min(visualColInRow, wrapWidth - 1);
+      return info.lineStart + Math.min(newColumn, currentLine.length);
+    }
+    if (info.lineIndex === 0) {
+      return null;
+    }
+    const prevLine = info.lines[info.lineIndex - 1] ?? '';
+    const prevLineStart = info.lineStart - prevLine.length - 1;
+    const prevTotalRows = Math.max(1, Math.ceil(prevLine.length / wrapWidth));
+    const targetRowStart = (prevTotalRows - 1) * wrapWidth;
+    const targetColumn = targetRowStart + Math.min(visualColInRow, wrapWidth - 1);
+    return prevLineStart + Math.min(targetColumn, prevLine.length);
+  } else {
+    if (wrappedRowInLine < totalWrappedRows - 1) {
+      const newColumn = (wrappedRowInLine + 1) * wrapWidth + Math.min(visualColInRow, wrapWidth - 1);
+      return info.lineStart + Math.min(newColumn, currentLine.length);
+    }
+    if (info.lineIndex >= info.lines.length - 1) {
+      return null;
+    }
+    const nextLine = info.lines[info.lineIndex + 1] ?? '';
+    const nextLineStart = info.lineEnd + 1;
+    const targetColumn = Math.min(visualColInRow, wrapWidth - 1);
+    return nextLineStart + Math.min(targetColumn, nextLine.length);
+  }
+}
+
 export function findNextWordEnd(text: string, start: number): number {
   let i = start;
 
