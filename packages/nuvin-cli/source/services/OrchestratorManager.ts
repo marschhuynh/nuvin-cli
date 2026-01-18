@@ -294,15 +294,12 @@ export class OrchestratorManager {
       const agentRegistry = new AgentRegistry({ filePersistence: agentFilePersistence });
       await agentRegistry.waitForLoad();
 
-      const enableLsp = process.env.NUVIN_EXPERIMENTAL_LSP === 'true';
       const skillsConfig = currentConfig.config.skills;
       const enableSkills = skillsConfig?.enabled !== false;
-      const toolRegistry = new ToolRegistry({ agentRegistry, enableLsp, enableSkills });
+      const toolRegistry = new ToolRegistry({ agentRegistry, enableSkills });
 
-      if (enableLsp) {
-        await LSP.init();
-        toolRegistry.setLspService(LSP);
-      }
+      await LSP.init();
+      toolRegistry.setLspService(LSP);
 
       if (enableSkills) {
         skillsService.setConfig({

@@ -101,6 +101,12 @@ const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     paramRenderer: DefaultParamRender,
     collapsedByDefault: false,
   },
+  skill: {
+    displayName: 'Load skill',
+    statusStrategy: defaultStrategy,
+    paramRenderer: null,
+    collapsedByDefault: false,
+  },
 };
 
 const DEFAULT_METADATA: ToolMetadata = {

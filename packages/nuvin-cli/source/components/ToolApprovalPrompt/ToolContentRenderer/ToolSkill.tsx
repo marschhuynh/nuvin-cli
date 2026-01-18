@@ -4,6 +4,7 @@ import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { EnrichedToolCall } from '@/utils/enrichToolCalls.js';
+import { getToolDisplayName } from '@/components/toolRegistry.js';
 
 type SkillArgs = {
   name: string;
@@ -55,9 +56,19 @@ export function SkillToolContent({ call }: { call: ToolCall }) {
     );
   }
 
+  const displayName = getToolDisplayName(call.function.name);
+
   if (!skillMetadata) {
     return (
       <Box flexDirection="column" marginTop={1}>
+        <Box flexDirection="row">
+          <Box flexShrink={0} marginRight={1}>
+            <Text color={theme.messageTypes.tool} bold>
+              {'⚙︎'}
+            </Text>
+          </Box>
+          <Text bold>{displayName}</Text>
+        </Box>
         <Text color={theme.colors.warning}>Skill not found: {args.name}</Text>
       </Box>
     );
@@ -67,6 +78,7 @@ export function SkillToolContent({ call }: { call: ToolCall }) {
 
   return (
     <Box flexDirection="column" marginTop={1} width={width - 8} overflow="hidden">
+
       {lines.map((line) => (
         <Box key={`${line.lineNumber}-${line.content.slice(0, 20)}`}>
           <Box flexWrap="nowrap" width={lineNumberWidth + 1}>

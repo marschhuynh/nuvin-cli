@@ -51,7 +51,6 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     toolsMemory?: MemoryPort<string>;
     agentRegistry?: AgentRegistry;
     delegationServiceFactory?: DelegationServiceFactory;
-    enableLsp?: boolean;
     enableSkills?: boolean;
   }) {
     this.toolsMemory = opts?.toolsMemory || new InMemoryMemory();
@@ -77,10 +76,8 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       this.tools.set(tool.name, tool);
     }
 
-    if (opts?.enableLsp) {
-      this.lspTool = new LspTool();
-      this.tools.set(this.lspTool.name, this.lspTool as FunctionTool<unknown, unknown>);
-    }
+    this.lspTool = new LspTool();
+    this.tools.set(this.lspTool.name, this.lspTool as FunctionTool<unknown, unknown>);
 
     if (opts?.enableSkills !== false) {
       this.skillTool = new SkillTool();
