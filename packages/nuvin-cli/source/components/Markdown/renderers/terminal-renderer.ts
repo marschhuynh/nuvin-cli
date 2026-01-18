@@ -74,7 +74,13 @@ class Renderer {
     return textLength(str);
   }
 
-  space(): string {
+  space(token?: { raw?: string }): string {
+    if (token?.raw) {
+      const newlineCount = (token.raw.match(/\n/g) || []).length;
+      if (newlineCount > 2) {
+        return '\n'.repeat(newlineCount - 2);
+      }
+    }
     return '';
   }
 
@@ -372,6 +378,7 @@ export function terminalRenderer(options?: RendererOptions, highlightOptions?: H
   const r = new Renderer(options, highlightOptions);
 
   const funcs: Array<keyof Renderer> = [
+    'space',
     'text',
     'code',
     'blockquote',
