@@ -1,5 +1,14 @@
 # @nuvin/nuvin-cli
 
+## 1.33.3
+
+### Patch Changes
+
+- [`e133ab5`](https://github.com/marschhuynh/nuvin-space/commit/e133ab545cf73d0c414c2d34f7b8275276a24059) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Enable LSP by default and improve skill tool display
+
+- Updated dependencies [[`e133ab5`](https://github.com/marschhuynh/nuvin-space/commit/e133ab545cf73d0c414c2d34f7b8275276a24059)]:
+  - @nuvin/nuvin-core@1.16.2
+
 ## 1.33.2
 
 ### Patch Changes
