@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.17.0
+
+### Minor Changes
+
+- [`822a763`](https://github.com/marschhuynh/nuvin-space/commit/822a76314ec7fa279dc646c508624c4f60315094) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MCP OAuth support with token storage
+
 ## 1.16.2
 
 ### Patch Changes
