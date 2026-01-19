@@ -432,7 +432,7 @@ const cli = meow(
           <InputProvider middleware={defaultMiddleware}>
             <ConfigProvider initialConfig={mergedConfig}>
               <NotificationProvider>
-                <UserQuestionProvider>
+                <UserQuestionProvider orchestratorManager={orchestratorManager}>
                   <ToolApprovalProvider
                     orchestratorManager={orchestratorManager}
                     requireToolApproval={finalRequireToolApproval}

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { useOrchestratorManager } from './OrchestratorManagerContext.js';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import type { OrchestratorManager } from '@/services/OrchestratorManager';
+import { eventBus } from '@/services/EventBus.js';
 
 interface QuestionData {
   questionId: string;
@@ -22,14 +23,20 @@ interface UserQuestionState {
 
 const UserQuestionContext = createContext<UserQuestionState | undefined>(undefined);
 
-export function UserQuestionProvider({ children }: { children: ReactNode }) {
-  const { orchestratorManager } = useOrchestratorManager();
+export function UserQuestionProvider({
+  orchestratorManager,
+  children,
+}: {
+  orchestratorManager: OrchestratorManager | null;
+  children: ReactNode;
+}) {
   const [pendingQuestion, setPendingQuestion] = useState<QuestionData | null>(null);
 
   const handleQuestionResponse = useCallback(
     (answers: Record<string, string | string[]>) => {
-      if (pendingQuestion) {
-        orchestratorManager?.getOrchestrator()?.handleUserQuestionResponse(
+      if (pendingQuestion && orchestratorManager?.getOrchestrator()) {
+        // @ts-expect-error - Method exists but not in type definition yet
+        orchestratorManager.getOrchestrator()!.handleUserQuestionResponse(
           pendingQuestion.questionId,
           answers
         );
@@ -40,22 +47,22 @@ export function UserQuestionProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    if (!orchestratorManager) return;
-
-    const handleEvent = (event: any) => {
-      if (event.type === 'user_question_required') {
+    const handleEvent = (data: any) => {
+      if (data?.type === 'user_question_required') {
         setPendingQuestion({
-          questionId: event.questionId,
-          questions: event.questions,
+          questionId: data.questionId,
+          questions: data.questions,
         });
       }
     };
 
-    orchestratorManager.on('event', handleEvent);
+    // @ts-ignore - Event type not yet added to EventMap
+    eventBus.on('agent:event', handleEvent);
     return () => {
-      orchestratorManager.off('event', handleEvent);
+      // @ts-ignore
+      eventBus.off('agent:event', handleEvent);
     };
-  }, [orchestratorManager]);
+  }, []);
 
   const value = {
     pendingQuestion,
