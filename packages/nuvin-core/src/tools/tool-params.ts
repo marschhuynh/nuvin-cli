@@ -91,6 +91,20 @@ export type AssignTaskArgs = {
   description: string;
 };
 
+export type AskUserArgs = {
+  description?: string;
+  questions: Array<{
+    question: string;
+    header: string;
+    options: Array<{
+      label: string;
+      description: string;
+    }>;
+    multiSelect: boolean;
+  }>;
+  answers?: Record<string, string | string[]>;
+};
+
 export type ToolArguments =
   | BashToolArgs
   | FileReadArgs
@@ -102,7 +116,8 @@ export type ToolArguments =
   | WebSearchArgs
   | WebFetchArgs
   | TodoWriteArgs
-  | AssignTaskArgs;
+  | AssignTaskArgs
+  | AskUserArgs;
 
 /**
  * Type guard to safely parse tool arguments

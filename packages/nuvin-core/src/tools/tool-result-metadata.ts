@@ -104,6 +104,12 @@ export type TodoWriteMetadata = {
 
 export type AssignTaskMetadata = DelegationMetadata;
 
+export type AskUserMetadata = {
+  questionId: string;
+  questionCount: number;
+  answers: Record<string, string | string[]>;
+};
+
 export type ToolErrorMetadata = {
   errorReason?: ErrorReason;
   editInstruction?: string;
@@ -126,6 +132,7 @@ export type ToolMetadataMap = {
   web_fetch: WebFetchMetadata;
   todo_write: TodoWriteMetadata;
   assign_task: AssignTaskMetadata;
+  ask_user_tool: AskUserMetadata;
 };
 
 export type ToolName = keyof ToolMetadataMap;
