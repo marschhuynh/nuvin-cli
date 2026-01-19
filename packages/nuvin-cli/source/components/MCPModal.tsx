@@ -33,12 +33,12 @@ export const MCPModal: React.FC<MCPModalProps> = ({
   const { theme } = useTheme();
   const [selectedServer, setSelectedServer] = useState<MCPServerInfo | null>(null);
   const [focusPanel, setFocusPanel] = useState<'servers' | 'tools'>('servers');
+  const [highlightedTool, setHighlightedTool] = useState<string | null>(null);
   const [localAllowedTools, setLocalAllowedTools] =
     useState<Record<string, Record<string, boolean>>>(allowedToolsConfig);
   const [localDisabledServers, setLocalDisabledServers] = useState<Set<string>>(
     new Set(servers.filter((s) => s.disabled).map((s) => s.id)),
   );
-  const inputActiveRef = useRef(false);
 
   // Sync local state with prop changes
   useEffect(() => {
@@ -88,13 +88,33 @@ export const MCPModal: React.FC<MCPModalProps> = ({
     };
   }, [visible]);
 
+  const toggleTool = (toolName: string) => {
+    if (!selectedServer) return;
+
+    const newAllowedTools = { ...localAllowedTools };
+    if (!newAllowedTools[selectedServer.id]) {
+      newAllowedTools[selectedServer.id] = {};
+    }
+
+    const currentValue = newAllowedTools[selectedServer.id][toolName];
+    newAllowedTools[selectedServer.id][toolName] = currentValue === false;
+
+    setLocalAllowedTools(newAllowedTools);
+
+    eventBus.emit('ui:mcp:toolPermissionChanged', {
+      serverId: selectedServer.id,
+      toolName: toolName,
+      allowed: newAllowedTools[selectedServer.id][toolName],
+    });
+  };
+
   // Handle keyboard input for panel switching and special actions
   useInput(
     (input, key) => {
       if (!visible) return;
 
-      // Process Enter for server toggle BEFORE checking inputActiveRef
-      if ((key.return || input === ' ') && focusPanel === 'servers' && selectedServer) {
+      // Process Space for server toggle
+      if (input === ' ' && focusPanel === 'servers' && selectedServer) {
         const isCurrentlyDisabled = localDisabledServers.has(selectedServer.id);
         const newDisabledServers = new Set(localDisabledServers);
         if (isCurrentlyDisabled) {
@@ -107,9 +127,9 @@ export const MCPModal: React.FC<MCPModalProps> = ({
         return;
       }
 
-      // Prevent input handling when SelectInput is active (but Enter is handled above)
-      if (inputActiveRef.current) {
-        inputActiveRef.current = false;
+      // Process Space for tool toggle
+      if (input === ' ' && focusPanel === 'tools' && highlightedTool) {
+        toggleTool(highlightedTool);
         return;
       }
 
@@ -120,33 +140,6 @@ export const MCPModal: React.FC<MCPModalProps> = ({
         } else {
           onClose();
         }
-        return;
-      }
-
-      // Tab - Switch panels
-      if (key.tab) {
-        if (
-          servers.length > 0 &&
-          selectedServer &&
-          selectedServer.status === 'connected' &&
-          !localDisabledServers.has(selectedServer.id)
-        ) {
-          setFocusPanel((prev) => (prev === 'servers' ? 'tools' : 'servers'));
-        }
-        return;
-      }
-
-      // Enter - Toggle server enable/disable in servers panel (redundant but safe)
-      if ((key.return || input === ' ') && focusPanel === 'servers' && selectedServer) {
-        const isCurrentlyDisabled = localDisabledServers.has(selectedServer.id);
-        const newDisabledServers = new Set(localDisabledServers);
-        if (isCurrentlyDisabled) {
-          newDisabledServers.delete(selectedServer.id);
-        } else {
-          newDisabledServers.add(selectedServer.id);
-        }
-        setLocalDisabledServers(newDisabledServers);
-        onServerToggle?.(selectedServer.id, isCurrentlyDisabled);
         return;
       }
 
@@ -245,33 +238,31 @@ export const MCPModal: React.FC<MCPModalProps> = ({
   };
 
   const handleServerSelect = (item: { value: MCPServerInfo }) => {
-    inputActiveRef.current = true;
     if (item.value.status === 'connected' && !localDisabledServers.has(item.value.id)) {
       setFocusPanel('tools');
     }
   };
 
-  const handleToolSelect = (item: { value: string }) => {
-    inputActiveRef.current = true;
-    if (!selectedServer) return;
-
-    const toolName = item.value;
-    const newAllowedTools = { ...localAllowedTools };
-    if (!newAllowedTools[selectedServer.id]) {
-      newAllowedTools[selectedServer.id] = {};
-    }
-
-    const currentValue = newAllowedTools[selectedServer.id][toolName];
-    newAllowedTools[selectedServer.id][toolName] = currentValue === false;
-
-    setLocalAllowedTools(newAllowedTools);
-
-    eventBus.emit('ui:mcp:toolPermissionChanged', {
-      serverId: selectedServer.id,
-      toolName: toolName,
-      allowed: newAllowedTools[selectedServer.id][toolName],
-    });
+  const handleToolHighlight = (item: { value: string }) => {
+    setHighlightedTool(item.value);
   };
+
+  const footerContent = (
+    <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>
+      <HelpText
+        segments={[
+          { text: '↑↓←→', highlight: true },
+          { text: ' navigate • ' },
+          { text: 'Space', highlight: true },
+          { text: ' toggle • ' },
+          { text: 'R', highlight: true },
+          { text: ' reconnect • ' },
+          { text: 'ESC', highlight: true },
+          { text: ' exit' },
+        ]}
+      />
+    </Box>
+  );
 
   return (
     <AppModal
@@ -279,27 +270,10 @@ export const MCPModal: React.FC<MCPModalProps> = ({
       title="MCP Server Configuration"
       onClose={undefined}
       closeOnEscape={false}
+      footer={footerContent}
       paddingX={2}
       paddingY={1}
     >
-      <Box marginBottom={1} flexDirection="column">
-        <Text color={theme.history.help} dimColor>
-          ↑↓ navigate • Tab switch panel • Enter to toggle • ESC {focusPanel === 'tools' ? 'back' : 'exit'}
-        </Text>
-        <Box>
-          <HelpText
-            segments={[
-              { text: 'R', highlight: true },
-              { text: ' reconnect • ' },
-              { text: 'A', highlight: true },
-              { text: ' enable all • ' },
-              { text: 'D', highlight: true },
-              { text: ' disable all' },
-            ]}
-          />
-        </Box>
-      </Box>
-
       {servers.length === 0 ? (
         <Box marginTop={1}>
           <Text color={theme.history.help}>No MCP servers configured or connected</Text>
@@ -338,7 +312,7 @@ export const MCPModal: React.FC<MCPModalProps> = ({
                   />
                 );
               }}
-              onSelect={handleServerSelect}
+              onSelect={undefined}
               onHighlight={handleServerHighlight}
               focus={focusPanel === 'servers'}
             />
@@ -366,7 +340,7 @@ export const MCPModal: React.FC<MCPModalProps> = ({
                   Server is disabled
                 </Text>
                 <Text color={theme.history.help} dimColor>
-                  Press Enter to enable
+                  Press Space to enable
                 </Text>
               </Box>
             ) : selectedServer.status === 'failed' ? (
@@ -408,7 +382,7 @@ export const MCPModal: React.FC<MCPModalProps> = ({
                     />
                   );
                 }}
-                onSelect={handleToolSelect}
+                onHighlight={handleToolHighlight}
                 focus={focusPanel === 'tools'}
               />
             )}

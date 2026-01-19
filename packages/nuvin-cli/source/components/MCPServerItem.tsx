@@ -44,6 +44,42 @@ export const MCPServerItem: React.FC<MCPServerItemProps> = ({
     statusIcon = '●';
   }
 
+  const getAuthBadge = () => {
+    if (!item.authStatus || item.authStatus.type === 'none') {
+      return null;
+    }
+
+    if (item.authStatus.type === 'bearer') {
+      return (
+        <Text color={theme.tokens.green} dimColor={!isSelected}>
+          {' '}
+          🔑
+        </Text>
+      );
+    }
+
+    if (item.authStatus.type === 'oauth') {
+      if (item.authStatus.authenticated) {
+        const isExpiringSoon =
+          item.authStatus.expiresAt && item.authStatus.expiresAt - Date.now() < 5 * 60 * 1000;
+        return (
+          <Text color={isExpiringSoon ? theme.tokens.yellow : theme.tokens.green} dimColor={!isSelected}>
+            {' '}
+            {isExpiringSoon ? '🔐⚠' : '🔐'}
+          </Text>
+        );
+      }
+      return (
+        <Text color={theme.tokens.red} dimColor={!isSelected}>
+          {' '}
+          🔒
+        </Text>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Box flexDirection="column">
       <Box>
@@ -59,6 +95,7 @@ export const MCPServerItem: React.FC<MCPServerItemProps> = ({
         >
           {item.id}
         </Text>
+        {getAuthBadge()}
         {reconnecting && (
           <Text color={theme.tokens.cyan} dimColor>
             {' '}
