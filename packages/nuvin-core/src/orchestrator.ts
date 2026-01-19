@@ -139,6 +139,22 @@ export class AgentOrchestrator {
     }
   >();
 
+  // Per-question response map: questionId -> { resolve, reject, questions }
+  private pendingQuestions = new Map<
+    string,
+    {
+      resolve: (result: Record<string, string | string[]>) => void;
+      reject: (error: Error) => void;
+      questions: Array<{
+        id: string;
+        question: string;
+        header: string;
+        options: Array<{ label: string; description: string }>;
+        multiSelect: boolean;
+      }>;
+    }
+  >();
+
 
   private context: ContextBuilder = new SimpleContextBuilder();
   private ids: IdGenerator = new SimpleId();
@@ -427,6 +443,24 @@ export class AgentOrchestrator {
           agentId: this.cfg.id,
           messageId,
           eventPort: this.events,
+          waitForUserQuestion: async (questionId, questions) => {
+            // Store the promise resolver
+            return new Promise<Record<string, string | string[]>>((resolve, reject) => {
+              this.pendingQuestions.set(questionId, {
+                resolve,
+                reject,
+                questions,
+              });
+
+              // Timeout after 5 minutes
+              setTimeout(() => {
+                if (this.pendingQuestions.has(questionId)) {
+                  this.pendingQuestions.delete(questionId);
+                  reject(new Error('User question timed out after 5 minutes'));
+                }
+              }, 5 * 60 * 1000);
+            });
+          },
         },
         1, // Execute single tool
         signal,
@@ -963,6 +997,34 @@ export class AgentOrchestrator {
     } else {
       approval.reject(new Error(`Invalid approval decision: ${decision}`));
     }
+  }
+
+  /**
+   * Handles user's response to questions.
+   * Called by UI when user submits answers.
+   */
+  public handleUserQuestionResponse(
+    questionId: string,
+    answers: Record<string, string | string[]>,
+  ): void {
+    const pending = this.pendingQuestions.get(questionId);
+    if (!pending) {
+      console.warn(`[Orchestrator] Received response for unknown or already processed question ID: ${questionId}`);
+      return;
+    }
+
+    this.pendingQuestions.delete(questionId);
+
+    // Emit response event
+    void this.events?.emit({
+      type: AgentEventTypes.UserQuestionResponse,
+      conversationId: this.context.conversationId,
+      messageId: this.context.messageId,
+      questionId,
+      answers,
+    });
+
+    pending.resolve(answers);
   }
 
   private getAvailableToolNames(): Set<string> {

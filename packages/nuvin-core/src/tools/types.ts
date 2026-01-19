@@ -34,6 +34,16 @@ export type ToolExecutionContext = {
   messageId?: string;
   eventPort?: EventPort;
   signal?: AbortSignal;
+  waitForUserQuestion?: (
+    questionId: string,
+    questions: Array<{
+      id: string;
+      question: string;
+      header: string;
+      options: Array<{ label: string; description: string }>;
+      multiSelect: boolean;
+    }>
+  ) => Promise<Record<string, string | string[]>>;
 } & Record<string, unknown>;
 
 export interface FunctionTool<

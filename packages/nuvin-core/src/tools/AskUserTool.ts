@@ -148,8 +148,52 @@ Usage notes:
       );
     }
 
-    // Otherwise, we need to emit event and wait for response
-    // This will be implemented in Task 3 when we integrate with orchestrator
-    return err('User question mechanism not yet integrated with orchestrator', undefined, ErrorReason.Unknown);
+    // Generate unique question ID
+    const questionId = `question-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+    // Prepare questions with IDs
+    const questionsWithIds = params.questions.map((q, idx) => ({
+      id: `q${idx}`,
+      question: q.question,
+      header: q.header,
+      options: q.options,
+      multiSelect: q.multiSelect,
+    }));
+
+    // Emit event
+    if (context?.eventPort) {
+      await context.eventPort.emit({
+        type: AgentEventTypes.UserQuestionRequired,
+        conversationId: context.conversationId || 'unknown',
+        messageId: context.messageId || 'unknown',
+        questionId,
+        questions: questionsWithIds,
+      });
+    }
+
+    // Wait for response
+    // This requires access to orchestrator's handleUserQuestionResponse
+    // We'll use a callback mechanism via context
+    if (context?.waitForUserQuestion) {
+      try {
+        const answers = await context.waitForUserQuestion(questionId, questionsWithIds);
+        return okText(
+          `User responses received: ${JSON.stringify(answers, null, 2)}`,
+          {
+            questionId,
+            questionCount: params.questions.length,
+            answers,
+          }
+        );
+      } catch (error) {
+        return err(
+          error instanceof Error ? error.message : 'Failed to get user response',
+          undefined,
+          ErrorReason.Unknown
+        );
+      }
+    }
+
+    return err('Context does not support user questions', undefined, ErrorReason.Unknown);
   }
 }
