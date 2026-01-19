@@ -29,6 +29,7 @@ import { AgentRegistry } from './agent-registry.js';
 import { AssignTool } from './tools/AssignTool.js';
 import { LspTool, type LspService } from './tools/LspTool.js';
 import { AgentManagerCommandRunner, DelegationServiceFactory } from './delegation/index.js';
+import { AskUserTool } from './tools/AskUserTool.js';
 
 export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorAwareToolPort {
   private tools = new Map<string, FunctionTool<unknown, unknown>>();
@@ -70,6 +71,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       new LsTool({ allowAbsolute: true }),
       new GlobTool({ allowAbsolute: true }),
       new GrepTool({ allowAbsolute: true }),
+      new AskUserTool(),
     ];
 
     for (const tool of toolInstances) {

@@ -3,6 +3,7 @@ import { AgentOrchestrator } from '../orchestrator.js';
 import { AgentEventTypes } from '../ports.js';
 import type { AgentEvent, EventPort } from '../ports.js';
 import { AskUserTool } from '../tools/AskUserTool.js';
+import { ToolRegistry } from '../tools.js';
 
 describe('AskUserTool', () => {
   let emittedEvents: AgentEvent[];
@@ -101,5 +102,13 @@ describe('AskUserTool', () => {
     });
     expect(result.status).toBe('error');
     expect(result.result).toContain('12 characters');
+  });
+
+  it('should be registered in DefaultToolPort', () => {
+    const toolPort = new ToolRegistry();
+    const definitions = toolPort.getToolDefinitions(['ask_user_tool']);
+    
+    expect(definitions).toHaveLength(1);
+    expect(definitions[0].function.name).toBe('ask_user_tool');
   });
 });
