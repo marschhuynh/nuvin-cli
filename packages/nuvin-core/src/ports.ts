@@ -508,6 +508,8 @@ export const AgentEventTypes = {
   SubAgentToolResult: 'sub_agent_tool_result',
   SubAgentCompleted: 'sub_agent_completed',
   SubAgentMetrics: 'sub_agent_metrics',
+  UserQuestionRequired: 'user_question_required',
+  UserQuestionResponse: 'user_question_response',
 } as const;
 
 export type ToolApprovalDecision = 'approve' | 'deny' | 'approve_all' | 'edit';
@@ -642,6 +644,29 @@ export type AgentEvent =
       agentId: string;
       toolCallId: string;
       metrics: MetricsSnapshot;
+    }
+  | {
+      type: typeof AgentEventTypes.UserQuestionRequired;
+      conversationId: string;
+      messageId: string;
+      questionId: string;
+      questions: Array<{
+        id: string;
+        question: string;
+        header: string;
+        options: Array<{
+          label: string;
+          description: string;
+        }>;
+        multiSelect: boolean;
+      }>;
+    }
+  | {
+      type: typeof AgentEventTypes.UserQuestionResponse;
+      conversationId: string;
+      messageId: string;
+      questionId: string;
+      answers: Record<string, string | string[]>;
     };
 
 export interface EventPort {
