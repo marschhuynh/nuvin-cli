@@ -20,11 +20,31 @@ describe('AskUserTool', () => {
   });
 
   it('should emit UserQuestionRequired event when tool is called', async () => {
-    // This test will fail until we add the event types
+    const tool = new AskUserTool();
+    const mockContext = {
+      eventPort: mockEvents,
+      conversationId: 'test-conv',
+      messageId: 'test-msg',
+      waitForUserQuestion: vi.fn().mockResolvedValue({ q0: 'Option A' }),
+    };
+    
+    await tool.execute({ 
+      questions: [{ 
+        question: 'Pick one?', 
+        header: 'Choice', 
+        options: [
+          {label: 'Option A', description: 'First choice'},
+          {label: 'Option B', description: 'Second choice'}
+        ], 
+        multiSelect: false 
+      }] 
+    }, mockContext);
+    
     const questionEvent = emittedEvents.find(
       (e) => e.type === AgentEventTypes.UserQuestionRequired
     );
     expect(questionEvent).toBeDefined();
+    expect(questionEvent?.type).toBe(AgentEventTypes.UserQuestionRequired);
   });
 
   it('should validate questions array has 1-4 items', async () => {
@@ -45,7 +65,7 @@ describe('AskUserTool', () => {
     });
     expect(result2.status).toBe('error');
     
-    // 1-4 questions should pass validation
+    // 1-4 questions should pass validation (but fail on no context)
     const result3 = await tool.execute({ 
       questions: [{ 
         question: 'Pick one?', 
@@ -57,7 +77,9 @@ describe('AskUserTool', () => {
         multiSelect: false 
       }] 
     });
-    expect(result3.status).toBe('success');
+    // Without context, it should fail with "Context does not support user questions"
+    expect(result3.status).toBe('error');
+    expect(result3.result).toContain('Context does not support');
   });
 
   it('should validate each question has 2-4 options', async () => {
