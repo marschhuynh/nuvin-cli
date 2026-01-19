@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Box, Text } from 'ink';
-import { useUserQuestion } from '@/contexts/UserQuestionContext.js';
 
 interface Props {
   questionData: {
@@ -19,42 +18,10 @@ interface Props {
 }
 
 function UserQuestionPromptContent({ questionData }: Props) {
-  const { handleQuestionResponse } = useUserQuestion();
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [selectedOptions, setSelectedOptions] = useState<Set<number>>(new Set());
+  const [currentQuestionIndex] = useState(0);
+  const [selectedOptions] = useState<Set<number>>(new Set());
 
   const currentQuestion = questionData.questions[currentQuestionIndex];
-
-  const handleSubmitCurrent = useCallback(() => {
-    let answer: string | string[];
-    
-    if (currentQuestion.multiSelect) {
-      answer = Array.from(selectedOptions).map(idx => currentQuestion.options[idx].label);
-    } else {
-      const selectedIdx = Array.from(selectedOptions)[0];
-      answer = currentQuestion.options[selectedIdx].label;
-    }
-
-    const newAnswers = { ...answers, [currentQuestion.id]: answer };
-    setAnswers(newAnswers);
-
-    if (currentQuestionIndex < questionData.questions.length - 1) {
-      // Move to next question
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedOptions(new Set());
-    } else {
-      // Submit all answers
-      handleQuestionResponse(newAnswers);
-    }
-  }, [
-    currentQuestion,
-    currentQuestionIndex,
-    selectedOptions,
-    answers,
-    questionData.questions.length,
-    handleQuestionResponse,
-  ]);
 
   return (
     <Box flexDirection="column" padding={1}>

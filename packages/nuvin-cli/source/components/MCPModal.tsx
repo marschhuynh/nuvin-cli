@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import SelectInput from './SelectInput/index.js';
@@ -235,12 +235,6 @@ export const MCPModal: React.FC<MCPModalProps> = ({
 
   const handleServerHighlight = (item: { value: MCPServerInfo }) => {
     setSelectedServer(item.value);
-  };
-
-  const handleServerSelect = (item: { value: MCPServerInfo }) => {
-    if (item.value.status === 'connected' && !localDisabledServers.has(item.value.id)) {
-      setFocusPanel('tools');
-    }
   };
 
   const handleToolHighlight = (item: { value: string }) => {
