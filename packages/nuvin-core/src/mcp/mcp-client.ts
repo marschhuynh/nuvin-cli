@@ -5,7 +5,20 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { ListToolsRequest, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import { ListToolsResultSchema, CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
 
-export type MCPHttpOptions = { type: 'http'; url: string; headers?: Record<string, string> };
+export interface MCPAuthOptions {
+  type: 'none' | 'bearer' | 'oauth';
+  token?: string;
+  getToken?: () => Promise<string | null>;
+  onAuthRequired?: () => Promise<string | null>;
+  onInsufficientScope?: (requiredScopes: string[]) => Promise<string | null>;
+}
+
+export type MCPHttpOptions = {
+  type: 'http';
+  url: string;
+  headers?: Record<string, string>;
+  auth?: MCPAuthOptions;
+};
 export type MCPStdioOptions = {
   type: 'stdio';
   command: string;
@@ -34,28 +47,58 @@ export class CoreMCPClient {
   private transport: Transport | null = null;
   private connected = false;
   private tools: MCPToolSchema[] = [];
+  private currentToken: string | null = null;
 
   constructor(
     private opts: MCPOptions,
     private timeoutMs = 30000,
   ) {}
 
+  private async getAuthHeaders(): Promise<Record<string, string>> {
+    if (this.opts.type !== 'http') return {};
+
+    const auth = this.opts.auth;
+    if (!auth || auth.type === 'none') return {};
+
+    if (auth.type === 'bearer' && auth.token) {
+      return { Authorization: `Bearer ${auth.token}` };
+    }
+
+    if (auth.type === 'oauth' && auth.getToken) {
+      const token = await auth.getToken();
+      if (token) {
+        this.currentToken = token;
+        return { Authorization: `Bearer ${token}` };
+      }
+
+      if (auth.onAuthRequired) {
+        const newToken = await auth.onAuthRequired();
+        if (newToken) {
+          this.currentToken = newToken;
+          return { Authorization: `Bearer ${newToken}` };
+        }
+      }
+    }
+
+    return {};
+  }
+
   async connect(): Promise<void> {
     if (this.connected) return;
     if (this.client || this.transport) throw new Error('MCP already initialized');
 
-    // Build transport
     if (this.opts.type === 'http') {
       const url = new URL(this.opts.url);
+      const authHeaders = await this.getAuthHeaders();
+      const headers = { ...this.opts.headers, ...authHeaders };
+
       this.transport = new StreamableHTTPClientTransport(url, {
-        requestInit: { headers: this.opts.headers ?? {} },
+        requestInit: { headers },
       });
     } else {
-      // Check if stderr is a custom stream
       const isCustomStream =
         this.opts.stderr && typeof this.opts.stderr === 'object' && typeof this.opts.stderr.pipe === 'function';
 
-      // Use 'pipe' if custom stream is provided, otherwise use the original value
       const stderrOption = isCustomStream ? 'pipe' : (this.opts.stderr ?? 'inherit');
 
       this.transport = new StdioClientTransport({
@@ -66,19 +109,15 @@ export class CoreMCPClient {
         cwd: this.opts.cwd,
       });
 
-      // If custom stream was provided, pipe the transport's stderr to it
       if (isCustomStream && this.transport instanceof StdioClientTransport) {
-        // Access the transport's stderr stream after creation
         const transportStderr = this.transport.stderr;
         const targetStderr = this.opts.stderr;
         if (transportStderr && targetStderr && typeof transportStderr.pipe === 'function') {
-          // Type assertion needed due to @modelcontextprotocol/sdk type limitations
           transportStderr.pipe(targetStderr as any);
         }
       }
     }
 
-    // Create SDK client and connect
     this.client = new Client(
       { name: 'nuvin-core-cli', version: '1.0.0' },
       { capabilities: { roots: { listChanged: true } } },
@@ -89,13 +128,23 @@ export class CoreMCPClient {
     await this.refreshTools();
   }
 
+  async reconnectWithNewToken(): Promise<void> {
+    if (this.opts.type !== 'http') return;
+
+    await this.disconnect();
+    await this.connect();
+  }
+
   isConnected(): boolean {
     return this.connected && this.client !== null;
   }
 
+  getCurrentToken(): string | null {
+    return this.currentToken;
+  }
+
   async disconnect(): Promise<void> {
     try {
-      // Use timeout for disconnect operations to prevent hanging
       const disconnectPromise = Promise.all([this.client?.close(), this.transport?.close?.()]);
 
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -104,7 +153,6 @@ export class CoreMCPClient {
 
       await Promise.race([disconnectPromise, timeoutPromise]);
     } catch (err) {
-      // Log but don't throw - we still want to clean up state
       console.warn('MCP disconnect error:', err);
     } finally {
       this.connected = false;
@@ -118,7 +166,6 @@ export class CoreMCPClient {
     if (!this.client) throw new Error('MCP client not connected');
     const req: ListToolsRequest = { method: 'tools/list', params: {} };
 
-    // Use configured timeout with Promise.race
     const requestPromise = this.client.request(req, ListToolsResultSchema);
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error(`MCP tools list request timed out after ${this.timeoutMs}ms`)), this.timeoutMs);
@@ -147,7 +194,6 @@ export class CoreMCPClient {
       params: { name: call.name, arguments: call.arguments ?? {} },
     };
 
-    // Use configured timeout with Promise.race
     const requestPromise = this.client.request(req, CallToolResultSchema);
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error(`MCP tool call timed out after ${this.timeoutMs}ms`)), this.timeoutMs);

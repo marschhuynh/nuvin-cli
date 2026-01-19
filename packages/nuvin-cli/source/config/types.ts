@@ -53,6 +53,20 @@ export interface ProviderConfig {
   [key: string]: unknown;
 }
 
+export interface MCPOAuthConfig {
+  clientId?: string;
+  clientMetadataUrl?: string;
+  authorizationServer?: string;
+  scopes?: string[];
+  tokenStorageKey?: string;
+}
+
+export interface MCPAuthConfig {
+  type: 'none' | 'bearer' | 'oauth';
+  token?: string;
+  oauth?: MCPOAuthConfig;
+}
+
 export interface MCPServerConfig {
   command?: string;
   args?: string[];
@@ -63,6 +77,7 @@ export interface MCPServerConfig {
   prefix?: string;
   timeoutMs?: number;
   enabled?: boolean;
+  auth?: MCPAuthConfig;
 }
 
 export interface MCPSettings {

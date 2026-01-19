@@ -1,254 +1,192 @@
-# MCP (Model Context Protocol) Integration - Usage Guide
+# MCP (Model Context Protocol) Usage Guide
 
-## Overview
+## Quick Start
 
-Nuvin CLI integrates with MCP servers to extend AI capabilities through external tools. MCP servers can be configured via JSON/YAML files or inline configuration.
+### Adding a Local MCP Server
+
+```bash
+# Add a stdio-based server
+nuvin mcp add filesystem npx -y @anthropic-ai/mcp-server-filesystem /path/to/allowed
+
+# Add with environment variables
+nuvin mcp add github npx -y @anthropic-ai/mcp-server-github --env GITHUB_TOKEN=your-token
+```
+
+### Adding a Remote MCP Server with OAuth
+
+```bash
+# Add Atlassian MCP (auto-discovers OAuth, opens browser for login)
+nuvin mcp add atlassian https://mcp.atlassian.com/v1/mcp --oauth
+
+# Add with explicit auth server (if auto-discovery fails)
+nuvin mcp add myserver https://mcp.example.com --oauth --auth-server https://auth.example.com
+```
+
+### Managing Servers
+
+```bash
+# List all servers
+nuvin mcp list
+
+# Remove a server
+nuvin mcp remove <server-name>
+
+# Test a server connection
+nuvin mcp test <server-name>
+
+# Enable/disable a server
+nuvin mcp enable <server-name>
+nuvin mcp disable <server-name>
+```
+
+## OAuth Authentication
+
+### How It Works
+
+1. **Add server with `--oauth`** → Auto-discovers OAuth config + opens browser for login
+2. **Browser login** → Authorize access, redirects back to CLI
+3. **Token stored** → Encrypted in `~/.nuvin/.tokens.json`
+4. **Auto-refresh** → Tokens refreshed automatically when expired
+
+### OAuth Commands
+
+```bash
+# Re-login (if token expired or revoked)
+nuvin mcp login <server-name>
+
+# Logout (clear stored tokens)
+nuvin mcp logout <server-name>
+
+# Check auth status
+nuvin mcp auth-status <server-name>
+```
+
+### OAuth Options
+
+| Flag | Description |
+|------|-------------|
+| `--oauth` | Enable OAuth authentication |
+| `--client-id <id>` | Manual client ID (if DCR not supported) |
+| `--auth-server <url>` | Manual auth server URL (if discovery fails) |
+| `--scopes <scopes>` | Comma-separated scopes to request |
 
 ## Configuration
 
-### Configuration File Locations
+### Config File Locations
 
-1. **Default global config**: `~/.nuvin-cli/.nuvin_mcp.json`
-2. **CLI flag**: `--mcp-config <path>`
-3. **Inline in nuvin config**: via `mcp.servers` field
-4. **Profile-specific**: Each profile can have its own MCP config
+- **Global**: `~/.nuvin/config.json` (under `mcp.servers`)
+- **Project**: `.nuvin.json` or `nuvin.yaml` in project root
+- **Custom**: `--mcp-config <path>`
 
-### Configuration Format
+### JSON Configuration Format
 
 ```json
 {
-  "mcpServers": {
-    "server-id": {
-      "command": "/path/to/server",
-      "args": ["--arg1", "value"],
-      "env": {
-        "ENV_VAR": "value"
+  "mcp": {
+    "servers": {
+      "filesystem": {
+        "command": "npx",
+        "args": ["-y", "@anthropic-ai/mcp-server-filesystem", "/home"],
+        "enabled": true
       },
-      "prefix": "mcp_custom_",
-      "timeoutMs": 120000
-    }
-  }
-}
-```
-
-### Supported Transports
-
-#### 1. Stdio Transport (default)
-```json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-server-filesystem", "/path/to/allowed"],
-      "env": {}
-    }
-  }
-}
-```
-
-#### 2. HTTP Transport
-```json
-{
-  "mcpServers": {
-    "remote-server": {
-      "transport": "http",
-      "url": "https://mcp-server.example.com/api",
-      "headers": {
-        "Authorization": "Bearer <token>"
+      "remote-api": {
+        "transport": "http",
+        "url": "https://mcp.example.com",
+        "auth": {
+          "type": "oauth",
+          "oauth": {
+            "scopes": ["read", "write"]
+          }
+        }
       }
     }
   }
 }
 ```
 
-### Configuration Options
+### Server Config Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `command` | string | - | Executable command (stdio transport) |
+| `command` | string | - | Executable (stdio transport) |
 | `args` | string[] | [] | Command arguments |
 | `env` | object | {} | Environment variables |
 | `transport` | 'stdio' \| 'http' | 'stdio' | Transport type |
 | `url` | string | - | Server URL (http transport) |
-| `headers` | object | {} | HTTP headers (http transport) |
-| `prefix` | string | `mcp_<serverId>_` | Tool name prefix |
-| `timeoutMs` | number | 120000 | Operation timeout (ms) |
+| `headers` | object | {} | HTTP headers |
+| `auth` | object | - | Authentication config |
+| `prefix` | string | `mcp_<id>_` | Tool name prefix |
+| `timeoutMs` | number | 120000 | Timeout in ms |
+| `enabled` | boolean | true | Enable/disable server |
 
-### Inline Configuration (nuvin.yaml/nuvin.json)
+## Tool Management
 
-```yaml
-mcp:
-  configPath: "./custom-mcp.json"  # or use inline servers
-  servers:
-    my-server:
-      command: "npx"
-      args: ["-y", "my-mcp-server"]
-```
+### In-App UI
 
-## CLI Usage
+Type `/mcp` in the chat to open the MCP management modal:
 
-### Starting with MCP
+- **Navigate**: `↑↓` arrows
+- **Switch panels**: `←→` or `Tab`
+- **Toggle tool**: `Space` or `Enter`
+- **Enable all**: `A`
+- **Disable all**: `D`
+- **Exit**: `ESC`
+
+### Auth Status Icons
+
+| Icon | Status |
+|------|--------|
+| 🔓 | No auth required |
+| 🔑 | Bearer token |
+| ✅ | OAuth authenticated |
+| ⚠️ | Token expired |
+| ❌ | Login required |
+
+## Examples
+
+### Atlassian (Jira/Confluence)
 
 ```bash
-# Use default config (~/.nuvin-cli/.nuvin_mcp.json)
-nuvin
-
-# Use custom config file
-nuvin --mcp-config ./project-mcp.json
-
-# Use profile with MCP config
-nuvin --profile development
+nuvin mcp add atlassian https://mcp.atlassian.com/v1/mcp --oauth
 ```
 
-### MCP Server Management UI
+### GitHub with Token
 
-Access via `/mcp` command in the CLI:
-
-```
-/mcp
+```bash
+nuvin mcp add github npx -y @anthropic-ai/mcp-server-github --env GITHUB_TOKEN=$GITHUB_TOKEN
 ```
 
-**Keyboard Controls:**
-- `↑↓` - Navigate items
-- `←→` or `Tab` - Switch between Servers/Tools panels
-- `Space` or `Enter` - Toggle tool permission
-- `A` - Enable all tools for selected server
-- `D` - Disable all tools for selected server
-- `ESC` - Back/Exit
+### Local Filesystem
 
-### Tool Permission Management
-
-Tool permissions are stored in the global config (`mcpAllowedTools`) and persist across sessions:
-
-```json
-{
-  "mcpAllowedTools": {
-    "server-id": {
-      "tool-name-1": true,
-      "tool-name-2": false
-    }
-  }
-}
+```bash
+nuvin mcp add fs npx -y @anthropic-ai/mcp-server-filesystem ~/projects
 ```
 
-## Architecture
+### Remote Server with Bearer Token
 
-### Core Components
-
-```
-packages/nuvin-core/src/
-├── mcp/
-│   ├── index.ts           # Exports CoreMCPClient, MCPToolPort
-│   ├── mcp-client.ts      # Low-level MCP SDK wrapper
-│   └── mcp-tools.ts       # ToolPort adapter for MCP tools
-├── config.ts              # MCPConfig types and loadMCPConfig()
-└── ports.ts               # ToolPort interface
-
-packages/nuvin-cli/source/
-├── services/
-│   ├── MCPServerManager.ts    # Multi-server management
-│   └── OrchestratorManager.ts # Integrates MCP into orchestrator
-├── components/
-│   ├── MCPModal.tsx           # Server/tool configuration UI
-│   ├── MCPServerItem.tsx      # Server list item component
-│   └── MCPToolItem.tsx        # Tool list item component
-└── modules/commands/definitions/
-    └── mcp.tsx                # /mcp command handler
-```
-
-### Data Flow
-
-```
-1. Config Loading (cli.tsx)
-   ├─> loadMCPConfig() from nuvin-core
-   ├─> resolveMCPDefinition() for inline configs
-   └─> Profile-specific MCP configs
-
-2. Server Initialization (OrchestratorManager)
-   ├─> MCPServerManager.initializeServers()
-   ├─> CoreMCPClient.connect() for each server
-   └─> MCPToolPort.init() exposes tools
-
-3. Tool Execution (during chat)
-   ├─> Orchestrator receives tool call
-   ├─> MCPToolPort.executeToolCalls()
-   └─> CoreMCPClient.callTool() → MCP server
+```bash
+nuvin mcp add api https://api.example.com/mcp --auth-type bearer --auth-token $API_TOKEN
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Server won't connect
+- Check command/URL is correct: `nuvin mcp test <name>`
+- Increase timeout: edit config, set `timeoutMs: 300000`
 
-1. **Server fails to connect**
-   - Check command path exists and is executable
-   - Verify environment variables are set correctly
-   - Increase `timeoutMs` for slow-starting servers
+### OAuth login fails
+- Clear and retry: `nuvin mcp logout <name> && nuvin mcp login <name>`
+- Check auth server is reachable
+- Some servers require manual `--client-id`
 
-2. **Tools not appearing**
-   - Check tool permissions in `/mcp` modal
-   - Verify server status is "connected"
-   - Check server logs for initialization errors
+### Tools not showing
+- Check server is enabled: `nuvin mcp list`
+- Open `/mcp` modal to see tool permissions
+- Check for errors in server status
 
-3. **Tool execution timeout**
-   - Increase `timeoutMs` in server config
-   - Check MCP server logs for errors
-
-### Debugging
-
-Enable verbose logging:
-```bash
-DEBUG=mcp:* nuvin
-```
-
-Check server status:
-```
-/mcp  # Shows connected/failed status and error messages
-```
-
-## Examples
-
-### File System Access
-```json
-{
-  "mcpServers": {
-    "fs": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-server-filesystem", "/Users/me/projects"],
-      "prefix": "fs_"
-    }
-  }
-}
-```
-
-### GitHub Integration
-```json
-{
-  "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-server-github"],
-      "env": {
-        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-      }
-    }
-  }
-}
-```
-
-### Multiple Servers
-```json
-{
-  "mcpServers": {
-    "fs": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-server-filesystem", "/home"],
-      "timeoutMs": 30000
-    },
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-server-memory"],
-      "prefix": "mem_"
-    }
-  }
-}
-```
+### Token expired
+- Tokens auto-refresh, but if issues persist:
+  ```bash
+  nuvin mcp logout <name>
+  nuvin mcp login <name>
+  ```

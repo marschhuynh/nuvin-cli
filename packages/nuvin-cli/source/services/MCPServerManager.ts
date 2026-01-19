@@ -1,20 +1,29 @@
-import { MCPToolPort, CoreMCPClient } from '@nuvin/nuvin-core';
+import { MCPToolPort, CoreMCPClient, MCPOAuthClient, type MCPAuthOptions } from '@nuvin/nuvin-core';
 import * as crypto from 'node:crypto';
 import type { MessageLine } from '@/adapters/index.js';
 import { theme, type ColorToken } from '@/theme.js';
 import type { MCPServerConfig, MCPSettings } from '@/config/types.js';
 import type { TypedEventBus } from './EventBus.js';
+import { FileTokenStorage } from './TokenStorage.js';
+
+export interface MCPAuthStatus {
+  type: 'none' | 'bearer' | 'oauth';
+  authenticated?: boolean;
+  expiresAt?: number;
+  scope?: string;
+}
 
 export interface MCPServerInfo {
   id: string;
   client: CoreMCPClient | null;
   port: MCPToolPort | null;
-  exposedTools: string[]; // All available tools (unfiltered)
-  allowedTools: string[]; // Currently allowed/enabled tools (filtered)
+  exposedTools: string[];
+  allowedTools: string[];
   prefix: string;
   status: 'connected' | 'failed' | 'pending';
   error?: string;
   disabled?: boolean;
+  authStatus?: MCPAuthStatus;
 }
 
 export interface MCPServerManagerOptions {
@@ -125,11 +134,34 @@ export class MCPServerManager {
     const timeoutMs = serverCfg.timeoutMs || this.config?.defaultTimeoutMs || 120_000;
 
     if (serverCfg.transport === 'http' && serverCfg.url) {
+      // Build auth config for HTTP transport
+      let auth: MCPAuthOptions | undefined;
+
+      if (serverCfg.auth?.type === 'oauth') {
+        const tokenStorage = new FileTokenStorage();
+        const oauthClient = new MCPOAuthClient(serverCfg.url, serverCfg.auth.oauth || {}, tokenStorage);
+
+        auth = {
+          type: 'oauth' as const,
+          getToken: async () => oauthClient.getAccessToken(),
+          onAuthRequired: async () => {
+            this.logInfo(`MCP server '${serverId}' requires authentication. Run: nuvin mcp login ${serverId}`, 'yellow');
+            return null;
+          },
+        };
+      } else if (serverCfg.auth?.type === 'bearer' && serverCfg.auth.token) {
+        auth = {
+          type: 'bearer' as const,
+          token: serverCfg.auth.token,
+        };
+      }
+
       client = new CoreMCPClient(
         {
           type: 'http',
           url: serverCfg.url,
           headers: serverCfg.headers,
+          auth,
         },
         timeoutMs,
       );

@@ -152,7 +152,13 @@ export type { WebFetchResult, WebFetchSuccessResult, WebFetchParams } from './to
 export type { TodoWriteResult, TodoWriteSuccessResult } from './tools/TodoWriteTool.js';
 export type { AssignResult, AssignSuccessResult, AssignErrorResult } from './tools/AssignTool.js';
 export { SkillTool, type SkillProvider, type SkillInfo as SkillToolInfo } from './tools/SkillTool.js';
-export type { SkillParams, SkillResult, SkillSuccessResult, SkillErrorResult, SkillMetadata } from './tools/SkillTool.js';
+export type {
+  SkillParams,
+  SkillResult,
+  SkillSuccessResult,
+  SkillErrorResult,
+  SkillMetadata,
+} from './tools/SkillTool.js';
 export type {
   TaskOutputParams,
   TaskOutputResult,
@@ -231,7 +237,13 @@ export {
   AgentManagerCommandRunner,
   DefaultAgentStateManager,
 } from './delegation/index.js';
-export type { DelegationService, AgentCatalog, DelegationServiceConfig, AgentStateManager, AgentSession } from './delegation/index.js';
+export type {
+  DelegationService,
+  AgentCatalog,
+  DelegationServiceConfig,
+  AgentStateManager,
+  AgentSession,
+} from './delegation/index.js';
 export { DelegationServiceFactory, LLMResolver } from './delegation/index.js';
 
 // LLM providers
@@ -262,7 +274,29 @@ export type { RetryConfig } from './transports/index.js';
 export { isRetryableError, isRetryableStatusCode } from './transports/index.js';
 
 // MCP
-export { MCPToolPort, CoreMCPClient } from './mcp/index.js';
+export {
+  MCPToolPort,
+  CoreMCPClient,
+  MCPOAuthClient,
+  parseWWWAuthenticate,
+  isInsufficientScopeError,
+  isUnauthorizedError,
+} from './mcp/index.js';
+export type {
+  MCPOptions,
+  MCPHttpOptions,
+  MCPStdioOptions,
+  MCPToolSchema,
+  MCPToolCall,
+  MCPCallResult,
+  MCPAuthOptions,
+  MCPOAuthConfig,
+  StoredTokens,
+  TokenStorage,
+  ProtectedResourceMetadata,
+  AuthServerMetadata,
+  AuthFlowResult,
+} from './mcp/index.js';
 // Note: MCPConfig types kept for backward compatibility, but config loading
 // is now handled by nuvin-cli ConfigManager under mcp.servers
 export type { MCPConfig, MCPServerConfig } from './config.js';

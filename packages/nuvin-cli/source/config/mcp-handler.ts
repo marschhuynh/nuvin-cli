@@ -1,16 +1,15 @@
 import { ConfigManager } from './manager.js';
-import type { ConfigScope } from './types.js';
+import type { ConfigScope, MCPServerConfig, MCPAuthConfig } from './types.js';
+import { MCPOAuthClient, type TokenStorage, type StoredTokens } from '@nuvin/nuvin-core';
 
-export interface MCPServerConfig {
-  command?: string;
-  args?: string[];
-  env?: Record<string, string>;
-  transport?: 'stdio' | 'http';
-  url?: string;
-  headers?: Record<string, string>;
-  prefix?: string;
-  timeoutMs?: number;
-  enabled?: boolean;
+export type { MCPServerConfig } from './types.js';
+
+class NoopTokenStorage implements TokenStorage {
+  async get(_key: string): Promise<StoredTokens | null> {
+    return null;
+  }
+  async set(_key: string, _tokens: StoredTokens): Promise<void> {}
+  async delete(_key: string): Promise<void> {}
 }
 
 export class MCPCliHandler {
@@ -78,6 +77,18 @@ export class MCPCliHandler {
       case 'test':
         await this.testServer(rest[0], rest.slice(1));
         break;
+      case 'auth':
+        await this.configureAuth(rest[0], rest.slice(1));
+        break;
+      case 'login':
+        await this.loginServer(rest[0]);
+        break;
+      case 'logout':
+        await this.logoutServer(rest[0]);
+        break;
+      case 'auth-status':
+        await this.showAuthStatus(rest[0]);
+        break;
       case 'help':
       case '--help':
       case '-h':
@@ -96,12 +107,16 @@ export class MCPCliHandler {
           console.log('  enable <name>     Enable a server');
           console.log('  disable <name>    Disable a server');
           console.log('  test <name>       Test server connection');
+          console.log('  auth <name>       Configure authentication for a server');
+          console.log('  login <name>      Authenticate with an OAuth server');
+          console.log('  logout <name>     Clear stored tokens for a server');
+          console.log('  auth-status <name> Show authentication status');
           console.log('  help              Show detailed help');
           console.log('\nExamples:');
           console.log('  nuvin mcp add myserver npx @org/mcp-server');
           console.log('  nuvin mcp add api --url https://api.example.com');
-          console.log('  nuvin --profile work mcp add jira --url https://mcp.atlassian.com');
-          console.log('  nuvin mcp list');
+          console.log('  nuvin mcp auth api --oauth --client-id my-client');
+          console.log('  nuvin mcp login api');
           console.log('\nFor more details, run: nuvin mcp help\n');
           process.exit(1);
         }
@@ -132,8 +147,10 @@ export class MCPCliHandler {
       const enabled = config.enabled !== false;
       const status = enabled ? '✓ enabled' : '✗ disabled';
       const prefix = config.prefix || `mcp_${name}_`;
+      const authType = config.auth?.type || 'none';
+      const authInfo = authType !== 'none' ? ` [${authType}]` : '';
 
-      console.log(`  ${name.padEnd(14)} ${transport.padEnd(6)} ${status.padEnd(12)} prefix: ${prefix}`);
+      console.log(`  ${name.padEnd(14)} ${transport.padEnd(6)} ${status.padEnd(12)} prefix: ${prefix}${authInfo}`);
     }
 
     const enabledCount = entries.filter(([, c]) => c.enabled !== false).length;
@@ -158,7 +175,21 @@ export class MCPCliHandler {
     const config = this.parseServerOptions(options);
 
     if (config.url) {
-      // HTTP transport - no command needed
+      if (config.auth?.type === 'oauth' && !config.auth.oauth?.authorizationServer) {
+        console.log('Discovering OAuth configuration...');
+        const discoveredAuth = await this.discoverOAuthConfig(config.url);
+        if (discoveredAuth) {
+          if (!config.auth.oauth) config.auth.oauth = {};
+          config.auth.oauth.authorizationServer = discoveredAuth.authorizationServer;
+          if (discoveredAuth.scopes && !config.auth.oauth.scopes?.length) {
+            config.auth.oauth.scopes = discoveredAuth.scopes;
+          }
+          console.log(`  ✓ Authorization server: ${discoveredAuth.authorizationServer}`);
+          if (discoveredAuth.scopes?.length) {
+            console.log(`  ✓ Discovered scopes: ${discoveredAuth.scopes.join(', ')}`);
+          }
+        }
+      }
     } else if (!config.command) {
       console.error('Error: command is required for stdio transport');
       console.log('Usage: nuvin mcp add <name> <command> [args...]');
@@ -169,6 +200,33 @@ export class MCPCliHandler {
     await this.configManager.set(`mcp.servers.${name}`, config, this.globalScope);
 
     console.log(`✓ Added MCP server '${name}' (${this.globalScope} scope)`);
+
+    // Auto-login if OAuth is configured
+    if (config.auth?.type === 'oauth' && config.url) {
+      console.log('\nInitiating OAuth login...');
+      await this.loginServer(name);
+    }
+  }
+
+  private async discoverOAuthConfig(
+    serverUrl: string,
+  ): Promise<{ authorizationServer: string; scopes?: string[] } | null> {
+    try {
+      const oauthClient = new MCPOAuthClient(serverUrl, {}, new NoopTokenStorage());
+      const discovery = await oauthClient.discoverOAuthServer();
+
+      return {
+        authorizationServer: discovery.authorizationServerUrl,
+        scopes:
+          discovery.wwwAuthenticateScope?.split(' ').filter(Boolean) ||
+          discovery.protectedResourceMetadata?.scopes_supported ||
+          discovery.authServerMetadata?.scopes_supported,
+      };
+    } catch (err) {
+      console.log(`  ⚠ Could not auto-discover OAuth config: ${err instanceof Error ? err.message : String(err)}`);
+      console.log('  You may need to configure --auth-server manually.');
+      return null;
+    }
   }
 
   private parseServerOptions(options: string[]): MCPServerConfig {
@@ -177,6 +235,8 @@ export class MCPCliHandler {
     const knownFlags = new Set([
       '--command', '--args', '--env', '--transport', '--url', '--header',
       '--prefix', '--timeout', '--disabled',
+      '--auth-type', '--auth-token', '--oauth', '--client-id', '--client-metadata-url',
+      '--auth-server', '--scopes',
     ]);
 
     const isUrl = (str: string): boolean => str.startsWith('http://') || str.startsWith('https://');
@@ -247,6 +307,50 @@ export class MCPCliHandler {
         case '--disabled':
           config.enabled = false;
           break;
+        case '--auth-type':
+          if (!config.auth) config.auth = { type: 'none' };
+          config.auth.type = value as 'none' | 'bearer' | 'oauth';
+          i++;
+          break;
+        case '--auth-token':
+          if (!config.auth) config.auth = { type: 'bearer' };
+          config.auth.type = 'bearer';
+          config.auth.token = value;
+          i++;
+          break;
+        case '--oauth':
+          if (!config.auth) config.auth = { type: 'oauth' };
+          config.auth.type = 'oauth';
+          if (!config.auth.oauth) config.auth.oauth = {};
+          break;
+        case '--client-id':
+          if (!config.auth) config.auth = { type: 'oauth' };
+          config.auth.type = 'oauth';
+          if (!config.auth.oauth) config.auth.oauth = {};
+          config.auth.oauth.clientId = value;
+          i++;
+          break;
+        case '--client-metadata-url':
+          if (!config.auth) config.auth = { type: 'oauth' };
+          config.auth.type = 'oauth';
+          if (!config.auth.oauth) config.auth.oauth = {};
+          config.auth.oauth.clientMetadataUrl = value;
+          i++;
+          break;
+        case '--auth-server':
+          if (!config.auth) config.auth = { type: 'oauth' };
+          config.auth.type = 'oauth';
+          if (!config.auth.oauth) config.auth.oauth = {};
+          config.auth.oauth.authorizationServer = value;
+          i++;
+          break;
+        case '--scopes':
+          if (!config.auth) config.auth = { type: 'oauth' };
+          config.auth.type = 'oauth';
+          if (!config.auth.oauth) config.auth.oauth = {};
+          config.auth.oauth.scopes = value?.split(',').map((s) => s.trim());
+          i++;
+          break;
       }
     }
 
@@ -268,6 +372,279 @@ export class MCPCliHandler {
     }
 
     return config;
+  }
+
+  private async configureAuth(name: string | undefined, options: string[]): Promise<void> {
+    if (!name) {
+      console.error('Error: Server name is required');
+      console.log('Usage: nuvin mcp auth <name> [options]');
+      console.log('Options:');
+      console.log('  --none                 Disable authentication');
+      console.log('  --bearer <token>       Use static bearer token');
+      console.log('  --oauth                Enable OAuth 2.1 authentication');
+      console.log('  --client-id <id>       OAuth client ID');
+      console.log('  --client-metadata-url <url>  OAuth client metadata URL');
+      console.log('  --auth-server <url>    OAuth authorization server URL');
+      console.log('  --scopes <scope1,scope2>  OAuth scopes (comma-separated)');
+      process.exit(1);
+    }
+
+    const existing = this.configManager.get(`mcp.servers.${name}`) as MCPServerConfig | undefined;
+    if (!existing) {
+      console.error(`Error: MCP server '${name}' not found`);
+      process.exit(1);
+    }
+
+    if (existing.transport !== 'http' && !existing.url) {
+      console.error('Error: Authentication is only supported for HTTP transport servers');
+      process.exit(1);
+    }
+
+    const authConfig: MCPAuthConfig = { type: 'none' };
+
+    for (let i = 0; i < options.length; i++) {
+      const flag = options[i];
+      const value = options[i + 1];
+
+      switch (flag) {
+        case '--none':
+          authConfig.type = 'none';
+          break;
+        case '--bearer':
+          authConfig.type = 'bearer';
+          authConfig.token = value;
+          i++;
+          break;
+        case '--oauth':
+          authConfig.type = 'oauth';
+          if (!authConfig.oauth) authConfig.oauth = {};
+          break;
+        case '--client-id':
+          authConfig.type = 'oauth';
+          if (!authConfig.oauth) authConfig.oauth = {};
+          authConfig.oauth.clientId = value;
+          i++;
+          break;
+        case '--client-metadata-url':
+          authConfig.type = 'oauth';
+          if (!authConfig.oauth) authConfig.oauth = {};
+          authConfig.oauth.clientMetadataUrl = value;
+          i++;
+          break;
+        case '--auth-server':
+          authConfig.type = 'oauth';
+          if (!authConfig.oauth) authConfig.oauth = {};
+          authConfig.oauth.authorizationServer = value;
+          i++;
+          break;
+        case '--scopes':
+          authConfig.type = 'oauth';
+          if (!authConfig.oauth) authConfig.oauth = {};
+          authConfig.oauth.scopes = value?.split(',').map((s) => s.trim());
+          i++;
+          break;
+      }
+    }
+
+    await this.configManager.set(`mcp.servers.${name}.auth`, authConfig, this.globalScope);
+
+    if (authConfig.type === 'oauth' && existing.url && !authConfig.oauth?.authorizationServer) {
+      console.log('Discovering OAuth configuration...');
+      const discoveredAuth = await this.discoverOAuthConfig(existing.url);
+      if (discoveredAuth) {
+        if (!authConfig.oauth) authConfig.oauth = {};
+        authConfig.oauth.authorizationServer = discoveredAuth.authorizationServer;
+        if (discoveredAuth.scopes && !authConfig.oauth.scopes?.length) {
+          authConfig.oauth.scopes = discoveredAuth.scopes;
+        }
+        await this.configManager.set(`mcp.servers.${name}.auth`, authConfig, this.globalScope);
+        console.log(`  ✓ Authorization server: ${discoveredAuth.authorizationServer}`);
+        if (discoveredAuth.scopes?.length) {
+          console.log(`  ✓ Discovered scopes: ${discoveredAuth.scopes.join(', ')}`);
+        }
+      }
+    }
+
+    console.log(`✓ Configured ${authConfig.type} authentication for '${name}' (${this.globalScope} scope)`);
+
+    if (authConfig.type === 'oauth') {
+      console.log('\nRun `nuvin mcp login ' + name + '` to authenticate.');
+    }
+  }
+
+  private async loginServer(name: string | undefined): Promise<void> {
+    if (!name) {
+      console.error('Error: Server name is required');
+      console.log('Usage: nuvin mcp login <name>');
+      process.exit(1);
+    }
+
+    const config = this.configManager.get(`mcp.servers.${name}`) as MCPServerConfig | undefined;
+    if (!config) {
+      console.error(`Error: MCP server '${name}' not found`);
+      process.exit(1);
+    }
+
+    if (config.auth?.type !== 'oauth') {
+      console.error(`Error: Server '${name}' is not configured for OAuth authentication`);
+      console.log('Configure OAuth first: nuvin mcp auth ' + name + ' --oauth --client-id <id>');
+      process.exit(1);
+    }
+
+    if (!config.url) {
+      console.error('Error: Server URL is required for OAuth authentication');
+      process.exit(1);
+    }
+
+    console.log(`Initiating OAuth login for '${name}'...`);
+
+    try {
+      const { MCPOAuthClient } = await import('@nuvin/nuvin-core');
+      const { FileTokenStorage } = await import('../services/TokenStorage.js');
+      const open = await import('open');
+
+      const tokenStorage = new FileTokenStorage();
+      const oauthClient = new MCPOAuthClient(config.url, config.auth.oauth || {}, tokenStorage);
+
+      const result = await oauthClient.initiateAuthFlow(async (url) => {
+        console.log('\nOpening browser for authentication...');
+        console.log(`If browser doesn't open, visit: ${url}\n`);
+        await open.default(url);
+      });
+
+      if (result.success) {
+        console.log('✓ Successfully authenticated!');
+        if (result.tokens?.scope) {
+          console.log(`  Scopes: ${result.tokens.scope}`);
+        }
+        if (result.tokens?.expiresAt) {
+          const expiresIn = Math.round((result.tokens.expiresAt - Date.now()) / 1000 / 60);
+          console.log(`  Token expires in: ${expiresIn} minutes`);
+        }
+      } else {
+        console.error(`✗ Authentication failed: ${result.error}`);
+        process.exit(1);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`✗ Login failed: ${message}`);
+      process.exit(1);
+    }
+  }
+
+  private async logoutServer(name: string | undefined): Promise<void> {
+    if (!name) {
+      console.error('Error: Server name is required');
+      console.log('Usage: nuvin mcp logout <name>');
+      process.exit(1);
+    }
+
+    const config = this.configManager.get(`mcp.servers.${name}`) as MCPServerConfig | undefined;
+    if (!config) {
+      console.error(`Error: MCP server '${name}' not found`);
+      process.exit(1);
+    }
+
+    if (!config.url) {
+      console.error('Error: Server URL is required');
+      process.exit(1);
+    }
+
+    try {
+      const { MCPOAuthClient } = await import('@nuvin/nuvin-core');
+      const { FileTokenStorage } = await import('../services/TokenStorage.js');
+
+      const tokenStorage = new FileTokenStorage();
+      const oauthClient = new MCPOAuthClient(config.url, config.auth?.oauth || {}, tokenStorage);
+
+      await oauthClient.logout();
+      console.log(`✓ Logged out from '${name}' - tokens cleared`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`✗ Logout failed: ${message}`);
+      process.exit(1);
+    }
+  }
+
+  private async showAuthStatus(name: string | undefined): Promise<void> {
+    if (!name) {
+      console.error('Error: Server name is required');
+      console.log('Usage: nuvin mcp auth-status <name>');
+      process.exit(1);
+    }
+
+    const config = this.configManager.get(`mcp.servers.${name}`) as MCPServerConfig | undefined;
+    if (!config) {
+      console.error(`Error: MCP server '${name}' not found`);
+      process.exit(1);
+    }
+
+    console.log(`\nAuthentication status for '${name}':`);
+    console.log('='.repeat(name.length + 30));
+
+    const authType = config.auth?.type || 'none';
+    console.log(`Auth type: ${authType}`);
+
+    if (authType === 'none') {
+      console.log('Status: No authentication configured');
+      return;
+    }
+
+    if (authType === 'bearer') {
+      console.log(`Status: Static bearer token configured`);
+      console.log(`Token: ${config.auth?.token ? '****' + config.auth.token.slice(-4) : 'Not set'}`);
+      return;
+    }
+
+    if (authType === 'oauth') {
+      console.log(`Client ID: ${config.auth?.oauth?.clientId || config.auth?.oauth?.clientMetadataUrl || 'Dynamic'}`);
+      
+      if (config.auth?.oauth?.authorizationServer) {
+        console.log(`Auth Server: ${config.auth.oauth.authorizationServer}`);
+      }
+      
+      if (config.auth?.oauth?.scopes?.length) {
+        console.log(`Scopes: ${config.auth.oauth.scopes.join(', ')}`);
+      }
+
+      if (!config.url) {
+        console.log('Status: Server URL not configured');
+        return;
+      }
+
+      try {
+        const { MCPOAuthClient } = await import('@nuvin/nuvin-core');
+        const { FileTokenStorage } = await import('../services/TokenStorage.js');
+
+        const tokenStorage = new FileTokenStorage();
+        const oauthClient = new MCPOAuthClient(config.url, config.auth?.oauth || {}, tokenStorage);
+
+        const status = await oauthClient.getAuthStatus();
+
+        if (status.authenticated) {
+          console.log('Status: ✓ Authenticated');
+          if (status.scope) {
+            console.log(`Active scopes: ${status.scope}`);
+          }
+          if (status.expiresAt) {
+            const expiresIn = Math.round((status.expiresAt - Date.now()) / 1000 / 60);
+            if (expiresIn > 0) {
+              console.log(`Expires in: ${expiresIn} minutes`);
+            } else {
+              console.log('Status: Token expired (will refresh on next use)');
+            }
+          }
+        } else {
+          console.log('Status: ✗ Not authenticated');
+          console.log(`\nRun 'nuvin mcp login ${name}' to authenticate.`);
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.log(`Status: Error checking auth status - ${message}`);
+      }
+    }
+
+    console.log();
   }
 
   private async removeServer(name: string | undefined): Promise<void> {
@@ -316,6 +693,12 @@ export class MCPCliHandler {
       console.log(`URL:        ${config.url}`);
       if (config.headers && Object.keys(config.headers).length > 0) {
         console.log(`Headers:    ${Object.keys(config.headers).join(', ')}`);
+      }
+      
+      const authType = config.auth?.type || 'none';
+      console.log(`Auth:       ${authType}`);
+      if (authType === 'oauth' && config.auth?.oauth?.clientId) {
+        console.log(`Client ID:  ${config.auth.oauth.clientId}`);
       }
     } else {
       console.log(`Command:    ${config.command}`);
@@ -472,6 +855,10 @@ Commands:
   enable <name>           Enable a server
   disable <name>          Disable a server
   test <name>             Test connection to a server
+  auth <name>             Configure authentication for a server
+  login <name>            Authenticate with an OAuth server
+  logout <name>           Clear stored tokens for a server
+  auth-status <name>      Show authentication status
   help                    Show this help
 
 Add Server (short syntax):
@@ -486,6 +873,15 @@ Add Options (http transport):
   --url <url>             Server URL (required for http)
   --header <KEY=VALUE>    HTTP header (repeatable)
 
+Authentication Options:
+  --auth-type <type>      Auth type: none, bearer, oauth
+  --auth-token <token>    Bearer token (sets auth-type to bearer)
+  --oauth                 Enable OAuth authentication
+  --client-id <id>        OAuth client ID
+  --client-metadata-url <url>  OAuth client metadata document URL
+  --auth-server <url>     OAuth authorization server URL override
+  --scopes <s1,s2>        OAuth scopes (comma-separated)
+
 Common Add Options:
   --transport <type>      Transport: stdio (default) or http
   --prefix <prefix>       Tool name prefix
@@ -498,14 +894,25 @@ Other Options:
   --timeout <ms>          Override timeout (for test)
 
 Examples:
-  nuvin --profile work mcp add api --url "https://api.example.com"
-  nuvin --profile personal mcp list
+  # Add stdio server
   nuvin mcp add fs npx -y @anthropic-ai/mcp-server-filesystem /home
-  nuvin mcp --local add chrome-devtools npx chrome-devtools-mcp@latest
-  nuvin mcp --local disable github
-  nuvin mcp show fs
-  nuvin mcp test fs --verbose
-  nuvin mcp --local remove old-server
+
+  # Add HTTP server with OAuth
+  nuvin mcp add api --url "https://api.example.com" --oauth --client-id my-app
+  nuvin mcp login api
+
+  # Add HTTP server with bearer token
+  nuvin mcp add api --url "https://api.example.com" --auth-token "secret123"
+
+  # Configure auth for existing server
+  nuvin mcp auth myserver --oauth --client-id my-client --scopes "read,write"
+
+  # Check auth status
+  nuvin mcp auth-status api
+
+  # List and test
+  nuvin mcp list
+  nuvin mcp test api --verbose
 `);
   }
 }
