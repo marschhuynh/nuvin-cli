@@ -35,7 +35,6 @@ export function UserQuestionProvider({
   const handleQuestionResponse = useCallback(
     (answers: Record<string, string | string[]>) => {
       if (pendingQuestion && orchestratorManager?.getOrchestrator()) {
-        // @ts-expect-error - Method exists but not in type definition yet
         orchestratorManager.getOrchestrator()!.handleUserQuestionResponse(
           pendingQuestion.questionId,
           answers
