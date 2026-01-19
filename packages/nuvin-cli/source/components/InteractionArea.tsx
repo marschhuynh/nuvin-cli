@@ -5,9 +5,11 @@ import type { MemoryPort, Message } from '@nuvin/nuvin-core';
 import { ActiveCommand } from '@/modules/commands/components/ActiveCommand.js';
 import { useCommand } from '@/modules/commands/hooks/useCommand.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
+import { useUserQuestion } from '@/contexts/UserQuestionContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
 import { ToolApprovalPrompt } from './ToolApprovalPrompt/ToolApprovalPrompt.js';
+import { UserQuestionPrompt } from './UserQuestionPrompt/index.js';
 import { InputArea, type InputAreaHandle } from './InputArea.js';
 
 type InteractionAreaProps = {
@@ -49,10 +51,12 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 ) {
   const { commands } = useCommand();
   const { pendingApprovalTools, toolApprovalMode } = useToolApproval();
+  const { pendingQuestion } = useUserQuestion();
   const { theme } = useTheme();
   const { altMode } = useAltMode();
 
   const hasPendingApproval = pendingApprovalTools.length > 0;
+  const hasPendingQuestion = pendingQuestion !== null;
 
   const escStageRef = useRef<'none' | 'armed-clear' | 'armed-stop'>('none');
   const [queuedMessages, setQueuedMessages] = useState<string[]>([]);
@@ -89,7 +93,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   useInput(
     (_input, key) => {
       if (key.escape) {
-        if (hasPendingApproval) {
+        if (hasPendingApproval || hasPendingQuestion) {
           return;
         }
 
@@ -188,7 +192,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
         }
       }
     },
-    { isActive: !hasActiveCommand && !hasPendingApproval },
+    { isActive: !hasActiveCommand && !hasPendingApproval && !hasPendingQuestion },
   );
 
   const commandItems = useMemo(
@@ -196,10 +200,24 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
     [commands],
   );
 
-  const mode = hasPendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
+  const mode = hasPendingQuestion ? 'question' : hasPendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
 
   const renderDynamicContent = () => {
     switch (mode) {
+      case 'question':
+        if (!hasPendingQuestion || !pendingQuestion) {
+          return null;
+        }
+        return altMode ? (
+          <Box position="absolute" bottom={2} zIndex={25} flexShrink={0}>
+            <UserQuestionPrompt questionData={pendingQuestion} />
+          </Box>
+        ) : (
+          <Box flexShrink={0} marginTop={1} zIndex={25}>
+            <UserQuestionPrompt questionData={pendingQuestion} />
+          </Box>
+        );
+
       case 'approval':
         if (!hasPendingApproval || !toolApprovalMode) {
           return null;
@@ -246,6 +264,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
               busy={busy}
               messageQueueLength={messageQueueLength}
               showToolApproval={hasPendingApproval}
+              showUserQuestion={hasPendingQuestion}
               commandItems={commandItems}
               vimModeEnabled={vimModeEnabled}
               memory={memory}

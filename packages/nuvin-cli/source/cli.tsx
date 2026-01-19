@@ -9,6 +9,7 @@ import AppVirtualized from './app-virtualized.js';
 import AppLegacy from './app.js';
 import { NotificationProvider } from './contexts/NotificationContext.js';
 import { ToolApprovalProvider } from './contexts/ToolApprovalContext.js';
+import { UserQuestionProvider } from './contexts/UserQuestionContext.js';
 import { CommandProvider } from './modules/commands/provider.js';
 import { registerCommands } from './modules/commands/definitions/index.js';
 import { ConfigProvider } from './contexts/ConfigContext.js';
@@ -431,22 +432,24 @@ const cli = meow(
           <InputProvider middleware={defaultMiddleware}>
             <ConfigProvider initialConfig={mergedConfig}>
               <NotificationProvider>
-                <ToolApprovalProvider
-                  orchestratorManager={orchestratorManager}
-                  requireToolApproval={finalRequireToolApproval}
-                  onError={(msg) => console.error(msg)}
-                >
-                  <CommandProvider>
-                    <ConfigBridge>
-                      <App
-                        memPersist={finalMemPersist}
-                        thinking={thinkingSetting}
-                        historyPath={historyPath}
-                        initialSessions={initialSessions}
-                      />
-                    </ConfigBridge>
-                  </CommandProvider>
-                </ToolApprovalProvider>
+                <UserQuestionProvider>
+                  <ToolApprovalProvider
+                    orchestratorManager={orchestratorManager}
+                    requireToolApproval={finalRequireToolApproval}
+                    onError={(msg) => console.error(msg)}
+                  >
+                    <CommandProvider>
+                      <ConfigBridge>
+                        <App
+                          memPersist={finalMemPersist}
+                          thinking={thinkingSetting}
+                          historyPath={historyPath}
+                          initialSessions={initialSessions}
+                        />
+                      </ConfigBridge>
+                    </CommandProvider>
+                  </ToolApprovalProvider>
+                </UserQuestionProvider>
               </NotificationProvider>
             </ConfigProvider>
           </InputProvider>

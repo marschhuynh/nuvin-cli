@@ -31,8 +31,9 @@ type InputAreaProps = {
   busy: boolean;
   messageQueueLength: number;
   showToolApproval?: boolean;
+  showUserQuestion?: boolean;
   disabled?: boolean;
-  mode?: 'input' | 'approval' | 'command' | 'command-menu';
+  mode?: 'input' | 'approval' | 'command' | 'command-menu' | 'question';
 
   commandItems: Array<{ label: string; value: string }>;
   vimModeEnabled?: boolean;
@@ -50,6 +51,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     {
       busy,
       showToolApproval = false,
+      showUserQuestion = false,
       disabled = false,
       mode = 'input',
 
@@ -229,7 +231,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
           onInputChanged?.('');
         }
       },
-      { isActive: isFocused && !showToolApproval && !disabled },
+      { isActive: isFocused && !showToolApproval && !showUserQuestion && !disabled },
     );
 
     const handleTextInputUpArrow = showCommandMenu ? undefined : handleUpArrow;
@@ -253,10 +255,10 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
       }
       return altMode ? (
         <Box position="absolute" bottom={2} zIndex={10} backgroundColor={theme.colors.background}>
-          <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval} />
+          <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval && !showUserQuestion} />
         </Box>
       ) : (
-        <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval} />
+        <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval && !showUserQuestion} />
       );
     };
 
@@ -278,7 +280,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
               onChange={handleChange}
               onSubmit={handleSubmit}
               placeholder="Type your message..."
-              focus={isFocused && !showToolApproval && !disabled}
+              focus={isFocused && !showToolApproval && !showUserQuestion && !disabled}
               vimModeEnabled={vimModeEnabled}
               onVimModeChange={handleVimModeChange}
               onUpArrow={handleTextInputUpArrow}
