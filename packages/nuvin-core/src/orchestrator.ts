@@ -139,7 +139,7 @@ export class AgentOrchestrator {
     }
   >();
 
-  // Per-question response map: questionId -> { resolve, reject, questions }
+  // Per-question response map: questionId -> { resolve, reject, questions, conversationId, messageId }
   private pendingQuestions = new Map<
     string,
     {
@@ -152,6 +152,8 @@ export class AgentOrchestrator {
         options: Array<{ label: string; description: string }>;
         multiSelect: boolean;
       }>;
+      conversationId: string;
+      messageId: string;
     }
   >();
 
@@ -443,13 +445,24 @@ export class AgentOrchestrator {
           agentId: this.cfg.id,
           messageId,
           eventPort: this.events,
-          waitForUserQuestion: async (questionId, questions) => {
+          waitForUserQuestion: async (
+            questionId: string,
+            questions: Array<{
+              id: string;
+              question: string;
+              header: string;
+              options: Array<{ label: string; description: string }>;
+              multiSelect: boolean;
+            }>
+          ) => {
             // Store the promise resolver
             return new Promise<Record<string, string | string[]>>((resolve, reject) => {
               this.pendingQuestions.set(questionId, {
                 resolve,
                 reject,
                 questions,
+                conversationId,
+                messageId,
               });
 
               // Timeout after 5 minutes
@@ -1018,8 +1031,8 @@ export class AgentOrchestrator {
     // Emit response event
     void this.events?.emit({
       type: AgentEventTypes.UserQuestionResponse,
-      conversationId: this.context.conversationId,
-      messageId: this.context.messageId,
+      conversationId: pending.conversationId,
+      messageId: pending.messageId,
       questionId,
       answers,
     });
