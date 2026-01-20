@@ -61,17 +61,25 @@ function OptionItem({ option, idx, isSelected, isMultiSelect }: OptionItemProps)
   };
 
   return (
-    <Box>
-      <Text color={isFocused ? theme.tokens.cyan : undefined}>
-        {isFocused ? '❯ ' : '  '}
+    <Box flexWrap='nowrap'>
+      <Box flexShrink={0} flexWrap="nowrap">
+        <Box>
+          <Text color={isFocused ? theme.tokens.cyan : undefined}>
+            {isFocused ? '❯ ' : '  '}
+          </Text>
+        </Box>
+        <Box>
+          <Text color={isSelected ? theme.tokens.green : undefined}>
+            {getIcon()}
+          </Text>
+        </Box>
+      </Box>
+      <Text>
+        <Text bold={isFocused} color={isFocused ? theme.tokens.cyan : isSelected ? theme.tokens.green : undefined}>
+          {option.label}
+        </Text>
+        {option.description && <Text dimColor> — {option.description}</Text>}
       </Text>
-      <Text color={isSelected ? theme.tokens.green : undefined}>
-        {getIcon()}
-      </Text>
-      <Text bold={isFocused} color={isFocused ? theme.tokens.cyan : isSelected ? theme.tokens.green : undefined}>
-        {option.label}
-      </Text>
-      {option.description && <Text dimColor> — {option.description}</Text>}
     </Box>
   );
 }
@@ -216,10 +224,12 @@ function UserQuestionPromptContent({ questionData }: Props) {
     return null;
   }, [currentQuestionIndex, questionData.questions, isQuestionAnswered]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:  The dependencies are managed manually to avoid unnecessary resets.
   useEffect(() => {
     setFocusedId(FOCUS_ID.OPTION(0));
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: The dependencies are managed manually to avoid unnecessary resets.
   useEffect(() => {
     const existingAnswer = answers[questionId];
     if (existingAnswer && !selectedOptionsMap[questionId]) {
