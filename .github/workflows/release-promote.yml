@@ -140,11 +140,23 @@ jobs:
 
       - name: Verify changelog was updated
         run: |
-          if ! grep -q "^## ${{ github.event.inputs.prerelease_version }}" CHANGELOG.md; then
+          if [ ! -f CHANGELOG.md ]; then
+            echo "⚠️ CHANGELOG.md not created - no unreleased changesets found"
+            echo "This is expected for promotion (changesets consumed during RC release)"
+            echo "Creating minimal CHANGELOG.md for this release..."
+            cat > CHANGELOG.md << EOF
+          # Changelog
+
+          ## ${{ github.event.inputs.prerelease_version }}
+
+          Promoted from RC to stable release.
+
+          EOF
+          elif ! grep -q "^## ${{ github.event.inputs.prerelease_version }}" CHANGELOG.md; then
             echo "❌ Changelog generation failed"
             exit 1
           fi
-          echo "✅ Changelog updated successfully"
+          echo "✅ Changelog ready"
 
       - name: Create Release PR
         uses: peter-evans/create-pull-request@v7
