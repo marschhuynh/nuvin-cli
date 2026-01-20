@@ -32,10 +32,10 @@ jobs:
           else
             VERSION="$TAG"
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Extracted version: $VERSION"
-          
+
           # Extract stable version (e.g., 1.35.0-rc.0 -> 1.35.0)
           STABLE_VERSION=$(echo "$VERSION" | sed 's/-rc\.[0-9]*$//')
           echo "stable_version=$STABLE_VERSION" >> $GITHUB_OUTPUT
@@ -89,14 +89,14 @@ jobs:
         run: |
           PRERELEASE_VERSION="${{ steps.parse.outputs.version }}"
           STABLE_VERSION="${{ steps.parse.outputs.stable_version }}"
-          
+
           # Check if stable version already exists
           CURRENT=$(npm view @nuvin/nuvin-cli version 2>/dev/null || echo "")
           if [ -n "$CURRENT" ] && [ "$CURRENT" = "$STABLE_VERSION" ]; then
             echo "❌ Stable version $STABLE_VERSION is already published to npm"
             exit 1
           fi
-          
+
           # Verify prerelease version exists
           if ! npm view @nuvin/nuvin-cli@"$PRERELEASE_VERSION" version &>/dev/null; then
             echo "❌ Prerelease version $PRERELEASE_VERSION not found on npm"
@@ -111,9 +111,13 @@ jobs:
 
       - name: Version Packages
         run: pnpm run version:promote
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate Changelog
         run: pnpm run changelog ${{ steps.parse.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify changelog was updated
         run: |
