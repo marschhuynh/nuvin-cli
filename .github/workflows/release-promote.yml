@@ -3,13 +3,56 @@ name: Promote Pre-Release
 on:
   workflow_dispatch:
     inputs:
+      selection_mode:
+        description: 'How to select RC version?'
+        required: true
+        type: choice
+        options:
+          - 'List available RC versions (then enter manually)'
+          - 'Enter version directly'
+        default: 'List available RC versions (then enter manually)'
       prerelease_version:
-        description: 'Pre-release version to promote (e.g., 1.34.0-rc.0) - Check npm for available RC versions'
+        description: 'Pre-release version to promote (e.g., 1.34.0-rc.0) - See available versions in workflow output'
         required: true
         type: string
 
 jobs:
+  list-rc-versions:
+    if: inputs.selection_mode == 'List available RC versions (then enter manually)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: List Available RC Versions
+        run: |
+          echo "## 📋 Available RC Versions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Last 10 RC versions published to npm:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          npm view @nuvin/nuvin-cli versions --json | jq -r '.[] | select(contains("-rc."))' | tail -10 | while read version; do
+            echo "- \`$version\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **This workflow run will stop here.**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Copy the version you want to promote from the list above" >> $GITHUB_STEP_SUMMARY
+          echo "2. Click 'Run workflow' again" >> $GITHUB_STEP_SUMMARY
+          echo "3. Select 'Enter version directly'" >> $GITHUB_STEP_SUMMARY
+          echo "4. Paste the version into the input field" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 **Selected version:** ${{ github.event.inputs.prerelease_version }}" >> $GITHUB_STEP_SUMMARY
+          
+          echo ""
+          echo "Available RC versions:"
+          npm view @nuvin/nuvin-cli versions --json | jq -r '.[] | select(contains("-rc."))' | tail -10
+          echo ""
+          echo "⚠️ Stopping here - Re-run workflow with 'Enter version directly' mode"
+          exit 0
+
   create-release-pr:
+    if: inputs.selection_mode == 'Enter version directly'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -47,11 +90,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: List Available RC Versions
+      - name: Confirm Selected Version
         run: |
-          echo "📋 Available RC versions on npm:"
-          npm view @nuvin/nuvin-cli versions --json | jq -r '.[] | select(contains("-rc."))' | tail -10
-          echo ""
           echo "🎯 Promoting version: ${{ github.event.inputs.prerelease_version }}"
 
       - name: Check for existing Release PR
