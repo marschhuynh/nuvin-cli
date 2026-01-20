@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.35.3-rc.1
+
+### Patch Changes
+
+- [`80de431`](https://github.com/marschhuynh/nuvin-space/commit/80de4318589f6aae396fbcc220be0eca5003428b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test complete RC to stable release flow
+
 ## 1.35.3-rc.0
 
 ### Patch Changes
