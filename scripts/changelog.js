@@ -32,7 +32,7 @@ async function main() {
   }
 
   try {
-    const changesets = execSync('pnpm changeset status --output JSON', {
+    const changesets = execSync('pnpm --silent changeset status --output JSON', {
       encoding: 'utf-8',
       cwd: join(__dirname, '..'),
     }).trim();
