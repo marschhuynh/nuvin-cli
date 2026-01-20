@@ -8,6 +8,7 @@
   },
   "changesets": [
     "test-complete-flow",
+    "test-multi-stage-approval",
     "test-rc-versioning"
   ]
 }

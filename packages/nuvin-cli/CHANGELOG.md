@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.35.3-rc.2
+
+### Patch Changes
+
+- [`d37cdeb`](https://github.com/marschhuynh/nuvin-space/commit/d37cdebeda1484d3634cd00e33adabfcce71a8a6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test multi-stage promotion workflow with manual approval
+
 ## 1.35.3-rc.1
 
 ### Patch Changes
