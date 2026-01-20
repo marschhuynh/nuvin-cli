@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       prerelease_version:
-        description: 'Pre-release version to promote (e.g., 1.34.0-rc.0)'
+        description: 'Pre-release version to promote (e.g., 1.34.0-rc.0) - Check npm for available RC versions'
         required: true
         type: string
 
@@ -46,6 +46,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: List Available RC Versions
+        run: |
+          echo "📋 Available RC versions on npm:"
+          npm view @nuvin/nuvin-cli versions --json | jq -r '.[] | select(contains("-rc."))' | tail -10
+          echo ""
+          echo "🎯 Promoting version: ${{ github.event.inputs.prerelease_version }}"
 
       - name: Check for existing Release PR
         id: check-pr
