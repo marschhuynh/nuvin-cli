@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.35.1
+
+### Patch Changes
+
+- [`3da22cc`](https://github.com/marschhuynh/nuvin-space/commit/3da22cc42a23f287eaa7ce80603e03c510c7ace8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add pre-release workflow with RC versioning and promotion to stable release
+
 ## 1.35.0
 
 ### Minor Changes
