@@ -11,11 +11,22 @@ type RecentSessionsProps = {
 };
 
 const version = getVersion();
-const ICON_2 = `╭──┴──┴──┴──┴──┴──╮
-│  ●  ●  ● ─────  │
-│  NUVIN          │
-│  >_     ${version.padEnd(7, ' ')} │
-╰──┬──┬──┬──┬──┬──╯`;
+const minVersionWidth = 7;
+const versionLen = Math.max(minVersionWidth, version.length);
+const line1 = `│  ●  ●  ● ${'─'.repeat(versionLen - 2)}  │`;
+const line2 = `│  NUVIN${' '.repeat(versionLen + 2)} │`;
+const line3 = `│  >_     ${version.padEnd(versionLen, ' ')} │`;
+const lineWidth = line1.length;
+const barWidth = lineWidth - 2;
+const segments = Math.floor(barWidth / 3);
+const remainder = barWidth % 3;
+const topBar = '──┴'.repeat(segments) + '─'.repeat(remainder);
+const bottomBar = '──┬'.repeat(segments) + '─'.repeat(remainder);
+const ICON_2 = `╭${topBar}╮
+${line1}
+${line2}
+${line3}
+╰${bottomBar}╯`;
 
 const WelcomeLogo = ({ recentSessions }: { recentSessions: SessionInfo[] }) => {
   const { cols } = useStdoutDimensionsContext();
