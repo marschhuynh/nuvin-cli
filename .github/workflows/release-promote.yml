@@ -225,6 +225,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Rebuild with new version
+        run: make build
+
       - name: Commit version changes
         run: |
           git add .
