@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.18.0
+
+### Minor Changes
+
+- [`a92a995`](https://github.com/marschhuynh/nuvin-space/commit/a92a9954519c52c516beb8929becf6e79104f7d1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix UserQuestionPrompt bugs, add ask_user_tool to enabled tools, and improve focus cycling
+
 ## 1.17.0
 
 ### Minor Changes
