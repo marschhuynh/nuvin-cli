@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.35.4-rc.0
+
+### Patch Changes
+
+- [`55904c3`](https://github.com/marschhuynh/nuvin-space/commit/55904c3fed0c190a5d0b7f83bafcdc68e86ef872) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test stable version dist-tag workflow fix
+
 ## 1.35.3
 
 ### Patch Changes
