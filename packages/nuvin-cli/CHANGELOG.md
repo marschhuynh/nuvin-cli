@@ -1,5 +1,17 @@
 # @nuvin/nuvin-cli
 
+## 1.35.3
+
+### Patch Changes
+
+- [`a481455`](https://github.com/marschhuynh/nuvin-space/commit/a48145562664250cf5a67d30a7202c9ed4076345) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Final test of complete RC to stable workflow with approval
+
+- [`80de431`](https://github.com/marschhuynh/nuvin-space/commit/80de4318589f6aae396fbcc220be0eca5003428b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test complete RC to stable release flow
+
+- [`d37cdeb`](https://github.com/marschhuynh/nuvin-space/commit/d37cdebeda1484d3634cd00e33adabfcce71a8a6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test multi-stage promotion workflow with manual approval
+
+- [`c52ecd6`](https://github.com/marschhuynh/nuvin-space/commit/c52ecd68e1064074f00ae69db1eb0ab57ce1a8ad) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test RC versioning with pre-release mode
+
 ## 1.35.3-rc.3
 
 ### Patch Changes
