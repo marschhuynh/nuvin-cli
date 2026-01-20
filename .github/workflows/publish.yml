@@ -1,0 +1,255 @@
+name: Publish to NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Release mode'
+        required: true
+        type: choice
+        options:
+          - rc
+          - stable
+      rc_tag:
+        description: 'RC tag to promote (required for stable mode, e.g., @nuvin/nuvin-cli@1.35.0-rc.0)'
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      mode:
+        description: 'Release mode (rc or stable)'
+        required: true
+        type: string
+      rc_tag:
+        description: 'RC tag to promote (required for stable mode)'
+        required: false
+        type: string
+
+concurrency:
+  group: publish-${{ github.workflow }}-${{ github.ref }}-${{ inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.mode == 'stable' && 'production' || null }}
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "Installing GitHub CLI..."
+            type -p curl >/dev/null || (sudo apt-get update && sudo apt-get install -y curl)
+            curl -fsSL https://cli.github.com/packages/script/install.sh | sudo bash
+          fi
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: make build
+
+      - name: Run tests
+        run: pnpm test
+
+      # Validate inputs
+      - name: Validate stable mode inputs
+        if: inputs.mode == 'stable'
+        run: |
+          if [ -z "${{ inputs.rc_tag }}" ]; then
+            echo "❌ rc_tag is required for stable mode"
+            exit 1
+          fi
+          echo "✅ rc_tag provided: ${{ inputs.rc_tag }}"
+
+      # RC Mode Steps
+      - name: Enter Pre-release Mode
+        if: inputs.mode == 'rc'
+        run: |
+          if [ ! -f .changeset/pre.json ]; then
+            echo "Entering pre-release mode with tag 'rc'"
+            npx changeset pre enter rc
+          else
+            echo "Already in pre-release mode"
+            cat .changeset/pre.json
+          fi
+
+      - name: Version and Publish RC
+        if: inputs.mode == 'rc'
+        id: changesets_rc
+        uses: changesets/action@v1
+        with:
+          version: pnpm run version:pre
+          publish: pnpm run release:pre
+          commit: "chore: pre-release packages"
+          title: "chore: pre-release packages"
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Push RC Tags
+        if: inputs.mode == 'rc' && steps.changesets_rc.outputs.published == 'true'
+        run: |
+          git push --tags || echo "⚠️  No new tags to push or push failed"
+          echo "✅ RC tags pushed to remote"
+
+      # Stable Mode Steps
+      - name: Parse RC version
+        if: inputs.mode == 'stable'
+        id: parse
+        run: |
+          TAG="${{ inputs.rc_tag }}"
+          if [[ "$TAG" =~ @nuvin/nuvin-cli@(.+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+          else
+            VERSION="$TAG"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Extracted version: $VERSION"
+
+          STABLE_VERSION=$(echo "$VERSION" | sed 's/-rc\.[0-9]*$//')
+          echo "stable_version=$STABLE_VERSION" >> $GITHUB_OUTPUT
+          echo "🎯 Target stable version: $STABLE_VERSION"
+
+      - name: Verify RC exists on npm
+        if: inputs.mode == 'stable'
+        run: |
+          PRERELEASE_VERSION="${{ steps.parse.outputs.version }}"
+          STABLE_VERSION="${{ steps.parse.outputs.stable_version }}"
+
+          CURRENT=$(npm view @nuvin/nuvin-cli version 2>/dev/null || echo "")
+          if [ -n "$CURRENT" ] && [ "$CURRENT" = "$STABLE_VERSION" ]; then
+            echo "❌ Stable version $STABLE_VERSION is already published to npm"
+            exit 1
+          fi
+
+          if ! npm view @nuvin/nuvin-cli@"$PRERELEASE_VERSION" version &>/dev/null; then
+            echo "❌ Prerelease version $PRERELEASE_VERSION not found on npm"
+            echo "Available versions:"
+            npm view @nuvin/nuvin-cli versions --json
+            exit 1
+          fi
+          echo "✅ Prerelease version $PRERELEASE_VERSION exists, stable version $STABLE_VERSION not published yet"
+
+      - name: Exit Pre-release Mode and Version
+        if: inputs.mode == 'stable'
+        run: pnpm run version:promote
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Changelog
+        if: inputs.mode == 'stable'
+        run: |
+          echo "Attempting to generate changelog..."
+          if pnpm run changelog ${{ steps.parse.outputs.version }}; then
+            echo "✅ Changelog generated successfully"
+          else
+            echo "⚠️ Changelog generation failed (expected during promotion)"
+            echo "Creating promotion changelog entry..."
+
+            VERSION="${{ steps.parse.outputs.version }}"
+            STABLE_VERSION="${{ steps.parse.outputs.stable_version }}"
+
+            cat > CHANGELOG.md << EOF
+          # Changelog
+
+          ## ${STABLE_VERSION}
+
+          Promoted ${VERSION} to stable release.
+
+          EOF
+            echo "✅ Created promotion changelog"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rebuild with stable version
+        if: inputs.mode == 'stable'
+        run: make build
+
+      - name: Publish Stable to npm
+        if: inputs.mode == 'stable'
+        id: publish_stable
+        run: pnpm run release:stable
+        env:
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Commit stable version changes
+        if: inputs.mode == 'stable' && steps.publish_stable.outcome == 'success'
+        run: |
+          git add .
+          git commit -m "chore: promote ${{ steps.parse.outputs.version }} to stable (${{ steps.parse.outputs.stable_version }})" || echo "No changes to commit"
+          git push origin main
+
+      - name: Push Stable Tags
+        if: inputs.mode == 'stable' && steps.publish_stable.outcome == 'success'
+        run: |
+          git push --tags || echo "⚠️  No new tags to push or push failed"
+          echo "✅ Stable tags pushed to remote"
+
+      # Summary
+      - name: RC Release Summary
+        if: inputs.mode == 'rc' && steps.changesets_rc.outputs.published == 'true'
+        run: |
+          echo "## ✅ RC Release Published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Packages:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.changesets_rc.outputs.publishedPackages }}' | jq -r '.[] | "- \(.name)@\(.version)"' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Stable Release Summary
+        if: inputs.mode == 'stable' && success()
+        run: |
+          echo "## ✅ Stable Release Published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.parse.outputs.stable_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** @nuvin/nuvin-cli@${{ steps.parse.outputs.stable_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @nuvin/nuvin-cli@latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Failure Summary
+        if: failure()
+        run: |
+          echo "## ❌ Publish Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** ${{ inputs.mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check logs above for details." >> $GITHUB_STEP_SUMMARY
+          exit 1

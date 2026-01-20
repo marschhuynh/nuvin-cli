@@ -1,4 +1,4 @@
-name: Release Packages
+name: RC Release
 
 on:
   workflow_dispatch:
@@ -11,73 +11,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release:
+  check-changesets:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-      pull-requests: write
-      actions: read
-      id-token: write
+    timeout-minutes: 10
+    outputs:
+      has_changesets: ${{ steps.check.outputs.has_changesets }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-          run_install: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: make build
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Enter Pre-release Mode
+      - name: Check for changesets
+        id: check
         run: |
-          # Check if already in pre-release mode
-          if [ ! -f .changeset/pre.json ]; then
-            echo "Entering pre-release mode with tag 'rc'"
-            npx changeset pre enter rc
+          if ls .changeset/*.md 1> /dev/null 2>&1; then
+            # Filter out README.md
+            CHANGESETS=$(ls .changeset/*.md | grep -v README.md | wc -l)
+            if [ "$CHANGESETS" -gt 0 ]; then
+              echo "has_changesets=true" >> $GITHUB_OUTPUT
+              echo "✅ Found $CHANGESETS changeset(s)"
+            else
+              echo "has_changesets=false" >> $GITHUB_OUTPUT
+              echo "⏭️  No changesets found (only README.md)"
+            fi
           else
-            echo "Already in pre-release mode"
-            cat .changeset/pre.json
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "⏭️  No changeset files found"
           fi
 
-      - name: Create RC Release Pull Request
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: pnpm run version:pre
-          publish: pnpm run release:pre
-          commit: "chore: pre-release packages"
-          title: "chore: pre-release packages"
-          createGithubReleases: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
-
-      - name: Push Git Tags
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          # Changesets already created the tags, we just need to push them
-          git push --tags || echo "⚠️  No new tags to push or push failed"
-          
-          echo "✅ Tags pushed to remote"
+  publish-rc:
+    needs: check-changesets
+    if: needs.check-changesets.outputs.has_changesets == 'true'
+    uses: ./.github/workflows/publish.yml
+    with:
+      mode: rc
+    secrets: inherit
