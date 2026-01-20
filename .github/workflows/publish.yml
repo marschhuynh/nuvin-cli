@@ -14,26 +14,51 @@ on:
         description: 'RC tag to promote (required for stable mode, e.g., @nuvin/nuvin-cli@1.35.0-rc.0)'
         required: false
         type: string
-  workflow_call:
-    inputs:
-      mode:
-        description: 'Release mode (rc or stable)'
-        required: true
-        type: string
-      rc_tag:
-        description: 'RC tag to promote (required for stable mode)'
-        required: false
-        type: string
+  push:
+    branches:
+      - main
 
 concurrency:
-  group: publish-${{ github.workflow }}-${{ github.ref }}-${{ inputs.mode }}
+  group: publish-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  check-changesets:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      has_changesets: ${{ steps.check.outputs.has_changesets }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for changesets
+        id: check
+        run: |
+          if ls .changeset/*.md 1> /dev/null 2>&1; then
+            CHANGESETS=$(ls .changeset/*.md | grep -v README.md | wc -l)
+            if [ "$CHANGESETS" -gt 0 ]; then
+              echo "has_changesets=true" >> $GITHUB_OUTPUT
+              echo "✅ Found $CHANGESETS changeset(s)"
+            else
+              echo "has_changesets=false" >> $GITHUB_OUTPUT
+              echo "⏭️  No changesets found (only README.md)"
+            fi
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "⏭️  No changeset files found"
+          fi
+
   publish:
+    needs: [check-changesets]
+    if: |
+      always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: ${{ inputs.mode == 'stable' && 'production' || null }}
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'stable') && 'production' || null }}
     permissions:
       contents: write
       pull-requests: write
@@ -84,9 +109,21 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      # Determine mode
+      - name: Determine release mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "value=rc" >> $GITHUB_OUTPUT
+            echo "📦 Mode: RC (triggered by push)"
+          else
+            echo "value=${{ inputs.mode }}" >> $GITHUB_OUTPUT
+            echo "📦 Mode: ${{ inputs.mode }} (triggered by workflow_dispatch)"
+          fi
+
       # Validate inputs
       - name: Validate stable mode inputs
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         run: |
           if [ -z "${{ inputs.rc_tag }}" ]; then
             echo "❌ rc_tag is required for stable mode"
@@ -96,7 +133,7 @@ jobs:
 
       # RC Mode Steps
       - name: Enter Pre-release Mode
-        if: inputs.mode == 'rc'
+        if: steps.mode.outputs.value == 'rc'
         run: |
           if [ ! -f .changeset/pre.json ]; then
             echo "Entering pre-release mode with tag 'rc'"
@@ -107,7 +144,7 @@ jobs:
           fi
 
       - name: Version and Publish RC
-        if: inputs.mode == 'rc'
+        if: steps.mode.outputs.value == 'rc'
         id: changesets_rc
         uses: changesets/action@v1
         with:
@@ -121,14 +158,14 @@ jobs:
           NPM_CONFIG_PROVENANCE: true
 
       - name: Push RC Tags
-        if: inputs.mode == 'rc' && steps.changesets_rc.outputs.published == 'true'
+        if: steps.mode.outputs.value == 'rc' && steps.changesets_rc.outputs.published == 'true'
         run: |
           git push --tags || echo "⚠️  No new tags to push or push failed"
           echo "✅ RC tags pushed to remote"
 
       # Stable Mode Steps
       - name: Parse RC version
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         id: parse
         run: |
           TAG="${{ inputs.rc_tag }}"
@@ -146,7 +183,7 @@ jobs:
           echo "🎯 Target stable version: $STABLE_VERSION"
 
       - name: Verify RC exists on npm
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         run: |
           PRERELEASE_VERSION="${{ steps.parse.outputs.version }}"
           STABLE_VERSION="${{ steps.parse.outputs.stable_version }}"
@@ -166,13 +203,13 @@ jobs:
           echo "✅ Prerelease version $PRERELEASE_VERSION exists, stable version $STABLE_VERSION not published yet"
 
       - name: Exit Pre-release Mode and Version
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         run: pnpm run version:promote
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate Changelog
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         run: |
           echo "Attempting to generate changelog..."
           if pnpm run changelog ${{ steps.parse.outputs.version }}; then
@@ -198,32 +235,32 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rebuild with stable version
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         run: make build
 
       - name: Publish Stable to npm
-        if: inputs.mode == 'stable'
+        if: steps.mode.outputs.value == 'stable'
         id: publish_stable
         run: pnpm run release:stable
         env:
           NPM_CONFIG_PROVENANCE: true
 
       - name: Commit stable version changes
-        if: inputs.mode == 'stable' && steps.publish_stable.outcome == 'success'
+        if: steps.mode.outputs.value == 'stable' && steps.publish_stable.outcome == 'success'
         run: |
           git add .
           git commit -m "chore: promote ${{ steps.parse.outputs.version }} to stable (${{ steps.parse.outputs.stable_version }})" || echo "No changes to commit"
           git push origin main
 
       - name: Push Stable Tags
-        if: inputs.mode == 'stable' && steps.publish_stable.outcome == 'success'
+        if: steps.mode.outputs.value == 'stable' && steps.publish_stable.outcome == 'success'
         run: |
           git push --tags || echo "⚠️  No new tags to push or push failed"
           echo "✅ Stable tags pushed to remote"
 
       # Summary
       - name: RC Release Summary
-        if: inputs.mode == 'rc' && steps.changesets_rc.outputs.published == 'true'
+        if: steps.mode.outputs.value == 'rc' && steps.changesets_rc.outputs.published == 'true'
         run: |
           echo "## ✅ RC Release Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -233,7 +270,7 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Stable Release Summary
-        if: inputs.mode == 'stable' && success()
+        if: steps.mode.outputs.value == 'stable' && success()
         run: |
           echo "## ✅ Stable Release Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -249,7 +286,7 @@ jobs:
         run: |
           echo "## ❌ Publish Failed!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Mode:** ${{ inputs.mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** ${{ steps.mode.outputs.value }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Check logs above for details." >> $GITHUB_STEP_SUMMARY
           exit 1
