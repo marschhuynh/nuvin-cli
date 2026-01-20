@@ -12,7 +12,7 @@ describe('SkillsService', () => {
   beforeEach(async () => {
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'skills-test-'));
     SkillsService.resetInstance();
-    skillsService = SkillsService.getInstance();
+    skillsService = SkillsService.createWithHomeDir(tempDir);
   });
 
   afterEach(async () => {
