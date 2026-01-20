@@ -90,17 +90,21 @@ export function processAgentEvent(
         const messageId = crypto.randomUUID();
         const enrichedToolCalls = await enrichToolCallsWithLineNumbers(event.toolCalls);
 
-        callbacks.appendLine({
-          id: messageId,
-          type: 'tool',
-          content: `${enrichedToolCalls.map(renderToolCall).join(', ')}`,
-          metadata: {
-            toolCallCount: enrichedToolCalls.length,
-            timestamp: now(),
-            toolCalls: enrichedToolCalls,
-          },
-          color: theme.tokens.blue,
-        });
+        const displayableToolCalls = enrichedToolCalls.filter((tc) => tc.function.name !== 'ask_user_tool');
+
+        if (displayableToolCalls.length > 0) {
+          callbacks.appendLine({
+            id: messageId,
+            type: 'tool',
+            content: `${displayableToolCalls.map(renderToolCall).join(', ')}`,
+            metadata: {
+              toolCallCount: displayableToolCalls.length,
+              timestamp: now(),
+              toolCalls: displayableToolCalls,
+            },
+            color: theme.tokens.blue,
+          });
+        }
 
         // Emit event for ToolApprovalContext to handle per-tool approvals
         // Note: enrichedToolCalls may have requiresApproval and approvalId from orchestrator

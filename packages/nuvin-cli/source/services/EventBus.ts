@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { MessageLine } from '@/adapters/index.js';
-import type { ToolCall } from '@nuvin/nuvin-core';
+import type { ToolCall, AgentEvent } from '@nuvin/nuvin-core';
 import type { Diagnostic } from 'vscode-languageserver-types';
 
 export type LspServerStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -43,6 +43,7 @@ type EventMap = {
   'custom-command:execute': { commandId: string; renderedPrompt: string; userInput: string };
   'lsp:status': LspStatusInfo;
   'lsp:diagnostics': { path: string; serverId: string; diagnostics: Diagnostic[] };
+  'agent:event': AgentEvent;
 };
 
 export class TypedEventBus {

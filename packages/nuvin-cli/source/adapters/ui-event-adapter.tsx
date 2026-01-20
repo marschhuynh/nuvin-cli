@@ -76,6 +76,7 @@ export class UIEventAdapter extends PersistingConsoleEventPort {
     try {
       await super.emit(event);
       this.state = await this.processEventSafely(event);
+      eventBus.emit('agent:event', event);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       eventBus.emit('ui:error', `[EventAdapter] Failed to process ${event.type}: ${errorMsg}`);

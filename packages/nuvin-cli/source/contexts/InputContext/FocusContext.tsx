@@ -28,7 +28,10 @@ interface FocusContextValue {
 
 interface FocusCycleValue {
   cycleFocus: (direction?: 'forward' | 'backward') => void;
+  cycleNext: () => void;
+  cycleBack: () => void;
   focusedId: string | null;
+  setFocusedId: (id: string | null) => void;
   getFocusableIds: () => string[];
 }
 
@@ -88,14 +91,15 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 }
 
 export function useFocus(
-  { active, autoFocus }: { active?: boolean; autoFocus?: boolean } = { active: true, autoFocus: false },
+  { active, autoFocus, id: customId }: { active?: boolean; autoFocus?: boolean; id?: string } = { active: true, autoFocus: false },
 ): FocusContextValue {
   const context = useContext(FocusContext);
   if (!context) {
     throw new Error('useFocus must be used within a FocusProvider');
   }
 
-  const id = useId();
+  const generatedId = useId();
+  const id = customId ?? generatedId;
   const { focusedId, setFocusedId, clearFocus: contextClearFocus, focusableIdsRef } = context;
 
   const isFocused = focusedId === id;
@@ -109,6 +113,9 @@ export function useFocus(
   }, [contextClearFocus]);
 
   const register = useCallback(() => {
+    if (focusableIdsRef.current.has(id)) {
+      console.warn(`[FocusContext] Duplicate focus id detected: "${id}". This may cause unexpected focus behavior.`);
+    }
     focusableIdsRef.current.add(id);
     return () => {
       focusableIdsRef.current.delete(id);
@@ -137,11 +144,19 @@ export function useFocusCycle(): FocusCycleValue {
     throw new Error('useFocusCycle must be used within FocusProvider');
   }
 
-  const { cycleFocus, focusableIdsRef, focusedId } = context;
+  const { cycleFocus, focusableIdsRef, focusedId, setFocusedId } = context;
+
+  const cycleNext = useCallback(() => {
+    cycleFocus('forward');
+  }, [cycleFocus]);
+
+  const cycleBack = useCallback(() => {
+    cycleFocus('backward');
+  }, [cycleFocus]);
 
   const getFocusableIds = useCallback(() => {
     return Array.from(focusableIdsRef.current);
   }, [focusableIdsRef]);
 
-  return useMemo(() => ({ cycleFocus, focusedId, getFocusableIds }), [cycleFocus, focusedId, getFocusableIds]);
+  return useMemo(() => ({ cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds }), [cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds]);
 }

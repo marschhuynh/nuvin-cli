@@ -76,7 +76,8 @@ const baseEnabledTools: string[] = [
   'web_fetch',
   'assign_task',
   'lsp',
-  'skill'
+  'skill',
+  'ask_user_tool'
 ];
 
 function getEnabledTools(): string[] {

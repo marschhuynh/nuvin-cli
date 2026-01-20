@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import type { OrchestratorManager } from '@/services/OrchestratorManager';
+import type { AgentEvent } from '@nuvin/nuvin-core';
 import { eventBus } from '@/services/EventBus.js';
 
 interface QuestionData {
@@ -31,23 +32,32 @@ export function UserQuestionProvider({
   children: ReactNode;
 }) {
   const [pendingQuestion, setPendingQuestion] = useState<QuestionData | null>(null);
+  const submittedRef = useRef<Set<string>>(new Set());
 
   const handleQuestionResponse = useCallback(
     (answers: Record<string, string | string[]>) => {
-      if (pendingQuestion && orchestratorManager?.getOrchestrator()) {
-        orchestratorManager.getOrchestrator()!.handleUserQuestionResponse(
-          pendingQuestion.questionId,
-          answers
-        );
-        setPendingQuestion(null);
+      if (!pendingQuestion || !orchestratorManager?.getOrchestrator()) {
+        return;
       }
+
+      if (submittedRef.current.has(pendingQuestion.questionId)) {
+        return;
+      }
+
+      submittedRef.current.add(pendingQuestion.questionId);
+      orchestratorManager.getOrchestrator()?.handleUserQuestionResponse(
+        pendingQuestion.questionId,
+        answers
+      );
+      setPendingQuestion(null);
     },
     [pendingQuestion, orchestratorManager]
   );
 
   useEffect(() => {
-    const handleEvent = (data: any) => {
-      if (data?.type === 'user_question_required') {
+    const handleEvent = (event: AgentEvent) => {
+      if (event?.type === 'user_question_required') {
+        const data = event as AgentEvent & { questionId: string; questions: QuestionData['questions'] };
         setPendingQuestion({
           questionId: data.questionId,
           questions: data.questions,
@@ -55,10 +65,8 @@ export function UserQuestionProvider({
       }
     };
 
-    // @ts-ignore - Event type not yet added to EventMap
     eventBus.on('agent:event', handleEvent);
     return () => {
-      // @ts-ignore
       eventBus.off('agent:event', handleEvent);
     };
   }, []);
