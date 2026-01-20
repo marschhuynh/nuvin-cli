@@ -9,12 +9,15 @@ on:
         type: string
 
 jobs:
-  create-release-pr:
+  prepare-release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      stable_version: ${{ steps.parse.outputs.stable_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,19 +75,6 @@ jobs:
           echo "📌 RC version: ${{ steps.parse.outputs.version }}"
           echo "🚀 Stable version: ${{ steps.parse.outputs.stable_version }}"
 
-      - name: Check for existing Release PR
-        id: check-pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_COUNT=$(gh pr list --base main --head "release/promote-${{ steps.parse.outputs.version }}" --json number -q '. | length')
-          if [ "$PR_COUNT" -gt 0 ]; then
-            echo "❌ Release PR already exists for ${{ steps.parse.outputs.version }}"
-            gh pr list --base main --head "release/promote-${{ steps.parse.outputs.version }}" --json title,number,url -q '.'
-            exit 1
-          fi
-          echo "No existing PR found, proceeding..."
-
       - name: Check for existing npm release
         run: |
           PRERELEASE_VERSION="${{ steps.parse.outputs.version }}"
@@ -140,32 +130,130 @@ jobs:
           fi
           echo "✅ Changelog ready"
 
-      - name: Create Release PR
-        uses: peter-evans/create-pull-request@v7
+      - name: Upload artifacts for review
+        uses: actions/upload-artifact@v4
         with:
+          name: release-artifacts
+          path: |
+            packages/*/package.json
+            packages/*/CHANGELOG.md
+            CHANGELOG.md
+            .changeset/pre.json
+          retention-days: 7
+
+      - name: Summary
+        run: |
+          echo "## 🎯 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pre-release tag:** ${{ github.event.inputs.rc_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Pre-release version:** ${{ steps.parse.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Stable version:** ${{ steps.parse.outputs.stable_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Changelog Preview" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat CHANGELOG.md | head -20 >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Ready for approval.** Review the artifacts and approve the 'Publish Stable Release' job to proceed." >> $GITHUB_STEP_SUMMARY
+
+  publish-stable:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: promote ${{ steps.parse.outputs.version }} to stable"
-          branch: release/promote-${{ steps.parse.outputs.version }}
-          title: "chore: promote ${{ steps.parse.outputs.version }} to stable"
-          body: |
-            ## Release Promotion
 
-            **Pre-release tag:** ${{ github.event.inputs.rc_tag }}
-            **Pre-release version:** ${{ steps.parse.outputs.version }}
-            **Stable version:** ${{ steps.parse.outputs.stable_version }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
 
-            ### Changelog
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
-            <!-- Auto-generated from changesets -->
+      - name: Setup GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "Installing GitHub CLI..."
+            type -p curl >/dev/null || (sudo apt-get update && sudo apt-get install -y curl)
+            curl -fsSL https://cli.github.com/packages/script/install.sh | sudo bash
+          fi
 
-            ---
-            **After merging this PR, the stable version will be published to npm.**
+      - name: Update npm
+        run: npm install -g npm@latest
 
-            Please review:
-            - [ ] Changelog is correct
-            - [ ] Version bumps are accurate
-            - [ ] No unintended changes
-          labels: release
-          reviewers: |
-            ${{ github.actor }}
-          draft: false
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: make build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Exit Pre-release Mode and Version
+        run: pnpm run version:promote
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit version changes
+        run: |
+          git add .
+          git commit -m "chore: promote ${{ needs.prepare-release.outputs.version }} to stable (${{ needs.prepare-release.outputs.stable_version }})" || echo "No changes to commit"
+          git push origin main
+
+      - name: Publish to npm (Stable)
+        id: publish
+        run: pnpm run release:stable
+        env:
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Push Git Tags
+        if: success()
+        run: |
+          git push --tags || echo "⚠️  No new tags to push or push failed"
+          echo "✅ Tags pushed to remote"
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "## ✅ Stable Release Published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare-release.outputs.stable_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** @nuvin/nuvin-cli@${{ needs.prepare-release.outputs.stable_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @nuvin/nuvin-cli@latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "## ❌ Stable Release Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check logs above for details." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Action Required:** If publish succeeded but later steps failed:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm deprecate @nuvin/nuvin-cli@VERSION 'Release failed validation'" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          exit 1
