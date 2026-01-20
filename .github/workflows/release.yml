@@ -50,6 +50,17 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Enter Pre-release Mode
+        run: |
+          # Check if already in pre-release mode
+          if [ ! -f .changeset/pre.json ]; then
+            echo "Entering pre-release mode with tag 'rc'"
+            npx changeset pre enter rc
+          else
+            echo "Already in pre-release mode"
+            cat .changeset/pre.json
+          fi
+
       - name: Create RC Release Pull Request
         id: changesets
         uses: changesets/action@v1
@@ -63,27 +74,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
-      - name: Create Git Tags for RC Versions
+      - name: Push Git Tags
         if: steps.changesets.outputs.published == 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Changesets already created the tags, we just need to push them
+          git push --tags || echo "⚠️  No new tags to push or push failed"
           
-          # Create git tags for each published package
-          git tag -d @nuvin/nuvin-cli@1.* 2>/dev/null || true
-          git tag -d @nuvin/nuvin-core@1.* 2>/dev/null || true
-          
-          # Get current versions from package.json files
-          CLI_VERSION=$(cat packages/nuvin-cli/package.json | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
-          CORE_VERSION=$(cat packages/nuvin-core/package.json | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
-          
-          # Create new tags
-          git tag -a "@nuvin/nuvin-cli@${CLI_VERSION}" -m "Release ${CLI_VERSION}"
-          git tag -a "@nuvin/nuvin-core@${CORE_VERSION}" -m "Release ${CORE_VERSION}"
-          
-          # Push tags
-          git push origin "@nuvin/nuvin-cli@${CLI_VERSION}" "@nuvin/nuvin-core@${CORE_VERSION}" || true
-          
-          echo "✅ Created RC tags:"
-          echo "  @nuvin/nuvin-cli@${CLI_VERSION}"
-          echo "  @nuvin/nuvin-core@${CORE_VERSION}"
+          echo "✅ Tags pushed to remote"
