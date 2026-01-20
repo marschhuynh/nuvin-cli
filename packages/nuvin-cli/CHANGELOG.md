@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.35.5-rc.0
+
+### Patch Changes
+
+- [`6e98ad5`](https://github.com/marschhuynh/nuvin-space/commit/6e98ad5c7fd1243566ac15f94f3d32d10ab82366) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Make ASCII logo width dynamic based on version length
+
+- [`0261c7c`](https://github.com/marschhuynh/nuvin-space/commit/0261c7ccf54b896674b1b2e9cf3e2661ee6a1013) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Suppress retry errors in /model modal and show recent models in provider list
+
 ## 1.35.4
 
 ### Patch Changes
