@@ -176,14 +176,11 @@ const ModelsV2CommandComponent = ({ context, deactivate, isActive }: CommandComp
         });
       } else {
         for (const model of models) {
-          const isRecent = validRecentModels.some((r) => r.provider === provider && r.model === model);
-          if (!isRecent) {
-            items.push({
-              label: model,
-              value: `${provider}::${model}`,
-              group: providerLabel,
-            });
-          }
+          items.push({
+            label: model,
+            value: `${provider}::${model}`,
+            group: providerLabel,
+          });
         }
       }
     }

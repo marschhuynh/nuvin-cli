@@ -234,7 +234,8 @@ export class LLMFactory implements LLMFactoryInterface {
     }
 
     // Use the factory's createLLM to handle both core and special providers (like github)
-    const llm = this.createLLM(provider);
+    // Pass silent retry config to suppress error messages when fetching models
+    const llm = this.createLLM(provider, { retry: { onRetry: () => {}, onExhausted: () => {} } });
 
     if (llm?.getModels) {
       const models = await llm.getModels(signal);

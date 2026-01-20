@@ -103,7 +103,7 @@ export const AppModal: FC<AppModalProps> = ({
         >
           {footer}
         </Box>
-      ) : <Box zIndex={20} height={1} backgroundColor={theme.modal.footerBackground}></Box>}
+      ) : <Box flexShrink={0} zIndex={20} height={1} backgroundColor={theme.modal.footerBackground}></Box>}
     </Box>
   );
 };
