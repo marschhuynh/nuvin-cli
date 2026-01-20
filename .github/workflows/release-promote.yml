@@ -1,0 +1,128 @@
+name: Promote Pre-Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease_version:
+        description: 'Pre-release version to promote (e.g., 1.34.0-rc.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Setup GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "Installing GitHub CLI..."
+            type -p curl >/dev/null || (sudo apt-get update && sudo apt-get install -y curl)
+            curl -fsSL https://cli.github.com/packages/script/install.sh | sudo bash
+          fi
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for existing Release PR
+        id: check-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_COUNT=$(gh pr list --base main --head "release/promote-${{ github.event.inputs.prerelease_version }}" --json number -q '. | length')
+          if [ "$PR_COUNT" -gt 0 ]; then
+            echo "❌ Release PR already exists for ${{ github.event.inputs.prerelease_version }}"
+            gh pr list --base main --head "release/promote-${{ github.event.inputs.prerelease_version }}" --json title,number,url -q '.'
+            exit 1
+          fi
+          echo "No existing PR found, proceeding..."
+
+      - name: Check for existing npm release
+        run: |
+          # Extract stable version from prerelease (e.g., 1.34.0-rc.0 -> 1.34.0)
+          PRERELEASE_VERSION="${{ github.event.inputs.prerelease_version }}"
+          STABLE_VERSION=$(echo "$PRERELEASE_VERSION" | sed 's/-rc\.[0-9]*$//')
+          
+          # Check if stable version already exists
+          CURRENT=$(npm view @nuvin/nuvin-cli version 2>/dev/null || echo "")
+          if [ -n "$CURRENT" ] && [ "$CURRENT" = "$STABLE_VERSION" ]; then
+            echo "❌ Stable version $STABLE_VERSION is already published to npm"
+            exit 1
+          fi
+          
+          # Verify prerelease version exists
+          if ! npm view @nuvin/nuvin-cli@"$PRERELEASE_VERSION" version &>/dev/null; then
+            echo "❌ Prerelease version $PRERELEASE_VERSION not found on npm"
+            echo "Available versions:"
+            npm view @nuvin/nuvin-cli versions --json
+            exit 1
+          fi
+          echo "✅ Prerelease version $PRERELEASE_VERSION exists, stable version $STABLE_VERSION not published yet"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Version Packages
+        run: pnpm run version:promote
+
+      - name: Generate Changelog
+        run: pnpm run changelog ${{ github.event.inputs.prerelease_version }}
+
+      - name: Verify changelog was updated
+        run: |
+          if ! grep -q "^## ${{ github.event.inputs.prerelease_version }}" CHANGELOG.md; then
+            echo "❌ Changelog generation failed"
+            exit 1
+          fi
+          echo "✅ Changelog updated successfully"
+
+      - name: Create Release PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: promote ${{ github.event.inputs.prerelease_version }} to stable"
+          branch: release/promote-${{ github.event.inputs.prerelease_version }}
+          title: "chore: promote ${{ github.event.inputs.prerelease_version }} to stable"
+          body: |
+            ## Release Promotion
+
+            **Pre-release version:** ${{ github.event.inputs.prerelease_version }}
+
+            ### Changelog
+
+            <!-- Auto-generated from changesets -->
+
+            ---
+            **After merging this PR, the stable version will be published to npm.**
+
+            Please review:
+            - [ ] Changelog is correct
+            - [ ] Version bumps are accurate
+            - [ ] No unintended changes
+          labels: release
+          reviewers: |
+            ${{ github.actor }}
+          draft: false

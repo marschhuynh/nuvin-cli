@@ -1,0 +1,100 @@
+name: Publish Stable Release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+    labels:
+      - release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: |
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Validate Release PR
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" != "chore: promote "* ]]; then
+            echo "❌ Not a release PR - skipping publish"
+            exit 78
+          fi
+          echo "✅ Valid release PR detected: $PR_TITLE"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "Installing GitHub CLI..."
+            type -p curl >/dev/null || (sudo apt-get update && sudo apt-get install -y curl)
+            curl -fsSL https://cli.github.com/packages/script/install.sh | sudo bash
+          fi
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: make build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull latest changes
+        run: |
+          git fetch origin main
+          git merge origin/main --ff-only || git merge origin/main
+
+      - name: Publish to npm (Stable)
+        id: publish
+        run: pnpm run release:stable
+        env:
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "✅ Stable version published successfully!"
+          echo "npm install @nuvin/nuvin-cli"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ Publish failed! Check logs above."
+          echo "⚠️ If publish succeeded but later steps failed, you may need to:"
+          echo "  npm deprecate @nuvin/nuvin-cli@VERSION 'Release failed validation'"
+          exit 1

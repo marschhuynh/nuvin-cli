@@ -1,19 +1,17 @@
-name: Release Packages
+name: Release Pre-Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      packages:
+        description: 'Packages to release (comma-separated, empty for all)'
+        required: false
+        type: string
+        default: ''
 
 jobs:
-  release:
+  prerelease:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
@@ -50,7 +48,7 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-      - name: Create RC Release Pull Request
+      - name: Create Pre-Release Pull Request
         uses: changesets/action@v1
         with:
           version: pnpm run version:pre

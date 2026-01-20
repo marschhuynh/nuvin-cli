@@ -18,7 +18,12 @@
     "prepare": "husky install",
     "changeset": "changeset",
     "version-packages": "changeset version && pnpm -w install --no-frozen-lockfile",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "version:pre": "changeset version --pre-release rc && pnpm -w install --no-frozen-lockfile",
+    "release:pre": "changeset publish --tag rc",
+    "version:promote": "changeset version && pnpm -w install --no-frozen-lockfile",
+    "release:stable": "changeset publish",
+    "changelog": "node scripts/changelog.js"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.9",
