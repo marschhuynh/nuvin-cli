@@ -1,0 +1,10 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@nuvin/ink": "6.6.4",
+    "@nuvin/nuvin-cli": "1.35.1",
+    "@nuvin/nuvin-core": "1.18.0"
+  },
+  "changesets": []
+}
