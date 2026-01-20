@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.35.0
+
+### Minor Changes
+
+- [`a92a995`](https://github.com/marschhuynh/nuvin-space/commit/a92a9954519c52c516beb8929becf6e79104f7d1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix UserQuestionPrompt bugs, add ask_user_tool to enabled tools, and improve focus cycling
+
+### Patch Changes
+
+- Updated dependencies [[`a92a995`](https://github.com/marschhuynh/nuvin-space/commit/a92a9954519c52c516beb8929becf6e79104f7d1)]:
+  - @nuvin/nuvin-core@1.18.0
+
 ## 1.34.0
 
 ### Minor Changes
