@@ -3,56 +3,13 @@ name: Promote Pre-Release
 on:
   workflow_dispatch:
     inputs:
-      selection_mode:
-        description: 'How to select RC version?'
-        required: true
-        type: choice
-        options:
-          - 'List available RC versions (then enter manually)'
-          - 'Enter version directly'
-        default: 'List available RC versions (then enter manually)'
-      prerelease_version:
-        description: 'Pre-release version to promote (e.g., 1.34.0-rc.0) - See available versions in workflow output'
+      rc_tag:
+        description: 'RC tag to promote (e.g., @nuvin/nuvin-cli@1.35.0-rc.0)'
         required: true
         type: string
 
 jobs:
-  list-rc-versions:
-    if: inputs.selection_mode == 'List available RC versions (then enter manually)'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: List Available RC Versions
-        run: |
-          echo "## 📋 Available RC Versions" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Last 10 RC versions published to npm:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          npm view @nuvin/nuvin-cli versions --json | jq -r '.[] | select(contains("-rc."))' | tail -10 | while read version; do
-            echo "- \`$version\`" >> $GITHUB_STEP_SUMMARY
-          done
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ **This workflow run will stop here.**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Please:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Copy the version you want to promote from the list above" >> $GITHUB_STEP_SUMMARY
-          echo "2. Click 'Run workflow' again" >> $GITHUB_STEP_SUMMARY
-          echo "3. Select 'Enter version directly'" >> $GITHUB_STEP_SUMMARY
-          echo "4. Paste the version into the input field" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🎯 **Selected version:** ${{ github.event.inputs.prerelease_version }}" >> $GITHUB_STEP_SUMMARY
-          
-          echo ""
-          echo "Available RC versions:"
-          npm view @nuvin/nuvin-cli versions --json | jq -r '.[] | select(contains("-rc."))' | tail -10
-          echo ""
-          echo "⚠️ Stopping here - Re-run workflow with 'Enter version directly' mode"
-          exit 0
-
   create-release-pr:
-    if: inputs.selection_mode == 'Enter version directly'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -64,6 +21,25 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse version from tag
+        id: parse
+        run: |
+          TAG="${{ github.event.inputs.rc_tag }}"
+          # Extract version from tag (e.g., @nuvin/nuvin-cli@1.35.0-rc.0 -> 1.35.0-rc.0)
+          if [[ "$TAG" =~ @nuvin/nuvin-cli@(.+) ]]; then
+            VERSION="${BASH_REMATCH[1]}"
+          else
+            VERSION="$TAG"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Extracted version: $VERSION"
+          
+          # Extract stable version (e.g., 1.35.0-rc.0 -> 1.35.0)
+          STABLE_VERSION=$(echo "$VERSION" | sed 's/-rc\.[0-9]*$//')
+          echo "stable_version=$STABLE_VERSION" >> $GITHUB_OUTPUT
+          echo "🎯 Target stable version: $STABLE_VERSION"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -92,26 +68,27 @@ jobs:
 
       - name: Confirm Selected Version
         run: |
-          echo "🎯 Promoting version: ${{ github.event.inputs.prerelease_version }}"
+          echo "🎯 Promoting tag: ${{ github.event.inputs.rc_tag }}"
+          echo "📌 RC version: ${{ steps.parse.outputs.version }}"
+          echo "🚀 Stable version: ${{ steps.parse.outputs.stable_version }}"
 
       - name: Check for existing Release PR
         id: check-pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_COUNT=$(gh pr list --base main --head "release/promote-${{ github.event.inputs.prerelease_version }}" --json number -q '. | length')
+          PR_COUNT=$(gh pr list --base main --head "release/promote-${{ steps.parse.outputs.version }}" --json number -q '. | length')
           if [ "$PR_COUNT" -gt 0 ]; then
-            echo "❌ Release PR already exists for ${{ github.event.inputs.prerelease_version }}"
-            gh pr list --base main --head "release/promote-${{ github.event.inputs.prerelease_version }}" --json title,number,url -q '.'
+            echo "❌ Release PR already exists for ${{ steps.parse.outputs.version }}"
+            gh pr list --base main --head "release/promote-${{ steps.parse.outputs.version }}" --json title,number,url -q '.'
             exit 1
           fi
           echo "No existing PR found, proceeding..."
 
       - name: Check for existing npm release
         run: |
-          # Extract stable version from prerelease (e.g., 1.34.0-rc.0 -> 1.34.0)
-          PRERELEASE_VERSION="${{ github.event.inputs.prerelease_version }}"
-          STABLE_VERSION=$(echo "$PRERELEASE_VERSION" | sed 's/-rc\.[0-9]*$//')
+          PRERELEASE_VERSION="${{ steps.parse.outputs.version }}"
+          STABLE_VERSION="${{ steps.parse.outputs.stable_version }}"
           
           # Check if stable version already exists
           CURRENT=$(npm view @nuvin/nuvin-cli version 2>/dev/null || echo "")
@@ -136,10 +113,11 @@ jobs:
         run: pnpm run version:promote
 
       - name: Generate Changelog
-        run: pnpm run changelog ${{ github.event.inputs.prerelease_version }}
+        run: pnpm run changelog ${{ steps.parse.outputs.version }}
 
       - name: Verify changelog was updated
         run: |
+          VERSION="${{ steps.parse.outputs.version }}"
           if [ ! -f CHANGELOG.md ]; then
             echo "⚠️ CHANGELOG.md not created - no unreleased changesets found"
             echo "This is expected for promotion (changesets consumed during RC release)"
@@ -147,12 +125,12 @@ jobs:
             cat > CHANGELOG.md << EOF
           # Changelog
 
-          ## ${{ github.event.inputs.prerelease_version }}
+          ## $VERSION
 
           Promoted from RC to stable release.
 
           EOF
-          elif ! grep -q "^## ${{ github.event.inputs.prerelease_version }}" CHANGELOG.md; then
+          elif ! grep -q "^## $VERSION" CHANGELOG.md; then
             echo "❌ Changelog generation failed"
             exit 1
           fi
@@ -162,13 +140,15 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: promote ${{ github.event.inputs.prerelease_version }} to stable"
-          branch: release/promote-${{ github.event.inputs.prerelease_version }}
-          title: "chore: promote ${{ github.event.inputs.prerelease_version }} to stable"
+          commit-message: "chore: promote ${{ steps.parse.outputs.version }} to stable"
+          branch: release/promote-${{ steps.parse.outputs.version }}
+          title: "chore: promote ${{ steps.parse.outputs.version }} to stable"
           body: |
             ## Release Promotion
 
-            **Pre-release version:** ${{ github.event.inputs.prerelease_version }}
+            **Pre-release tag:** ${{ github.event.inputs.rc_tag }}
+            **Pre-release version:** ${{ steps.parse.outputs.version }}
+            **Stable version:** ${{ steps.parse.outputs.stable_version }}
 
             ### Changelog
 
