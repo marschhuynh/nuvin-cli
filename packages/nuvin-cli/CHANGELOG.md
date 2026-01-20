@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.35.2
+
+### Patch Changes
+
+- [`99a4cda`](https://github.com/marschhuynh/nuvin-space/commit/99a4cda29f5525d73f3c4b723c88fbb00ce2a669) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Test RC tag creation workflow
+
 ## 1.35.1
 
 ### Patch Changes
