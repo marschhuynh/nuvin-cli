@@ -51,12 +51,39 @@ jobs:
         run: pnpm test
 
       - name: Create RC Release Pull Request
+        id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm run version:pre
           publish: pnpm run release:pre
           commit: "chore: pre-release packages"
           title: "chore: pre-release packages"
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+      - name: Create Git Tags for RC Versions
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create git tags for each published package
+          git tag -d @nuvin/nuvin-cli@1.* 2>/dev/null || true
+          git tag -d @nuvin/nuvin-core@1.* 2>/dev/null || true
+          
+          # Get current versions from package.json files
+          CLI_VERSION=$(cat packages/nuvin-cli/package.json | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+          CORE_VERSION=$(cat packages/nuvin-core/package.json | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+          
+          # Create new tags
+          git tag -a "@nuvin/nuvin-cli@${CLI_VERSION}" -m "Release ${CLI_VERSION}"
+          git tag -a "@nuvin/nuvin-core@${CORE_VERSION}" -m "Release ${CORE_VERSION}"
+          
+          # Push tags
+          git push origin "@nuvin/nuvin-cli@${CLI_VERSION}" "@nuvin/nuvin-core@${CORE_VERSION}" || true
+          
+          echo "✅ Created RC tags:"
+          echo "  @nuvin/nuvin-cli@${CLI_VERSION}"
+          echo "  @nuvin/nuvin-core@${CORE_VERSION}"
