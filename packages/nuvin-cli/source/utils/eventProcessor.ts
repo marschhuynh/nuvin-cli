@@ -1,9 +1,11 @@
 import * as crypto from 'node:crypto';
+import * as path from 'node:path';
 import { AgentEventTypes, ErrorReason, type AgentEvent, type ToolCall, type SubAgentState } from '@nuvin/nuvin-core';
 import type { MessageLine, LineMetadata } from '@/adapters/index.js';
 import { renderToolCall, flattenError } from './messageProcessor.js';
 import { enrichToolCallsWithLineNumbers } from './enrichToolCalls.js';
 import { theme } from '@/theme.js';
+import { LSP } from '@/services/lsp/index.js';
 
 const now = () => new Date().toISOString();
 
@@ -133,6 +135,19 @@ export function processAgentEvent(
     case AgentEventTypes.ToolResult: {
       const tool = event.result;
       const errorReason = tool.status === 'error' ? tool.metadata?.errorReason : undefined;
+
+      if (tool.status === 'success' && (tool.name === 'file_edit' || tool.name === 'file_new')) {
+        const filePath =
+          tool.name === 'file_edit'
+            ? tool.metadata?.path
+            : tool.name === 'file_new'
+              ? tool.metadata?.file_path
+              : undefined;
+        if (typeof filePath === 'string' && LSP.isEnabled()) {
+          const resolvedPath = path.resolve(process.cwd(), filePath);
+          void LSP.diagnosticsForFile(resolvedPath);
+        }
+      }
 
       // Use metadata to determine tool execution state
       const isAborted = errorReason === ErrorReason.Aborted;

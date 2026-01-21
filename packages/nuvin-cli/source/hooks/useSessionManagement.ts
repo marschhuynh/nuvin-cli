@@ -106,7 +106,7 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
             continue;
           }
 
-          const cliMessages = (historyData?.default ?? []) as Message[];
+          const cliMessages = (historyData?.default ?? historyData?.cli ?? []) as Message[];
           if (cliMessages.length === 0) {
             continue;
           }
@@ -177,7 +177,7 @@ export const loadHistoryFromFile = async (historyFile: string): Promise<LoadResu
       return { kind: 'empty', reason: 'not_found' };
     }
 
-    const cliMessages = (historyData?.default ?? []) as Message[];
+    const cliMessages = (historyData?.default ?? historyData?.cli ?? []) as Message[];
     if (cliMessages.length === 0) return { kind: 'empty', reason: 'no_messages' };
 
     const { processMessageToUILines } = await import('../utils/messageProcessor.js');

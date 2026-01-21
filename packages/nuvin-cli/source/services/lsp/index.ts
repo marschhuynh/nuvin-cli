@@ -26,6 +26,7 @@ interface State {
   clients: LSPClientInfo[];
   broken: Set<string>;
   spawning: Map<string, Promise<LSPClientInfo | undefined>>;
+  fileVersions: Map<string, number>;
 }
 
 const state: State = {
@@ -34,6 +35,7 @@ const state: State = {
   clients: [],
   broken: new Set(),
   spawning: new Map(),
+  fileVersions: new Map(),
 };
 
 export namespace LSP {
@@ -103,6 +105,13 @@ export namespace LSP {
   export async function diagnosticsForFile(filePath: string): Promise<Diagnostic[]> {
     const client = await getOrCreateClient(filePath);
     if (!client) return [];
+
+    await client.notify.open({ path: filePath });
+    const nextVersion = (state.fileVersions.get(filePath) ?? 1) + 1;
+    state.fileVersions.set(filePath, nextVersion);
+    await client.notify.change({ path: filePath, version: nextVersion });
+    await client.waitForDiagnostics({ path: filePath });
+
     return client.diagnostics.get(filePath) ?? [];
   }
 
@@ -181,6 +190,7 @@ export namespace LSP {
     state.clients = [];
     state.spawning.clear();
     state.broken.clear();
+    state.fileVersions.clear();
     state.initialized = false;
   }
 
