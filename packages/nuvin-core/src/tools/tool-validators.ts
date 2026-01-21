@@ -22,7 +22,9 @@ export const fileReadSchema = z.object({
 });
 
 export const fileEditSchema = z.object({
-  file_path: z.string({ message: 'file_path must be a non-empty string' }).min(1, 'file_path must be a non-empty string'),
+  file_path: z
+    .string({ message: 'file_path must be a non-empty string' })
+    .min(1, 'file_path must be a non-empty string'),
   old_text: z.string({ message: 'old_text is required' }),
   new_text: z.string({ message: 'new_text is required' }),
   dry_run: z.boolean().optional(),
@@ -30,7 +32,9 @@ export const fileEditSchema = z.object({
 });
 
 export const fileNewSchema = z.object({
-  file_path: z.string({ message: 'file_path must be a non-empty string' }).min(1, 'file_path must be a non-empty string'),
+  file_path: z
+    .string({ message: 'file_path must be a non-empty string' })
+    .min(1, 'file_path must be a non-empty string'),
   content: z.string({ message: 'content is required' }),
   description: z.string().optional(),
 });
@@ -78,7 +82,9 @@ export const todoWriteSchema = z.object({
 export const assignTaskSchema = z.object({
   agent: z.string({ message: 'agent must be a non-empty string' }).min(1, 'agent must be a non-empty string'),
   task: z.string({ message: 'task must be a non-empty string' }).min(1, 'task must be a non-empty string'),
-  description: z.string({ message: 'description must be a non-empty string' }).min(1, 'description must be a non-empty string'),
+  description: z
+    .string({ message: 'description must be a non-empty string' })
+    .min(1, 'description must be a non-empty string'),
 });
 
 export const globToolSchema = z.object({

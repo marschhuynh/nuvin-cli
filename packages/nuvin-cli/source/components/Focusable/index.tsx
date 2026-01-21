@@ -4,11 +4,13 @@ import { useFocus } from '@/contexts/InputContext/FocusContext.js';
 interface FocusableProps {
   children: (context: { isFocused: boolean }) => React.ReactNode;
   autoFocus?: boolean;
+  disabled?: boolean;
+  focusId?: string;
 }
 
-export const Focusable: React.FC<FocusableProps> = ({ children, autoFocus }) => {
-  const { isFocused } = useFocus({ active: true, autoFocus });
-  return <>{children({ isFocused })}</>;
+export const Focusable: React.FC<FocusableProps> = ({ children, autoFocus, disabled, focusId }) => {
+  const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId });
+  return <>{children({ isFocused: disabled ? false : isFocused })}</>;
 };
 
 export default Focusable;

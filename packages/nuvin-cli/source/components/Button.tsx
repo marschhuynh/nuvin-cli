@@ -9,12 +9,20 @@ interface ButtonProps {
   onSubmit: () => void;
   variant?: 'default' | 'danger';
   autoFocus?: boolean;
+  disabled?: boolean;
+  focusId?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus }) => {
+export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus, disabled, focusId }) => {
   const { theme } = useTheme();
 
   const getColors = (isFocused: boolean) => {
+    if (disabled) {
+      return {
+        backgroundColor: theme.tokens.dim,
+        textColor: theme.tokens.gray,
+      };
+    }
     if (variant === 'danger') {
       return {
         backgroundColor: isFocused ? theme.colors.error : theme.tokens.dimYellow,
@@ -28,22 +36,22 @@ export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'defa
   };
 
   return (
-    <Focusable autoFocus={autoFocus}>
+    <Focusable autoFocus={autoFocus} disabled={disabled} focusId={focusId}>
       {({ isFocused }) => {
         useInput(
           (_input, key) => {
-            if (key.return) {
+            if (key.return && !disabled) {
               onSubmit();
             }
           },
-          { isActive: isFocused },
+          { isActive: isFocused && !disabled },
         );
 
         const { backgroundColor, textColor } = getColors(isFocused);
 
         return (
           <Box backgroundColor={backgroundColor} paddingX={2}>
-            <Text color={textColor} bold={isFocused}>
+            <Text color={textColor} bold={isFocused} dimColor={disabled}>
               {label}
             </Text>
           </Box>

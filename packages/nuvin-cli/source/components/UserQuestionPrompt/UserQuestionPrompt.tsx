@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useUserQuestion } from '@/contexts/UserQuestionContext.js';
@@ -7,6 +7,8 @@ import { HelpText } from '@/components/HelpText.js';
 import { FocusProvider, useFocus, useFocusCycle } from '@/contexts/InputContext/FocusContext.js';
 import TextInput from '@/components/TextInput/index.js';
 import { theme } from '@/theme.js';
+import { TextWrapper } from '../TextWrapper';
+import { Button } from '@/components/Button.js';
 
 const FOCUS_ID = {
   OPTION: (idx: number) => `question-option-${idx}`,
@@ -51,6 +53,7 @@ interface OptionItemProps {
 }
 
 function OptionItem({ option, idx, isSelected, isMultiSelect }: OptionItemProps) {
+  const containerRef = useRef(null);
   const { isFocused } = useFocus({ active: true, id: FOCUS_ID.OPTION(idx) });
 
   const getIcon = () => {
@@ -61,7 +64,7 @@ function OptionItem({ option, idx, isSelected, isMultiSelect }: OptionItemProps)
   };
 
   return (
-    <Box flexWrap='nowrap'>
+    <Box ref={containerRef} flexWrap='nowrap'>
       <Box flexShrink={0} flexWrap="nowrap">
         <Box>
           <Text color={isFocused ? theme.tokens.cyan : undefined}>
@@ -78,7 +81,7 @@ function OptionItem({ option, idx, isSelected, isMultiSelect }: OptionItemProps)
         <Text bold={isFocused} color={isFocused ? theme.tokens.cyan : isSelected ? theme.tokens.green : undefined}>
           {option.label}
         </Text>
-        {option.description && <Text dimColor> — {option.description}</Text>}
+        {option.description && <Text dimColor>{` — ${option.description}`}</Text>}
       </Text>
     </Box>
   );
@@ -137,43 +140,6 @@ function OtherOption({
           onDownArrow={cycleNext}
         />
       </Box>
-    </Box>
-  );
-}
-
-interface SubmitButtonProps {
-  label: string;
-  onSubmit: () => void;
-  disabled?: boolean;
-}
-
-function SubmitButton({ label, onSubmit, disabled }: SubmitButtonProps) {
-  const { isFocused } = useFocus({ active: !disabled, id: FOCUS_ID.SUBMIT });
-
-  useInput(
-    (_input, key) => {
-      if (key.return && !disabled) {
-        onSubmit();
-      }
-    },
-    { isActive: isFocused && !disabled },
-  );
-
-  if (disabled) {
-    return (
-      <Box backgroundColor={theme.tokens.dim} paddingX={2}>
-        <Text color={theme.tokens.gray} dimColor>
-          {label}
-        </Text>
-      </Box>
-    );
-  }
-
-  return (
-    <Box backgroundColor={isFocused ? theme.tokens.cyan : theme.tokens.dim} paddingX={2}>
-      <Text color={isFocused ? theme.tokens.white : theme.tokens.gray} bold={isFocused}>
-        {label}
-      </Text>
     </Box>
   );
 }
@@ -558,7 +524,7 @@ function UserQuestionPromptContent({ questionData }: Props) {
     >
       <Box flexDirection="column" width="100%" paddingX={1}>
         <Box marginBottom={1}>
-          <Text>{currentQuestion.question}</Text>
+          <TextWrapper>{currentQuestion.question}</TextWrapper>
         </Box>
         {optionsWithOther.map((option, idx) => {
           const isSelected = currentQuestion.multiSelect
@@ -592,10 +558,11 @@ function UserQuestionPromptContent({ questionData }: Props) {
           );
         })}
         <Box marginY={1}>
-          <SubmitButton
+          <Button
             label="Submit"
             onSubmit={submitAllAnswers}
             disabled={!allQuestionsAnswered}
+            focusId={FOCUS_ID.SUBMIT}
           />
         </Box>
       </Box>

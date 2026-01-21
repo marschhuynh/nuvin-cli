@@ -31,11 +31,13 @@ export class AskUserTool implements FunctionTool<AskUserArgs, ToolExecutionConte
           properties: {
             question: {
               type: 'string',
-              description: 'The complete question to ask the user. Should be clear, specific, and end with a question mark. Example: "Which library should we use for date formatting?" If multiSelect is true, phrase it accordingly, e.g. "Which features do you want to enable?"'
+              description:
+                'The complete question to ask the user. Should be clear, specific, and end with a question mark. Example: "Which library should we use for date formatting?" If multiSelect is true, phrase it accordingly, e.g. "Which features do you want to enable?"',
             },
             header: {
               type: 'string',
-              description: 'Very short label displayed as a chip/tag (max 12 chars). Examples: "Auth method", "Library", "Approach".'
+              description:
+                'Very short label displayed as a chip/tag (max 20 chars). Examples: "Auth method", "Library", "Approach".',
             },
             options: {
               type: 'array',
@@ -46,35 +48,39 @@ export class AskUserTool implements FunctionTool<AskUserArgs, ToolExecutionConte
                 properties: {
                   label: {
                     type: 'string',
-                    description: 'The display text for this option that the user will see and select. Should be concise (1-5 words) and clearly describe the choice.'
+                    description:
+                      'The display text for this option that the user will see and select. Should be concise (1-5 words) and clearly describe the choice.',
                   },
                   description: {
                     type: 'string',
-                    description: 'Explanation of what this option means or what will happen if chosen. Useful for providing context about trade-offs or implications.'
-                  }
+                    description:
+                      'Explanation of what this option means or what will happen if chosen. Useful for providing context about trade-offs or implications.',
+                  },
                 },
-                required: ['label', 'description']
+                required: ['label', 'description'],
               },
-              description: 'The available choices for this question. Must have 2-4 options. Each option should be a distinct, mutually exclusive choice (unless multiSelect is enabled). There should be no \'Other\' option, that will be provided automatically.'
+              description:
+                "The available choices for this question. Must have 2-4 options. Each option should be a distinct, mutually exclusive choice (unless multiSelect is enabled). There should be no 'Other' option, that will be provided automatically.",
             },
             multiSelect: {
               type: 'boolean',
-              description: 'Set to true to allow the user to select multiple options instead of just one. Use when choices are not mutually exclusive.'
-            }
+              description:
+                'Set to true to allow the user to select multiple options instead of just one. Use when choices are not mutually exclusive.',
+            },
           },
-          required: ['question', 'header', 'options', 'multiSelect']
+          required: ['question', 'header', 'options', 'multiSelect'],
         },
-        description: 'Questions to ask the user (1-4 questions)'
+        description: 'Questions to ask the user (1-4 questions)',
       },
       answers: {
         type: 'object',
         additionalProperties: {
-          type: 'string'
+          type: 'string',
         },
-        description: 'User answers collected by the permission component'
-      }
+        description: 'User answers collected by the permission component',
+      },
     },
-    required: ['questions']
+    required: ['questions'],
   } as const;
 
   definition(): ToolDefinition['function'] {
@@ -106,17 +112,29 @@ Usage notes:
 
     for (let i = 0; i < params.questions.length; i++) {
       const q = params.questions[i];
-      
+
       if (!q.question || typeof q.question !== 'string') {
-        return err(`Question ${i + 1}: "question" field is required and must be a string`, undefined, ErrorReason.InvalidInput);
+        return err(
+          `Question ${i + 1}: "question" field is required and must be a string`,
+          undefined,
+          ErrorReason.InvalidInput,
+        );
       }
 
       if (!q.header || typeof q.header !== 'string') {
-        return err(`Question ${i + 1}: "header" field is required and must be a string`, undefined, ErrorReason.InvalidInput);
+        return err(
+          `Question ${i + 1}: "header" field is required and must be a string`,
+          undefined,
+          ErrorReason.InvalidInput,
+        );
       }
 
-      if (q.header.length > 12) {
-        return err(`Question ${i + 1}: "header" must be max 12 characters, got ${q.header.length}`, undefined, ErrorReason.InvalidInput);
+      if (q.header.length > 20) {
+        return err(
+          `Question ${i + 1}: "header" must be max 20 characters, got ${q.header.length}`,
+          undefined,
+          ErrorReason.InvalidInput,
+        );
       }
 
       if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 4) {
@@ -126,7 +144,11 @@ Usage notes:
       for (let j = 0; j < q.options.length; j++) {
         const opt = q.options[j];
         if (!opt.label || !opt.description) {
-          return err(`Question ${i + 1}, Option ${j + 1}: both "label" and "description" are required`, undefined, ErrorReason.InvalidInput);
+          return err(
+            `Question ${i + 1}, Option ${j + 1}: both "label" and "description" are required`,
+            undefined,
+            ErrorReason.InvalidInput,
+          );
         }
       }
 
@@ -138,14 +160,11 @@ Usage notes:
     // If answers already provided (second call), return them
     if (params.answers && Object.keys(params.answers).length > 0) {
       const questionId = context?.messageId || 'unknown';
-      return okText(
-        `User responses received: ${JSON.stringify(params.answers, null, 2)}`,
-        {
-          questionId,
-          questionCount: params.questions.length,
-          answers: params.answers,
-        }
-      );
+      return okText(`User responses received: ${JSON.stringify(params.answers, null, 2)}`, {
+        questionId,
+        questionCount: params.questions.length,
+        answers: params.answers,
+      });
     }
 
     // Generate unique question ID
@@ -177,19 +196,16 @@ Usage notes:
     if (context?.waitForUserQuestion) {
       try {
         const answers = await context.waitForUserQuestion(questionId, questionsWithIds);
-        return okText(
-          `User responses received: ${JSON.stringify(answers, null, 2)}`,
-          {
-            questionId,
-            questionCount: params.questions.length,
-            answers,
-          }
-        );
+        return okText(`User responses received: ${JSON.stringify(answers, null, 2)}`, {
+          questionId,
+          questionCount: params.questions.length,
+          answers,
+        });
       } catch (error) {
         return err(
           error instanceof Error ? error.message : 'Failed to get user response',
           undefined,
-          ErrorReason.Unknown
+          ErrorReason.Unknown,
         );
       }
     }

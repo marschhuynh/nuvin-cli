@@ -271,6 +271,9 @@ importers:
       vscode-languageserver-types:
         specifier: ^3.17.5
         version: 3.17.5
+      wrap-ansi:
+        specifier: ^9.0.2
+        version: 9.0.2
       yaml:
         specifier: ^2.8.2
         version: 2.8.2
