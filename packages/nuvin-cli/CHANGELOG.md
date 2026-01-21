@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.35.6-rc.0
+
+### Patch Changes
+
+- [`2c80900`](https://github.com/marschhuynh/nuvin-space/commit/2c80900bbd377c1b8d8e81e0bdf819da2495ac99) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add GitHub responses API support and tool validation tweaks.
+
+- [`55d7324`](https://github.com/marschhuynh/nuvin-space/commit/55d73245fc2e6e7748adb30bce5740d41868a5fa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refresh LSP diagnostics on file changes and load /export history.
+
+- Updated dependencies [[`2c80900`](https://github.com/marschhuynh/nuvin-space/commit/2c80900bbd377c1b8d8e81e0bdf819da2495ac99)]:
+  - @nuvin/nuvin-core@1.19.0-rc.0
+
 ## 1.35.5
 
 ### Patch Changes

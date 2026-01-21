@@ -1,0 +1,12 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@nuvin/nuvin-cli": "1.35.5",
+    "@nuvin/nuvin-core": "1.18.0"
+  },
+  "changesets": [
+    "github-responses-api",
+    "lsp-history-refresh"
+  ]
+}

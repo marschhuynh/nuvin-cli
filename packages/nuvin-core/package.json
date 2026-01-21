@@ -1,6 +1,6 @@
 {
 	"name": "@nuvin/nuvin-core",
-	"version": "1.18.0",
+	"version": "1.19.0-rc.0",
 	"description": "",
 	"private": false,
 	"main": "dist/index.js",
