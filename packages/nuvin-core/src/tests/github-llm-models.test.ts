@@ -133,31 +133,90 @@ describe('GithubLLM', () => {
     expect(models.map((m) => m.id)).toContain('gpt-5.1-codex');
   });
 
-  it('should handle unsupported_api_for_model error gracefully during completion', async () => {
-    const errorResponse = {
-      error: {
-        message: 'model gpt-5.1-codex is not accessible via the /chat/completions endpoint',
-        code: 'unsupported_api_for_model',
-      },
+  it('should use responses API directly for codex models based on model name pattern', async () => {
+    const responsesApiResponse = {
+      id: 'resp_123',
+      object: 'response',
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'Hello from responses API!' }],
+        },
+      ],
+      usage: { input_tokens: 10, output_tokens: 5 },
     };
 
-    // Mock the transport to return the error
     vi.mocked(llm.mockTransport.post).mockResolvedValueOnce({
-      ok: false,
-      status: 400,
-      text: () => Promise.resolve(JSON.stringify(errorResponse)),
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(responsesApiResponse),
+      text: () => Promise.resolve(JSON.stringify(responsesApiResponse)),
     } as any);
 
     const params = {
       model: 'gpt-5.1-codex',
-      messages: [],
+      messages: [{ role: 'user' as const, content: 'Hello' }],
       temperature: 0,
       topP: 0,
     };
 
-    await expect(llm.generateCompletion(params)).rejects.toThrow(
-      "The model 'gpt-5.1-codex' is not supported for chat completions",
-    );
+    const result = await llm.generateCompletion(params);
+
+    expect(llm.mockTransport.post).toHaveBeenCalledTimes(1);
+    expect(llm.mockTransport.post).toHaveBeenCalledWith('/responses', expect.any(Object), undefined, undefined);
+    expect(result.content).toBe('Hello from responses API!');
+  });
+
+  it('should fallback to responses API when chat completions fails with unsupported_api_for_model for non-codex models', async () => {
+    const chatCompletionsError = {
+      error: {
+        message: 'model some-new-model is not accessible via the /chat/completions endpoint',
+        code: 'unsupported_api_for_model',
+      },
+    };
+
+    const responsesApiResponse = {
+      id: 'resp_123',
+      object: 'response',
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'Hello from responses API!' }],
+        },
+      ],
+      usage: { input_tokens: 10, output_tokens: 5 },
+    };
+
+    vi.mocked(llm.mockTransport.post)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve(JSON.stringify(chatCompletionsError)),
+      } as any)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(responsesApiResponse),
+        text: () => Promise.resolve(JSON.stringify(responsesApiResponse)),
+      } as any);
+
+    const params = {
+      model: 'some-new-model',
+      messages: [{ role: 'user' as const, content: 'Hello' }],
+      temperature: 0,
+      topP: 0,
+    };
+
+    const result = await llm.generateCompletion(params);
+
+    expect(llm.mockTransport.post).toHaveBeenCalledTimes(2);
+    expect(llm.mockTransport.post).toHaveBeenNthCalledWith(1, '/chat/completions', expect.any(Object), undefined, undefined);
+    expect(llm.mockTransport.post).toHaveBeenNthCalledWith(2, '/responses', expect.any(Object), undefined, undefined);
+    expect(result.content).toBe('Hello from responses API!');
   });
 
   it('should deduplicate models with the same ID', async () => {

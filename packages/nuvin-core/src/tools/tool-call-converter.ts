@@ -35,7 +35,7 @@ export function convertToolCall(
     availableTools?: Set<string>;
   } = {},
 ): ToolCallValidation {
-  const { strict = false, availableTools } = options;
+  const { strict = true, availableTools } = options;
 
   if (availableTools && !availableTools.has(toolCall.function.name)) {
     return {
@@ -72,7 +72,7 @@ export function convertToolCall(
       if (strict) {
         return {
           valid: false,
-          error: `Validation failed: ${validationResult.errors.join('; ')}`,
+          error: validationResult.errors.join('; '),
           errorType: 'validation',
           callId: toolCall.id,
           toolName: toolCall.function.name,
@@ -98,7 +98,7 @@ export function convertToolCalls(
   toolCalls: ToolCall[],
   options: { strict?: boolean; throwOnError?: boolean } = {},
 ): ToolInvocation[] {
-  const { strict = false, throwOnError = true } = options;
+  const { strict = true, throwOnError = true } = options;
   const invocations: ToolInvocation[] = [];
 
   for (const tc of toolCalls) {
@@ -133,7 +133,7 @@ export function convertToolCallsWithErrorHandling(
     availableTools?: Set<string>;
   } = {},
 ): ToolCallConversionResult {
-  const { strict = false, availableTools } = options;
+  const { strict = true, availableTools } = options;
   const invocations: ToolInvocation[] = [];
   const errors: ValidationError[] = [];
 

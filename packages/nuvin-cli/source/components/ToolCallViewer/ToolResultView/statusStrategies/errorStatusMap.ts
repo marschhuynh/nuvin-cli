@@ -20,7 +20,7 @@ const errorStatusMap: Record<ErrorReason, ErrorConfig> = {
   [ErrorReason.InvalidInput]: { text: 'Invalid input', colorKey: 'error' },
   [ErrorReason.Unknown]: { text: 'Unknown error', colorKey: 'error' },
   [ErrorReason.ValidationFailed]: {
-    text: '',
+    text: 'Validation failed',
     colorKey: 'warning'
   }
 };

@@ -413,19 +413,25 @@ export class AgentOrchestrator {
       // Execute the tool (bypass or approved)
       const availableTools = this.getAvailableToolNames();
       const conversionResult = convertToolCallsWithErrorHandling([toolCall], {
-        strict: this.cfg.strictToolValidation ?? false,
+        strict: this.cfg.strictToolValidation ?? true,
         availableTools,
       });
 
       if (conversionResult.errors && conversionResult.errors.length > 0) {
         const err = conversionResult.errors[0];
+        const errorReason =
+          err.errorType === 'tool_not_found'
+            ? ErrorReason.ToolNotFound
+            : err.errorType === 'parse'
+              ? ErrorReason.InvalidInput
+              : ErrorReason.ValidationFailed;
         result = {
           id: err.id,
           name: err.name,
           status: 'error',
           type: 'text',
-          result: `Tool call validation failed (${err.errorType}): ${err.error}`,
-          metadata: { errorReason: ErrorReason.ValidationFailed },
+          result: `Tool call validation failed: ${err.error}`,
+          metadata: { errorReason },
           durationMs: 0,
         };
 
@@ -761,6 +767,8 @@ export class AgentOrchestrator {
         result.usage,
         opts.signal,
       );
+
+      allToolResults.push(...toolResults);
 
       // Check if all tools were denied
       const allDenied = toolResults.every(

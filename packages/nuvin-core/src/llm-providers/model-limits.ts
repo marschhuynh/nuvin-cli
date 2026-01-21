@@ -7,7 +7,8 @@ export type ModelInfo = {
   id: string;
   name?: string;
   limits?: ModelLimits;
-  [key: string]: string | number | ModelLimits | undefined | unknown;
+  supportedEndpoints?: string[];
+  [key: string]: string | number | ModelLimits | string[] | undefined | unknown;
 };
 
 type RawModelResponse = {
@@ -141,10 +142,15 @@ export function normalizeModelInfo(provider: string, model: RawModelResponse): M
     limits = normalizeModelLimits(provider, model);
   }
 
+  const supportedEndpoints =
+    (model.supported_endpoints as string[] | undefined) ??
+    (model.capable_endpoints as string[] | undefined);
+
   return {
     id,
     name,
     ...(limits ? { limits } : {}),
+    ...(supportedEndpoints ? { supportedEndpoints } : {}),
   };
 }
 

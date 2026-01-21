@@ -7,50 +7,61 @@ export type ToolValidator<T extends ToolName> = (
   params: Record<string, unknown>,
 ) => ValidationResult<ToolParameterMap[T]>;
 
+const requiredString = (label: string) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' ? value : ''),
+    z.string().min(1, `${label} must be a non-empty string`),
+  );
+
 export const bashToolSchema = z.object({
-  cmd: z.string({ message: 'cmd must be a non-empty string' }).min(1, 'cmd must be a non-empty string'),
+  cmd: requiredString('cmd'),
   cwd: z.string().optional(),
-  timeoutMs: z.number().int().positive({ message: 'timeoutMs must be positive' }).optional(),
+  timeoutMs: z.number().int().positive({ message: 'must be positive' }).optional(),
   description: z.string().optional(),
 });
 
-export const fileReadSchema = z.object({
-  path: z.string({ message: 'path must be a non-empty string' }).min(1, 'path must be a non-empty string'),
-  lineStart: z.number().int().positive({ message: 'lineStart must be positive' }).optional(),
-  lineEnd: z.number().int().positive({ message: 'lineEnd must be positive' }).optional(),
-  description: z.string().optional(),
-});
+export const fileReadSchema = z.preprocess(
+  (value) => {
+    if (value && typeof value === 'object' && 'file_path' in value && !('path' in value)) {
+      const record = value as Record<string, unknown>;
+      return { ...record, path: record.file_path };
+    }
+    return value;
+  },
+  z.object({
+    path: requiredString('path'),
+    lineStart: z.number().int().positive({ message: 'must be positive' }).optional(),
+    lineEnd: z.number().int().positive({ message: 'must be positive' }).optional(),
+    description: z.string().optional(),
+  }),
+);
 
 export const fileEditSchema = z.object({
-  file_path: z
-    .string({ message: 'file_path must be a non-empty string' })
-    .min(1, 'file_path must be a non-empty string'),
-  old_text: z.string({ message: 'old_text is required' }),
-  new_text: z.string({ message: 'new_text is required' }),
+  file_path: requiredString('file_path'),
+  old_text: requiredString('old_text'),
+  new_text: requiredString('new_text'),
   dry_run: z.boolean().optional(),
   description: z.string().optional(),
 });
 
 export const fileNewSchema = z.object({
-  file_path: z
-    .string({ message: 'file_path must be a non-empty string' })
-    .min(1, 'file_path must be a non-empty string'),
-  content: z.string({ message: 'content is required' }),
+  file_path: requiredString('file_path'),
+  content: requiredString('content'),
   description: z.string().optional(),
 });
 
 export const lsToolSchema = z.object({
   path: z.string().optional(),
-  limit: z.number().int().positive({ message: 'limit must be positive' }).optional(),
+  limit: z.number().int().positive({ message: 'must be positive' }).optional(),
   description: z.string().optional(),
 });
 
 export const webSearchSchema = z.object({
-  query: z.string({ message: 'query must be a non-empty string' }).min(1, 'query must be a non-empty string'),
+  query: requiredString('query'),
   count: z.number().int().min(1).max(50).optional(),
   offset: z.number().int().nonnegative().optional(),
   domains: z.array(z.string()).optional(),
-  recencyDays: z.number().int().positive({ message: 'recencyDays must be positive' }).optional(),
+  recencyDays: z.number().int().positive({ message: 'must be positive' }).optional(),
   lang: z.string().optional(),
   region: z.string().optional(),
   safe: z.boolean().optional(),
@@ -60,7 +71,14 @@ export const webSearchSchema = z.object({
 });
 
 export const webFetchSchema = z.object({
-  url: z.string({ message: 'url must be a valid URL' }).url('url must be a valid URL'),
+  url: requiredString('url').refine((value) => {
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }, 'url must be a valid URL'),
   description: z.string().optional(),
 });
 
@@ -75,26 +93,24 @@ export const todoWriteSchema = z.object({
         createdAt: z.string().optional(),
       }),
     )
-    .min(1, 'todos must be a non-empty array'),
+    .min(1, 'must be a non-empty array'),
   description: z.string().optional(),
 });
 
 export const assignTaskSchema = z.object({
-  agent: z.string({ message: 'agent must be a non-empty string' }).min(1, 'agent must be a non-empty string'),
-  task: z.string({ message: 'task must be a non-empty string' }).min(1, 'task must be a non-empty string'),
-  description: z
-    .string({ message: 'description must be a non-empty string' })
-    .min(1, 'description must be a non-empty string'),
+  agent: requiredString('agent'),
+  task: requiredString('task'),
+  description: requiredString('description'),
 });
 
 export const globToolSchema = z.object({
-  pattern: z.string({ message: 'pattern must be a non-empty string' }).min(1, 'pattern must be a non-empty string'),
+  pattern: requiredString('pattern'),
   path: z.string().optional(),
   description: z.string().optional(),
 });
 
 export const grepToolSchema = z.object({
-  pattern: z.string({ message: 'pattern must be a non-empty string' }).min(1, 'pattern must be a non-empty string'),
+  pattern: requiredString('pattern'),
   path: z.string().optional(),
   include: z.string().optional(),
   description: z.string().optional(),
