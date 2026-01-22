@@ -1,5 +1,14 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.1
+
+### Minor Changes
+
+- [`458f15a`](https://github.com/marschhuynh/nuvin-space/commit/458f15a831ca7f5d4c54fabfbdf5a2a9e67fcdd4) Thanks [@marschhuynh](https://github.com/marschhuynh)! - ```
+
+  3. Message should be a compact, single sentence (imperative), e.g. `Refresh LSP diagnostics after file edits.`
+  4. Commit with conventional commits (e.g. `fix: ...`, `feat: ...`, `chore: ...`).
+
 ## 1.19.0-rc.0
 
 ### Minor Changes
