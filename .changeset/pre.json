@@ -8,8 +8,12 @@
   "changesets": [
     "INSTRUCTIONS",
     "command-menu-description-wrap",
+    "command-tab-completion",
     "github-responses-api",
     "lsp-history-refresh",
-    "recent-sessions-width-fix"
+    "minimax-fix-changes",
+    "recent-sessions-width-fix",
+    "tool-call-header-args",
+    "tool-display-names"
   ]
 }
