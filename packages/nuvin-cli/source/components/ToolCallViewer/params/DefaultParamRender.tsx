@@ -7,8 +7,11 @@ export const DefaultParamRender: React.FC<ToolParamRendererProps> = ({
   args,
   statusColor,
   formatValue,
+  mainArgKey,
 }: ToolParamRendererProps) => {
-  const entries = Object.entries(args).filter(([key]) => key !== 'description');
+  const entries = Object.entries(args).filter(
+    ([key]) => key !== 'description' && key !== mainArgKey && key !== 'lineStart' && key !== 'lineEnd'
+  );
 
   if (entries.length === 0) {
     return null;
