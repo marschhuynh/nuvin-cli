@@ -9,8 +9,11 @@ export const FileNewParamRender: React.FC<ToolParamRendererProps> = ({
   args,
   statusColor,
   formatValue,
+  mainArgKey,
 }: ToolParamRendererProps) => {
-  const entries = Object.entries(args).filter(([key]) => !EXCLUDED_KEYS.includes(key));
+  const entries = Object.entries(args).filter(
+    ([key]) => !EXCLUDED_KEYS.includes(key) && key !== mainArgKey && key !== 'lineStart' && key !== 'lineEnd'
+  );
 
   if (entries.length === 0) {
     return null;

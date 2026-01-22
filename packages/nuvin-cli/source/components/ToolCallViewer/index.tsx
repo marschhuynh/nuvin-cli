@@ -8,6 +8,7 @@ import { ToolResultView } from './ToolResultView/index.js';
 import { FileEditParamRender, FileNewParamRender, DefaultParamRender, AssignTaskParamRender } from './params/index.js';
 import { ToolTimer } from '@/components/ToolTimer.js';
 import { getToolDisplayName } from '@/components/toolRegistry.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 type ToolCallProps = {
   toolCall: ToolCall;
@@ -15,9 +16,40 @@ type ToolCallProps = {
   messageId: string;
 };
 
+const getMainArgument = (toolName: string, args: Record<string, unknown>): { value: string | undefined; key: string | undefined } => {
+  switch (toolName) {
+    case 'file_read':
+    case 'ls_tool': {
+      const path = args.path as string | undefined;
+      if (!path) return { value: undefined, key: 'path' };
+      const lineStart = args.lineStart as number | undefined;
+      const lineEnd = args.lineEnd as number | undefined;
+      let formatted = path;
+      if (lineStart !== undefined && lineEnd !== undefined) {
+        formatted = `${path}:${lineStart}-${lineEnd}`;
+      } else if (lineStart !== undefined) {
+        formatted = `${path}:${lineStart}`;
+      }
+      return { value: formatted, key: 'path' };
+    }
+    case 'file_new': {
+      const path = args.file_path as string | undefined;
+      if (!path) return { value: undefined, key: 'file_path' };
+      return { value: path, key: 'file_path' };
+    }
+    case 'grep_tool':
+      return { value: args.pattern as string | undefined, key: 'pattern' };
+    case 'web_fetch':
+      return { value: args.url as string | undefined, key: 'url' };
+    default:
+      return { value: undefined, key: undefined };
+  }
+};
+
 export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, messageId }) => {
   const { theme } = useTheme();
   const { pendingApprovalTools } = useToolApproval();
+  const { cols } = useStdoutDimensions();
 
   const isAwaitingApproval = pendingApprovalTools.some((tc) => tc.id === toolCall.id);
 
@@ -48,6 +80,10 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
       ? args.description
       : getToolDisplayName(toolName);
 
+  const mainArgInfo = getMainArgument(toolName, args);
+  const mainArg = mainArgInfo.value;
+  const mainArgKey = mainArgInfo.key;
+
   const getParameterRenderer = () => {
     switch (toolName) {
       case 'file_edit':
@@ -75,17 +111,22 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
   const ParamRenderer = getParameterRenderer();
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" width={cols - 2} overflow='hidden'>
       <Box flexDirection="row">
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
             {'⚙︎'}
           </Text>
         </Box>
-        <Text bold>{displayName}</Text>
+        <Text wrap="truncate-middle" >
+          <Text bold>{displayName}</Text>
+          {mainArg && (
+            <Text dimColor> {mainArg}</Text>
+          )}
+        </Text>
       </Box>
 
-      <ParamRenderer toolCall={toolCall} args={args} statusColor={statusColor} formatValue={formatValue} />
+      <ParamRenderer toolCall={toolCall} args={args} statusColor={statusColor} formatValue={formatValue} mainArgKey={mainArgKey} />
 
       {!hasResult && !isDenied && !isEdited && (
         <Box flexDirection="row" marginLeft={2}>
