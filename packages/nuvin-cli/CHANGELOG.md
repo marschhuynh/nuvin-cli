@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.35.6-rc.2
+
+### Patch Changes
+
+- [`dbe79ab`](https://github.com/marschhuynh/nuvin-space/commit/dbe79ab78d5e93821f929823821723a553a8f081) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix command menu description rendering and wrapping.
+
 ## 1.35.6-rc.1
 
 ### Patch Changes
