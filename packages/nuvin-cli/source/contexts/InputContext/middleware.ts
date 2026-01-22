@@ -21,11 +21,9 @@ export const pasteDetectionMiddleware: InputMiddleware = (input, key, next) => {
 export const focusCycleMiddleware: InputMiddleware = (_input, key, next) => {
   if (key.tab && !key.shift) {
     eventBus.emit('ui:focus:cycle', 'forward');
-    return;
   }
   if (key.shift && key.tab) {
     eventBus.emit('ui:focus:cycle', 'backward');
-    return;
   }
   next();
 };
