@@ -1,5 +1,17 @@
 # @nuvin/nuvin-cli
 
+## 1.35.6-rc.3
+
+### Patch Changes
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`1dd100d`](https://github.com/marschhuynh/nuvin-space/commit/1dd100d42d93c494562d735df91aecce2b7ef60d) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add tab completion for slash commands in TextInput
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`7ae6cb6`](https://github.com/marschhuynh/nuvin-space/commit/7ae6cb668fe7d68e264f8bfe3b365f1977b90aa8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor Button to use useFocus directly, update AutoScrollBox, clean up demo files
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`3f2fb9f`](https://github.com/marschhuynh/nuvin-space/commit/3f2fb9f7bb493328226aa6e4d3a708ee20bc3e5a) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Show main args beside tool name in ToolCallViewer
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`baef0fb`](https://github.com/marschhuynh/nuvin-space/commit/baef0fbce650664a62cef340004360bb28b95864) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Shorten tool display names and add command creation docs
+
 ## 1.35.6-rc.2
 
 ### Patch Changes
