@@ -6,7 +6,9 @@
     "@nuvin/nuvin-core": "1.18.0"
   },
   "changesets": [
+    "INSTRUCTIONS",
     "github-responses-api",
-    "lsp-history-refresh"
+    "lsp-history-refresh",
+    "recent-sessions-width-fix"
   ]
 }

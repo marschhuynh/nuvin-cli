@@ -1,5 +1,19 @@
 # @nuvin/nuvin-cli
 
+## 1.35.6-rc.1
+
+### Patch Changes
+
+- [`458f15a`](https://github.com/marschhuynh/nuvin-space/commit/458f15a831ca7f5d4c54fabfbdf5a2a9e67fcdd4) Thanks [@marschhuynh](https://github.com/marschhuynh)! - ```
+
+  3. Message should be a compact, single sentence (imperative), e.g. `Refresh LSP diagnostics after file edits.`
+  4. Commit with conventional commits (e.g. `fix: ...`, `feat: ...`, `chore: ...`).
+
+- [`9830b82`](https://github.com/marschhuynh/nuvin-space/commit/9830b82b82cf640a6846ea9fd295a7b268a153a1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix RecentSessions width calculation to prevent overflow.
+
+- Updated dependencies [[`458f15a`](https://github.com/marschhuynh/nuvin-space/commit/458f15a831ca7f5d4c54fabfbdf5a2a9e67fcdd4)]:
+  - @nuvin/nuvin-core@1.19.0-rc.1
+
 ## 1.35.6-rc.0
 
 ### Patch Changes
