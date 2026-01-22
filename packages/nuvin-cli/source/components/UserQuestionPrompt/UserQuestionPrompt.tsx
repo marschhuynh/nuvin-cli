@@ -354,7 +354,7 @@ function UserQuestionPromptContent({ questionData }: Props) {
   const handleToggle = useCallback(() => {
     if (focusedOptionIndex === null && !isOtherFocused) return;
 
-    const targetIndex = isOtherFocused ? otherIndex : focusedOptionIndex!;
+    const targetIndex = isOtherFocused ? otherIndex : (focusedOptionIndex as number);
 
     if (targetIndex === otherIndex) {
       if (customInput.trim()) {

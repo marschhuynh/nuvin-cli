@@ -468,7 +468,7 @@ export class MCPCliHandler {
     console.log(`✓ Configured ${authConfig.type} authentication for '${name}' (${this.globalScope} scope)`);
 
     if (authConfig.type === 'oauth') {
-      console.log('\nRun `nuvin mcp login ' + name + '` to authenticate.');
+      console.log(`\nRun \`nuvin mcp login ${name}\` to authenticate.`);
     }
   }
 
@@ -487,7 +487,7 @@ export class MCPCliHandler {
 
     if (config.auth?.type !== 'oauth') {
       console.error(`Error: Server '${name}' is not configured for OAuth authentication`);
-      console.log('Configure OAuth first: nuvin mcp auth ' + name + ' --oauth --client-id <id>');
+      console.log(`Configure OAuth first: nuvin mcp auth ${name} --oauth --client-id <id>`);
       process.exit(1);
     }
 
@@ -592,7 +592,7 @@ export class MCPCliHandler {
 
     if (authType === 'bearer') {
       console.log(`Status: Static bearer token configured`);
-      console.log(`Token: ${config.auth?.token ? '****' + config.auth.token.slice(-4) : 'Not set'}`);
+      console.log(`Token: ${config.auth?.token ? `****${config.auth.token.slice(-4)}` : 'Not set'}`);
       return;
     }
 

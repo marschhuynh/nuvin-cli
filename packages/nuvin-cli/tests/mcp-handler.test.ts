@@ -3,11 +3,10 @@ import { ConfigManager } from '../source/config/manager.js';
 import { MCPCliHandler, type MCPServerConfig } from '../source/config/mcp-handler.js';
 
 vi.mock('@nuvin/nuvin-core', async () => {
-  const actual = await vi.importActual('@nuvin/nuvin-core') as any;
+  const actual = await vi.importActual<typeof import('@nuvin/nuvin-core')>('@nuvin/nuvin-core');
   return {
     ...actual,
     MCPOAuthClient: class {
-      constructor() {}
       async discoverOAuthServer() {
         return {
           authorizationServerUrl: 'https://api.example.com/oauth',

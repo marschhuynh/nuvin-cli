@@ -52,6 +52,7 @@ export const AgentList: React.FC<AgentListProps> = ({
       const accentColor = theme.colors.accent;
 
       const params: React.ReactNode[] = [];
+
       if (agent.maxTokens) {
         params.push(
           <Text key="max_tokens">
@@ -94,6 +95,7 @@ export const AgentList: React.FC<AgentListProps> = ({
               <>
                 <Text dimColor> - </Text>
                 {params.map((param, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since params are static
                   <Text key={i}>
                     {param}
                     {i < params.length - 1 && <Text dimColor> - </Text>}
