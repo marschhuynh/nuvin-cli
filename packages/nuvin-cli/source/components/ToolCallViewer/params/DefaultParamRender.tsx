@@ -10,7 +10,15 @@ export const DefaultParamRender: React.FC<ToolParamRendererProps> = ({
   mainArgKey,
 }: ToolParamRendererProps) => {
   const entries = Object.entries(args).filter(
-    ([key]) => key !== 'description' && key !== mainArgKey && key !== 'lineStart' && key !== 'lineEnd'
+    ([key]) =>
+      key !== 'description' &&
+      key !== mainArgKey &&
+      key !== 'lineStart' &&
+      key !== 'lineEnd' &&
+      key !== 'filePath' &&
+      key !== 'line' &&
+      key !== 'character' &&
+      key !== 'operation'
   );
 
   if (entries.length === 0) {

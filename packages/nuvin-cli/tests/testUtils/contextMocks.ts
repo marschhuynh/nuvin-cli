@@ -305,7 +305,7 @@ export function setupContextMocks() {
   // The mocks are now set up at module level above
 }
 
-export function setupContextMocksWithOverrides(options?: {
+export function setupContextMocksWithOverrides(_options?: {
   theme?: any;
   altMode?: any;
   toolApproval?: any;

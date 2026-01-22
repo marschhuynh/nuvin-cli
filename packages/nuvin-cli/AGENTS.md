@@ -31,6 +31,54 @@ pnpm format                   # Auto-fix formatting issues
 pnpm clean                    # Remove dist/ directory
 ```
 
+## Creating New Commands
+
+Commands are registered in `source/modules/commands/definitions/`. Each command file exports a `register*Command` function:
+
+```typescript
+// source/modules/commands/definitions/mycommand.ts
+import type { CommandRegistry } from '@/modules/commands/types.js';
+
+export function registerMyCommand(registry: CommandRegistry) {
+  registry.register({
+    id: '/mycommand',           // Command invocation: /mycommand
+    type: 'function',           // 'function' | 'component'
+    description: 'Description',
+    category: 'session',        // For grouping in help
+    async handler({ eventBus, orchestratorManager, config }) {
+      // Command logic here
+      eventBus.emit('ui:line', {
+        id: crypto.randomUUID(),
+        type: 'info',
+        content: 'Command executed',
+      });
+    },
+  });
+}
+```
+
+Then register in `source/modules/commands/definitions/index.ts`:
+
+```typescript
+import { registerMyCommand } from './mycommand.js';
+
+export async function registerCommands(orchestratorManager: OrchestratorManager) {
+  // ...existing commands
+  registerMyCommand(commandRegistry);
+}
+```
+
+**Component-based commands** render interactive UI:
+```typescript
+registry.register({
+  id: '/interactive',
+  type: 'component',
+  description: 'Interactive command',
+  category: 'config',
+  Component: () => import('@/components/MyComponent.js'),
+});
+```
+
 ## CLI Entry Points and Subcommands
 
 The CLI is invoked via `source/cli.tsx` using `meow` for argument parsing. Three subcommand families exist:

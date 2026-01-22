@@ -38,7 +38,23 @@ const getMainArgument = (toolName: string, args: Record<string, unknown>): { val
       return { value: path, key: 'file_path' };
     }
     case 'grep_tool':
+    case 'glob_tool':
       return { value: args.pattern as string | undefined, key: 'pattern' };
+    case 'lsp': {
+      const operation = args.operation as string | undefined;
+      const filePath = args.filePath as string | undefined;
+      const line = args.line as number | undefined;
+      const character = args.character as number | undefined;
+      if (!filePath) return { value: operation, key: 'operation' };
+      let formatted = filePath;
+      if (line !== undefined) {
+        formatted += `:${line}`;
+        if (character !== undefined) {
+          formatted += `:${character}`;
+        }
+      }
+      return { value: operation ? `${operation} ${formatted}` : formatted, key: 'lsp_main' };
+    }
     case 'web_fetch':
       return { value: args.url as string | undefined, key: 'url' };
     default:

@@ -45,7 +45,7 @@ export function completeCommand(
   }
 
   const beforePartial = textBeforeCursor.slice(0, lastWordMatch.index);
-  const newTextBeforeCursor = beforePartial + completedCommand + ' ';
+  const newTextBeforeCursor = `${beforePartial}${completedCommand} `;
   const textAfterCursor = input.slice(cursorOffset);
 
   return {

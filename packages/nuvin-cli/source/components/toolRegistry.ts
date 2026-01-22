@@ -30,43 +30,43 @@ export type ToolMetadata = {
 
 const TOOL_REGISTRY: Record<string, ToolMetadata> = {
   file_read: {
-    displayName: 'Read file',
+    displayName: 'Read',
     statusStrategy: fileReadStrategy,
     paramRenderer: DefaultParamRender,
     collapsedByDefault: true,
   },
   file_edit: {
-    displayName: 'Edit file',
+    displayName: 'Edit',
     statusStrategy: fileEditStrategy,
     paramRenderer: FileEditParamRender,
     collapsedByDefault: false,
   },
   file_new: {
-    displayName: 'Create file',
+    displayName: 'Create',
     statusStrategy: fileNewStrategy,
     paramRenderer: FileNewParamRender,
     collapsedByDefault: true,
   },
   bash_tool: {
-    displayName: 'Run command',
+    displayName: 'Run',
     statusStrategy: bashToolStrategy,
     paramRenderer: DefaultParamRender,
     collapsedByDefault: false,
   },
   web_search: {
-    displayName: 'Search web',
+    displayName: 'Search',
     statusStrategy: webSearchStrategy,
     paramRenderer: DefaultParamRender,
     collapsedByDefault: false,
   },
   web_fetch: {
-    displayName: 'Fetch page',
+    displayName: 'Fetch',
     statusStrategy: webFetchStrategy,
     paramRenderer: DefaultParamRender,
     collapsedByDefault: false,
   },
   ls_tool: {
-    displayName: 'List directory',
+    displayName: 'List',
     statusStrategy: dirLsStrategy,
     paramRenderer: DefaultParamRender,
     collapsedByDefault: true,
@@ -78,7 +78,7 @@ const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     collapsedByDefault: false,
   },
   grep_tool: {
-    displayName: 'Search content',
+    displayName: 'Search',
     statusStrategy: grepStrategy,
     paramRenderer: DefaultParamRender,
     collapsedByDefault: false,
@@ -90,7 +90,7 @@ const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     collapsedByDefault: false,
   },
   assign_task: {
-    displayName: 'Delegate task',
+    displayName: 'Delegate',
     statusStrategy: assignTaskStrategy,
     paramRenderer: AssignTaskParamRender,
     collapsedByDefault: true,
