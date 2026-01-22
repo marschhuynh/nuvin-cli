@@ -2,6 +2,7 @@ import type React from 'react';
 import { type RefObject, useMemo, useState, useLayoutEffect, useRef } from 'react';
 import { Box, Text, measureElement, type BoxRef, type TextProps } from 'ink';
 import wrapAnsi from 'wrap-ansi';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 interface TextWrapperProps extends Omit<TextProps, 'wrap'> {
   children: string;
@@ -21,9 +22,9 @@ export const TextWrapper: React.FC<TextWrapperProps> = ({
   containerRef,
   ...textProps
 }) => {
+  const { cols } = useStdoutDimensions();
   const innerRef = useRef<BoxRef>(null);
-  const effectiveRef = containerRef ?? innerRef;
-  const [containerWidth, setContainerWidth] = useState<number | undefined>(explicitWidth);
+  const [containerWidth, setContainerWidth] = useState<number | undefined>(explicitWidth ?? cols);
 
   useLayoutEffect(() => {
     if (explicitWidth !== undefined) {
@@ -31,20 +32,25 @@ export const TextWrapper: React.FC<TextWrapperProps> = ({
       return;
     }
 
-    if (effectiveRef?.current) {
-      const { width } = measureElement(effectiveRef.current);
+    if (!containerRef?.current && innerRef.current) {
+      const { width } = measureElement(innerRef.current);
       if (width > 0) {
         setContainerWidth(width);
+        return;
       }
     }
-  }, [explicitWidth, effectiveRef]);
+
+    if (cols > 0) {
+      setContainerWidth(cols);
+    }
+  }, [explicitWidth, containerRef, cols]);
 
   const wrappedText = useMemo(() => {
     if (!children || containerWidth === undefined || containerWidth <= 0) {
       return children ?? '';
     }
 
-    return wrapAnsi(children, containerWidth, {
+    return wrapAnsi(children, containerWidth - 2, {
       trim,
       hard,
       wordWrap,

@@ -35,7 +35,7 @@ type InputAreaProps = {
   disabled?: boolean;
   mode?: 'input' | 'approval' | 'command' | 'command-menu' | 'question';
 
-  commandItems: Array<{ label: string; value: string }>;
+  commandItems: Array<{ label: string; value: string, description?: string }>;
   vimModeEnabled?: boolean;
   memory?: MemoryPort<Message> | null;
 

@@ -1,12 +1,14 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Box, Text } from 'ink';
-import { useTheme } from '@/contexts/ThemeContext.js';
+import stringWidth from 'string-width';
 import { SelectInput, type SelectInputItem, type SelectInputHandle } from '../SelectInput/SelectInput.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
+import { CommandMenuItemComponent } from './CommandMenuItem.js';
 
 export type CommandMenuItem = {
   label: string;
   value: string;
+  description?: string;
 };
 
 export type CommandMenuHandle = {
@@ -23,7 +25,6 @@ export type CommandMenuProps = {
 
 export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
   ({ items, focus = false, onHighlight }, ref) => {
-    const { theme } = useTheme();
     const { altMode } = useAltMode();
     const selectInputRef = useRef<SelectInputHandle>(null);
 
@@ -43,6 +44,8 @@ export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
       value: item,
     }));
 
+    const maxCommandWidth = Math.max(...items.map((item) => stringWidth(`${item.value} - `)));
+
     return (
       <Box flexDirection="column" flexGrow={1} width={'100%'}>
         <Box paddingX={altMode ? 1 : 0}>
@@ -54,15 +57,8 @@ export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
             enableRotation={false}
             showScrollIndicators={true}
             onHighlight={(item) => onHighlight?.(item.value)}
-            itemComponent={({ isSelected, label }) => (
-              <Text
-                color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
-                bold={isSelected}
-              >
-                {label}
-              </Text>
-            )}
-            indicatorComponent={({ isSelected }) => <Text>{isSelected ? '❯ ' : '  '}</Text>}
+            itemComponent={(props) => <CommandMenuItemComponent {...props} commandWidth={maxCommandWidth} />}
+            indicatorComponent={({ isSelected }) => <Box flexShrink={0}><Text>{isSelected ? '❯ ' : '  '}</Text></Box>}
           />
         </Box>
       </Box>

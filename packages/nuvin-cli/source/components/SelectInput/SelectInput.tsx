@@ -160,15 +160,16 @@ export const SelectInput = forwardRef<SelectInputHandle, SelectInputProps<unknow
         </Box>
       )}
 
-      {visibleItems.map((item, index) => {
+      {visibleItems.map(({ key: _key, ...item }, index) => {
         const actualIndex = startIndex + index;
         const isSelected = actualIndex === selectedIndex;
-        const key = item.key || String(actualIndex);
+        const key = _key || String(actualIndex);
+
 
         return (
           <Box key={key} width="100%">
             <IndicatorComponent isSelected={focus && isSelected} />
-            <ItemComponent isSelected={focus && isSelected} label={item.label} value={item.value} />
+            <ItemComponent isSelected={focus && isSelected} {...item} />
           </Box>
         );
       })}

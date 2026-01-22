@@ -196,7 +196,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   );
 
   const commandItems = useMemo(
-    () => commands.map((cmd) => ({ label: `${cmd.id} - ${cmd.description}`, value: cmd.id })),
+    () => commands.map((cmd) => ({ label: `${cmd.id} - ${cmd.description}`, value: cmd.id, description: cmd.description })),
     [commands],
   );
 
