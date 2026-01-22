@@ -12,6 +12,7 @@ import { useEditorState } from './useEditorState.js';
 import { useLineIndex } from './useLineIndex.js';
 import { TextInputScrollbar } from './TextInputScrollbar.js';
 import { useCursorBlink } from './useCursorBlink.js';
+import { findCommandCompletion, completeCommand } from './useCommandCompletion.js';
 
 export type Props = {
   readonly placeholder?: string;
@@ -342,7 +343,16 @@ function TextInput({
       }
 
       if (key.tab || (key.shift && key.tab)) {
-        return;
+        const completedCommand = findCommandCompletion(currentValue, currentCursorOffset);
+        if (completedCommand) {
+          const { newValue, newCursorOffset } = completeCommand(
+            currentValue,
+            currentCursorOffset,
+            completedCommand,
+          );
+          setValueRef.current(newValue, newCursorOffset);
+        }
+        return true;
       }
 
       if (key.return) {
