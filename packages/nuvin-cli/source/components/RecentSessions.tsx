@@ -48,7 +48,7 @@ const RecentSessions = ({ recentSessions }: RecentSessionsProps) => {
   const { cols } = useStdoutDimensionsContext();
 
   return (
-    <Box flexDirection="column" overflow="hidden" width={cols - 24}>
+    <Box flexDirection="column" overflow="hidden" width={cols - 26}>
       <Text color={theme.welcome.title} bold underline>
         Recent Sessions
       </Text>
