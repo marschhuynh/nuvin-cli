@@ -283,7 +283,7 @@ const cli = meow(
     const { MCPCliHandler } = await import('./config/mcp-handler.js');
     const mcpHandler = new MCPCliHandler();
     // Use raw process.argv to preserve unknown flags like --oauth, --auth-server
-    const mcpStartIndex = process.argv.findIndex((arg) => arg === 'mcp');
+    const mcpStartIndex = process.argv.indexOf('mcp');
     const mcpArgs = mcpStartIndex !== -1 ? process.argv.slice(mcpStartIndex + 1) : cli.input.slice(1);
     await mcpHandler.handleMCPCommand(mcpArgs, normalizedProfile);
     process.exit(0);

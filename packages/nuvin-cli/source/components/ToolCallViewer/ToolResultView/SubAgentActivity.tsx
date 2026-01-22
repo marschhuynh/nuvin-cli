@@ -5,7 +5,6 @@ import {
   type ToolExecutionResult,
   type SubAgentState,
   parseToolArguments,
-  type ToolArguments,
 } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters/index';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -13,6 +12,7 @@ import { ToolResultView } from './ToolResultView';
 import { ToolTimer } from '../../ToolTimer';
 import { GradientRunText } from '../../Gradient';
 import { formatCost, formatTokens } from '@/utils/formatters';
+import { getToolDisplayName } from '@/components/toolRegistry';
 
 type SubAgentActivityProps = {
   toolCall: ToolCall;
@@ -21,96 +21,38 @@ type SubAgentActivityProps = {
   messageId: string;
 };
 
-/**
- * Extract the most relevant parameter for display based on tool name
- */
-const extractRelevantParameter = (toolName: string, args: ToolArguments): string | undefined => {
-  // Always prefer description if available
-  if ('description' in args && args.description) {
-    return args.description;
-  }
-
-  // Tool-specific parameter extraction using discriminated union by name
+const getMainArgument = (toolName: string, args: Record<string, unknown>): string | undefined => {
   switch (toolName) {
     case 'bash_tool':
-      if ('cmd' in args) return args.cmd;
-      break;
-
+      return args.cmd as string | undefined;
     case 'file_read':
-      if ('path' in args) {
-        let value = args.path;
-        if ('lineStart' in args && 'lineEnd' in args && args.lineStart && args.lineEnd) {
-          value += ` (lines ${args.lineStart}-${args.lineEnd})`;
-        }
-        return value;
-      }
-      break;
-
-    case 'file_edit':
-    case 'file_new':
-      if ('file_path' in args) return args.file_path;
-      break;
-
     case 'ls_tool':
-      if ('path' in args) {
-        let value = args.path || '.';
-        if ('limit' in args && args.limit) {
-          value += ` (limit: ${args.limit})`;
+      return args.path as string | undefined;
+    case 'file_new':
+    case 'file_edit':
+      return args.file_path as string | undefined;
+    case 'grep_tool':
+    case 'glob_tool':
+      return args.pattern as string | undefined;
+    case 'lsp': {
+      const filePath = args.filePath as string | undefined;
+      const line = args.line as number | undefined;
+      const character = args.character as number | undefined;
+      if (!filePath) return args.operation as string | undefined;
+      let formatted = filePath;
+      if (line !== undefined) {
+        formatted += `:${line}`;
+        if (character !== undefined) {
+          formatted += `:${character}`;
         }
-        return value;
       }
-      return '.';
-
-    case 'web_search':
-      if ('query' in args) {
-        let value = args.query;
-        if ('count' in args && args.count) {
-          value += ` (${args.count} results)`;
-        }
-        return value;
-      }
-      break;
-
+      return formatted;
+    }
     case 'web_fetch':
-      if ('url' in args) return args.url;
-      break;
-
-    case 'assign_task':
-      if ('agent' in args && 'task' in args) {
-        const taskDisplay = 'description' in args && args.description ? args.description : args.task.substring(0, 50);
-        return `${args.agent}: ${taskDisplay}`;
-      }
-      break;
-
-    case 'todo_write':
-      if ('todos' in args && Array.isArray(args.todos)) {
-        // Check for status changes to show specific item updates
-        const completedItems = args.todos.filter((todo) => todo.status === 'completed');
-        const inProgressItems = args.todos.filter((todo) => todo.status === 'in_progress');
-
-        if (completedItems.length === 1 && args.todos.length > 1) {
-          // Show specific item completion
-          const completedItem = completedItems[0];
-          return `${completedItem.content} => Done`;
-        } else if (inProgressItems.length === 1 && args.todos.length > 1) {
-          // Show specific item started
-          const inProgressItem = inProgressItems[0];
-          return `${inProgressItem.content} => In Progress`;
-        }
-
-        return `${args.todos.length} todos`;
-      }
-      break;
-
+      return args.url as string | undefined;
     default:
-      // For unknown tools, try to find a meaningful parameter
-      if ('name' in args && typeof args.name === 'string') return args.name;
-      if ('id' in args && typeof args.id === 'string') return args.id;
-      if ('value' in args && typeof args.value === 'string') return args.value;
-      break;
+      return undefined;
   }
-
-  return undefined;
 };
 
 /**
@@ -167,7 +109,6 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
         flexShrink={0}
         top={0}
         position="sticky"
-        backgroundColor={theme.colors.background}
       >
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
@@ -195,14 +136,14 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
 
             if (toolCall.arguments) {
               try {
-              const args = parseToolArguments(toolCall.arguments);
-              const relevantValue = extractRelevantParameter(toolCall.name, args);
+                const args = parseToolArguments(toolCall.arguments) as Record<string, unknown>;
+                const mainArg = getMainArgument(toolCall.name, args);
 
-              if (relevantValue) {
-                argsDisplay = ` ${relevantValue}`;
-              }
+                if (mainArg) {
+                  argsDisplay = ` ${mainArg}`;
+                }
               } catch {
-              // Ignore parse errors
+                // Ignore parse errors
               }
             }
 
@@ -218,16 +159,16 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
             }
 
             return (
-              <Box key={toolCall.id} flexDirection="column" width={'100%'}>
-              <Box flexDirection="row" height={1}>
+              <Box key={toolCall.id} width={'100%'} overflow='hidden' flexDirection="row" height={1}>
                 {statusIcon ? <Text color={statusIconColor}>{statusIcon}</Text> : null}
-                <Box flexWrap="nowrap">
-                <Text dimColor>{toolCall.name}</Text>
-                <Text dimColor wrap="truncate-end">
-                  {argsDisplay}
-                </Text>
+                <Box flexWrap="nowrap" width="100%" overflow="hidden">
+                  <Text wrap="truncate-middle" dimColor>
+                    <Text dimColor={false}>{getToolDisplayName(toolCall.name)}</Text>
+                    <Text dimColor wrap="truncate-middle">
+                      {argsDisplay}
+                    </Text>
+                  </Text>
                 </Box>
-              </Box>
               </Box>
             );
           })}
