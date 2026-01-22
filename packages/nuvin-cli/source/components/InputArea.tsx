@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
 import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
+import { findCommandCompletion, completeCommand } from './TextInput/useCommandCompletion.js';
 import { CommandMenu, type CommandMenuHandle, type CommandMenuItem } from './CommandMenu/index.js';
 
 type VimMode = 'insert' | 'normal';
@@ -237,6 +238,22 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     const handleTextInputUpArrow = showCommandMenu ? undefined : handleUpArrow;
     const handleTextInputDownArrow = showCommandMenu ? undefined : handleDownArrow;
 
+    const handleTab = useCallback(
+      (value: string, cursorOffset: number, isShiftTab: boolean) => {
+        const completedCommand = findCommandCompletion(value, cursorOffset);
+        if (completedCommand) {
+          const { newValue, newCursorOffset } = completeCommand(
+            value,
+            cursorOffset,
+            completedCommand,
+          );
+          return { value: newValue, cursorOffset: newCursorOffset };
+        }
+        return undefined;
+      },
+      [],
+    );
+
     const inputProps = {
       borderStyle: 'single' as const,
       borderBottomDimColor: true,
@@ -285,6 +302,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
               onVimModeChange={handleVimModeChange}
               onUpArrow={handleTextInputUpArrow}
               onDownArrow={handleTextInputDownArrow}
+              onTab={handleTab}
               maxLines={10}
             />
           </Box>

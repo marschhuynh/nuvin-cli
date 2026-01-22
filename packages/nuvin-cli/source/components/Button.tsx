@@ -11,11 +11,12 @@ interface ButtonProps {
   autoFocus?: boolean;
   disabled?: boolean;
   focusId?: string;
+  tabIndex?: number;
 }
 
-export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus, disabled, focusId }) => {
+export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus, disabled, focusId, tabIndex }) => {
   const { theme } = useTheme();
-  const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId });
+  const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId, tabIndex });
 
   useInput(
     (_input, key) => {

@@ -10,6 +10,8 @@ import { useAgentModalState } from './useAgentModalState.js';
 import { AgentList } from './AgentList.js';
 import { useInput } from '@/contexts/InputContext/index.js';
 
+const MODAL_HEIGHT = 30;
+
 export interface AgentInfo extends CompleteAgent {
   isDefault: boolean;
 }
@@ -68,7 +70,7 @@ export const AgentConfigurationModal: React.FC<AgentModalProps> = ({
 
   if (!visible) return null;
 
-  const modalHeight = rows - 4;
+  const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
 
   const footerContent = (
     <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>

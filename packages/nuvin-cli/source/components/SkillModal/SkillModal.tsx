@@ -9,6 +9,8 @@ import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useSkillModalState } from './useSkillModalState.js';
 import { SkillList } from './SkillList.js';
 
+const MODAL_HEIGHT = 30;
+
 interface SkillModalProps {
   visible: boolean;
   skills: SkillInfo[];
@@ -29,7 +31,7 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
   onSkillEdit,
 }) => {
   const { theme } = useTheme();
-  useStdoutDimensions();
+  const { rows } = useStdoutDimensions();
 
   const state = useSkillModalState(skills, enabledSkills, initialSelectedIndex);
 
@@ -51,7 +53,7 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
 
   if (!visible) return null;
 
-  // const modalHeight = rows - 4;
+  const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
 
   const footerContent = (
     <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>
@@ -80,7 +82,7 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
       paddingX={1}
       paddingY={0}
       footer={footerContent}
-      height="100%"
+      height={modalHeight}
     >
       {skills.length === 0 ? (
         <Box marginX={1} flexDirection="column">

@@ -12,6 +12,8 @@ import TextInput from '@/components/TextInput/index.js';
 import { Focusable } from '@/components/Focusable/index.js';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
 
+const MODAL_HEIGHT = 30;
+
 interface CommandFormProps {
   mode: 'create' | 'edit';
   command: Partial<CustomCommandTemplate>;
@@ -38,9 +40,10 @@ const ScopeSelector: React.FC<{
   editedScope: CommandSource;
   activeProfile?: string;
   onScopeChange: (direction: 'left' | 'right') => void;
-}> = ({ availableScopes, editedScope, activeProfile, onScopeChange }) => {
+  tabIndex?: number;
+}> = ({ availableScopes, editedScope, activeProfile, onScopeChange, tabIndex }) => {
   const { theme } = useTheme();
-  const { isFocused } = useFocus({ active: true });
+  const { isFocused } = useFocus({ active: true, tabIndex });
 
   useInput(
     (_input, key) => {
@@ -117,7 +120,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
   const promptMaxLines = Math.max(3, rows - 22);
 
   return (
-    <AppModal visible={true} title={title} footer={footerContent}>
+    <AppModal visible={true} title={title} footer={footerContent} height={Math.min(MODAL_HEIGHT, rows - 4)}>
       <Box flexDirection="column">
         {error && (
           <Box marginBottom={1}>
@@ -137,6 +140,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             value={editedName}
             onChange={(value) => onFieldChange('name', value)}
             autoFocus
+            tabIndex={1}
           />
         </Box>
 
@@ -145,6 +149,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             label="Description:"
             value={editedDescription}
             onChange={(value) => onFieldChange('description', value)}
+            tabIndex={2}
           />
         </Box>
 
@@ -154,11 +159,12 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             editedScope={editedScope}
             activeProfile={activeProfile}
             onScopeChange={onScopeChange}
+            tabIndex={3}
           />
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
-          <Focusable>
+          <Focusable tabIndex={4}>
             {({ isFocused }) => (
               <Box flexDirection="column">
                 <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
@@ -183,7 +189,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
 
         {mode === 'edit' && onDelete && (
           <Box marginY={1}>
-            <Button label="Delete Command" onSubmit={onDelete} variant="danger" />
+            <Button label="Delete Command" onSubmit={onDelete} variant="danger" tabIndex={5} />
           </Box>
         )}
       </Box>

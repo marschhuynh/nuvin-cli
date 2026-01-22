@@ -62,7 +62,13 @@ export const AppModal: FC<AppModalProps> = ({
   if (!visible) return null;
 
   return (
-    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.modal.background} flexGrow={1}>
+    <Box
+      height={height}
+      flexDirection="column"
+      width="100%"
+      backgroundColor={theme.modal.background}
+      flexGrow={1}
+    >
       <Box flexWrap="wrap" justifyContent="space-between" backgroundColor={globalTheme.modal.titleBackground} flexShrink={0}>
         {title ? (
           <Box>

@@ -27,6 +27,7 @@ export type Props = {
   readonly onVimModeChange?: (mode: 'insert' | 'normal') => void;
   readonly onUpArrow?: (lineInfo: LineInfo) => void;
   readonly onDownArrow?: (lineInfo: LineInfo) => void;
+  readonly onTab?: (value: string, cursorOffset: number, isShiftTab: boolean) => { value: string; cursorOffset: number } | void;
   readonly maxLines?: number;
   readonly showScrollbar?: boolean;
   readonly scrollbarColor?: string;
@@ -45,6 +46,7 @@ function TextInput({
   onVimModeChange,
   onUpArrow,
   onDownArrow,
+  onTab,
   maxLines,
   showScrollbar = true,
   scrollbarColor,
@@ -343,16 +345,14 @@ function TextInput({
       }
 
       if (key.tab || (key.shift && key.tab)) {
-        const completedCommand = findCommandCompletion(currentValue, currentCursorOffset);
-        if (completedCommand) {
-          const { newValue, newCursorOffset } = completeCommand(
-            currentValue,
-            currentCursorOffset,
-            completedCommand,
-          );
-          setValueRef.current(newValue, newCursorOffset);
+        if (onTab) {
+          const result = onTab(currentValue, currentCursorOffset, key.shift === true);
+          if (result) {
+            setValueRef.current(result.value, result.cursorOffset);
+          }
+          return true;
         }
-        return true;
+        return;
       }
 
       if (key.return) {

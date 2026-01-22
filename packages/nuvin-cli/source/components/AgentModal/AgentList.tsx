@@ -79,7 +79,7 @@ export const AgentList: React.FC<AgentListProps> = ({
       }
 
       return (
-        <Box flexDirection="column" marginBottom={1}>
+        <Box flexDirection="column">
           <Box>
             <Text color={statusColor} bold>
               {statusIcon}

@@ -6,10 +6,12 @@ import { FormTextInput } from '@/components/FormTextInput.js';
 import { ToolSelectInput } from './ToolSelectInput.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
-import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { HelpText } from '@/components/HelpText.js';
 import { AutoScrollBox } from '@/components/AutoScrollBox.js';
 import { Focusable } from '@/components/Focusable/index.js';
+import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
+
+const MODAL_HEIGHT = 30;
 
 interface AgentFormProps {
   mode: 'create' | 'edit';
@@ -51,7 +53,7 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
   onFieldChange,
   onToolsChange,
 }) => {
-  const { cols } = useStdoutDimensions();
+  const { rows, cols } = useStdoutDimensions();
   const { theme } = useTheme();
 
   const editingTitle = mode === 'edit' ? 'Edit Agent' : 'Edit Generated Agent';
@@ -71,8 +73,10 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
     </Box>
   );
 
+  const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
+
   return (
-    <AppModal visible={true} title={editingTitle} footer={footerContent}>
+    <AppModal visible={true} title={editingTitle} footer={footerContent} height={modalHeight}>
       <Box flexDirection="column" marginTop={1}>
         {error ? (
           <Box marginBottom={1}>
@@ -93,6 +97,7 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
               value={editedName}
               onChange={(value) => onFieldChange('name', value)}
               autoFocus
+              tabIndex={1}
             />
           </Box>
 
@@ -101,11 +106,12 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
               label={`ID${mode === 'edit' ? '' : ' (auto-gen)'}:`}
               value={editedId}
               onChange={(value) => onFieldChange('id', value)}
+              tabIndex={2}
             />
           </Box>
 
           <Box flexGrow={1} width={cols / 4}>
-            <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} placeHolder="(inherited)" />
+            <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} placeHolder="(inherited)" tabIndex={3} />
           </Box>
 
           <Box flexGrow={1} width={cols / 4}>
@@ -113,12 +119,13 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
               label="Temp (0-2):"
               value={editedTemperature}
               onChange={(value) => onFieldChange('temperature', value)}
+              tabIndex={4}
             />
           </Box>
         </ResponsiveBox>
 
         <Box flexDirection="column" marginBottom={1}>
-          <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} />
+          <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} tabIndex={5} />
         </Box>
 
         <Box marginBottom={1}>
@@ -126,10 +133,11 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
             label="Description:"
             value={editedDescription}
             onChange={(value) => onFieldChange('description', value)}
+            tabIndex={6}
           />
         </Box>
 
-        <Focusable>
+        <Focusable tabIndex={7}>
           {({ isFocused }) => (
             <Box flexDirection="column" marginBottom={1}>
               <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>

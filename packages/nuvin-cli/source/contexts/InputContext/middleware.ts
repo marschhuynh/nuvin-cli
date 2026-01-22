@@ -28,8 +28,4 @@ export const focusCycleMiddleware: InputMiddleware = (_input, key, next) => {
   next();
 };
 
-export const defaultMiddleware: InputMiddleware[] = [
-  ctrlCMiddleware,
-  pasteDetectionMiddleware,
-  focusCycleMiddleware,
-];
+export const defaultMiddleware: InputMiddleware[] = [ctrlCMiddleware, pasteDetectionMiddleware, focusCycleMiddleware];

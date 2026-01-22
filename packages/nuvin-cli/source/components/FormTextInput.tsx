@@ -11,6 +11,7 @@ interface FormTextInputProps {
   autoFocus?: boolean;
   hint?: string;
   placeHolder?: string;
+  tabIndex?: number;
 }
 
 export const FormTextInput: React.FC<FormTextInputProps> = ({
@@ -20,10 +21,11 @@ export const FormTextInput: React.FC<FormTextInputProps> = ({
   autoFocus,
   hint,
   placeHolder,
+  tabIndex,
 }) => {
   const { theme } = useTheme();
   return (
-    <Focusable autoFocus={autoFocus}>
+    <Focusable autoFocus={autoFocus} tabIndex={tabIndex}>
       {({ isFocused }) => (
         <Box flexDirection="column">
           <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>

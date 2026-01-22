@@ -11,11 +11,20 @@ import {
 } from 'react';
 import { eventBus } from '../../services/EventBus.js';
 
+interface FocusableEntry {
+  id: string;
+  tabIndex: number;
+  registrationOrder: number;
+}
+
+const DEFAULT_TAB_INDEX = 0;
+
 interface FocusContextInternal {
   focusedId: string | null;
   setFocusedId: (id: string | null) => void;
   clearFocus: () => void;
-  focusableIdsRef: React.MutableRefObject<Set<string>>;
+  focusableEntriesRef: React.MutableRefObject<Map<string, FocusableEntry>>;
+  registrationCounterRef: React.MutableRefObject<number>;
   cycleFocus: (direction?: 'forward' | 'backward') => void;
 }
 
@@ -37,19 +46,28 @@ interface FocusCycleValue {
 
 const FocusContext = createContext<FocusContextInternal | undefined>(undefined);
 
-export function FocusProvider({ children }: { children: ReactNode }) {
+export function FocusProvider({ children, active = true }: { children: ReactNode; active?: boolean }) {
   const [focusedId, setFocusedIdState] = useState<string | null>(null);
-  const focusableIdsRef = useRef<Set<string>>(new Set());
+  const focusableEntriesRef = useRef<Map<string, FocusableEntry>>(new Map());
+  const registrationCounterRef = useRef(0);
 
   const setFocusedId = useCallback((id: string | null) => {
     setFocusedIdState(id);
   }, []);
 
   const cycleFocus = useCallback((direction: 'forward' | 'backward' = 'forward') => {
-    const ids = Array.from(focusableIdsRef.current);
-    if (ids.length === 0) {
+    const entries = Array.from(focusableEntriesRef.current.values());
+    if (entries.length === 0) {
       return;
     }
+
+    entries.sort((a, b) => {
+      if (a.tabIndex !== b.tabIndex) {
+        return a.tabIndex - b.tabIndex;
+      }
+      return a.registrationOrder - b.registrationOrder;
+    });
+    const ids = entries.map((e) => e.id);
 
     setFocusedIdState((currentFocusedId) => {
       const currentIndex = currentFocusedId ? ids.indexOf(currentFocusedId) : -1;
@@ -61,12 +79,13 @@ export function FocusProvider({ children }: { children: ReactNode }) {
         nextIndex = currentIndex <= 0 ? ids.length - 1 : currentIndex - 1;
       }
 
-      const nextId = ids[nextIndex] || null;
-      return nextId;
+      return ids[nextIndex] || null;
     });
   }, []);
 
   useEffect(() => {
+    if (!active) return;
+    
     const handleFocusCycle = (direction: 'forward' | 'backward') => {
       cycleFocus(direction);
     };
@@ -76,14 +95,14 @@ export function FocusProvider({ children }: { children: ReactNode }) {
     return () => {
       eventBus.off('ui:focus:cycle', handleFocusCycle);
     };
-  }, [cycleFocus]);
+  }, [cycleFocus, active]);
 
   const clearFocus = useCallback(() => {
     setFocusedIdState(null);
   }, []);
 
   const value = useMemo(
-    () => ({ focusedId, setFocusedId, clearFocus, focusableIdsRef, cycleFocus }),
+    () => ({ focusedId, setFocusedId, clearFocus, focusableEntriesRef, registrationCounterRef, cycleFocus }),
     [focusedId, setFocusedId, clearFocus, cycleFocus],
   );
 
@@ -91,7 +110,7 @@ export function FocusProvider({ children }: { children: ReactNode }) {
 }
 
 export function useFocus(
-  { active, autoFocus, id: customId }: { active?: boolean; autoFocus?: boolean; id?: string } = { active: true, autoFocus: false },
+  { active = true, autoFocus = false, id: customId, tabIndex = DEFAULT_TAB_INDEX }: { active?: boolean; autoFocus?: boolean; id?: string; tabIndex?: number } = {},
 ): FocusContextValue {
   const context = useContext(FocusContext);
   if (!context) {
@@ -100,7 +119,7 @@ export function useFocus(
 
   const generatedId = useId();
   const id = customId ?? generatedId;
-  const { focusedId, setFocusedId, clearFocus: contextClearFocus, focusableIdsRef } = context;
+  const { focusedId, setFocusedId, clearFocus: contextClearFocus, focusableEntriesRef, registrationCounterRef } = context;
 
   const isFocused = focusedId === id;
 
@@ -113,14 +132,12 @@ export function useFocus(
   }, [contextClearFocus]);
 
   const register = useCallback(() => {
-    if (focusableIdsRef.current.has(id)) {
-      console.warn(`[FocusContext] Duplicate focus id detected: "${id}". This may cause unexpected focus behavior.`);
-    }
-    focusableIdsRef.current.add(id);
+    const order = registrationCounterRef.current++;
+    focusableEntriesRef.current.set(id, { id, tabIndex, registrationOrder: order });
     return () => {
-      focusableIdsRef.current.delete(id);
+      focusableEntriesRef.current.delete(id);
     };
-  }, [id, focusableIdsRef]);
+  }, [id, focusableEntriesRef, registrationCounterRef, tabIndex]);
 
   useEffect(() => {
     if (!active) return;
@@ -144,7 +161,7 @@ export function useFocusCycle(): FocusCycleValue {
     throw new Error('useFocusCycle must be used within FocusProvider');
   }
 
-  const { cycleFocus, focusableIdsRef, focusedId, setFocusedId } = context;
+  const { cycleFocus, focusableEntriesRef, focusedId, setFocusedId } = context;
 
   const cycleNext = useCallback(() => {
     cycleFocus('forward');
@@ -155,8 +172,15 @@ export function useFocusCycle(): FocusCycleValue {
   }, [cycleFocus]);
 
   const getFocusableIds = useCallback(() => {
-    return Array.from(focusableIdsRef.current);
-  }, [focusableIdsRef]);
+    return Array.from(focusableEntriesRef.current.values())
+      .sort((a, b) => {
+        if (a.tabIndex !== b.tabIndex) {
+          return a.tabIndex - b.tabIndex;
+        }
+        return a.registrationOrder - b.registrationOrder;
+      })
+      .map((e) => e.id);
+  }, [focusableEntriesRef]);
 
   return useMemo(() => ({ cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds }), [cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds]);
 }

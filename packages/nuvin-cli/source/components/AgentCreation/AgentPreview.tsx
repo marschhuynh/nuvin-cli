@@ -6,6 +6,9 @@ import { FocusProvider, useFocus } from '@/contexts/InputContext/FocusContext.js
 import { AppModal } from '@/components/AppModal.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { HelpText } from '@/components/HelpText.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
+
+const MODAL_HEIGHT = 30;
 
 interface AgentPreviewProps {
   preview: Partial<AgentTemplate> & { systemPrompt: string };
@@ -46,6 +49,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ label, onExecute, autoFocus
 };
 
 const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onEdit }) => {
+  const { rows } = useStdoutDimensions();
   const { theme } = useTheme();
   const footerContent = (
     <Box marginLeft={1} flexGrow={1} marginRight={1}>
@@ -63,7 +67,7 @@ const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onE
   );
 
   return (
-    <AppModal visible={true} title="Preview Generated Agent" footer={footerContent}>
+    <AppModal visible={true} title="Preview Generated Agent" footer={footerContent} height={Math.min(MODAL_HEIGHT, rows - 4)}>
       <Box flexDirection="column" marginTop={1}>
         <Box marginBottom={1}>
           <Text color={theme.colors.primary} bold>

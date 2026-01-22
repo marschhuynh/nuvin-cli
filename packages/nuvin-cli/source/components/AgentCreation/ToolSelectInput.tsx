@@ -2,20 +2,47 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
-import { useFocus } from '@/contexts/InputContext/FocusContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { HelpText } from '../HelpText';
+import { Focusable } from '../Focusable/index.js';
 
 interface ToolSelectInputProps {
   availableTools: string[];
   selectedTools: string[];
   onChange: (nextTools: string[]) => void;
+  tabIndex?: number;
 }
 
-export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools, selectedTools, onChange }) => {
+export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools, selectedTools, onChange, tabIndex }) => {
   const { theme } = useTheme();
-  const { isFocused } = useFocus({ active: true });
   const [highlightIndex, setHighlightIndex] = useState(0);
+
+  return (
+    <Focusable tabIndex={tabIndex}>
+      {({ isFocused }) => (
+        <ToolSelectInputContent
+          isFocused={isFocused}
+          availableTools={availableTools}
+          selectedTools={selectedTools}
+          onChange={onChange}
+          highlightIndex={highlightIndex}
+          setHighlightIndex={setHighlightIndex}
+          theme={theme}
+        />
+      )}
+    </Focusable>
+  );
+};
+
+const ToolSelectInputContent: React.FC<{
+  isFocused: boolean;
+  availableTools: string[];
+  selectedTools: string[];
+  onChange: (nextTools: string[]) => void;
+  highlightIndex: number;
+  setHighlightIndex: React.Dispatch<React.SetStateAction<number>>;
+  theme: any;
+}> = ({ isFocused, availableTools, selectedTools, onChange, highlightIndex, setHighlightIndex, theme }) => {
 
   const combinedTools = useMemo(() => {
     const ordered = [...availableTools];
@@ -56,10 +83,6 @@ export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools
 
   useInput(
     (input, key) => {
-      if (!isFocused || combinedTools.length === 0) {
-        return;
-      }
-
       if (key.upArrow || key.leftArrow) {
         setHighlightIndex((prev) => (prev <= 0 ? combinedTools.length - 1 : prev - 1));
         return true;

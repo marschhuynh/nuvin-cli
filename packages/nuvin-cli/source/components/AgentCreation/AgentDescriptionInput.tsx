@@ -3,6 +3,9 @@ import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import TextInput from '@/components/TextInput/index.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
+
+const MODAL_HEIGHT = 30;
 
 interface AgentDescriptionInputProps {
   description: string;
@@ -11,10 +14,11 @@ interface AgentDescriptionInputProps {
 }
 
 export const AgentDescriptionInput: React.FC<AgentDescriptionInputProps> = ({ description, onChange, onSubmit }) => {
+  const { rows } = useStdoutDimensions();
   const { theme } = useTheme();
 
   return (
-    <AppModal visible={true} title="Create New Agent">
+    <AppModal visible={true} title="Create New Agent" height={Math.min(MODAL_HEIGHT, rows - 4)}>
       <Box flexDirection="column" marginTop={1}>
         <Text color={theme.modal.help}>
           Describe what you want this agent to do. Be specific about its role, expertise, and approach.

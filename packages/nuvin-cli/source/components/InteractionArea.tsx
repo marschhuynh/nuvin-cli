@@ -238,14 +238,14 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ActiveCommand />
           </Box>
         ) : (
-          <Box flexShrink={1} zIndex={10}>
+          <Box flexShrink={0} zIndex={10}>
             <ActiveCommand />
           </Box>
         );
 
       default:
         return (
-          <Box flexDirection="column" marginTop={3} position="relative" flexShrink={0}>
+          <Box flexDirection="column" marginTop={2} position="relative" flexShrink={0}>
             {queuedMessages.length > 0 && (
               <Box flexDirection="row" marginLeft={2}>
                 <Text color={theme.colors.secondary} dimColor>

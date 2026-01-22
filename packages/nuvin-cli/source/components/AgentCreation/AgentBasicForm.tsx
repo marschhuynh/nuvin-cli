@@ -6,9 +6,11 @@ import { Button } from '@/components/Button.js';
 import { FormTextInput } from '@/components/FormTextInput.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
-import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { HelpText } from '@/components/HelpText.js';
 import { ToolSelectInput } from './ToolSelectInput.js';
+import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
+
+const MODAL_HEIGHT = 30;
 
 interface AgentBasicFormProps {
   mode: 'create' | 'edit';
@@ -55,13 +57,13 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
   onNavigateToSystemPrompt: _onNavigateToSystemPrompt,
   onDelete,
 }) => {
-  const { cols } = useStdoutDimensions();
   const { theme } = useTheme();
+  const { cols, rows } = useStdoutDimensions();
 
   const editingTitle = mode === 'edit' ? 'Edit Agent' : 'Edit Generated Agent';
 
   const footerContent = (
-    <Box marginLeft={1} flexGrow={1} marginRight={1}>
+    <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>
       <HelpText
         segments={[
           { text: 'Tab', highlight: true },
@@ -77,67 +79,75 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
     </Box>
   );
 
+  const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
+
   return (
-    <AppModal visible={true} title={editingTitle} footer={footerContent}>
-      <Box flexDirection="column">
-        {error ? (
+    <AppModal visible={true} title={editingTitle} footer={footerContent} height={modalHeight}>
+      <Box flexDirection="column" flexShrink={1} height={"100%"}>
+        <Box flexGrow={1} flexDirection="column" flexShrink={1}>
+          {error ? (
+            <Box marginBottom={1}>
+              <Text color={theme.colors.error}>{error}</Text>
+            </Box>
+          ) : null}
+
           <Box marginBottom={1}>
-            <Text color={theme.colors.error}>{error}</Text>
+            <Text color={theme.colors.primary} bold>
+              {preview.name || 'Custom Agent'}
+            </Text>
           </Box>
-        ) : null}
 
-        <Box marginBottom={1}>
-          <Text color={theme.colors.primary} bold>
-            {preview.name || 'Custom Agent'}
-          </Text>
-        </Box>
+          <ResponsiveBox marginBottom={1} gap={2}>
+            <Box flexGrow={1} width={cols / 4}>
+              <FormTextInput
+                label="Name:"
+                value={editedName}
+                onChange={(value) => onFieldChange('name', value)}
+                autoFocus
+                tabIndex={1}
+              />
+            </Box>
 
-        <ResponsiveBox marginBottom={1} gap={2}>
-          <Box flexGrow={1} width={cols / 4}>
+            <Box flexGrow={1} width={cols / 4}>
+              <FormTextInput
+                label={`ID${mode === 'edit' ? '' : ' (auto-gen)'}:`}
+                value={editedId}
+                onChange={(value) => onFieldChange('id', value)}
+                tabIndex={2}
+              />
+            </Box>
+
+            <Box flexGrow={1} width={cols / 4}>
+              <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} tabIndex={3} />
+            </Box>
+
+            <Box flexGrow={1} width={cols / 4}>
+              <FormTextInput
+                label="Temp (0-2):"
+                value={editedTemperature}
+                onChange={(value) => onFieldChange('temperature', value)}
+                tabIndex={4}
+              />
+            </Box>
+          </ResponsiveBox>
+
+          <Box flexDirection="column" marginBottom={1}>
+            <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} tabIndex={5} />
+          </Box>
+
+          <Box marginBottom={1}>
             <FormTextInput
-              label="Name:"
-              value={editedName}
-              onChange={(value) => onFieldChange('name', value)}
-              autoFocus
+              label="Description:"
+              value={editedDescription}
+              onChange={(value) => onFieldChange('description', value)}
+              tabIndex={6}
             />
           </Box>
-
-          <Box flexGrow={1} width={cols / 4}>
-            <FormTextInput
-              label={`ID${mode === 'edit' ? '' : ' (auto-gen)'}:`}
-              value={editedId}
-              onChange={(value) => onFieldChange('id', value)}
-            />
-          </Box>
-
-          <Box flexGrow={1} width={cols / 4}>
-            <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} />
-          </Box>
-
-          <Box flexGrow={1} width={cols / 4}>
-            <FormTextInput
-              label="Temp (0-2):"
-              value={editedTemperature}
-              onChange={(value) => onFieldChange('temperature', value)}
-            />
-          </Box>
-        </ResponsiveBox>
-
-        <Box flexDirection="column" marginBottom={1}>
-          <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} />
-        </Box>
-
-        <Box marginBottom={1}>
-          <FormTextInput
-            label="Description:"
-            value={editedDescription}
-            onChange={(value) => onFieldChange('description', value)}
-          />
         </Box>
 
         {mode === 'edit' && !isDefault && onDelete && (
-          <Box marginY={1}>
-            <Button label="Delete Agent" onSubmit={onDelete} variant="danger" />
+          <Box marginY={1} alignItems="flex-end">
+            <Button label="Delete Agent" onSubmit={onDelete} variant="danger" tabIndex={7} />
           </Box>
         )}
       </Box>

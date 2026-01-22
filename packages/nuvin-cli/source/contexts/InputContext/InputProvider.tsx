@@ -337,7 +337,7 @@ export const InputProvider: React.FC<Props> = ({
 
   return (
     <InputContext.Provider value={contextValue}>
-      <FocusProvider>{children}</FocusProvider>
+      <FocusProvider active={false}>{children}</FocusProvider>
     </InputContext.Provider>
   );
 };

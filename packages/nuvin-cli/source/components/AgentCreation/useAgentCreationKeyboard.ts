@@ -72,15 +72,7 @@ export const useAgentCreationKeyboard = ({
           return;
         }
 
-        if (key.tab && !key.shift) {
-          eventBus.emit('ui:focus:cycle', 'forward');
-          return;
-        }
-
-        if (key.tab && key.shift) {
-          eventBus.emit('ui:focus:cycle', 'backward');
-          return;
-        }
+        // Tab/Shift+Tab are handled by focusCycleMiddleware, no need to emit here
       }
     },
     { isActive: visible },

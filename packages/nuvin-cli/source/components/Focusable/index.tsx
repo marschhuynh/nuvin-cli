@@ -6,10 +6,11 @@ interface FocusableProps {
   autoFocus?: boolean;
   disabled?: boolean;
   focusId?: string;
+  tabIndex?: number;
 }
 
-export const Focusable: React.FC<FocusableProps> = ({ children, autoFocus, disabled, focusId }) => {
-  const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId });
+export const Focusable: React.FC<FocusableProps> = ({ children, autoFocus, disabled, focusId, tabIndex }) => {
+  const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId, tabIndex });
   return <>{children({ isFocused: disabled ? false : isFocused })}</>;
 };
 

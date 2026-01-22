@@ -50,7 +50,7 @@ export const SkillList: React.FC<SkillListProps> = ({
       const isGlobal = skill.location.includes('/.claude/') || skill.location.includes('/.nuvin/');
 
       return (
-        <Box flexDirection="column" marginBottom={1}>
+        <Box flexDirection="column">
           <Box>
             <Text color={statusColor} bold>
               {statusIcon}

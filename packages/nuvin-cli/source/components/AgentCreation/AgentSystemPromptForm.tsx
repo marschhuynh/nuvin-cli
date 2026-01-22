@@ -46,7 +46,7 @@ const AgentSystemPromptFormContent: React.FC<AgentSystemPromptFormProps> = ({
     </Box>
   );
 
-  const maxLines = Math.max(5, rows - 10);
+  const maxLines = Math.min(24, rows - 10);
 
   return (
     <AppModal visible={true} title={title} footer={footerContent}>
