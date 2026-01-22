@@ -35,7 +35,8 @@ export function TextInputScrollbar({
   return (
     <Box flexDirection="column" flexShrink={0} marginLeft={1}>
       {track.map((char, i) => (
-        <Text key={`scrollbar-${i}`} color={char === '┃' ? color : trackColor}>
+        // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
+        <Text key={`scrollbar-track-${i}`} color={char === '┃' ? color : trackColor}>
           {char}
         </Text>
       ))}

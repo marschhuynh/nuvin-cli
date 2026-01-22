@@ -224,26 +224,26 @@ export const mockUseFocus = {
 export const mockUseInput = vi.fn();
 export const mockUseMouse = vi.fn();
 
-export function createThemeMock(overrides?: any) {
+export function createThemeMock(overrides?: Partial<typeof mockTheme>) {
   return () => ({
     theme: overrides ? { ...mockTheme, ...overrides } : mockTheme,
-    getColor: vi.fn((path: string) => 'white'),
+    getColor: vi.fn((_path: string) => 'white'),
   });
 }
 
-export function createAltModeMock(overrides?: any) {
+export function createAltModeMock(overrides?: Partial<typeof mockAltMode>) {
   return () => ({ ...mockAltMode, ...overrides });
 }
 
-export function createToolApprovalMock(overrides?: any) {
+export function createToolApprovalMock(overrides?: Partial<typeof mockToolApproval>) {
   return () => ({ ...mockToolApproval, ...overrides });
 }
 
-export function createStdoutDimensionsMock(overrides?: any) {
+export function createStdoutDimensionsMock(overrides?: Partial<typeof mockStdoutDimensions>) {
   return () => ({ ...mockStdoutDimensions, ...overrides });
 }
 
-export function createUseFocusMock(overrides?: any) {
+export function createUseFocusMock(overrides?: Partial<typeof mockUseFocus>) {
   return () => ({ ...mockUseFocus, ...overrides });
 }
 
@@ -306,13 +306,13 @@ export function setupContextMocks() {
 }
 
 export function setupContextMocksWithOverrides(_options?: {
-  theme?: any;
-  altMode?: any;
-  toolApproval?: any;
-  stdoutDimensions?: any;
-  focus?: any;
-  config?: Record<string, any>;
-  userQuestion?: { pendingQuestion?: any };
+  theme?: Partial<typeof mockTheme>;
+  altMode?: Partial<typeof mockAltMode>;
+  toolApproval?: Partial<typeof mockToolApproval>;
+  stdoutDimensions?: Partial<typeof mockStdoutDimensions>;
+  focus?: Partial<typeof mockUseFocus>;
+  config?: Record<string, unknown>;
+  userQuestion?: { pendingQuestion?: unknown };
 }) {
   // Note: vi.mock is hoisted so we can't dynamically configure mocks with options.
   // Instead, call setupContextMocks() first, then override specific mocks in your tests.

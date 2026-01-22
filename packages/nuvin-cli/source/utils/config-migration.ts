@@ -8,9 +8,9 @@
  * 2. Next run: If marker exists in old dir, delete old dir entirely
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import * as os from 'node:os';
 
 const OLD_DIR_NAME = '.nuvin-cli';
 const NEW_DIR_NAME = '.nuvin';

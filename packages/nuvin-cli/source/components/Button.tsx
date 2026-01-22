@@ -2,7 +2,7 @@ import type React from 'react';
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useInput } from '@/contexts/InputContext/index.js';
-import { Focusable } from '@/components/Focusable/index.js';
+import { useFocus } from '@/contexts/InputContext/FocusContext.js';
 
 interface ButtonProps {
   label: string;
@@ -15,6 +15,16 @@ interface ButtonProps {
 
 export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus, disabled, focusId }) => {
   const { theme } = useTheme();
+  const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId });
+
+  useInput(
+    (_input, key) => {
+      if (key.return && !disabled) {
+        onSubmit();
+      }
+    },
+    { isActive: isFocused && !disabled },
+  );
 
   const getColors = (isFocused: boolean) => {
     if (disabled) {
@@ -35,28 +45,13 @@ export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'defa
     };
   };
 
+  const { backgroundColor, textColor } = getColors(isFocused);
+
   return (
-    <Focusable autoFocus={autoFocus} disabled={disabled} focusId={focusId}>
-      {({ isFocused }) => {
-        useInput(
-          (_input, key) => {
-            if (key.return && !disabled) {
-              onSubmit();
-            }
-          },
-          { isActive: isFocused && !disabled },
-        );
-
-        const { backgroundColor, textColor } = getColors(isFocused);
-
-        return (
-          <Box backgroundColor={backgroundColor} paddingX={2}>
-            <Text color={textColor} bold={isFocused} dimColor={disabled}>
-              {label}
-            </Text>
-          </Box>
-        );
-      }}
-    </Focusable>
+    <Box backgroundColor={backgroundColor} paddingX={2}>
+      <Text color={textColor} bold={isFocused} dimColor={disabled}>
+        {label}
+      </Text>
+    </Box>
   );
 };

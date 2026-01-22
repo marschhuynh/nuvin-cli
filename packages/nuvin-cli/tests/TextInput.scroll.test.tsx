@@ -342,7 +342,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
     });
 
     it('should move up from first row of wrapped line to previous logical line', () => {
-      const content = 'First line\n' + 'A'.repeat(50);
+      const content = `First line\n${'A'.repeat(50)}`;
       const cursorOffset = 11 + 5; // Second logical line, row 0, col 5
 
       const result = moveCursorVisually(content, cursorOffset, 'up', wrapWidth);
@@ -352,7 +352,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
     });
 
     it('should move down from last row of wrapped line to next logical line', () => {
-      const content = 'A'.repeat(50) + '\nSecond line';
+      const content = `${'A'.repeat(50)}\nSecond line`;
       const cursorOffset = 45; // First line, row 2, col 5
 
       const result = moveCursorVisually(content, cursorOffset, 'down', wrapWidth);
@@ -406,7 +406,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
     });
 
     it('should clamp column when target row is shorter', () => {
-      const content = 'A'.repeat(50) + '\nShort';
+      const content = `${'A'.repeat(50)}\nShort`;
       const cursorOffset = 45; // First line, row 2, col 5
 
       const result = moveCursorVisually(content, cursorOffset, 'down', wrapWidth);
@@ -423,14 +423,14 @@ describe('TextInput Scroll and Visual Navigation', () => {
       const down1 = moveCursorVisually(line, startOffset, 'down', wrapWidth);
       expect(down1).toBe(25); // Row 1, col 5
 
-      const down2 = moveCursorVisually(line, down1!, 'down', wrapWidth);
+      const down2 = moveCursorVisually(line, down1, 'down', wrapWidth);
       expect(down2).toBe(45); // Row 2, col 5
 
       // Move back up twice
-      const up1 = moveCursorVisually(line, down2!, 'up', wrapWidth);
+      const up1 = moveCursorVisually(line, down2, 'up', wrapWidth);
       expect(up1).toBe(25); // Row 1, col 5
 
-      const up2 = moveCursorVisually(line, up1!, 'up', wrapWidth);
+      const up2 = moveCursorVisually(line, up1, 'up', wrapWidth);
       expect(up2).toBe(5); // Row 0, col 5
     });
   });
@@ -595,7 +595,7 @@ server clients and configuration updated: 1 clients (1 auth entries + 0 keys)
 
     it('should allow navigation through all visual rows', () => {
       const width = 40; // Narrower to force wrapping
-      let cursorOffset = logContent.length;
+      const cursorOffset = logContent.length;
 
       // Navigate up through all rows
       let upCount = 0;
@@ -749,7 +749,8 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       expect(positions[0]).toBe(announcementText.length);
 
       // Last position should be near the start (row 0)
-      const lastCursorInfo = calculateCursorInfoDetailed(announcementText, positions[positions.length - 1]!, width);
+      const lastPosition = positions[positions.length - 1];
+      const lastCursorInfo = calculateCursorInfoDetailed(announcementText, lastPosition, width);
       expect(lastCursorInfo.visualRow).toBe(0);
     });
 
@@ -772,7 +773,8 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       expect(positions.length).toBe(visualRows.length);
 
       // Last position should be on the last visual row
-      const lastCursorInfo = calculateCursorInfoDetailed(announcementText, positions[positions.length - 1]!, width);
+      const lastPosition = positions[positions.length - 1];
+      const lastCursorInfo = calculateCursorInfoDetailed(announcementText, lastPosition, width);
       expect(lastCursorInfo.visualRow).toBe(visualRows.length - 1);
     });
 
@@ -800,7 +802,7 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       const upResult = moveCursorVisually(announcementText, secondParaStart, 'up', width);
       expect(upResult).not.toBeNull();
 
-      const upCursorInfo = calculateCursorInfoDetailed(announcementText, upResult!, width);
+      const upCursorInfo = calculateCursorInfoDetailed(announcementText, upResult, width);
       expect(upCursorInfo.visualRow).toBe(cursorInfo.visualRow - 1);
     });
 
@@ -833,7 +835,7 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       }
 
       // Go back up
-      const upPositions: number[] = [currentOffset!];
+      const upPositions: number[] = [currentOffset];
       while (currentOffset !== null) {
         const nextOffset = moveCursorVisually(announcementText, currentOffset, 'up', width);
         if (nextOffset === null) break;

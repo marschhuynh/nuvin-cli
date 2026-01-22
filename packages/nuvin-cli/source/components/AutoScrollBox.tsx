@@ -68,27 +68,24 @@ function ScrollbarComponent({
   const beforeThumb = thumbPosition;
   const afterThumb = trackHeight - thumbPosition - thumbHeight;
 
+  const beforeThumbItems = Array.from({ length: beforeThumb }, (_, i) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
+    <Text key={`before-thumb-${i}`} color={trackColor}>│</Text>
+  ));
+  const thumbItems = Array.from({ length: thumbHeight }, (_, i) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
+    <Text key={`thumb-${i}`} color={color}>┃</Text>
+  ));
+  const afterThumbItems = Array.from({ length: afterThumb }, (_, i) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
+    <Text key={`after-thumb-${i}`} color={trackColor}>│</Text>
+  ));
+
   return (
     <Box flexDirection="column" flexShrink={0}>
-      {beforeThumb > 0 && (
-        <Box flexDirection="column">
-          {Array.from({ length: beforeThumb }, (_, i) => (
-            <Text key={`before-${i}`} color={trackColor}>│</Text>
-          ))}
-        </Box>
-      )}
-      <Box flexDirection="column">
-        {Array.from({ length: thumbHeight }, (_, i) => (
-          <Text key={`thumb-${i}`} color={color}>┃</Text>
-        ))}
-      </Box>
-      {afterThumb > 0 && (
-        <Box flexDirection="column">
-          {Array.from({ length: afterThumb }, (_, i) => (
-            <Text key={`after-${i}`} color={trackColor}>│</Text>
-          ))}
-        </Box>
-      )}
+      {beforeThumb > 0 && <Box flexDirection="column">{beforeThumbItems}</Box>}
+      <Box flexDirection="column">{thumbItems}</Box>
+      {afterThumb > 0 && <Box flexDirection="column">{afterThumbItems}</Box>}
     </Box>
   );
 }
