@@ -92,17 +92,15 @@ export function processAgentEvent(
         const messageId = crypto.randomUUID();
         const enrichedToolCalls = await enrichToolCallsWithLineNumbers(event.toolCalls);
 
-        const displayableToolCalls = enrichedToolCalls.filter((tc) => tc.function.name !== 'ask_user_tool');
-
-        if (displayableToolCalls.length > 0) {
+        if (enrichedToolCalls.length > 0) {
           callbacks.appendLine({
             id: messageId,
             type: 'tool',
-            content: `${displayableToolCalls.map(renderToolCall).join(', ')}`,
+            content: `${enrichedToolCalls.map(renderToolCall).join(', ')}`,
             metadata: {
-              toolCallCount: displayableToolCalls.length,
+              toolCallCount: enrichedToolCalls.length,
               timestamp: now(),
-              toolCalls: displayableToolCalls,
+              toolCalls: enrichedToolCalls,
             },
             color: theme.tokens.blue,
           });

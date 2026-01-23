@@ -10,6 +10,7 @@ import { FileReadRenderer } from './renderers/FileReadRenderer.js';
 import { FileNewRenderer } from './renderers/FileNewRenderer.js';
 import { BashToolRenderer } from './renderers/BashToolRenderer.js';
 import { DefaultRenderer } from './renderers/DefaultRenderer.js';
+import { AskUserRenderer } from './renderers/AskUserRenderer.js';
 import { LAYOUT } from './renderers/constants.js';
 import { formatDuration } from '@/utils/formatters.js';
 import { getStatusMessage } from './statusStrategies/index.js';
@@ -50,6 +51,8 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
           toolResult.type === 'text' ? (toolResult.result as string) : JSON.stringify(toolResult.result, null, 2);
         return <Markdown maxWidth={cols - LAYOUT.MARKDOWN_MARGIN}>{errorStr}</Markdown>;
       }
+      case 'ask_user_tool':
+        return <AskUserRenderer toolResult={toolResult} toolCall={toolCall} messageId={messageId} fullMode={fullMode} cols={cols} />;
       case 'todo_write':
         return <TodoWriteRenderer toolResult={toolResult} messageId={messageId} fullMode={fullMode} />;
       case 'file_edit':
@@ -109,9 +112,10 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
   const collapsed = isCollapsedTool(toolResult.name);
   const hasResult = toolResult.result != null && toolResult.result !== '';
   const isTodoWrite = toolResult.name === 'todo_write';
+  const isAskUser = toolResult.name === 'ask_user_tool';
 
-  const shouldShowStatus = hasResult || isTodoWrite;
-  const shouldShowContent = (hasResult || isTodoWrite) && (!collapsed || fullMode);
+  const shouldShowStatus = hasResult || isTodoWrite || isAskUser;
+  const shouldShowContent = (hasResult || isTodoWrite || isAskUser) && (!collapsed || fullMode);
   const shouldShowDone = !collapsed || fullMode;
 
   const showStatusTop = shouldShowStatus && statusPosition === 'top';

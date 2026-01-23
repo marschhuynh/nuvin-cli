@@ -4,6 +4,7 @@ import {
   FileNewParamRender,
   DefaultParamRender,
   AssignTaskParamRender,
+  AskUserParamRender,
 } from '@/components/ToolCallViewer/params/index.js';
 import type { StatusStrategy } from '@/components/ToolCallViewer/ToolResultView/statusStrategies/index.js';
 import {
@@ -105,6 +106,12 @@ const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     displayName: 'Load skill',
     statusStrategy: defaultStrategy,
     paramRenderer: null,
+    collapsedByDefault: false,
+  },
+  ask_user_tool: {
+    displayName: 'Ask user questions',
+    statusStrategy: defaultStrategy,
+    paramRenderer: AskUserParamRender,
     collapsedByDefault: false,
   },
 };
