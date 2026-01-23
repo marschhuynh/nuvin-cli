@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.35.6-rc.4
+
+### Patch Changes
+
+- [`572184a`](https://github.com/marschhuynh/nuvin-space/commit/572184ad088edfba950cf846e0d9844a34e2f97d) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Enhance agent and skill list UI with bordered metadata display
+
+- [`d6d23c6`](https://github.com/marschhuynh/nuvin-space/commit/d6d23c6b9682e778e55d3f395d6fdfbf638ed589) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix focus order in modals by removing duplicate event emissions and adding stable tabIndex sorting
+
 ## 1.35.6-rc.3
 
 ### Patch Changes
