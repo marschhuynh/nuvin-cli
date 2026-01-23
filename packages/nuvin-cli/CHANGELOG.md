@@ -1,5 +1,13 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.6
+
+### Patch Changes
+
+- [`47be715`](https://github.com/marschhuynh/nuvin-space/commit/47be7158a5e878e941dc91caa2dcf1ba9034bc67) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Enhance AutoScrollBox with vim-style keyboard nav, simplify TextWrapper usage, improve focus
+
+- [`c2b5de6`](https://github.com/marschhuynh/nuvin-space/commit/c2b5de61fcd6daca677d4560166989fa2f124e60) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor: improve swap command UI and input area components
+
 ## 1.36.0-rc.5
 
 ### Minor Changes

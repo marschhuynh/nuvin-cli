@@ -11,10 +11,12 @@
     "command-menu-description-wrap",
     "command-tab-completion",
     "enhance-agent-skill-lists",
+    "enhance-scroll-keyboard-nav",
     "fix-tabindex-focus-order",
     "github-responses-api",
     "lsp-history-refresh",
     "minimax-fix-changes",
+    "quiet-ears-jam",
     "recent-sessions-width-fix",
     "tool-call-header-args",
     "tool-display-names"
