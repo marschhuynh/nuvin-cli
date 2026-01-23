@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.5
+
+### Minor Changes
+
+- [`baee016`](https://github.com/marschhuynh/nuvin-space/commit/baee0168c0fe5cca77c1b6683dbc9c729e1a64f6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add display support for ask_user_tool with question count and answer rendering.
+
 ## 1.35.6-rc.4
 
 ### Patch Changes
