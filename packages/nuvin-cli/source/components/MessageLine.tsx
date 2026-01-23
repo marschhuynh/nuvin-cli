@@ -10,7 +10,6 @@ import { useToolApproval } from '@/contexts/ToolApprovalContext';
 import { ToolCallViewer } from './ToolCallViewer';
 import { AutoScrollBox } from './AutoScrollBox.js';
 import { SubAgentActivity } from './ToolCallViewer/ToolResultView';
-import { TextWrapper } from './TextWrapper';
 
 type MessageLineProps = {
   key: string;
@@ -165,7 +164,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 ●
               </Text>
             </Box>
-            <TextWrapper>{message.content}</TextWrapper>
+            <Text>{message.content}</Text>
           </Box>
         );
 
@@ -177,7 +176,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 ●
               </Text>
             </Box>
-            <TextWrapper>{message.content}</TextWrapper>
+            <Text>{message.content}</Text>
           </Box>
         );
 
@@ -189,7 +188,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 ●
               </Text>
             </Box>
-            <TextWrapper color={message.color}>{message.content}</TextWrapper>
+            <Text color={message.color}>{message.content}</Text>
           </Box>
         );
 
@@ -201,7 +200,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 ●
               </Text>
             </Box>
-            <TextWrapper>{message.content}</TextWrapper>
+            <Text>{message.content}</Text>
           </Box>
         );
 
@@ -215,9 +214,9 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 </Text>
               </Box>
               <AutoScrollBox maxHeight={'100%'} marginX={2} width={'100%'}>
-                <TextWrapper color={theme.colors.textDim} dimColor>
+                <Text color={theme.colors.textDim} dimColor>
                   {streamingContent}
-                </TextWrapper>
+                </Text>
               </AutoScrollBox>
             </Box>
           );
@@ -231,9 +230,9 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
               </Text>
             </Box>
             <Box marginX={2}>
-              <TextWrapper color={theme.colors.textDim} dimColor>
+              <Text color={theme.colors.textDim} dimColor>
                 {streamingContent}
-              </TextWrapper>
+              </Text>
             </Box>
           </Box>
         );
@@ -251,12 +250,12 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       backgroundColor={backgroundColor}
       {...(liveMessage
         ? {
-          borderStyle: 'single',
-          borderColor: theme.colors.accent,
-          borderBottom: false,
-          borderTop: false,
-          borderLeft: false,
-        }
+            borderStyle: 'single',
+            borderColor: theme.colors.accent,
+            borderBottom: false,
+            borderTop: false,
+            borderLeft: false,
+          }
         : {})}
     >
       {renderMessage()}
@@ -264,4 +263,4 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
   );
 };
 
-export const MessageLine = MessageLineComponent
+export const MessageLine = MessageLineComponent;

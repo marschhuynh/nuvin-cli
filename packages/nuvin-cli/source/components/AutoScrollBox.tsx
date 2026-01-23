@@ -1,7 +1,14 @@
 import { type BoxRef, Box, type BoxProps, measureElement, Text } from 'ink';
-import React, { useRef, useEffect, useCallback, useState, useMemo, type ReactNode, useImperativeHandle, forwardRef } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useCallback,
+  useState,
+  type ReactNode,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import { useMouse, useInput, useFocus, type MouseEvent, type Key } from '../contexts/InputContext/index.js';
-import { useTheme } from '@/contexts/ThemeContext.js';
 
 export type AutoScrollBoxHandle = {
   scrollTo: (y: number) => void;
@@ -21,6 +28,7 @@ type AutoScrollBoxProps = {
   enableKeyboardScroll?: boolean;
   focus?: boolean;
   manualFocus?: boolean;
+  autoFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onScrollChange?: (scrollInfo: ScrollInfo) => void;
   flexGrow?: number;
@@ -50,11 +58,7 @@ function calculateThumbPosition(scrollInfo: ScrollInfo): number {
   return Math.round(scrollRatio * (trackHeight - thumbHeight));
 }
 
-function ScrollbarComponent({
-  scrollInfo,
-  color = 'gray',
-  trackColor = 'dim',
-}: ScrollbarProps) {
+function ScrollbarComponent({ scrollInfo, color = 'gray', trackColor = 'dim' }: ScrollbarProps) {
   const { containerHeight, contentHeight } = scrollInfo;
 
   if (contentHeight <= containerHeight) {
@@ -70,15 +74,21 @@ function ScrollbarComponent({
 
   const beforeThumbItems = Array.from({ length: beforeThumb }, (_, i) => (
     // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
-    <Text key={`before-thumb-${i}`} color={trackColor}>│</Text>
+    <Text key={`before-thumb-${i}`} color={trackColor}>
+      │
+    </Text>
   ));
   const thumbItems = Array.from({ length: thumbHeight }, (_, i) => (
     // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
-    <Text key={`thumb-${i}`} color={color}>┃</Text>
+    <Text key={`thumb-${i}`} color={color}>
+      ┃
+    </Text>
   ));
   const afterThumbItems = Array.from({ length: afterThumb }, (_, i) => (
     // biome-ignore lint/suspicious/noArrayIndexKey: Items are static and never reorder
-    <Text key={`after-thumb-${i}`} color={trackColor}>│</Text>
+    <Text key={`after-thumb-${i}`} color={trackColor}>
+      │
+    </Text>
   ));
 
   return (
@@ -102,51 +112,28 @@ const Scrollbar = React.memo(ScrollbarComponent, (prev, next) => {
   );
 });
 
-function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T & { cancel: () => void } {
-  let timeoutId: NodeJS.Timeout | null = null;
-
-  const debounced = ((...args: unknown[]) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      timeoutId = null;
-      fn(...args);
-    }, ms);
-  }) as T & { cancel: () => void };
-
-  debounced.cancel = () => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
-  };
-
-  return debounced;
-}
-
-const SCROLL_BATCH_MS = 48;
-const SCROLL_INFO_DEBOUNCE_MS = 80;
-
-export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>(function AutoScrollBox({
-  maxHeight,
-  children,
-  scrollStep = 1,
-  enableMouseScroll = true,
-  showScrollbar = true,
-  scrollbarColor = 'cyan',
-  scrollbarTrackColor = 'gray',
-  mousePriority = 0,
-  enableKeyboardScroll = true,
-  focus: externalFocus,
-  manualFocus = false,
-  onFocusChange,
-  onScrollChange,
-  flexGrow,
-  autoScrollToBottom = true,
-  ...boxProps
-}: AutoScrollBoxProps, ref) {
-  const { theme } = useTheme();
+export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>(function AutoScrollBox(
+  {
+    maxHeight,
+    children,
+    scrollStep = 1,
+    enableMouseScroll = true,
+    showScrollbar = true,
+    scrollbarColor = 'cyan',
+    scrollbarTrackColor = 'gray',
+    mousePriority = 0,
+    enableKeyboardScroll = true,
+    focus: externalFocus,
+    manualFocus = false,
+    autoFocus = false,
+    onFocusChange,
+    onScrollChange,
+    flexGrow,
+    autoScrollToBottom = true,
+    ...boxProps
+  }: AutoScrollBoxProps,
+  ref,
+) {
   const boxRef = useRef<BoxRef>(null);
   const contentRef = useRef<BoxRef>(null);
   const prevChildrenRef = useRef(children);
@@ -158,17 +145,6 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     contentHeight: 0,
   });
 
-  const pendingScrollDelta = useRef(0);
-  const scrollBatchTimer = useRef<NodeJS.Timeout | null>(null);
-
-  const needsScrollbar = showScrollbar && scrollInfo.contentHeight > scrollInfo.containerHeight;
-  const internalFocus = useFocus({ active: needsScrollbar && !manualFocus });
-  const isFocused = externalFocus !== undefined ? externalFocus : internalFocus.isFocused;
-
-  useEffect(() => {
-    onFocusChange?.(isFocused);
-  }, [isFocused, onFocusChange]);
-
   const measureDimensions = useCallback(() => {
     if (!boxRef.current || !contentRef.current) return null;
     const containerDim = measureElement(boxRef.current);
@@ -177,23 +153,7 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     return cachedDimensionsRef.current;
   }, []);
 
-  const updateScrollInfoDebounced = useMemo(
-    () =>
-      debounce(() => {
-        if (!boxRef.current || !contentRef.current) return;
-        const pos = boxRef.current.getScrollPosition();
-        const dims = cachedDimensionsRef.current;
-        if (!dims) return;
-        setScrollInfo({
-          scrollY: pos?.y ?? 0,
-          containerHeight: dims.container.height,
-          contentHeight: dims.content.height,
-        });
-      }, SCROLL_INFO_DEBOUNCE_MS),
-    [],
-  );
-
-  const updateScrollInfoImmediate = useCallback(() => {
+  const updateScrollInfo = useCallback(() => {
     if (!boxRef.current || !contentRef.current) return;
     const pos = boxRef.current.getScrollPosition();
     const dims = measureDimensions();
@@ -205,60 +165,46 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     });
   }, [measureDimensions]);
 
-  const applyBatchedScroll = useCallback(() => {
-    if (!boxRef.current) return;
+  const needsScrollbar = showScrollbar && scrollInfo.contentHeight > scrollInfo.containerHeight;
+  const internalFocus = useFocus({ active: needsScrollbar && !manualFocus, autoFocus });
+  const isFocused = externalFocus !== undefined ? externalFocus : internalFocus.isFocused;
 
-    const delta = pendingScrollDelta.current;
-    pendingScrollDelta.current = 0;
-    scrollBatchTimer.current = null;
-
-    if (delta === 0) return;
-
-    const currentPos = boxRef.current.getScrollPosition();
-    if (!currentPos) return;
-
-    const newY = Math.max(0, currentPos.y + delta);
-    boxRef.current.scrollTo({ x: 0, y: newY });
-
-    const actualPos = boxRef.current.getScrollPosition();
-    if (actualPos) {
-      const dims = cachedDimensionsRef.current;
-      if (dims) {
-        const maxScrollY = dims.content.height - dims.container.height;
-        const isAtBottom = actualPos.y >= maxScrollY - 1;
-        if (isAtBottom) {
-          isUserScrolledRef.current = false;
-        } else if (actualPos.y > 0) {
-          isUserScrolledRef.current = true;
-        }
-      }
-    }
-
-    updateScrollInfoDebounced();
-  }, [updateScrollInfoDebounced]);
+  useEffect(() => {
+    onFocusChange?.(isFocused);
+  }, [isFocused, onFocusChange]);
 
   const scrollBy = useCallback(
     (delta: number) => {
       if (!boxRef.current || !contentRef.current) return;
 
-      pendingScrollDelta.current += delta;
+      const currentPos = boxRef.current.getScrollPosition();
+      if (!currentPos) return;
 
-      if (!scrollBatchTimer.current) {
-        scrollBatchTimer.current = setTimeout(applyBatchedScroll, SCROLL_BATCH_MS);
+      const newY = Math.max(0, currentPos.y + delta);
+      boxRef.current.scrollTo({ x: 0, y: newY });
+
+      const actualPos = boxRef.current.getScrollPosition();
+      if (actualPos) {
+        const dims = cachedDimensionsRef.current;
+        if (dims) {
+          const maxScrollY = dims.content.height - dims.container.height;
+          const isAtBottom = actualPos.y >= maxScrollY - 1;
+          if (isAtBottom) {
+            isUserScrolledRef.current = false;
+          } else if (actualPos.y > 0) {
+            isUserScrolledRef.current = true;
+          }
+        }
       }
+
+      updateScrollInfo();
     },
-    [applyBatchedScroll],
+    [updateScrollInfo],
   );
 
   const scrollByImmediate = useCallback(
     (delta: number) => {
       if (!boxRef.current || !contentRef.current) return;
-
-      if (scrollBatchTimer.current) {
-        clearTimeout(scrollBatchTimer.current);
-        scrollBatchTimer.current = null;
-      }
-      pendingScrollDelta.current = 0;
 
       const currentPos = boxRef.current.getScrollPosition();
       if (!currentPos) return;
@@ -279,19 +225,86 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
         }
       }
 
-      updateScrollInfoDebounced();
+      updateScrollInfo();
     },
-    [updateScrollInfoDebounced],
+    [updateScrollInfo],
   );
 
-  useEffect(() => {
-    return () => {
-      if (scrollBatchTimer.current) {
-        clearTimeout(scrollBatchTimer.current);
+  const scrollPage = useCallback(
+    (direction: 'up' | 'down', pageSize?: number) => {
+      if (!boxRef.current || !contentRef.current) return;
+
+      const dims = cachedDimensionsRef.current;
+      if (!dims) return;
+
+      const scrollPageSize = pageSize ?? Math.max(1, dims.container.height - 1);
+      const delta = direction === 'down' ? scrollPageSize : -scrollPageSize;
+
+      const currentPos = boxRef.current.getScrollPosition();
+      if (!currentPos) return;
+
+      const newY = Math.max(0, currentPos.y + delta);
+      boxRef.current.scrollTo({ x: 0, y: newY });
+
+      const actualPos = boxRef.current.getScrollPosition();
+      if (actualPos) {
+        const maxScrollY = dims.content.height - dims.container.height;
+        const isAtBottom = actualPos.y >= maxScrollY - 1;
+        if (isAtBottom) {
+          isUserScrolledRef.current = false;
+        } else if (actualPos.y > 0) {
+          isUserScrolledRef.current = true;
+        }
       }
-      updateScrollInfoDebounced.cancel();
-    };
-  }, [updateScrollInfoDebounced]);
+
+      updateScrollInfo();
+    },
+    [updateScrollInfo],
+  );
+
+  const scrollLine = useCallback(
+    (direction: 'up' | 'down') => {
+      if (!boxRef.current) return;
+
+      const delta = direction === 'down' ? 1 : -1;
+      const currentPos = boxRef.current.getScrollPosition();
+      if (!currentPos) return;
+
+      const newY = Math.max(0, currentPos.y + delta);
+      boxRef.current.scrollTo({ x: 0, y: newY });
+
+      updateScrollInfo();
+    },
+    [updateScrollInfo],
+  );
+
+  const scrollToPositionInView = useCallback(
+    (position: 'top' | 'middle' | 'bottom') => {
+      if (!boxRef.current) return;
+
+      const dims = cachedDimensionsRef.current;
+      if (!dims) return;
+
+      let targetY: number;
+      switch (position) {
+        case 'top':
+          targetY = 0;
+          break;
+        case 'bottom':
+          targetY = Math.max(0, dims.content.height - dims.container.height);
+          break;
+        case 'middle':
+        default:
+          targetY = Math.max(0, Math.floor((dims.content.height - dims.container.height) / 2));
+          break;
+      }
+
+      boxRef.current.scrollTo({ x: 0, y: targetY });
+      isUserScrolledRef.current = true;
+      updateScrollInfo();
+    },
+    [updateScrollInfo],
+  );
 
   const handleMouseEvent = useCallback(
     (event: MouseEvent) => {
@@ -309,10 +322,13 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
   );
 
   const handleKeyboardEvent = useCallback(
-    (input: string, _key: Key) => {
+    (input: string, key: Key) => {
       if (!isFocused || !needsScrollbar || !enableKeyboardScroll) {
-        if (isFocused && (input === 'j' || input === 'k' || input === 'g' || input === 'G')) {
-          return true;
+        if (isFocused) {
+          const vimCommands = ['j', 'k', 'g', 'G', 'H', 'M', 'L', 'z'];
+          if (vimCommands.includes(input) || key.pageUp || key.pageDown || key.ctrl) {
+            return true;
+          }
         }
         return;
       }
@@ -329,17 +345,71 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
         if (!boxRef.current || !contentRef.current) return;
         boxRef.current.scrollTo({ x: 0, y: 0 });
         isUserScrolledRef.current = true;
-        updateScrollInfoDebounced();
+        updateScrollInfo();
         return true;
       }
       if (input === 'G') {
         boxRef.current?.scrollToBottom();
         isUserScrolledRef.current = false;
-        updateScrollInfoDebounced();
+        updateScrollInfo();
+        return true;
+      }
+      if (key.pageUp) {
+        scrollPage('up');
+        return true;
+      }
+      if (key.pageDown) {
+        scrollPage('down');
+        return true;
+      }
+      if (key.ctrl && (input === 'f' || input === 'F')) {
+        scrollPage('down');
+        return true;
+      }
+      if (key.ctrl && (input === 'b' || input === 'B')) {
+        scrollPage('up');
+        return true;
+      }
+      if (key.ctrl && (input === 'd' || input === 'D')) {
+        scrollPage('down', Math.max(1, Math.floor((cachedDimensionsRef.current?.container.height ?? 10) / 2)));
+        return true;
+      }
+      if (key.ctrl && (input === 'u' || input === 'U')) {
+        scrollPage('up', Math.max(1, Math.floor((cachedDimensionsRef.current?.container.height ?? 10) / 2)));
+        return true;
+      }
+      if (key.ctrl && (input === 'e' || input === 'E')) {
+        scrollLine('down');
+        return true;
+      }
+      if (key.ctrl && (input === 'y' || input === 'Y')) {
+        scrollLine('up');
+        return true;
+      }
+      if (input === 'H') {
+        scrollToPositionInView('top');
+        return true;
+      }
+      if (input === 'M') {
+        scrollToPositionInView('middle');
+        return true;
+      }
+      if (input === 'L') {
+        scrollToPositionInView('bottom');
         return true;
       }
     },
-    [isFocused, scrollByImmediate, scrollStep, needsScrollbar, updateScrollInfoDebounced, enableKeyboardScroll],
+    [
+      isFocused,
+      scrollByImmediate,
+      scrollStep,
+      needsScrollbar,
+      updateScrollInfo,
+      enableKeyboardScroll,
+      scrollPage,
+      scrollLine,
+      scrollToPositionInView,
+    ],
   );
 
   useMouse(handleMouseEvent, { isActive: enableMouseScroll && needsScrollbar, priority: mousePriority });
@@ -353,45 +423,72 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
       }
       prevChildrenRef.current = children;
     }
-    updateScrollInfoImmediate();
-  }, [children, measureDimensions, updateScrollInfoImmediate, autoScrollToBottom]);
+    updateScrollInfo();
+  }, [children, measureDimensions, updateScrollInfo, autoScrollToBottom]);
 
   useEffect(() => {
     onScrollChange?.(scrollInfo);
   }, [scrollInfo, onScrollChange]);
 
-  const scrollToPosition = useCallback((y: number) => {
-    if (!boxRef.current) return;
-    boxRef.current.scrollTo({ x: 0, y: Math.max(0, y) });
-    isUserScrolledRef.current = true;
-    updateScrollInfoDebounced();
-  }, [updateScrollInfoDebounced]);
+  const scrollToPosition = useCallback(
+    (y: number) => {
+      if (!boxRef.current) return;
+      boxRef.current.scrollTo({ x: 0, y: Math.max(0, y) });
+      isUserScrolledRef.current = true;
+      updateScrollInfo();
+    },
+    [updateScrollInfo],
+  );
 
-  useImperativeHandle(ref, () => ({
-    scrollTo: scrollToPosition,
-    scrollBy: scrollByImmediate,
-    getScrollInfo: () => scrollInfo,
-  }), [scrollToPosition, scrollByImmediate, scrollInfo]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollTo: scrollToPosition,
+      scrollBy: scrollByImmediate,
+      getScrollInfo: () => scrollInfo,
+    }),
+    [scrollToPosition, scrollByImmediate, scrollInfo],
+  );
 
   const scrollbarElement = needsScrollbar && (
     <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} />
   );
 
+  const scrollHint =
+    enableKeyboardScroll && needsScrollbar && isFocused ? (
+      <Box flexShrink={0} alignSelf="flex-end">
+        <Text color={scrollbarColor}>
+          <Text bold>g</Text>
+          <Text> top </Text>
+          <Text bold>G</Text>
+          <Text> bot </Text>
+          <Text bold>j</Text>
+          <Text>/</Text>
+          <Text bold>k</Text>
+          <Text> scroll</Text>
+        </Text>
+      </Box>
+    ) : (
+      <Box height={1} flexShrink={0} />
+    );
+
   return (
     <Box
-      flexDirection="row"
+      flexDirection="column"
       width="100%"
       {...(maxHeight !== undefined ? { maxHeight } : {})}
       {...(flexGrow !== undefined ? { flexGrow } : {})}
       overflow="hidden"
-      backgroundColor={isFocused ? theme.tokens.dim : undefined}
     >
-      <Box ref={boxRef} overflow="scroll" flexGrow={1} {...boxProps} flexDirection="column">
-        <Box ref={contentRef} flexShrink={0} flexDirection="column">
-          {children}
+      <Box flexDirection="row" flexGrow={1} flexShrink={1} overflow="hidden">
+        <Box ref={boxRef} overflow="scroll" flexGrow={1} {...boxProps} flexDirection="column">
+          <Box ref={contentRef} flexShrink={0} flexDirection="column">
+            {children}
+          </Box>
         </Box>
+        {scrollbarElement}
       </Box>
-      {scrollbarElement}
+      {scrollHint}
     </Box>
   );
 });
