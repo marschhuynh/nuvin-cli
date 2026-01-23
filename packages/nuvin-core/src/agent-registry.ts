@@ -33,16 +33,14 @@ export class AgentRegistry {
     this.persistence = options?.persistence;
     this.filePersistence = options?.filePersistence;
 
-    // Register default agents
     for (const agent of defaultAgents) {
       const complete = this.applyDefaults(agent);
-      if (complete.id) {
-        this.agents.set(complete.id, complete);
-        this.defaultAgentIds.add(complete.id);
+      if (complete.name) {
+        this.agents.set(complete.name, complete);
+        this.defaultAgentIds.add(complete.name);
       }
     }
 
-    // Start loading agents asynchronously
     this.loadingPromise = this.loadAgents();
   }
 
@@ -72,27 +70,28 @@ export class AgentRegistry {
 
   /**
    * Apply defaults to a partial agent template
-   * Only systemPrompt is required; all other fields get defaults
+   * Only instructions is required; all other fields get defaults
    */
-  applyDefaults(partial: Partial<AgentTemplate> & { systemPrompt: string }): CompleteAgent {
-    const id = partial.id || generateIdFromName(partial.name) || `agent-${Date.now()}`;
-    const name = partial.name || 'Custom Agent';
+  applyDefaults(partial: Partial<AgentTemplate> & { instructions: string }): CompleteAgent {
+    const name = partial.name || generateIdFromName(partial.description) || `custom-agent`;
     const description = partial.description || 'Custom specialist agent';
-    const tools = partial.tools || ['file_read', 'web_search'];
+    const allowed_tools = partial.allowed_tools || ['Read', 'WebSearch'];
 
     return {
-      id,
       name,
       description,
-      systemPrompt: partial.systemPrompt,
-      tools,
+      instructions: partial.instructions,
+      allowed_tools,
       temperature: partial.temperature ?? 0.7,
-      maxTokens: partial.maxTokens ?? 64000,
-      provider: partial.provider,
       model: partial.model,
-      topP: partial.topP,
-      timeoutMs: partial.timeoutMs,
-      shareContext: partial.shareContext,
+      disable_model_invocation: partial.disable_model_invocation,
+      user_invocable: partial.user_invocable,
+      context: partial.context,
+      agent: partial.agent,
+      provider: partial.provider,
+      top_p: partial.top_p,
+      timeout_ms: partial.timeout_ms,
+      share_context: partial.share_context,
       metadata: partial.metadata,
     };
   }
@@ -110,11 +109,11 @@ export class AgentRegistry {
         for (const template of templates) {
           if (this.validateTemplate(template)) {
             const complete = this.applyDefaults(template);
-            if (!complete.id) {
-              console.warn('Agent loaded from persistence has no ID, skipping');
+            if (!complete.name) {
+              console.warn('Agent loaded from persistence has no name, skipping');
               continue;
             }
-            this.agents.set(complete.id, complete);
+            this.agents.set(complete.name, complete);
           }
         }
       }
@@ -134,9 +133,8 @@ export class AgentRegistry {
       for (const agent of loadedAgents) {
         if (this.validateTemplate(agent)) {
           const complete = this.applyDefaults(agent);
-          // Don't overwrite default agents with file versions
-          if (complete.id && !this.defaultAgentIds.has(complete.id)) {
-            this.agents.set(complete.id, complete);
+          if (complete.name && !this.defaultAgentIds.has(complete.name)) {
+            this.agents.set(complete.name, complete);
           }
         }
       }
@@ -160,27 +158,26 @@ export class AgentRegistry {
   }
 
   /**
-   * Validate agent template (only systemPrompt required)
+   * Validate agent template (only instructions required)
    */
   private validateTemplate(template: Partial<AgentTemplate>): boolean {
-    if (!template.systemPrompt || typeof template.systemPrompt !== 'string') return false;
+    if (!template.instructions || typeof template.instructions !== 'string') return false;
     return true;
   }
 
   /**
    * Register a new agent template
    */
-  register(agent: Partial<AgentTemplate> & { systemPrompt: string }): void {
+  register(agent: Partial<AgentTemplate> & { instructions: string }): void {
     if (!this.validateTemplate(agent)) {
-      throw new Error(`Invalid agent template: missing systemPrompt`);
+      throw new Error(`Invalid agent template: missing instructions`);
     }
 
     const complete = this.applyDefaults(agent);
-    // ID is always generated in applyDefaults, but check for safety
-    if (!complete.id) {
-      throw new Error('Failed to generate agent ID');
+    if (!complete.name) {
+      throw new Error('Failed to generate agent name');
     }
-    this.agents.set(complete.id, complete);
+    this.agents.set(complete.name, complete);
     void this.saveToPersistence();
   }
 
@@ -192,8 +189,8 @@ export class AgentRegistry {
       throw new Error('File persistence not configured');
     }
 
-    if (this.defaultAgentIds.has(agent.id)) {
-      throw new Error(`Cannot save default agent "${agent.id}" to file`);
+    if (this.defaultAgentIds.has(agent.name)) {
+      throw new Error(`Cannot save default agent "${agent.name}" to file`);
     }
 
     await this.filePersistence.save(agent);
@@ -202,43 +199,42 @@ export class AgentRegistry {
   /**
    * Delete agent from file
    */
-  async deleteFromFile(agentId: string): Promise<void> {
+  async deleteFromFile(agentName: string): Promise<void> {
     if (!this.filePersistence) {
       throw new Error('File persistence not configured');
     }
 
-    if (this.defaultAgentIds.has(agentId)) {
-      throw new Error(`Cannot delete default agent "${agentId}"`);
+    if (this.defaultAgentIds.has(agentName)) {
+      throw new Error(`Cannot delete default agent "${agentName}"`);
     }
 
-    await this.filePersistence.delete(agentId);
+    await this.filePersistence.delete(agentName);
   }
 
   /**
    * Check if an agent is a default agent
    */
-  isDefault(agentId: string): boolean {
-    return this.defaultAgentIds.has(agentId);
+  isDefault(agentName: string): boolean {
+    return this.defaultAgentIds.has(agentName);
   }
 
   /**
    * Unregister an agent template
    */
-  unregister(agentId: string): void {
-    // Cannot unregister default agents
-    if (this.defaultAgentIds.has(agentId)) {
-      throw new Error(`Cannot unregister default agent "${agentId}"`);
+  unregister(agentName: string): void {
+    if (this.defaultAgentIds.has(agentName)) {
+      throw new Error(`Cannot unregister default agent "${agentName}"`);
     }
 
-    this.agents.delete(agentId);
+    this.agents.delete(agentName);
     void this.saveToPersistence();
   }
 
   /**
    * Get an agent template by ID
    */
-  get(agentId: string): CompleteAgent | undefined {
-    return this.agents.get(agentId);
+  get(agentName: string): CompleteAgent | undefined {
+    return this.agents.get(agentName);
   }
 
   /**
@@ -251,7 +247,7 @@ export class AgentRegistry {
   /**
    * Check if an agent exists
    */
-  exists(agentId: string): boolean {
-    return this.agents.has(agentId);
+  exists(agentName: string): boolean {
+    return this.agents.has(agentName);
   }
 }

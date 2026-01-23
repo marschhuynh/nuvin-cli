@@ -7,7 +7,7 @@ interface UseAgentCreationKeyboardProps {
   state: AgentCreationState;
   actions: AgentCreationActions;
   onCancel: () => void;
-  onConfirm?: (nextPreview?: Partial<AgentTemplate> & { systemPrompt: string }) => void;
+  onConfirm?: (nextPreview?: Partial<AgentTemplate> & { instructions: string }) => void;
   onDelete?: () => void;
   loading?: boolean;
 }
@@ -27,7 +27,7 @@ export const useAgentCreationKeyboard = ({
 
       if (key.escape) {
         if (state.isEditing) {
-          if (state.editFormView === 'systemPrompt') {
+          if (state.editFormView === 'instructions') {
             actions.navigateToBasicForm();
             return;
           }
@@ -59,7 +59,7 @@ export const useAgentCreationKeyboard = ({
 
         if (key.ctrl && input === 'p') {
           if (state.editFormView === 'basic') {
-            actions.navigateToSystemPrompt();
+            actions.navigateToInstructions();
           } else {
             actions.navigateToBasicForm();
           }
@@ -70,8 +70,6 @@ export const useAgentCreationKeyboard = ({
           onDelete();
           return;
         }
-
-        // Tab/Shift+Tab are handled by focusCycleMiddleware, no need to emit here
       }
     },
     { isActive: visible },

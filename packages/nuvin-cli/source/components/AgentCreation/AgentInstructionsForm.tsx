@@ -9,27 +9,27 @@ import { HelpText } from '@/components/HelpText.js';
 import { Focusable } from '@/components/Focusable/index.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
-interface AgentSystemPromptFormProps {
+interface AgentInstructionsFormProps {
   mode: 'create' | 'edit';
-  preview: Partial<AgentTemplate> & { systemPrompt: string };
-  editedSystemPrompt: string;
+  preview: Partial<AgentTemplate> & { instructions: string };
+  editedInstructions: string;
   error?: string;
-  onSystemPromptChange: (value: string) => void;
+  onInstructionsChange: (value: string) => void;
   onNavigateBack: () => void;
 }
 
-const AgentSystemPromptFormContent: React.FC<AgentSystemPromptFormProps> = ({
+const AgentInstructionsFormContent: React.FC<AgentInstructionsFormProps> = ({
   mode,
   preview,
-  editedSystemPrompt,
+  editedInstructions,
   error,
-  onSystemPromptChange,
+  onInstructionsChange,
   onNavigateBack: _onNavigateBack,
 }) => {
   const { theme } = useTheme();
   const { rows } = useStdoutDimensions();
 
-  const title = mode === 'edit' ? 'Edit System Prompt' : 'Edit Generated System Prompt';
+  const title = mode === 'edit' ? 'Edit Instructions' : 'Edit Generated Instructions';
 
   const footerContent = (
     <Box marginLeft={1} flexGrow={1} marginRight={1}>
@@ -61,18 +61,18 @@ const AgentSystemPromptFormContent: React.FC<AgentSystemPromptFormProps> = ({
           <Text color={theme.colors.primary} bold>
             {preview.name || 'Custom Agent'}
           </Text>
-          <Text color={theme.modal.subtitle}> • System Prompt</Text>
+          <Text color={theme.modal.subtitle}> • Instructions</Text>
         </Box>
 
         <Focusable autoFocus>
           {({ isFocused }) => (
             <Box flexDirection="column" flexGrow={1}>
               <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
-                System Prompt:
+                Instructions:
               </Text>
               <TextInput
-                value={editedSystemPrompt}
-                onChange={onSystemPromptChange}
+                value={editedInstructions}
+                onChange={onInstructionsChange}
                 focus={isFocused}
                 maxLines={maxLines}
                 showScrollbar
@@ -85,10 +85,10 @@ const AgentSystemPromptFormContent: React.FC<AgentSystemPromptFormProps> = ({
   );
 };
 
-export const AgentSystemPromptForm: React.FC<AgentSystemPromptFormProps> = (props) => {
+export const AgentInstructionsForm: React.FC<AgentInstructionsFormProps> = (props) => {
   return (
     <FocusProvider>
-      <AgentSystemPromptFormContent {...props} />
+      <AgentInstructionsFormContent {...props} />
     </FocusProvider>
   );
 };

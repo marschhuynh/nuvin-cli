@@ -40,7 +40,7 @@ const SwapCommandComponent = ({ context, deactivate }: CommandComponentProps) =>
       const allAgents = agentRegistry.list();
       const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
         ...agent,
-        isDefault: agentRegistry.isDefault(agent.id),
+        isDefault: agentRegistry.isDefault(agent.name),
       }));
 
       setAgents(agentInfos);
@@ -154,7 +154,7 @@ const SwapCommandComponent = ({ context, deactivate }: CommandComponentProps) =>
     >
       <AgentList
         agents={[
-          { id: 'main', name: 'nuvin-agent', description: 'Default main agent', systemPrompt: '', tools: [], temperature: 0.7, maxTokens: 64000, isDefault: true },
+          { name: 'main', description: 'Default main agent', instructions: '', allowed_tools: [], temperature: 0.7, isDefault: true },
           ...agents,
         ]}
         isAgentEnabled={() => true}

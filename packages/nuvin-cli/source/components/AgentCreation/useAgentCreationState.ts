@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 
-type EditingField = 'name' | 'id' | 'description' | 'systemPrompt' | 'tools' | 'model' | 'temperature';
+type EditingField = 'name' | 'description' | 'instructions' | 'allowed_tools' | 'model' | 'temperature';
 type ViewMode = 'input' | 'preview' | 'editing' | 'loading' | 'error';
-type EditFormView = 'basic' | 'systemPrompt';
+type EditFormView = 'basic' | 'instructions';
 
-const editingSequence: EditingField[] = ['name', 'id', 'model', 'temperature', 'tools', 'description'];
+const editingSequence: EditingField[] = ['name', 'model', 'temperature', 'allowed_tools', 'description'];
 
 export interface AgentCreationState {
   mode: 'create' | 'edit';
@@ -16,11 +16,10 @@ export interface AgentCreationState {
   isEditing: boolean;
   activeField: EditingField;
   editedName: string;
-  editedId: string;
   editedDescription: string;
-  editedTools: string[];
+  editedAllowedTools: string[];
   editedTemperature: string;
-  editedSystemPrompt: string;
+  editedInstructions: string;
   editedModel: string;
 }
 
@@ -30,31 +29,30 @@ export interface AgentCreationActions {
   setIsEditing: (editing: boolean) => void;
   setActiveField: (field: EditingField) => void;
   setEditedName: (name: string) => void;
-  setEditedId: (id: string) => void;
   setEditedDescription: (description: string) => void;
-  setEditedTools: (tools: string[]) => void;
+  setEditedAllowedTools: (tools: string[]) => void;
   setEditedTemperature: (temperature: string) => void;
-  setEditedSystemPrompt: (systemPrompt: string) => void;
+  setEditedInstructions: (instructions: string) => void;
   setEditedModel: (model: string) => void;
   setViewMode: (mode: ViewMode) => void;
   setEditFormView: (view: EditFormView) => void;
-  navigateToSystemPrompt: () => void;
+  navigateToInstructions: () => void;
   navigateToBasicForm: () => void;
-  initializeEditingState: (preview?: Partial<AgentTemplate> & { systemPrompt: string }) => void;
+  initializeEditingState: (preview?: Partial<AgentTemplate> & { instructions: string }) => void;
   handleStartEditing: () => void;
   handleCancelEditing: () => void;
   moveFocus: (direction: 'next' | 'prev') => void;
   handleSaveEditedAgent: () => void;
   handleFieldSubmit: (field: EditingField) => void;
   handleSaveEditing: () => void;
-  getUpdatedPreview: () => (Partial<AgentTemplate> & { systemPrompt: string }) | undefined;
+  getUpdatedPreview: () => (Partial<AgentTemplate> & { instructions: string }) | undefined;
 }
 
 export const useAgentCreationState = (
   mode: 'create' | 'edit',
-  preview?: Partial<AgentTemplate> & { systemPrompt: string },
-  onUpdatePreview?: (nextPreview: Partial<AgentTemplate> & { systemPrompt: string }) => void,
-  onConfirm?: (nextPreview?: Partial<AgentTemplate> & { systemPrompt: string }) => void,
+  preview?: Partial<AgentTemplate> & { instructions: string },
+  onUpdatePreview?: (nextPreview: Partial<AgentTemplate> & { instructions: string }) => void,
+  onConfirm?: (nextPreview?: Partial<AgentTemplate> & { instructions: string }) => void,
 ) => {
   const [description, setDescription] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('input');
@@ -63,15 +61,14 @@ export const useAgentCreationState = (
   const [isEditing, setIsEditing] = useState(false);
   const [activeField, setActiveField] = useState<EditingField>('name');
   const [editedName, setEditedName] = useState('');
-  const [editedId, setEditedId] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
-  const [editedTools, setEditedTools] = useState<string[]>([]);
+  const [editedAllowedTools, setEditedAllowedTools] = useState<string[]>([]);
   const [editedTemperature, setEditedTemperature] = useState('');
-  const [editedSystemPrompt, setEditedSystemPrompt] = useState('');
+  const [editedInstructions, setEditedInstructions] = useState('');
   const [editedModel, setEditedModel] = useState('');
 
-  const navigateToSystemPrompt = useCallback(() => {
-    setEditFormView('systemPrompt');
+  const navigateToInstructions = useCallback(() => {
+    setEditFormView('instructions');
   }, []);
 
   const navigateToBasicForm = useCallback(() => {
@@ -82,13 +79,12 @@ export const useAgentCreationState = (
     if (!preview) return;
 
     setEditedName(preview.name ?? '');
-    setEditedId(preview.id ?? '');
     setEditedDescription(preview.description ?? '');
-    setEditedTools(Array.isArray(preview.tools) ? [...preview.tools] : []);
+    setEditedAllowedTools(Array.isArray(preview.allowed_tools) ? [...preview.allowed_tools] : []);
     setEditedTemperature(
       preview.temperature !== undefined && preview.temperature !== null ? String(preview.temperature) : '',
     );
-    setEditedSystemPrompt(preview.systemPrompt ?? '');
+    setEditedInstructions(preview.instructions ?? '');
     setEditedModel(preview.model ?? '');
   }, [preview]);
 
@@ -110,7 +106,7 @@ export const useAgentCreationState = (
       return;
     }
 
-    setEditedSystemPrompt(preview.systemPrompt ?? '');
+    setEditedInstructions(preview.instructions ?? '');
     if (!isEditing) {
       setShowPreview(true);
     }
@@ -162,10 +158,9 @@ export const useAgentCreationState = (
     if (!preview || !onUpdatePreview) return;
 
     const normalizedName = editedName.trim();
-    const normalizedId = editedId.trim();
     const normalizedDescription = editedDescription.trim();
     const normalizedTemperature = editedTemperature.trim();
-    const normalizedSystemPrompt = editedSystemPrompt.trim();
+    const normalizedInstructions = editedInstructions.trim();
     const normalizedModel = editedModel.trim();
 
     const parsedTemperature = Number(normalizedTemperature);
@@ -174,17 +169,15 @@ export const useAgentCreationState = (
         ? undefined
         : Math.min(2, Math.max(0, parsedTemperature));
 
-    const nextId = normalizedId.length > 0 ? normalizedId : mode === 'edit' ? preview.id : undefined;
-    const nextSystemPrompt = normalizedSystemPrompt.length > 0 ? normalizedSystemPrompt : (preview.systemPrompt ?? '');
+    const nextInstructions = normalizedInstructions.length > 0 ? normalizedInstructions : (preview.instructions ?? '');
 
-    const updatedPreview: Partial<AgentTemplate> & { systemPrompt: string } = {
+    const updatedPreview: Partial<AgentTemplate> & { instructions: string } = {
       ...preview,
       name: normalizedName.length > 0 ? normalizedName : preview.name,
-      id: nextId,
       description: normalizedDescription.length > 0 ? normalizedDescription : undefined,
-      tools: [...editedTools],
+      allowed_tools: [...editedAllowedTools],
       temperature,
-      systemPrompt: nextSystemPrompt,
+      instructions: nextInstructions,
       model: normalizedModel.length > 0 ? normalizedModel : undefined,
     };
 
@@ -198,12 +191,11 @@ export const useAgentCreationState = (
     }
   }, [
     editedDescription,
-    editedId,
     editedModel,
     editedName,
-    editedSystemPrompt,
+    editedInstructions,
     editedTemperature,
-    editedTools,
+    editedAllowedTools,
     mode,
     onConfirm,
     onUpdatePreview,
@@ -223,10 +215,9 @@ export const useAgentCreationState = (
     if (!preview) return undefined;
 
     const normalizedName = editedName.trim();
-    const normalizedId = editedId.trim();
     const normalizedDescription = editedDescription.trim();
     const normalizedTemperature = editedTemperature.trim();
-    const normalizedSystemPrompt = editedSystemPrompt.trim();
+    const normalizedInstructions = editedInstructions.trim();
     const normalizedModel = editedModel.trim();
 
     const parsedTemperature = Number(normalizedTemperature);
@@ -235,27 +226,24 @@ export const useAgentCreationState = (
         ? undefined
         : Math.min(2, Math.max(0, parsedTemperature));
 
-    const nextId = normalizedId.length > 0 ? normalizedId : mode === 'edit' ? preview.id : undefined;
-    const nextSystemPrompt = normalizedSystemPrompt.length > 0 ? normalizedSystemPrompt : (preview.systemPrompt ?? '');
+    const nextInstructions = normalizedInstructions.length > 0 ? normalizedInstructions : (preview.instructions ?? '');
 
     return {
       ...preview,
       name: normalizedName.length > 0 ? normalizedName : preview.name,
-      id: nextId,
       description: normalizedDescription.length > 0 ? normalizedDescription : undefined,
-      tools: [...editedTools],
+      allowed_tools: [...editedAllowedTools],
       temperature,
-      systemPrompt: nextSystemPrompt,
+      instructions: nextInstructions,
       model: normalizedModel.length > 0 ? normalizedModel : undefined,
     };
   }, [
     editedDescription,
-    editedId,
     editedModel,
     editedName,
-    editedSystemPrompt,
+    editedInstructions,
     editedTemperature,
-    editedTools,
+    editedAllowedTools,
     mode,
     preview,
   ]);
@@ -285,26 +273,24 @@ export const useAgentCreationState = (
     isEditing,
     activeField,
     editedName,
-    editedId,
     editedDescription,
-    editedTools,
+    editedAllowedTools,
     editedTemperature,
-    editedSystemPrompt,
+    editedInstructions,
     editedModel,
     setDescription,
     setShowPreview,
     setIsEditing,
     setActiveField,
     setEditedName,
-    setEditedId,
     setEditedDescription,
-    setEditedTools,
+    setEditedAllowedTools,
     setEditedTemperature,
-    setEditedSystemPrompt,
+    setEditedInstructions,
     setEditedModel,
     setViewMode,
     setEditFormView,
-    navigateToSystemPrompt,
+    navigateToInstructions,
     navigateToBasicForm,
     initializeEditingState,
     handleStartEditing,

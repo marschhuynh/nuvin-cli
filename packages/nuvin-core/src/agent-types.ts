@@ -1,73 +1,79 @@
 import type { AgentEvent, Message, MetricsSnapshot } from './ports.js';
 
-/**
- * Agent Template - defines a pre-configured specialist agent
- * Only systemPrompt is required; all other fields have sensible defaults
- */
+export type AgentFrontmatter = {
+  name?: string;
+  description?: string;
+  allowed_tools?: string[];
+  model?: string;
+  disable_model_invocation?: boolean;
+  user_invocable?: boolean;
+  context?: 'fork';
+  agent?: string;
+  hooks?: Record<string, unknown>;
+  argument_hint?: string;
+};
+
+export type ClaudeAgentSkill = {
+  frontmatter: AgentFrontmatter;
+  instructions: string;
+};
+
 export type AgentTemplate = {
-  systemPrompt: string; // REQUIRED: Custom system prompt for the agent
-
-  // Optional fields with defaults applied at runtime
-  id?: string; // Unique identifier (auto-generated if not provided)
-  name?: string; // Human-readable name (defaults to "Custom Agent")
-  description?: string; // What this agent does (defaults to generic description)
-  tools?: string[]; // Allowed tools (defaults to ['file_read', 'web_search'])
-
-  // LLM Configuration (optional - inherits from delegating agent if not specified)
-  provider?: string; // LLM provider (e.g., "openrouter", "github")
-  model?: string; // Model name (e.g., "gpt-4", "claude-3-sonnet")
-
-  // Sampling parameters (optional - inherits if not specified)
-  temperature?: number; // Default temperature (defaults to 0.7)
-  maxTokens?: number; // Token limit (optional - omitted from request if not provided)
-  topP?: number;
-  timeoutMs?: number;
-  shareContext?: boolean;
-  stream?: boolean; // Enable streaming for sub-agent responses
+  instructions: string;
+  name?: string;
+  description?: string;
+  allowed_tools?: string[];
+  model?: string;
+  disable_model_invocation?: boolean;
+  user_invocable?: boolean;
+  context?: 'fork';
+  agent?: string;
+  hooks?: Record<string, unknown>;
+  argument_hint?: string;
+  provider?: string;
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  timeout_ms?: number;
+  share_context?: boolean;
+  stream?: boolean;
   metadata?: Record<string, unknown>;
 };
 
-/**
- * CompleteAgent is an AgentTemplate with all required fields populated
- * Used for registered agents that have gone through applyDefaults()
- */
 export type CompleteAgent = Required<
-  Pick<AgentTemplate, 'id' | 'name' | 'description' | 'systemPrompt' | 'tools' | 'temperature' | 'maxTokens'>
+  Pick<AgentTemplate, 'instructions' | 'name' | 'description' | 'allowed_tools' | 'temperature'>
 > &
-  Pick<AgentTemplate, 'provider' | 'model' | 'topP' | 'timeoutMs' | 'shareContext' | 'metadata'>;
+  Pick<AgentTemplate, 'model' | 'disable_model_invocation' | 'user_invocable' | 'context' | 'agent' | 'provider' | 'top_p' | 'max_tokens' | 'timeout_ms' | 'share_context' | 'metadata'>;
 
 /**
  * Specialist Agent Configuration (Internal - used by AgentManager)
  */
 export type SpecialistAgentConfig = {
-  // From AssignTool parameters
-  agentId: string; // Agent ID from tool call
-  agentName: string; // Agent human-readable name
-  agentType?: string; // Agent type (template id) for storage key
-  taskDescription: string; // Task from tool call
-
-  // From AgentTemplate (merged)
-  systemPrompt: string; // From template
-  tools: string[]; // From template
-  provider?: string; // From template or delegating agent
-  model?: string; // From template or delegating agent
-  temperature?: number; // From template or delegating agent
-  maxTokens?: number; // From template or delegating agent
-  topP?: number; // From template or delegating agent
-  timeoutMs?: number; // From template or default
-
-  // Runtime context
-  shareContext?: boolean;
-  stream?: boolean; // Enable streaming for sub-agent responses
-  delegatingMemory?: Message[]; // If shareContext is true
-  delegationDepth: number; // Current delegation level (tracked internally)
-  conversationId?: string; // For event tracking
-  messageId?: string; // For event tracking
-  toolCallId?: string; // For event tracking - links to specific assign_task tool call
-
-  // Session resumption
-  resumeSessionId?: string; // Session to resume (reuses existing messages)
-  previousMessages?: Message[]; // Messages from previous session (loaded by factory)
+  agentId: string;
+  agentName: string;
+  agentType?: string;
+  taskDescription: string;
+  instructions: string;
+  allowed_tools: string[];
+  provider?: string;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  timeout_ms?: number;
+  share_context?: boolean;
+  stream?: boolean;
+  delegatingMemory?: Message[];
+  delegationDepth: number;
+  conversationId?: string;
+  messageId?: string;
+  toolCallId?: string;
+  resumeSessionId?: string;
+  previousMessages?: Message[];
+  disable_model_invocation?: boolean;
+  user_invocable?: boolean;
+  context?: 'fork';
+  agent?: string;
 };
 
 /**
@@ -86,7 +92,7 @@ export type SpecialistAgentResult = {
     events?: AgentEvent[];
     errorMessage?: string;
     metrics?: MetricsSnapshot;
-    sessionId?: string; // Session ID for resume
+    sessionId?: string;
   };
 };
 
@@ -94,9 +100,9 @@ export type SpecialistAgentResult = {
  * AssignTool Parameters (what LLM provides)
  */
 export type AssignParams = {
-  agent: string; // Required: Agent ID from registry (e.g., "code-reviewer", "researcher")
-  task: string; // Required: Task description (3-4 sentences explaining what to do)
-  description?: string; // Short description of the task
-  run_in_background?: boolean; // Run agent in background and return immediately
-  resume?: string; // Session ID to resume a previous agent session
+  agent: string;
+  task: string;
+  description?: string;
+  run_in_background?: boolean;
+  resume?: string;
 };

@@ -153,7 +153,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       commandRunner,
       agentListProvider: () =>
         this.agentRegistry.list().map((agent) => ({
-          id: agent.id,
+          id: agent.name,
           name: agent.name,
           description: agent.description,
         })),

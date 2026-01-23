@@ -5,7 +5,7 @@ import { useAgentCreationKeyboard } from './useAgentCreationKeyboard.js';
 import { AgentDescriptionInput } from './AgentDescriptionInput.js';
 import { AgentPreview } from './AgentPreview.js';
 import { AgentBasicForm } from './AgentBasicForm.js';
-import { AgentSystemPromptForm } from './AgentSystemPromptForm.js';
+import { AgentInstructionsForm } from './AgentInstructionsForm.js';
 import { AgentLoading } from './AgentLoading.js';
 import { AgentError } from './AgentError.js';
 
@@ -13,14 +13,14 @@ interface AgentCreationProps {
   visible: boolean;
   onGenerate: (description: string) => void;
   onCancel: () => void;
-  onConfirm?: (nextPreview?: Partial<AgentTemplate> & { systemPrompt: string }) => void;
+  onConfirm?: (nextPreview?: Partial<AgentTemplate> & { instructions: string }) => void;
   onEditPreview?: () => void;
-  onUpdatePreview?: (nextPreview: Partial<AgentTemplate> & { systemPrompt: string }) => void;
+  onUpdatePreview?: (nextPreview: Partial<AgentTemplate> & { instructions: string }) => void;
   onDelete?: () => void;
   availableTools?: string[];
   loading?: boolean;
   error?: string;
-  preview?: Partial<AgentTemplate> & { systemPrompt: string };
+  preview?: Partial<AgentTemplate> & { instructions: string };
   mode?: 'create' | 'edit';
   isDefault?: boolean;
   navigationSource?: 'agent-config' | 'direct';
@@ -63,14 +63,14 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
   }
 
   if (state.isEditing && preview) {
-    if (state.editFormView === 'systemPrompt') {
+    if (state.editFormView === 'instructions') {
       return (
-        <AgentSystemPromptForm
+        <AgentInstructionsForm
           mode={mode}
           preview={preview}
-          editedSystemPrompt={state.editedSystemPrompt}
+          editedInstructions={state.editedInstructions}
           error={error}
-          onSystemPromptChange={state.setEditedSystemPrompt}
+          onInstructionsChange={state.setEditedInstructions}
           onNavigateBack={state.navigateToBasicForm}
         />
       );
@@ -82,9 +82,8 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         preview={preview}
         availableTools={availableTools}
         editedName={state.editedName}
-        editedId={state.editedId}
         editedDescription={state.editedDescription}
-        editedTools={state.editedTools}
+        editedAllowedTools={state.editedAllowedTools}
         editedTemperature={state.editedTemperature}
         editedModel={state.editedModel}
         error={error}
@@ -93,9 +92,6 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
           switch (field) {
             case 'name':
               state.setEditedName(value);
-              break;
-            case 'id':
-              state.setEditedId(value);
               break;
             case 'model':
               state.setEditedModel(value);
@@ -108,8 +104,8 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
               break;
           }
         }}
-        onToolsChange={state.setEditedTools}
-        onNavigateToSystemPrompt={state.navigateToSystemPrompt}
+        onToolsChange={state.setEditedAllowedTools}
+        onNavigateToInstructions={state.navigateToInstructions}
         onDelete={onDelete}
       />
     );
@@ -138,9 +134,8 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         preview={preview}
         availableTools={availableTools}
         editedName={state.editedName}
-        editedId={state.editedId}
         editedDescription={state.editedDescription}
-        editedTools={state.editedTools}
+        editedAllowedTools={state.editedAllowedTools}
         editedTemperature={state.editedTemperature}
         editedModel={state.editedModel}
         error={error}
@@ -149,9 +144,6 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
           switch (field) {
             case 'name':
               state.setEditedName(value);
-              break;
-            case 'id':
-              state.setEditedId(value);
               break;
             case 'model':
               state.setEditedModel(value);
@@ -164,8 +156,8 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
               break;
           }
         }}
-        onToolsChange={state.setEditedTools}
-        onNavigateToSystemPrompt={state.navigateToSystemPrompt}
+        onToolsChange={state.setEditedAllowedTools}
+        onNavigateToInstructions={state.navigateToInstructions}
         onDelete={onDelete}
       />
     );

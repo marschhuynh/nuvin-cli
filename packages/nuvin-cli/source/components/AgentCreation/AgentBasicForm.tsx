@@ -14,19 +14,18 @@ const MODAL_HEIGHT = 30;
 
 interface AgentBasicFormProps {
   mode: 'create' | 'edit';
-  preview: Partial<AgentTemplate> & { systemPrompt: string };
+  preview: Partial<AgentTemplate> & { instructions: string };
   availableTools: string[];
   editedName: string;
-  editedId: string;
   editedDescription: string;
-  editedTools: string[];
+  editedAllowedTools: string[];
   editedTemperature: string;
   editedModel: string;
   error?: string;
   isDefault?: boolean;
   onFieldChange: (field: string, value: string) => void;
   onToolsChange: (tools: string[]) => void;
-  onNavigateToSystemPrompt: () => void;
+  onNavigateToInstructions: () => void;
   onDelete?: () => void;
 }
 
@@ -45,16 +44,15 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
   preview,
   availableTools,
   editedName,
-  editedId,
   editedDescription,
-  editedTools,
+  editedAllowedTools,
   editedTemperature,
   editedModel,
   error,
   isDefault,
   onFieldChange,
   onToolsChange,
-  onNavigateToSystemPrompt: _onNavigateToSystemPrompt,
+  onNavigateToInstructions: _onNavigateToInstructions,
   onDelete,
 }) => {
   const { theme } = useTheme();
@@ -69,7 +67,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
           { text: 'Tab', highlight: true },
           { text: ' cycle fields • ' },
           { text: 'Ctrl+P', highlight: true },
-          { text: ' edit system prompt • ' },
+          { text: ' edit instructions • ' },
           { text: 'Ctrl+S', highlight: true },
           { text: ' save • ' },
           { text: 'ESC', highlight: true },
@@ -109,15 +107,6 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
             </Box>
 
             <Box flexGrow={1} width={cols / 4}>
-              <FormTextInput
-                label={`ID${mode === 'edit' ? '' : ' (auto-gen)'}:`}
-                value={editedId}
-                onChange={(value) => onFieldChange('id', value)}
-                tabIndex="0"
-              />
-            </Box>
-
-            <Box flexGrow={1} width={cols / 4}>
               <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} tabIndex="0" />
             </Box>
 
@@ -132,7 +121,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
           </ResponsiveBox>
 
           <Box flexDirection="column" marginBottom={1}>
-            <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} tabIndex="0" />
+            <ToolSelectInput availableTools={availableTools} selectedTools={editedAllowedTools} onChange={onToolsChange} tabIndex="0" />
           </Box>
 
           <Box marginBottom={1}>

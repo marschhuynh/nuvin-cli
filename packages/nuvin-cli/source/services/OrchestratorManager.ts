@@ -364,10 +364,10 @@ export class OrchestratorManager {
       const availableAgents = agentRegistry
         .list()
         .filter((agent) => {
-          return enabledAgentsConfig[agent.id] !== false;
+          return enabledAgentsConfig[agent.name] !== false;
         })
         .map((agent) => ({
-          id: agent.id as string,
+          id: agent.name as string,
           name: agent.name as string,
           description: agent.description as string,
         }));

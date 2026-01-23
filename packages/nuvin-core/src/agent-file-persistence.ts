@@ -1,15 +1,27 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parse, stringify } from 'yaml';
-import type { AgentTemplate } from './agent-types.js';
+import type { AgentTemplate, AgentFrontmatter } from './agent-types.js';
 
 export interface AgentFilePersistenceOptions {
-  agentsDir: string; // Directory where agent YAML files are stored
+  agentsDir: string;
 }
 
-/**
- * AgentFilePersistence - handles loading and saving agents to YAML files
- */
+function parseFrontmatter(content: string): { frontmatter: Record<string, unknown>; body: string } {
+  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (frontmatterMatch) {
+    const frontmatter = parse(frontmatterMatch[1]) || {};
+    const body = frontmatterMatch[2].trim();
+    return { frontmatter, body };
+  }
+  return { frontmatter: {}, body: content.trim() };
+}
+
+function buildSkillContent(frontmatter: Record<string, unknown>, instructions: string): string {
+  const yamlPart = stringify(frontmatter, { lineWidth: 0, indent: 2 });
+  return `---\n${yamlPart}---\n\n${instructions}`;
+}
+
 export class AgentFilePersistence {
   private agentsDir: string;
 
@@ -17,18 +29,12 @@ export class AgentFilePersistence {
     this.agentsDir = options.agentsDir;
   }
 
-  /**
-   * Ensure agents directory exists
-   */
   private ensureAgentsDir(): void {
     if (!fs.existsSync(this.agentsDir)) {
       fs.mkdirSync(this.agentsDir, { recursive: true });
     }
   }
 
-  /**
-   * Load all agents from the agents directory
-   */
   async loadAll(): Promise<AgentTemplate[]> {
     const agents: AgentTemplate[] = [];
 
@@ -40,9 +46,9 @@ export class AgentFilePersistence {
       }
 
       const files = fs.readdirSync(this.agentsDir);
-      const yamlFiles = files.filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
+      const mdFiles = files.filter((f) => f.endsWith('.md'));
 
-      for (const file of yamlFiles) {
+      for (const file of mdFiles) {
         try {
           const agent = await this.load(file);
           if (agent) {
@@ -52,74 +58,86 @@ export class AgentFilePersistence {
           console.warn(`Failed to load agent from ${file}:`, error);
         }
       }
-    } catch (_error) {
-      // Silently ignore directory read errors (directory might not exist or be inaccessible)
-    }
+    } catch (_error) {}
 
     return agents;
   }
 
-  /**
-   * Load a single agent from a YAML file
-   */
   async load(filename: string): Promise<AgentTemplate | null> {
     try {
       const filePath = path.join(this.agentsDir, filename);
       const content = fs.readFileSync(filePath, 'utf8');
-      const data = parse(content);
+      const { frontmatter, body } = parseFrontmatter(content);
 
-      // Validate that data is an object and systemPrompt exists (only required field)
-      if (!data || typeof data !== 'object' || typeof data.systemPrompt !== 'string') {
-        console.warn(`Invalid agent template in ${filename}: missing or invalid systemPrompt`);
+      const fm = frontmatter as Record<string, unknown>;
+
+      if (!body || typeof body !== 'string') {
+        console.warn(`Invalid agent template in ${filename}: missing instructions`);
         return null;
       }
 
-      // Additional validation for optional fields if present
-      const template = data as Record<string, unknown>;
-      if (template.tools !== undefined && !Array.isArray(template.tools)) {
-        console.warn(`Invalid agent template in ${filename}: tools must be an array`);
-        return null;
-      }
+      const template: AgentTemplate = {
+        instructions: body,
+        name: typeof fm.name === 'string' ? fm.name : undefined,
+        description: typeof fm.description === 'string' ? fm.description : undefined,
+        allowed_tools: Array.isArray(fm.allowed_tools)
+          ? fm.allowed_tools.filter((t): t is string => typeof t === 'string')
+          : undefined,
+        model: typeof fm.model === 'string' ? fm.model : undefined,
+        disable_model_invocation:
+          typeof fm.disable_model_invocation === 'boolean' ? fm.disable_model_invocation : undefined,
+        user_invocable: typeof fm.user_invocable === 'boolean' ? fm.user_invocable : undefined,
+        context: fm.context === 'fork' ? 'fork' : undefined,
+        agent: typeof fm.agent === 'string' ? fm.agent : undefined,
+        hooks: typeof fm.hooks === 'object' && fm.hooks !== null ? (fm.hooks as Record<string, unknown>) : undefined,
+        argument_hint: typeof fm.argument_hint === 'string' ? fm.argument_hint : undefined,
+      };
 
-      return data as AgentTemplate;
+      return template;
     } catch (error) {
       console.warn(`Failed to load agent from ${filename}:`, error);
       return null;
     }
   }
 
-  /**
-   * Save an agent to a YAML file
-   */
   async save(agent: AgentTemplate): Promise<void> {
     this.ensureAgentsDir();
 
-    // Validate systemPrompt is present
-    if (!agent.systemPrompt) {
-      throw new Error('Cannot save agent: systemPrompt is required');
+    if (!agent.instructions) {
+      throw new Error('Cannot save agent: instructions are required');
     }
 
-    // Generate filename from agent ID (or use timestamp if no ID)
-    const id = agent.id || `agent-${Date.now()}`;
-    const filename = `${this.sanitizeFilename(id)}.yaml`;
+    const id = agent.name || `agent-${Date.now()}`;
+    const filename = `${this.sanitizeFilename(id)}.md`;
     const filePath = path.join(this.agentsDir, filename);
 
-    try {
-      const yamlContent = stringify(agent, {
-        lineWidth: 0, // Disable line wrapping
-        indent: 2,
-      });
-      fs.writeFileSync(filePath, yamlContent, 'utf8');
-    } catch (error) {
-      throw new Error(`Failed to save agent to ${filename}: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    const frontmatter: AgentFrontmatter = {
+      name: agent.name,
+      description: agent.description,
+      allowed_tools: agent.allowed_tools,
+      model: agent.model,
+      disable_model_invocation: agent.disable_model_invocation,
+      user_invocable: agent.user_invocable,
+      context: agent.context,
+      agent: agent.agent,
+      hooks: agent.hooks,
+      argument_hint: agent.argument_hint,
+    };
+
+    Object.keys(frontmatter).forEach((key) => {
+      const k = key as keyof AgentFrontmatter;
+      if (frontmatter[k] === undefined) {
+        delete frontmatter[k];
+      }
+    });
+
+    const content = buildSkillContent(frontmatter as Record<string, unknown>, agent.instructions);
+
+    fs.writeFileSync(filePath, content, 'utf8');
   }
 
-  /**
-   * Delete an agent file
-   */
   async delete(agentId: string): Promise<void> {
-    const filename = `${this.sanitizeFilename(agentId)}.yaml`;
+    const filename = `${this.sanitizeFilename(agentId)}.md`;
     const filePath = path.join(this.agentsDir, filename);
 
     try {
@@ -131,29 +149,20 @@ export class AgentFilePersistence {
     }
   }
 
-  /**
-   * Check if an agent file exists
-   */
   exists(agentId: string): boolean {
-    const filename = `${this.sanitizeFilename(agentId)}.yaml`;
+    const filename = `${this.sanitizeFilename(agentId)}.md`;
     const filePath = path.join(this.agentsDir, filename);
     return fs.existsSync(filePath);
   }
 
-  /**
-   * Sanitize filename to kebab-case and remove invalid characters
-   */
   private sanitizeFilename(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '-') // Replace non-alphanumeric with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 
-  /**
-   * Get the agents directory path
-   */
   getAgentsDir(): string {
     return this.agentsDir;
   }

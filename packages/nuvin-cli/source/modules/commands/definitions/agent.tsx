@@ -9,7 +9,6 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import { AgentCreator } from '@/services/AgentCreator.js';
 import AgentCreation from '@/components/AgentCreation/AgentCreation.js';
 
-// Navigation state types
 type NavigationSource = 'agent-config' | 'direct' | null;
 type ActiveView = 'config' | 'edit' | 'none';
 
@@ -17,7 +16,7 @@ interface NavigationState {
   activeView: ActiveView;
   navigationSource: NavigationSource;
   preservedState: {
-    selectedAgentId: string | null;
+    selectedAgentName: string | null;
     selectedAgentIndex: number;
   } | null;
 }
@@ -32,27 +31,25 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   const [creationLoading, setCreationLoading] = useState(false);
   const [creationError, setCreationError] = useState<string | undefined>(undefined);
   const [creationPreview, setCreationPreview] = useState<
-    (Partial<AgentTemplate> & { systemPrompt: string }) | undefined
+    (Partial<AgentTemplate> & { instructions: string }) | undefined
   >(undefined);
-  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+  const [editingAgentName, setEditingAgentName] = useState<string | null>(null);
   const [availableTools, setAvailableTools] = useState<string[]>([]);
 
-  // Navigation state management
   const [navigationState, setNavigationState] = useState<NavigationState>({
     activeView: 'config',
     navigationSource: null,
     preservedState: null,
   });
 
-  // Helper functions for clean state transitions
-  const transitionToEdit = useCallback((agentId: string, source: NavigationSource, selectedAgentIndex: number) => {
+  const transitionToEdit = useCallback((agentName: string, source: NavigationSource, selectedAgentIndex: number) => {
     setNavigationState({
       activeView: 'edit',
       navigationSource: source,
       preservedState:
         source === 'agent-config'
           ? {
-            selectedAgentId: agentId,
+            selectedAgentName: agentName,
             selectedAgentIndex,
           }
           : null,
@@ -111,7 +108,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       const allAgents = agentRegistry.list();
       const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
         ...agent,
-        isDefault: agentRegistry.isDefault(agent.id),
+        isDefault: agentRegistry.isDefault(agent.name),
       }));
 
       setAgents(agentInfos);
@@ -162,10 +159,10 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   }, [loadAgents]);
 
   const handleAgentStatusChange = useCallback(
-    async (agentId: string, enabled: boolean) => {
+    async (agentName: string, enabled: boolean) => {
       try {
         const currentConfig = (context.config.get('agentsEnabled') as Record<string, boolean>) || {};
-        const updatedConfig = { ...currentConfig, [agentId]: enabled };
+        const updatedConfig = { ...currentConfig, [agentName]: enabled };
 
         await context.config.set('agentsEnabled', updatedConfig, 'global');
         setEnabledAgents(updatedConfig);
@@ -183,7 +180,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   );
 
   const handleAgentCreate = useCallback(() => {
-    setEditingAgentId(null);
+    setEditingAgentName(null);
     setCreationMode(true);
     setCreationError(undefined);
     setCreationPreview(undefined);
@@ -191,7 +188,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   }, []);
 
   const handleAgentEdit = useCallback(
-    (agentId: string) => {
+    (agentName: string) => {
       const tools = context.orchestratorManager?.getOrchestrator()?.getTools?.();
       const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
       const agentRegistry = agentAwareTools?.getAgentRegistry?.();
@@ -201,20 +198,17 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         return;
       }
 
-      const agent = agentRegistry.get(agentId);
+      const agent = agentRegistry.get(agentName);
       if (!agent) {
         void loadAgents();
         return;
       }
 
-      // Find the current selected agent index
-      const selectedAgentIndex = agents.findIndex((a) => a.id === agentId);
+      const selectedAgentIndex = agents.findIndex((a) => a.name === agentName);
 
-      // Store navigation source as 'agent-config' and preserve state
-      transitionToEdit(agentId, 'agent-config', selectedAgentIndex);
+      transitionToEdit(agentName, 'agent-config', selectedAgentIndex);
 
-      // Set up edit mode
-      setEditingAgentId(agentId);
+      setEditingAgentName(agentName);
       setCreationMode(true);
       setCreationError(undefined);
       setCreationPreview(agent);
@@ -224,7 +218,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   );
 
   const handleAgentDelete = useCallback(
-    async (agentId: string) => {
+    async (agentName: string) => {
       try {
         const tools = context.orchestratorManager?.getOrchestrator()?.getTools?.();
         const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
@@ -235,18 +229,16 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           return;
         }
 
-        if (agentRegistry.isDefault(agentId)) {
+        if (agentRegistry.isDefault(agentName)) {
           setError('Cannot delete default agents');
           return;
         }
 
-        agentRegistry.unregister(agentId);
-        await agentRegistry.deleteFromFile(agentId);
+        agentRegistry.unregister(agentName);
+        await agentRegistry.deleteFromFile(agentName);
 
-        // Delete the agent from config - this updates ConfigManager internal state
-        await context.config.delete(`agentsEnabled.${agentId}`, 'global');
+        await context.config.delete(`agentsEnabled.${agentName}`, 'global');
 
-        // Get the updated config from ConfigManager (already updated by delete)
         const updatedConfig = (context.config.get('agentsEnabled') as Record<string, boolean>) || {};
         setEnabledAgents(updatedConfig);
 
@@ -255,15 +247,13 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           orchestratorAwareTools.setEnabledAgents(updatedConfig);
         }
 
-        // Reload agents list (this will also re-sync enabledAgents from config)
         await loadAgents();
 
-        // Navigate back to agent list
         transitionToConfig();
         setCreationMode(false);
         setCreationError(undefined);
         setCreationPreview(undefined);
-        setEditingAgentId(null);
+        setEditingAgentName(null);
       } catch (error) {
         setError(`Failed to delete agent: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -271,12 +261,11 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
     [context.config, loadAgents, context.orchestratorManager?.getOrchestrator, transitionToConfig],
   );
 
-  // Handle agent creation
   const handleCreationSubmit = async (description: string) => {
     try {
       setCreationLoading(true);
       setCreationError(undefined);
-      setEditingAgentId(null);
+      setEditingAgentName(null);
 
       const llm = context.orchestratorManager?.getOrchestrator()?.getLLM?.();
       const model = context.orchestratorManager?.getOrchestrator()?.getConfig?.()?.model || 'gpt-4';
@@ -287,7 +276,6 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         return;
       }
 
-      // Create agent using AgentCreator service
       const agentCreator = new AgentCreator(llm);
       const result = await agentCreator.createAgent(description, model);
 
@@ -297,7 +285,6 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         return;
       }
 
-      // Show preview
       setCreationPreview(result.agent);
       setCreationLoading(false);
     } catch (error) {
@@ -307,23 +294,19 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   };
 
   const handleCreationCancel = () => {
-    // Check navigationSource to determine where to return
     if (navigationState.navigationSource === 'agent-config') {
-      // Return to Agent Configuration modal
       transitionToConfig();
       setCreationMode(false);
       setCreationError(undefined);
       setCreationPreview(undefined);
       setCreationLoading(false);
-      setEditingAgentId(null);
-      // Note: preservedState is cleared by transitionToConfig, but we keep the agents list intact
+      setEditingAgentName(null);
     } else {
-      // Direct entry - close the command entirely
       setCreationMode(false);
       setCreationError(undefined);
       setCreationPreview(undefined);
       setCreationLoading(false);
-      setEditingAgentId(null);
+      setEditingAgentName(null);
       deactivate();
     }
   };
@@ -332,13 +315,13 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
     setCreationError(undefined);
   };
 
-  const handlePreviewUpdate = (updatedPreview: Partial<AgentTemplate> & { systemPrompt: string }) => {
+  const handlePreviewUpdate = (updatedPreview: Partial<AgentTemplate> & { instructions: string }) => {
     setCreationPreview(updatedPreview);
     setCreationError(undefined);
   };
 
   const handleCreationConfirm = useCallback(
-    async (nextPreview?: Partial<AgentTemplate> & { systemPrompt: string }) => {
+    async (nextPreview?: Partial<AgentTemplate> & { instructions: string }) => {
       const previewToUse = nextPreview ?? creationPreview;
       if (!previewToUse) return;
 
@@ -354,29 +337,29 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           return;
         }
 
-        if (editingAgentId) {
-          if (agentRegistry.isDefault(editingAgentId)) {
+        if (editingAgentName) {
+          if (agentRegistry.isDefault(editingAgentName)) {
             setCreationError('Default agents cannot be edited');
             return;
           }
 
-          const originalAgent = agentRegistry.get(editingAgentId);
+          const originalAgent = agentRegistry.get(editingAgentName);
           if (!originalAgent) {
             setCreationError('Agent not found. Please refresh and try again.');
             return;
           }
 
           const updatedAgent = agentRegistry.applyDefaults(previewToUse);
-          const newId = updatedAgent.id;
-          const renamed = newId !== editingAgentId;
+          const newName = updatedAgent.name;
+          const renamed = newName !== editingAgentName;
 
-          if (renamed && agentRegistry.exists(newId)) {
-            setCreationError(`Agent with ID "${newId}" already exists`);
+          if (renamed && agentRegistry.exists(newName)) {
+            setCreationError(`Agent with name "${newName}" already exists`);
             return;
           }
 
           const currentConfig = (context.config.get('agentsEnabled') as Record<string, boolean>) || {};
-          const wasEnabled = currentConfig[editingAgentId] ?? true;
+          const wasEnabled = currentConfig[editingAgentName] ?? true;
           const updatedConfig = { ...currentConfig };
 
           let newRegistered = false;
@@ -385,7 +368,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
 
           try {
             if (renamed) {
-              agentRegistry.unregister(editingAgentId);
+              agentRegistry.unregister(editingAgentName);
             }
 
             agentRegistry.register(updatedAgent);
@@ -395,14 +378,14 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
             savedUpdatedFile = true;
 
             if (renamed) {
-              await agentRegistry.deleteFromFile(editingAgentId);
+              await agentRegistry.deleteFromFile(editingAgentName);
               removedOriginalFile = true;
             }
 
             if (renamed) {
-              delete updatedConfig[editingAgentId];
+              delete updatedConfig[editingAgentName];
             }
-            if (newId) updatedConfig[newId] = wasEnabled ?? true;
+            if (newName) updatedConfig[newName] = wasEnabled ?? true;
 
             await context.config.set('agentsEnabled', updatedConfig, 'global');
             setEnabledAgents(updatedConfig);
@@ -411,12 +394,9 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               orchestratorAwareTools.setEnabledAgents(updatedConfig);
             }
 
-            // Reload agents list to get updated data
             await loadAgents();
 
-            // Check navigationSource to determine where to return
             if (navigationState.navigationSource === 'agent-config') {
-              // Get the updated agents list to find the correct index
               const tools = context.orchestratorManager?.getOrchestrator()?.getTools?.();
               const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
               const agentRegistry = agentAwareTools?.getAgentRegistry?.();
@@ -424,20 +404,18 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
                 const allAgents = agentRegistry.list();
                 const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
                   ...agent,
-                  isDefault: agentRegistry.isDefault(agent.id),
+                  isDefault: agentRegistry.isDefault(agent.name),
                 }));
 
-                // Find the index of the edited agent (use new ID if renamed)
-                const editedAgentIndex = agentInfos.findIndex((a) => a.id === newId);
+                const editedAgentIndex = agentInfos.findIndex((a) => a.name === newName);
                 const selectedIndex =
                   editedAgentIndex >= 0 ? editedAgentIndex : (navigationState.preservedState?.selectedAgentIndex ?? 0);
 
-                // Update navigation state to preserve selection on edited agent
                 setNavigationState({
                   activeView: 'config',
                   navigationSource: null,
                   preservedState: {
-                    selectedAgentId: newId ?? null,
+                    selectedAgentName: newName ?? null,
                     selectedAgentIndex: selectedIndex,
                   },
                 });
@@ -448,27 +426,26 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               setCreationMode(false);
               setCreationError(undefined);
               setCreationPreview(undefined);
-              setEditingAgentId(null);
+              setEditingAgentName(null);
             } else {
-              // Direct entry - close the command entirely
               setCreationMode(false);
               setCreationError(undefined);
               setCreationPreview(undefined);
-              setEditingAgentId(null);
+              setEditingAgentName(null);
               deactivate();
             }
           } catch (error) {
             if (newRegistered) {
-              agentRegistry.unregister(updatedAgent.id);
+              agentRegistry.unregister(updatedAgent.name);
             }
 
-            if (!agentRegistry.exists(editingAgentId)) {
+            if (!agentRegistry.exists(editingAgentName)) {
               agentRegistry.register(originalAgent);
             }
 
             if (savedUpdatedFile && renamed) {
               try {
-                await agentRegistry.deleteFromFile(updatedAgent.id);
+                await agentRegistry.deleteFromFile(updatedAgent.name);
               } catch (cleanupError) {
                 console.error(
                   'Failed to remove updated agent file after edit error:',
@@ -497,7 +474,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           await agentRegistry.saveToFile(completeAgent);
 
           const currentConfig = (context.config.get('agentsEnabled') as Record<string, boolean>) || {};
-          const updatedConfig = { ...currentConfig, [completeAgent.id]: true };
+          const updatedConfig = { ...currentConfig, [completeAgent.name]: true };
           await context.config.set('agentsEnabled', updatedConfig, 'global');
           setEnabledAgents(updatedConfig);
 
@@ -506,26 +483,22 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
             orchestratorAwareTools.setEnabledAgents(updatedConfig);
           }
 
-          // Reload agents list to get updated data
           const allAgents = agentRegistry.list();
           const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
             ...agent,
-            isDefault: agentRegistry.isDefault(agent.id),
+            isDefault: agentRegistry.isDefault(agent.name),
           }));
           setAgents(agentInfos);
 
-          // Check navigationSource to determine where to return
           if (navigationState.navigationSource === 'agent-config') {
-            // Find the index of the newly created agent
-            const newAgentIndex = agentInfos.findIndex((a) => a.id === completeAgent.id);
+            const newAgentIndex = agentInfos.findIndex((a) => a.name === completeAgent.name);
             const selectedIndex = newAgentIndex >= 0 ? newAgentIndex : 0;
 
-            // Update navigation state to preserve selection on new agent
             setNavigationState({
               activeView: 'config',
               navigationSource: null,
               preservedState: {
-                selectedAgentId: completeAgent.id,
+                selectedAgentName: completeAgent.name,
                 selectedAgentIndex: selectedIndex,
               },
             });
@@ -534,7 +507,6 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
             setCreationError(undefined);
             setCreationPreview(undefined);
           } else {
-            // Direct entry - close the command entirely
             setCreationMode(false);
             setCreationError(undefined);
             setCreationPreview(undefined);
@@ -550,7 +522,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
     [
       context.config,
       creationPreview,
-      editingAgentId,
+      editingAgentName,
       loadAgents,
       navigationState.navigationSource,
       transitionToConfig,
@@ -560,21 +532,20 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
     ],
   );
 
-  // Show creation input if in creation mode
   if (creationMode) {
-    const editingAgent = editingAgentId ? agents.find((a) => a.id === editingAgentId) : null;
+    const editingAgent = editingAgentName ? agents.find((a) => a.name === editingAgentName) : null;
     const isEditingDefault = editingAgent?.isDefault ?? false;
 
     return (
       <AgentCreation
         visible={true}
-        mode={editingAgentId ? 'edit' : 'create'}
+        mode={editingAgentName ? 'edit' : 'create'}
         onGenerate={handleCreationSubmit}
         onCancel={handleCreationCancel}
         onConfirm={handleCreationConfirm}
         onEditPreview={handlePreviewEdit}
         onUpdatePreview={handlePreviewUpdate}
-        onDelete={editingAgentId && !isEditingDefault ? () => handleAgentDelete(editingAgentId) : undefined}
+        onDelete={editingAgentName && !isEditingDefault ? () => handleAgentDelete(editingAgentName) : undefined}
         availableTools={availableTools}
         loading={creationLoading}
         error={creationError}
@@ -613,11 +584,8 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
     );
   }
 
-  // Show Agent Configuration modal only when activeView is 'config'
   const showAgentModal = navigationState.activeView === 'config';
 
-  // Calculate the initial selected index for restoration
-  // If we have preserved state, use it; otherwise let the modal default to 0
   const initialSelectedIndex =
     navigationState.preservedState?.selectedAgentIndex !== undefined
       ? Math.min(navigationState.preservedState.selectedAgentIndex, Math.max(0, agents.length - 1))

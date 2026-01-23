@@ -8,10 +8,10 @@ interface UseAgentModalKeyboardProps {
   state: AgentModalState;
   actions: AgentModalActions;
   onClose: () => void;
-  onAgentStatusChange?: (agentId: string, enabled: boolean) => void;
+  onAgentStatusChange?: (agentName: string, enabled: boolean) => void;
   onAgentCreate?: () => void;
-  onAgentDelete?: (agentId: string) => void;
-  onAgentEdit?: (agentId: string) => void;
+  onAgentDelete?: (agentName: string) => void;
+  onAgentEdit?: (agentName: string) => void;
 }
 
 export const useAgentModalKeyboard = ({
@@ -50,10 +50,10 @@ export const useAgentModalKeyboard = ({
       if (input === ' ') {
         if (agents[state.selectedAgentIndex]) {
           const currentAgent = agents[state.selectedAgentIndex];
-          if (currentAgent.id) {
-            const newValue = state.localEnabledAgents[currentAgent.id] === false;
-            actions.toggleAgent(currentAgent.id);
-            onAgentStatusChange?.(currentAgent.id, newValue);
+          if (currentAgent.name) {
+            const newValue = state.localEnabledAgents[currentAgent.name] === false;
+            actions.toggleAgent(currentAgent.name);
+            onAgentStatusChange?.(currentAgent.name, newValue);
           }
         }
         return;
@@ -63,9 +63,9 @@ export const useAgentModalKeyboard = ({
       if (key.return) {
         if (agents[state.selectedAgentIndex]) {
           const currentAgent = agents[state.selectedAgentIndex];
-          const newValue = state.localEnabledAgents[currentAgent.id] === false;
-          actions.toggleAgent(currentAgent.id);
-          onAgentStatusChange?.(currentAgent.id, newValue);
+          const newValue = state.localEnabledAgents[currentAgent.name] === false;
+          actions.toggleAgent(currentAgent.name);
+          onAgentStatusChange?.(currentAgent.name, newValue);
         }
         return;
       }
@@ -81,7 +81,7 @@ export const useAgentModalKeyboard = ({
         if (agents[state.selectedAgentIndex]) {
           const currentAgent = agents[state.selectedAgentIndex];
           if (!currentAgent.isDefault) {
-            onAgentEdit?.(currentAgent.id);
+            onAgentEdit?.(currentAgent.name);
           }
         }
         return;
@@ -92,8 +92,8 @@ export const useAgentModalKeyboard = ({
         if (agents[state.selectedAgentIndex]) {
           const currentAgent = agents[state.selectedAgentIndex];
           if (!currentAgent.isDefault) {
-            actions.removeAgent(currentAgent.id);
-            onAgentDelete?.(currentAgent.id);
+            actions.removeAgent(currentAgent.name);
+            onAgentDelete?.(currentAgent.name);
           }
         }
         return;

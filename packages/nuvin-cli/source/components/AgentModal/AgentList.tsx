@@ -7,10 +7,10 @@ import type { AgentInfo } from './AgentModal.js';
 
 interface AgentListProps {
   agents: AgentInfo[];
-  isAgentEnabled: (agentId: string) => boolean;
+  isAgentEnabled: (agentName: string) => boolean;
   onAgentSelect: (index: number) => void;
-  onToggle?: (agentId: string) => void;
-  onEdit?: (agentId: string) => void;
+  onToggle?: (agentName: string) => void;
+  onEdit?: (agentName: string) => void;
   onNew?: () => void;
   maxHeight?: number;
   flexGrow?: number;
@@ -31,35 +31,35 @@ export const AgentList: React.FC<AgentListProps> = ({
   const { theme } = useTheme();
 
   const getEnabledCount = () => {
-    return agents.filter((agent) => isAgentEnabled(agent.id)).length;
+    return agents.filter((agent) => isAgentEnabled(agent.name)).length;
   };
 
   const comboBoxItems = useMemo<ComboBoxItem[]>(
     () =>
       agents.map((agent) => ({
         label: agent.name,
-        value: agent.id,
+        value: agent.name,
       })),
     [agents],
   );
 
   const renderAgentItem = useCallback(
     (item: ComboBoxItem, isSelected: boolean) => {
-      const agent = agents.find((a) => a.id === item.value);
+      const agent = agents.find((a) => a.name === item.value);
       if (!agent) return null;
 
-      const enabled = isAgentEnabled(agent.id);
+      const enabled = isAgentEnabled(agent.name);
       const statusColor = showStatus ? (enabled ? theme.tokens.green : theme.tokens.red) : theme.tokens.green;
       const statusIcon = showStatus ? (enabled ? '✓' : '✗') : '✓';
       const accentColor = theme.colors.accent;
 
       const params: React.ReactNode[] = [];
 
-      if (agent.maxTokens) {
+      if (agent.max_tokens) {
         params.push(
           <Text key="max_tokens">
             <Text dimColor>max_tokens: </Text>
-            <Text color="white">{agent.maxTokens}</Text>
+            <Text color="white">{agent.max_tokens}</Text>
           </Text>,
         );
       }
@@ -71,11 +71,11 @@ export const AgentList: React.FC<AgentListProps> = ({
           </Text>,
         );
       }
-      if (agent.topP !== undefined) {
+      if (agent.top_p !== undefined) {
         params.push(
           <Text key="top_p">
             <Text dimColor>top_p: </Text>
-            <Text color="white">{agent.topP}</Text>
+            <Text color="white">{agent.top_p}</Text>
           </Text>,
         );
       }
@@ -131,9 +131,9 @@ export const AgentList: React.FC<AgentListProps> = ({
 
   const handleSelect = useCallback(
     (item: ComboBoxItem) => {
-      const agent = agents.find((a) => a.id === item.value);
+      const agent = agents.find((a) => a.name === item.value);
       if (agent) {
-        onEdit?.(agent.id);
+        onEdit?.(agent.name);
       }
     },
     [agents, onEdit],
@@ -141,9 +141,9 @@ export const AgentList: React.FC<AgentListProps> = ({
 
   const handleSpace = useCallback(
     (item: ComboBoxItem) => {
-      const agent = agents.find((a) => a.id === item.value);
+      const agent = agents.find((a) => a.name === item.value);
       if (agent) {
-        onToggle?.(agent.id);
+        onToggle?.(agent.name);
       }
     },
     [agents, onToggle],

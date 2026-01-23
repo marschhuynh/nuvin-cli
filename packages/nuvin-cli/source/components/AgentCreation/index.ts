@@ -6,6 +6,6 @@ export { AgentDescriptionInput } from './AgentDescriptionInput.js';
 export { AgentPreview } from './AgentPreview.js';
 export { AgentForm } from './AgentForm.js';
 export { AgentBasicForm } from './AgentBasicForm.js';
-export { AgentSystemPromptForm } from './AgentSystemPromptForm.js';
+export { AgentInstructionsForm } from './AgentInstructionsForm.js';
 export { AgentLoading } from './AgentLoading.js';
 export { AgentError } from './AgentError.js';

@@ -68,14 +68,14 @@ export class DefaultSpecialistAgentFactory implements SpecialistAgentFactory {
     );
 
     const renderedSystemPrompt = renderTemplate(
-      `${template.systemPrompt}
+      `${template.instructions}
 <env>
 {{injectedSystem}}
 </env>`,
       { injectedSystem },
     );
 
-    const agentType = template.id ?? params.agent;
+    const agentType = template.name ?? params.agent;
     const idBase = agentType;
 
     // Handle session resumption
@@ -105,15 +105,15 @@ export class DefaultSpecialistAgentFactory implements SpecialistAgentFactory {
       agentName: template.name ?? params.agent,
       agentType,
       taskDescription: params.task,
-      systemPrompt: renderedSystemPrompt,
-      tools: template.tools ?? [],
+      instructions: renderedSystemPrompt,
+      allowed_tools: template.allowed_tools ?? [],
       provider: template.provider,
       model: template.model,
       temperature: template.temperature,
-      maxTokens: template.maxTokens,
-      topP: template.topP,
-      timeoutMs: template.timeoutMs,
-      shareContext: template.shareContext ?? false,
+      max_tokens: template.max_tokens,
+      top_p: template.top_p,
+      timeout_ms: template.timeout_ms,
+      share_context: template.share_context ?? false,
       stream: template.stream ?? true,
       delegatingMemory: undefined,
       delegationDepth: input.currentDepth + 1,

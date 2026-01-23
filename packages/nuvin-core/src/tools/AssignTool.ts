@@ -7,90 +7,123 @@ import type { DelegationService } from '../delegation/types.js';
 import type { AssignTaskMetadata } from './tool-result-metadata.js';
 import type { DelegationMetadata } from './metadata-types.js';
 
-const DESCRIPTION_TEMPLATE = `Delegate a task to a specialist agent for focused, independent execution.
+const DESCRIPTION_TEMPLATE = `Delegate tasks to specialist agents with focused expertise.
 
-The assign_task tool launches specialized agents that autonomously handle complex, multi-step tasks. Each agent has specific capabilities and tools available to it.
+Specialist agents operate in isolated contexts with dedicated tools and system prompts. Each agent is optimized for specific workflows and can work independently or collaboratively.
 
 Available agents:
 {AGENT_LIST}
 
-When NOT to use this tool:
-- To read a specific file path - use file_read instead (faster)
-- To search for a class like "class Foo" - use grep_tool instead (faster)
-- To search within 2-3 specific files - use file_read instead (faster)
-- For simple, single-step tasks that don't need specialist knowledge
+**When to use this tool:**
+- Tasks matching a specialist's domain (code review, security audit, research, testing)
+- Multi-step workflows requiring sustained attention and focus
+- Complex operations that benefit from domain-specific knowledge
+- Work that produces verbose output you don't want polluting main context
 
-Usage notes:
-- Always include a short description (5-10 words) summarizing what the agent will do
-- Launch multiple agents concurrently by making mutiple assign_task calls in a single message
-- Use resume parameter with a session ID to continue a previous agent session with full context preserved
-- Session IDs are returned in metadata.sessionId after each invocation
-- When the agent completes, it returns a result to you (not visible to user) - summarize it for the user
-- Provide clear, detailed task descriptions so agents can work autonomously
-- Clearly specify whether you expect code writing or just research (search, reads, web fetches)
-- Agent outputs should generally be trusted
+**When NOT to use this tool:**
+- Simple questions the main agent can answer directly
+- Tasks requiring frequent iterative refinement with you
+- Quick lookups or single-file operations (use: file_read, grep_tool, glob_tool)
+- Reading specific files or searching for known patterns
 
-Session resumption:
-- Pass session_id from previous invocation to resume parameter
-- Agent continues with full conversation history preserved
-- Useful for follow-up questions or continuing interrupted work
+**Orchestration patterns supported:**
+- Supervisor pattern: Central agent delegates to specialists
+- Sequential: Ordered handoffs (draft → review → polish)
+- Concurrent: Parallel independent tasks
+- Handoff: Dynamic capability-based routing
 
-Examples of when and how to use assign_task:
+**Parameters:**
 
-<example>
-User: "I need to create a reusable data table component with sorting, filtering, and pagination."
-Assistant: "I'll use the code-investigator agent to analyze existing patterns and design a comprehensive data table component."
-call assign_task({ agent: "code-investigator", task: "Analyze codebase for table component patterns and design a reusable data table with sorting, filtering, pagination", description: "Design data table component" })
-</example>
+\`description\` (required) - Short identifier for tracking and logs.
+  → 3-7 words. Example: "Security audit of auth module"
 
-<example>
-User: "My app is re-rendering too frequently. Can you help optimize it?"
-Assistant: "I'll delegate this to the code-investigator agent to trace the rendering behavior and identify optimization opportunities."
-call assign_task({ agent: "code-investigator", task: "Trace component render cycles, identify unnecessary re-renders, and suggest memoization strategies", description: "Analyze React render performance" })
-</example>
+\`task\` (required) - Detailed instructions for the agent.
+  → Include: what to analyze/create, specific files/patterns/scope, expected output format, constraints
+  → Scale effort to query complexity (simple fact-finding vs. deep research)
 
-<example>
-User: "I just finished writing the login authentication function. Can you take a look?"
-Assistant: "I'll use the code-security-auditor agent to review your authentication code for security issues and best practices."
-call assign_task({ agent: "code-security-auditor", task: "Review the authentication function for security vulnerabilities, input validation, and secure coding practices", description: "Security review of auth function" })
-</example>
+\`resume\` (optional) - Session ID from previous delegation to continue context.
+  → Format: "<agent-type>:<session-id>". Preserves full conversation history.
 
-<example>
-User: "I've finished implementing the payment processing feature."
-Assistant: "Let me have the code-security-auditor review this for security vulnerabilities before we proceed."
-call assign_task({ agent: "code-security-auditor", task: "Audit payment processing code for security flaws, PCI compliance issues, and error handling", description: "Security audit of payment code" })
-</example>
+**Context engineering notes:**
+- Agents use ~15x more tokens than single-agent workflows
+- Each agent maintains isolated context windows for focused reasoning
+- Complex tasks benefit from sub-agent specialization
+- State is passed via shared session state between agents in a workflow
 
-<example>
-User: "How does the data flow from API to database in this codebase?"
-Assistant: "I'll launch the code-investigator agent to trace the data flow architecture."
-call assign_task({ agent: "code-investigator", task: "Trace data flow from API endpoints through service layers to database, document the architecture", description: "Map API to database flow" })
-</example>
+**Parallelism guidance:**
+- Launch multiple agents in parallel to speed up work whenever tasks are independent
+- Each agent's work should be isolated (different files, different scopes) to avoid conflicts
+- Split large tasks into smaller, independent chunks that can run concurrently
+- Example: Review 50 test files → launch 5 agents, each reviewing 10 different files
+- Example: Research a topic → launch historian, technologist, and practitioner agents in parallel
 
+**Writing effective task descriptions:**
 
-<example>
-User: "Review my new feature - check both the code quality and security."
-Assistant: "I'll launch both agents in parallel to review your code."
-Assistant: [multiple tool calls in single message]
-call assign_task({ agent: "code-investigator", task: "Review code structure, patterns, and best practices in the new feature", description: "Code quality review" })
-call assign_task({ agent: "code-security-auditor", task: "Audit the new feature for security vulnerabilities and input validation", description: "Security audit" })
-Assistant: Both results return together, then summarize findings to user
-</example>
+Good: "Review src/auth/*.ts for security vulnerabilities. Focus on authentication flows, token handling, and input validation. Report critical issues with severity level."
 
-<example>
-[Turn 1]
-User: "Analyze the authentication implementation"
-Assistant: "I'll have the code-investigator review the authentication code."
-call assign_task({ agent: "code-investigator", task: "Analyze authentication implementation, check patterns and security", description: "Auth code review" })
-Agent returns: { status: "success", result: "...", metadata: { sessionId: "code-investigator:abc123", ... } }
-Assistant: [Summarizes findings to user, remembers sessionId from metadata]
+Poor: "Review the auth code"
 
-[Turn 2 - User follow-up]
-User: "Are there any CSRF vulnerabilities in that auth code?"
-Assistant: "Let me continue the investigation with the same context."
-call assign_task({ agent: "code-investigator", resume: "code-investigator:abc123", task: "Check specifically for CSRF vulnerabilities in the authentication code", description: "CSRF security check" })
-Agent continues with full previous context about the auth implementation
-</example>`;
+**Agent selection guidance:**
+- Code review → agents with Read, Grep access and review-focused prompts
+- Security audit → agents with restricted tools (read-only) and security expertise
+- Research → agents with web search/fetch tools
+- Testing → agents with file write capabilities
+
+**Session resumption:**
+To continue previous work, provide the sessionId from prior metadata. The agent retains full history including tool calls, results, and reasoning—picking up exactly where it stopped.
+
+**Examples:**
+
+// User breaks down work for parallel execution
+User: "Analyze the entire codebase for issues - check code quality, security vulnerabilities, and documentation completeness"
+Agent: "I'll break this into three isolated tasks and run them in parallel"
+Agent: [multiple assign_task calls]
+call assign_task({ agent: "code-analyst", task: "Analyze src/**/*.ts for code quality issues, code smells, and refactoring opportunities. Report findings by category.", description: "Code quality analysis" })
+call assign_task({ agent: "security-analyst", task: "Analyze src/**/*.ts for security vulnerabilities, hardcoded secrets, and unsafe patterns. Report critical issues first.", description: "Security vulnerability scan" })
+call assign_task({ agent: "docs-reviewer", task: "Review documentation completeness. Check that all public APIs have docstrings, README is up to date, and examples work.", description: "Documentation review" })
+
+// User requests sequential workflow
+User: "Create a feature, then review it, then write tests"
+Agent: "I'll create a pipeline: write → review → test"
+Agent: [sequential assign_task calls]
+call assign_task({ agent: "feature-writer", task: "Implement the new feature based on requirements. Write clean, documented code.", description: "Implement new feature" })
+call assign_task({ agent: "code-reviewer", task: "Review the implemented code for quality, edge cases, and best practices. Provide specific feedback.", description: "Review implementation" })
+call assign_task({ agent: "test-writer", task: "Write unit tests for the new feature. Cover happy path and edge cases.", description: "Write unit tests" })
+
+// User asks for complex research
+User: "Research this topic thoroughly and create a comprehensive report"
+Agent: "I'll spawn specialists for different research angles, then synthesize"
+Agent: [concurrent assign_task calls]
+call assign_task({ agent: "research-historian", task: "Research the historical context and evolution of this topic. Timeline key developments.", description: "Research historical context" })
+call assign_task({ agent: "research-technologist", task: "Research current technologies, tools, and frameworks related to this topic. Compare options.", description: "Research current technologies" })
+call assign_task({ agent: "research-practitioner", task: "Research real-world case studies, best practices, and lessons learned from implementations.", description: "Research case studies" })
+
+// User continues interrupted work
+User: "Continue where we left off"
+Agent: "Resuming the previous session with full context"
+Agent: [single assign_task with resume]
+call assign_task({
+  agent: "code-reviewer",
+  resume: "code-reviewer:abc123",
+  task: "Continue reviewing the remaining files. Previous work completed src/auth/, now review src/api/ and src/utils/.",
+  description: "Continue code review"
+})
+
+// Parallel instances of the same agent
+User: "Review all 50 test files and identify coverage gaps"
+Agent: "I'll launch multiple parallel instances of the test-reviewer agent, each focusing on a subset of files"
+Agent: [multiple assign_task calls with same agent]
+call assign_task({ agent: "test-reviewer", task: "Review tests/test_api_*.ts files. Identify missing test cases and coverage gaps.", description: "Review API test files" })
+call assign_task({ agent: "test-reviewer", task: "Review tests/test_auth_*.ts files. Identify missing test cases and coverage gaps.", description: "Review auth test files" })
+call assign_task({ agent: "test-reviewer", task: "Review tests/test_utils_*.ts files. Identify missing test cases and coverage gaps.", description: "Review utils test files" })
+
+// Parallel file processing
+User: "Extract documentation from all markdown files in docs/"
+Agent: "Launching parallel extractors for different doc sections"
+Agent: [multiple assign_task calls]
+call assign_task({ agent: "doc-extractor", task: "Extract key information from docs/getting-started/*.md. Create summary of setup instructions.", description: "Extract getting started docs" })
+call assign_task({ agent: "doc-extractor", task: "Extract key information from docs/api-reference/*.md. Create summary of available APIs.", description: "Extract API reference docs" })
+call assign_task({ agent: "doc-extractor", task: "Extract key information from docs/guides/*.md. Create summary of tutorials and how-tos.", description: "Extract guides docs" })`;
 
 export type AssignSuccessResult = {
   status: 'success';
@@ -155,8 +188,8 @@ export class AssignTool implements FunctionTool<AssignParams, ToolExecutionConte
     const enabledAgents = this.delegationService.listEnabledAgents();
     const agentList = enabledAgents
       .map((a) => {
-        const toolsStr = a.tools?.length ? ` (Tools: ${this.formatTools(a.tools)})` : '';
-        return `- ${a.id}: ${a.description ?? 'No description provided'}${toolsStr}`;
+        const toolsStr = a.allowed_tools?.length ? ` (Tools: ${this.formatTools(a.allowed_tools)})` : '';
+        return `- ${a.name}: ${a.description ?? 'No description provided'}${toolsStr}`;
       })
       .join('\n');
 
@@ -274,12 +307,12 @@ export class AssignTool implements FunctionTool<AssignParams, ToolExecutionConte
     }
 
     const metadata = outcome.metadata as DelegationMetadata;
-    
+
     // Add system reminder about session ID for potential resume
-    const sessionReminder = metadata.sessionId 
+    const sessionReminder = metadata.sessionId
       ? `\n\n<system-reminder>\nAgent session ID: "${metadata.sessionId}"\nThis session can be resumed using the resume parameter in assign_task if the user has follow-up questions about this topic.\n</system-reminder>`
       : '';
-    
+
     return okText(outcome.summary + sessionReminder, {
       ...metadata,
       taskDescription: params.task,

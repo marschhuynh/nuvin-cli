@@ -11,11 +11,11 @@ export interface AgentModalActions {
   setSelectedAgentIndex: (index: number) => void;
   setFocusPanel: (panel: 'agents' | 'details') => void;
   setLocalEnabledAgents: (agents: Record<string, boolean>) => void;
-  toggleAgent: (agentId: string) => void;
+  toggleAgent: (agentName: string) => void;
   enableAllAgents: (agents: AgentInfo[]) => Record<string, boolean>;
   disableAllAgents: (agents: AgentInfo[]) => Record<string, boolean>;
-  removeAgent: (agentId: string) => void;
-  isAgentEnabled: (agentId: string) => boolean;
+  removeAgent: (agentName: string) => void;
+  isAgentEnabled: (agentName: string) => boolean;
   getEnabledCount: (agents: AgentInfo[]) => number;
 }
 
@@ -25,7 +25,6 @@ export const useAgentModalState = (
   initialSelectedIndex?: number,
 ) => {
   const [selectedAgentIndex, setSelectedAgentIndex] = useState(() => {
-    // Use initialSelectedIndex if provided and valid, otherwise default to 0
     if (initialSelectedIndex !== undefined && initialSelectedIndex >= 0 && initialSelectedIndex < agents.length) {
       return initialSelectedIndex;
     }
@@ -34,19 +33,16 @@ export const useAgentModalState = (
   const [focusPanel, setFocusPanel] = useState<'agents' | 'details'>('agents');
   const [localEnabledAgents, setLocalEnabledAgents] = useState<Record<string, boolean>>(() => ({ ...enabledAgents }));
 
-  // Sync local state with prop changes
   useEffect(() => {
     setLocalEnabledAgents({ ...enabledAgents });
   }, [enabledAgents]);
 
-  // Update selectedAgentIndex when initialSelectedIndex changes (for restoration)
   useEffect(() => {
     if (initialSelectedIndex !== undefined && initialSelectedIndex >= 0 && initialSelectedIndex < agents.length) {
       setSelectedAgentIndex(initialSelectedIndex);
     }
   }, [initialSelectedIndex, agents.length]);
 
-  // Reset selections when agents change
   useEffect(() => {
     if (agents.length === 0) {
       setSelectedAgentIndex(0);
@@ -56,17 +52,17 @@ export const useAgentModalState = (
     }
   }, [agents.length, selectedAgentIndex]);
 
-  const toggleAgent = (agentId: string) => {
+  const toggleAgent = (agentName: string) => {
     const newEnabledAgents = { ...localEnabledAgents };
-    const currentValue = newEnabledAgents[agentId];
-    newEnabledAgents[agentId] = currentValue === false;
+    const currentValue = newEnabledAgents[agentName];
+    newEnabledAgents[agentName] = currentValue === false;
     setLocalEnabledAgents(newEnabledAgents);
   };
 
   const enableAllAgents = (agents: AgentInfo[]) => {
     const newEnabledAgents = { ...localEnabledAgents };
     agents.forEach((agent) => {
-      newEnabledAgents[agent.id] = true;
+      newEnabledAgents[agent.name] = true;
     });
     setLocalEnabledAgents(newEnabledAgents);
     return newEnabledAgents;
@@ -75,24 +71,24 @@ export const useAgentModalState = (
   const disableAllAgents = (agents: AgentInfo[]) => {
     const newEnabledAgents = { ...localEnabledAgents };
     agents.forEach((agent) => {
-      newEnabledAgents[agent.id] = false;
+      newEnabledAgents[agent.name] = false;
     });
     setLocalEnabledAgents(newEnabledAgents);
     return newEnabledAgents;
   };
 
-  const removeAgent = (agentId: string) => {
+  const removeAgent = (agentName: string) => {
     const newEnabledAgents = { ...localEnabledAgents };
-    delete newEnabledAgents[agentId];
+    delete newEnabledAgents[agentName];
     setLocalEnabledAgents(newEnabledAgents);
   };
 
-  const isAgentEnabled = (agentId: string) => {
-    return localEnabledAgents[agentId] !== false;
+  const isAgentEnabled = (agentName: string) => {
+    return localEnabledAgents[agentName] !== false;
   };
 
   const getEnabledCount = (agents: AgentInfo[]) => {
-    return agents.filter((agent) => isAgentEnabled(agent.id)).length;
+    return agents.filter((agent) => isAgentEnabled(agent.name)).length;
   };
 
   return {

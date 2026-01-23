@@ -18,16 +18,16 @@ function evaluatePolicy(
   agent: AgentTemplate,
   enabledAgents: Record<string, boolean>,
 ): { allowed: boolean; reason?: string } {
-  const agentId = agent.id;
-  if (!agentId) {
+  const agentName = agent.name;
+  if (!agentName) {
     return { allowed: false, reason: 'Agent is missing identifier.' };
   }
 
-  const enabled = enabledAgents[agentId];
+  const enabled = enabledAgents[agentName];
   if (enabled === false) {
     return {
       allowed: false,
-      reason: `Agent "${agentId}" is currently disabled. Please enable it in the agent configuration.`,
+      reason: `Agent "${agentName}" is currently disabled. Please enable it in the agent configuration.`,
     };
   }
 
@@ -74,7 +74,7 @@ export class DefaultDelegationService implements DelegationService {
   }
 
   listEnabledAgents() {
-    return this.catalog.list().filter((agent) => !agent.id || this.enabledAgents[agent.id] !== false);
+    return this.catalog.list().filter((agent) => !agent.name || this.enabledAgents[agent.name] !== false);
   }
 
   async delegate(params: AssignParams, context?: ToolExecutionContext): Promise<DelegationResult> {
@@ -82,7 +82,7 @@ export class DefaultDelegationService implements DelegationService {
     if (!template) {
       const availableAgents = this.catalog
         .list()
-        .map((a) => a.id)
+        .map((a) => a.name)
         .filter(Boolean)
         .join(', ');
       return {
@@ -137,10 +137,7 @@ export class DefaultDelegationService implements DelegationService {
     }
   }
 
-  async delegateBackground(
-    params: AssignParams,
-    context?: ToolExecutionContext,
-  ): Promise<BackgroundDelegationResult> {
+  async delegateBackground(params: AssignParams, context?: ToolExecutionContext): Promise<BackgroundDelegationResult> {
     const template = this.catalog.get(params.agent);
     if (!template) {
       return {

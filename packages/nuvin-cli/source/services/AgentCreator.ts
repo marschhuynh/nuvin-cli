@@ -3,7 +3,7 @@ import { AGENT_CREATOR_SYSTEM_PROMPT, buildAgentCreationPrompt } from '@nuvin/nu
 
 export interface AgentCreationResult {
   success: boolean;
-  agent?: Partial<AgentTemplate> & { systemPrompt: string };
+  agent?: Partial<AgentTemplate> & { instructions: string };
   error?: string;
   retryable?: boolean;
 }
@@ -112,32 +112,32 @@ export class AgentCreator {
           };
         }
 
-        if (!agentConfig.systemPrompt || typeof agentConfig.systemPrompt !== 'string') {
+        if (!agentConfig.instructions || typeof agentConfig.instructions !== 'string') {
           if (attempt < maxRetries) {
-            lastError = 'LLM did not generate required systemPrompt';
+            lastError = 'LLM did not generate required instructions';
             continue;
           }
           return {
             success: false,
-            error: "The generated agent is missing a system prompt. Please describe the agent's behavior more clearly.",
+            error: "The generated agent is missing instructions. Please describe the agent's behavior more clearly.",
             retryable: true,
           };
         }
 
-        const name = agentConfig.name || agentConfig.id;
-        agentConfig.id = generateAgentId(name);
+        const name = agentConfig.name;
+        agentConfig.name = generateAgentId(name);
 
         if (!agentConfig.temperature) {
           agentConfig.temperature = DEFAULT_TEMPERATURE;
         }
 
-        if (!agentConfig.tools || !Array.isArray(agentConfig.tools) || agentConfig.tools.length === 0) {
-          agentConfig.tools = ['file_read', 'web_search'];
+        if (!agentConfig.allowed_tools || !Array.isArray(agentConfig.allowed_tools) || agentConfig.allowed_tools.length === 0) {
+          agentConfig.allowed_tools = ['Read', 'WebSearch'];
         }
 
         return {
           success: true,
-          agent: agentConfig as Partial<AgentTemplate> & { systemPrompt: string },
+          agent: agentConfig as Partial<AgentTemplate> & { instructions: string },
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

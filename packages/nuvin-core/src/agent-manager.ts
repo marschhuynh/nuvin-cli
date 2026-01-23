@@ -118,7 +118,7 @@ export class AgentManager {
     // Note: With per-agent files, previous messages are loaded from the agent's own file
     if (config.previousMessages && config.previousMessages.length > 0) {
       await memory.set('default', config.previousMessages);
-    } else if (config.shareContext && config.delegatingMemory && config.delegatingMemory.length > 0) {
+    } else if (config.share_context && config.delegatingMemory && config.delegatingMemory.length > 0) {
       await memory.set('default', config.delegatingMemory);
     }
 
@@ -161,17 +161,16 @@ export class AgentManager {
     // Get fresh config values if resolver is available
     const freshConfig = this.configResolver?.() ?? {};
 
-    // Create specialist agent config
     const specialistConfig: AgentConfig = {
       id: agentId,
-      systemPrompt: config.systemPrompt,
+      systemPrompt: config.instructions,
       temperature: config.temperature ?? this.delegatingConfig.temperature,
-      topP: config.topP ?? this.delegatingConfig.topP,
+      topP: config.top_p ?? this.delegatingConfig.topP,
       model: config.model ?? freshConfig.model ?? this.delegatingConfig.model,
-      maxTokens: config.maxTokens ?? this.delegatingConfig.maxTokens,
-      enabledTools: config.tools,
+      maxTokens: config.max_tokens ?? this.delegatingConfig.maxTokens,
+      enabledTools: config.allowed_tools,
       maxToolConcurrency: this.delegatingConfig.maxToolConcurrency,
-      requireToolApproval: false, // Specialists run autonomously
+      requireToolApproval: false,
       reasoningEffort: freshConfig.reasoningEffort ?? this.delegatingConfig.reasoningEffort,
       thinking: freshConfig.thinking ?? this.delegatingConfig.thinking,
     };
@@ -210,7 +209,7 @@ export class AgentManager {
 
     try {
       // Execute the task with timeout - use 'default' as conversation key since each agent has its own memory
-      const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+      const timeoutMs = config.timeout_ms ?? DEFAULT_TIMEOUT_MS;
       const response = await this.executeWithTimeout(specialistOrchestrator, config.taskDescription, 'default', timeoutMs, signal, config.stream);
 
       const executionTimeMs = Date.now() - startTime;

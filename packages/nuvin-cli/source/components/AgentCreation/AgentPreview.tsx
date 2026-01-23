@@ -11,7 +11,7 @@ import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 const MODAL_HEIGHT = 30;
 
 interface AgentPreviewProps {
-  preview: Partial<AgentTemplate> & { systemPrompt: string };
+  preview: Partial<AgentTemplate> & { instructions: string };
   onSave: () => void;
   onEdit: () => void;
 }
@@ -77,9 +77,9 @@ const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onE
 
         <Box flexDirection="column" marginBottom={1}>
           <Text color={theme.modal.help} dimColor>
-            ID:
+            Name:
           </Text>
-          <Text>{preview.id || '(auto-generated)'}</Text>
+          <Text>{preview.name || '(auto-generated)'}</Text>
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
@@ -91,9 +91,9 @@ const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onE
 
         <Box flexDirection="column" marginBottom={1}>
           <Text color={theme.modal.help} dimColor>
-            Tools:
+            Allowed Tools:
           </Text>
-          <Text>{preview.tools?.join(', ') || 'file_read, web_search'}</Text>
+          <Text>{preview.allowed_tools?.join(', ') || 'Read, WebSearch'}</Text>
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
