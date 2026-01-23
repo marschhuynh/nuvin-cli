@@ -298,11 +298,16 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
       setIsExiting(true);
     };
 
+    const onAgentSwapped = (event: { agentId: string; agentName: string }) => {
+      setNotification(`${event.agentName} is now active`, 3000);
+    };
+
     eventBus.on('command:sudo:toggle', onSudoToggle);
     eventBus.on('ui:header:refresh', onViewRefresh);
     eventBus.on('ui:input:toggleVimMode', onVimModeToggle);
     eventBus.on('custom-command:execute', onCustomCommandExecute);
     eventBus.on('ui:exit:start', onExitStart);
+    eventBus.on('agent:swapped', onAgentSwapped);
 
     return () => {
       eventBus.off('command:sudo:toggle', onSudoToggle);
@@ -310,8 +315,9 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
       eventBus.off('ui:input:toggleVimMode', onVimModeToggle);
       eventBus.off('custom-command:execute', onCustomCommandExecute);
       eventBus.off('ui:exit:start', onExitStart);
+      eventBus.off('agent:swapped', onAgentSwapped);
     };
-  }, [onViewRefresh, setToolApprovalMode, handleSubmit]);
+  }, [onViewRefresh, setToolApprovalMode, handleSubmit, setNotification]);
 
   useEffect(() => {
     if (previousVimModeRef.current === null) {

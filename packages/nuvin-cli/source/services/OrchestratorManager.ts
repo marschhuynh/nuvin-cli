@@ -35,6 +35,8 @@ import {
   type UserMessagePayload,
   type SendMessageOptions,
   type ConversationMetadata,
+  type AgentAwareToolPort,
+  mergeAgentConfig,
 } from '@nuvin/nuvin-core';
 import { UIEventAdapter, type MessageLine, type LineMetadata } from '@/adapters/index.js';
 import { prompt } from '@/prompt.js';
@@ -147,6 +149,8 @@ export class OrchestratorManager {
   private llmFactory: LLMFactory;
   private sessionInitialized: boolean = false;
   private toolRegistry: ToolRegistry | null = null;
+  private activeAgentId: string = 'main';
+  private previousOrchestrator: AgentOrchestrator | null = null;
 
   private static readonly WARNING_THRESHOLD = 0.85;
   private static readonly AUTO_SUMMARY_THRESHOLD = 0.95;
@@ -497,6 +501,10 @@ export class OrchestratorManager {
 
   getConfig() {
     return this.orchestrator?.getConfig();
+  }
+
+  getActiveAgentId(): string {
+    return this.activeAgentId;
   }
 
   async updateMCPAllowedTools(allowedToolsConfig: Record<string, Record<string, boolean>>): Promise<void> {
@@ -1285,6 +1293,218 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const response = await summaryOrchestrator.send(conversationText);
 
     return response.content;
+  }
+
+  /**
+   * Swap to a different agent by creating a new AgentOrchestrator with the agent's config.
+   * Preserves conversation history by copying it to the new orchestrator's memory.
+   *
+   * @param agentId - The ID of the agent to swap to (from AgentRegistry)
+   * @throws Error if orchestrator is not initialized or agent is not found
+   */
+  async swapToAgent(agentId: string): Promise<void> {
+    if (!this.orchestrator) {
+      throw new Error('Orchestrator not initialized');
+    }
+
+    // Get agent registry from tools
+    const tools = this.orchestrator.getTools();
+    const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
+    const agentRegistry = agentAwareTools?.getAgentRegistry?.();
+
+    if (!agentRegistry) {
+      throw new Error('Agent registry not available');
+    }
+
+    // Validate agent exists
+    const agent = agentRegistry.get(agentId);
+    if (!agent) {
+      throw new Error(`Agent "${agentId}" not found`);
+    }
+
+    const currentConfig = this.getCurrentConfig();
+    const persistEventLog = currentConfig.config.session?.persistEventLog ?? false;
+
+    // Capture current conversation history for preservation
+    const conversationId = this.conversationContext.getActiveConversationId();
+    const history = this.memory ? await this.memory.get(conversationId) : [];
+
+    // Merge the main config with the agent's config
+    const mainConfig = this.orchestrator.getConfig();
+    const mergedConfig = mergeAgentConfig(mainConfig, agent);
+
+    // Create new memory for the swapped agent
+    let newMemory: MemoryPort<Message>;
+    if (this.sessionDir) {
+      newMemory = this.createMemory(this.sessionDir, `swapped-${agentId}`);
+    } else {
+      newMemory = new InMemoryMemory<Message>();
+    }
+
+    // Copy conversation history to new memory
+    if (history.length > 0) {
+      await newMemory.set(conversationId, history);
+    }
+
+    // Create new LLM for the agent's model
+    const httpLogFile = this.memPersist && this.sessionDir && this.sessionDir.length > 0
+      ? path.join(this.sessionDir, 'http-log.json')
+      : undefined;
+    const newLLM = this.createLLM(httpLogFile);
+
+    // Create new event adapter
+    const newEventAdapter = this.createEventAdapter(
+      this.sessionDir || '',
+      this.handlers!,
+      persistEventLog,
+      this.streamingChunks,
+    );
+
+    // Create new metrics port
+    const newMetrics = new SessionBoundMetricsPort(
+      `swapped-${agentId}`,
+      sessionMetricsService,
+    );
+
+    // Create new orchestrator with merged config
+    const newOrchestrator = new AgentOrchestrator(mergedConfig, {
+      memory: newMemory,
+      tools,
+      events: newEventAdapter,
+      metrics: newMetrics,
+    });
+
+    // Set LLM before storing
+    newOrchestrator.setLLM(newLLM);
+
+    // Store previous orchestrator for potential restore
+    this.previousOrchestrator = this.orchestrator;
+
+    // Swap orchestrator state
+    this.orchestrator = newOrchestrator;
+    this.memory = newMemory;
+    this.activeAgentId = agentId;
+
+    // Emit swap event
+    eventBus.emit('agent:swapped', {
+      type: 'agent:swapped',
+      previousAgentId: 'main',
+      agentId,
+      agentName: agent.name,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * Swap back to the main (nuvin-agent) agent.
+   * Preserves conversation history by copying it to the new orchestrator's memory.
+   *
+   * @throws Error if orchestrator is not initialized
+   */
+  async swapToMain(): Promise<void> {
+    if (!this.orchestrator) {
+      throw new Error('Orchestrator not initialized');
+    }
+
+    // Early return if already on main agent
+    if (this.activeAgentId === 'main') {
+      return;
+    }
+
+    const currentConfig = this.getCurrentConfig();
+    const persistEventLog = currentConfig.config.session?.persistEventLog ?? false;
+
+    // Capture current conversation history for preservation
+    const conversationId = this.conversationContext.getActiveConversationId();
+    const history = this.memory ? await this.memory.get(conversationId) : [];
+
+    // Get the original main agent config by creating a fresh config
+    const injectedSystem = buildInjectedSystem(
+      {
+        today: new Date().toLocaleString(),
+        platform: process.platform,
+        arch: process.arch,
+        tempDir: os.tmpdir?.() ?? '',
+        workspaceDir: process.cwd(),
+        availableAgents: [],
+        folderTree: undefined,
+      },
+      { withSubAgent: true },
+    );
+
+    const mainConfig: AgentConfig = {
+      id: 'nuvin-agent',
+      systemPrompt: renderTemplate(prompt, { injectedSystem }),
+      temperature: 1,
+      topP: 1,
+      model: currentConfig.model,
+      enabledTools: getEnabledTools(),
+      maxToolConcurrency: 10,
+      requireToolApproval: currentConfig.requireToolApproval,
+      reasoningEffort: currentConfig.reasoningEffort,
+      thinking: currentConfig.thinking,
+    };
+
+    // Create new memory for the main agent
+    let newMemory: MemoryPort<Message>;
+    if (this.sessionDir) {
+      newMemory = this.createMemory(this.sessionDir, 'cli');
+    } else {
+      newMemory = new InMemoryMemory<Message>();
+    }
+
+    // Copy conversation history to new memory
+    if (history.length > 0) {
+      await newMemory.set(conversationId, history);
+    }
+
+    // Create new LLM for the main agent's model
+    const httpLogFile = this.memPersist && this.sessionDir && this.sessionDir.length > 0
+      ? path.join(this.sessionDir, 'http-log.json')
+      : undefined;
+    const newLLM = this.createLLM(httpLogFile);
+
+    // Create new event adapter
+    const newEventAdapter = this.createEventAdapter(
+      this.sessionDir || '',
+      this.handlers!,
+      persistEventLog,
+      this.streamingChunks,
+    );
+
+    // Create new metrics port
+    const newMetrics = new SessionBoundMetricsPort('main', sessionMetricsService);
+
+    // Get tools from current orchestrator
+    const tools = this.orchestrator.getTools();
+
+    // Create new orchestrator with main config
+    const newOrchestrator = new AgentOrchestrator(mainConfig, {
+      memory: newMemory,
+      tools,
+      events: newEventAdapter,
+      metrics: newMetrics,
+    });
+
+    // Set LLM before storing
+    newOrchestrator.setLLM(newLLM);
+
+    // Store previous orchestrator for potential restore
+    this.previousOrchestrator = this.orchestrator;
+
+    // Swap orchestrator state
+    this.orchestrator = newOrchestrator;
+    this.memory = newMemory;
+    this.activeAgentId = 'main';
+
+    // Emit swap event
+    eventBus.emit('agent:swapped', {
+      type: 'agent:swapped',
+      previousAgentId: this.previousOrchestrator?.getConfig?.()?.id || 'unknown',
+      agentId: 'main',
+      agentName: 'Main Agent',
+      timestamp: new Date().toISOString(),
+    });
   }
 }
 

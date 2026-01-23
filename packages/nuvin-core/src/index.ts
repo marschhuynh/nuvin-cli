@@ -213,6 +213,7 @@ export { okText, okJson, err } from './tools/result-helpers.js';
 export { AgentRegistry } from './agent-registry.js';
 export { AgentManager } from './agent-manager.js';
 export { AgentFilePersistence } from './agent-file-persistence.js';
+export { mergeAgentConfig } from './swap-config.js';
 export type {
   AgentTemplate,
   CompleteAgent,

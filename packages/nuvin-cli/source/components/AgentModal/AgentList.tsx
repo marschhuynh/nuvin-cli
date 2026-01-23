@@ -15,6 +15,7 @@ interface AgentListProps {
   maxHeight?: number;
   flexGrow?: number;
   focus?: boolean;
+  showStatus?: boolean;
 }
 
 export const AgentList: React.FC<AgentListProps> = ({
@@ -25,6 +26,7 @@ export const AgentList: React.FC<AgentListProps> = ({
   onEdit,
   onNew,
   focus = true,
+  showStatus = true,
 }) => {
   const { theme } = useTheme();
 
@@ -47,8 +49,8 @@ export const AgentList: React.FC<AgentListProps> = ({
       if (!agent) return null;
 
       const enabled = isAgentEnabled(agent.id);
-      const statusColor = enabled ? theme.tokens.green : theme.tokens.red;
-      const statusIcon = enabled ? '✓' : '✗';
+      const statusColor = showStatus ? (enabled ? theme.tokens.green : theme.tokens.red) : theme.tokens.green;
+      const statusIcon = showStatus ? (enabled ? '✓' : '✗') : '✓';
       const accentColor = theme.colors.accent;
 
       const params: React.ReactNode[] = [];

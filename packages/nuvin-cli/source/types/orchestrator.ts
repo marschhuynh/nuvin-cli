@@ -4,5 +4,6 @@
 export enum OrchestratorStatus {
     INITIALIZING = 'Initializing',
     READY = 'Ready',
+    SWAPPING = 'Swapping',
     ERROR = 'Error',
 }

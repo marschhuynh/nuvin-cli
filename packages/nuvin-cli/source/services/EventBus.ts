@@ -44,6 +44,13 @@ type EventMap = {
   'lsp:status': LspStatusInfo;
   'lsp:diagnostics': { path: string; serverId: string; diagnostics: Diagnostic[] };
   'agent:event': AgentEvent;
+  'agent:swapped': {
+    type: 'agent:swapped';
+    previousAgentId: string;
+    agentId: string;
+    agentName: string;
+    timestamp: string;
+  };
 };
 
 export class TypedEventBus {

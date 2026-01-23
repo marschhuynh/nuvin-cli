@@ -19,6 +19,7 @@ import { registerVimCommand } from './vim.js';
 import { registerSummaryCommand } from './summary/index.js';
 import { registerStatCommand } from './stat.js';
 import { registerSkillsCommand } from './skills.js';
+import { registerSwapCommand } from './swap.js';
 
 export async function registerCommands(orchestratorManager: OrchestratorManager) {
   commandRegistry.setOrchestrator(orchestratorManager);
@@ -39,6 +40,7 @@ export async function registerCommands(orchestratorManager: OrchestratorManager)
   registerSummaryCommand(commandRegistry);
   registerStatCommand(commandRegistry);
   registerSkillsCommand(commandRegistry);
+  registerSwapCommand(commandRegistry);
 
   await loadAndRegisterCustomCommands(commandRegistry);
 }

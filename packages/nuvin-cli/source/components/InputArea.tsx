@@ -9,6 +9,8 @@ import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
 import { findCommandCompletion, completeCommand } from './TextInput/useCommandCompletion.js';
 import { CommandMenu, type CommandMenuHandle, type CommandMenuItem } from './CommandMenu/index.js';
+import { orchestratorManager } from '@/services/OrchestratorManager.js';
+import { eventBus } from '@/services/EventBus.js';
 
 type VimMode = 'insert' | 'normal';
 
@@ -36,7 +38,7 @@ type InputAreaProps = {
   disabled?: boolean;
   mode?: 'input' | 'approval' | 'command' | 'command-menu' | 'question';
 
-  commandItems: Array<{ label: string; value: string, description?: string }>;
+  commandItems: Array<{ label: string; value: string; description?: string }>;
   vimModeEnabled?: boolean;
   memory?: MemoryPort<Message> | null;
 
@@ -238,21 +240,14 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     const handleTextInputUpArrow = showCommandMenu ? undefined : handleUpArrow;
     const handleTextInputDownArrow = showCommandMenu ? undefined : handleDownArrow;
 
-    const handleTab = useCallback(
-      (value: string, cursorOffset: number, _isShiftTab: boolean) => {
-        const completedCommand = findCommandCompletion(value, cursorOffset);
-        if (completedCommand) {
-          const { newValue, newCursorOffset } = completeCommand(
-            value,
-            cursorOffset,
-            completedCommand,
-          );
-          return { value: newValue, cursorOffset: newCursorOffset };
-        }
-        return undefined;
-      },
-      [],
-    );
+    const handleTab = useCallback((value: string, cursorOffset: number, _isShiftTab: boolean) => {
+      const completedCommand = findCommandCompletion(value, cursorOffset);
+      if (completedCommand) {
+        const { newValue, newCursorOffset } = completeCommand(value, cursorOffset, completedCommand);
+        return { value: newValue, cursorOffset: newCursorOffset };
+      }
+      return undefined;
+    }, []);
 
     const inputProps = {
       borderStyle: 'single' as const,
@@ -272,7 +267,11 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
       }
       return altMode ? (
         <Box position="absolute" bottom={2} zIndex={10} backgroundColor={theme.colors.background}>
-          <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval && !showUserQuestion} />
+          <CommandMenu
+            ref={commandMenuRef}
+            items={filteredCommandItems}
+            focus={!showToolApproval && !showUserQuestion}
+          />
         </Box>
       ) : (
         <CommandMenu ref={commandMenuRef} items={filteredCommandItems} focus={!showToolApproval && !showUserQuestion} />
@@ -282,13 +281,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     return (
       <Box flexDirection="column" position="relative" {...inputProps} flexShrink={0}>
         <Box flexShrink={0} minWidth={1}>
-          {!busy ? (
-            <Text color={theme.input.prompt} bold>
-              {isFocused ? '❯' : ' '}
-            </Text>
-          ) : (
-            <Spinner type="dots" />
-          )}
+          <BusyIndicator busy={busy} isFocused={isFocused} theme={theme} />
           <Box minWidth={1} />
           <Box flexGrow={1} width="90%">
             <TextInput
@@ -312,5 +305,40 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     );
   },
 );
+
+const BusyIndicator = ({ busy, isFocused, theme }: { busy: boolean; isFocused: boolean; theme: any }) => {
+  const [activeAgentId, setActiveAgentId] = useState<string>('main');
+
+  useEffect(() => {
+    const updateAgent = () => {
+      setActiveAgentId(orchestratorManager.getActiveAgentId());
+    };
+    updateAgent();
+    const handler = (event: { agentId: string }) => {
+      setActiveAgentId(event.agentId);
+    };
+    eventBus.on('agent:swapped', handler);
+    return () => {
+      eventBus.off('agent:swapped', handler);
+    };
+  }, []);
+
+  return (
+    <Box flexWrap="nowrap" flexShrink={0}>
+      {activeAgentId !== 'main' && (
+        <Text color={theme.colors.accent} bold>
+          [{activeAgentId}]{' '}
+        </Text>
+      )}
+      {!busy ? (
+        <Text color={theme.input.prompt} bold>
+          {isFocused ? '❯' : ' '}
+        </Text>
+      ) : (
+        <Spinner type="dots" />
+      )}
+    </Box>
+  );
+};
 
 export const InputArea = React.memo(InputAreaComponent);
