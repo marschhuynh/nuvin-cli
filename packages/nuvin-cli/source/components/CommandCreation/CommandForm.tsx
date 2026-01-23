@@ -40,7 +40,7 @@ const ScopeSelector: React.FC<{
   editedScope: CommandSource;
   activeProfile?: string;
   onScopeChange: (direction: 'left' | 'right') => void;
-  tabIndex?: number;
+  tabIndex?: number | string;
 }> = ({ availableScopes, editedScope, activeProfile, onScopeChange, tabIndex }) => {
   const { theme } = useTheme();
   const { isFocused } = useFocus({ active: true, tabIndex });
@@ -140,7 +140,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             value={editedName}
             onChange={(value) => onFieldChange('name', value)}
             autoFocus
-            tabIndex={1}
+            tabIndex="0"
           />
         </Box>
 
@@ -149,7 +149,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             label="Description:"
             value={editedDescription}
             onChange={(value) => onFieldChange('description', value)}
-            tabIndex={2}
+            tabIndex="0"
           />
         </Box>
 
@@ -159,12 +159,12 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
             editedScope={editedScope}
             activeProfile={activeProfile}
             onScopeChange={onScopeChange}
-            tabIndex={3}
+            tabIndex="0"
           />
         </Box>
 
         <Box flexDirection="column" marginBottom={1}>
-          <Focusable tabIndex={4}>
+          <Focusable tabIndex="0">
             {({ isFocused }) => (
               <Box flexDirection="column">
                 <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
@@ -189,7 +189,7 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
 
         {mode === 'edit' && onDelete && (
           <Box marginY={1}>
-            <Button label="Delete Command" onSubmit={onDelete} variant="danger" tabIndex={5} />
+            <Button label="Delete Command" onSubmit={onDelete} variant="danger" tabIndex="0" />
           </Box>
         )}
       </Box>

@@ -1,5 +1,4 @@
 import { useInput } from '@/contexts/InputContext/index.js';
-import { eventBus } from '@/services/EventBus.js';
 
 interface UseCommandCreationKeyboardProps {
   visible: boolean;

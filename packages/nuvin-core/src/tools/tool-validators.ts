@@ -113,6 +113,7 @@ export const grepToolSchema = z.object({
   pattern: requiredString('pattern'),
   path: z.string().optional(),
   include: z.string().optional(),
+  limit: z.number().int().min(1).optional(),
   description: z.string().optional(),
 });
 

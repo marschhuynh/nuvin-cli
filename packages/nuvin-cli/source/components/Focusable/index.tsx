@@ -6,7 +6,7 @@ interface FocusableProps {
   autoFocus?: boolean;
   disabled?: boolean;
   focusId?: string;
-  tabIndex?: number;
+  tabIndex?: number | string;
 }
 
 export const Focusable: React.FC<FocusableProps> = ({ children, autoFocus, disabled, focusId, tabIndex }) => {

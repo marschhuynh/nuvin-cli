@@ -1,5 +1,4 @@
 import { useInput } from '@/contexts/InputContext/index.js';
-import { eventBus } from '@/services/EventBus.js';
 import type { AgentCreationState, AgentCreationActions } from './useAgentCreationState.js';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 

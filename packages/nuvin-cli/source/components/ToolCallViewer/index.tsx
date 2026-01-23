@@ -57,6 +57,12 @@ const getMainArgument = (toolName: string, args: Record<string, unknown>): { val
     }
     case 'web_fetch':
       return { value: args.url as string | undefined, key: 'url' };
+    case 'bash_tool': {
+      const cmd = args.cmd as string | undefined;
+      const cwd = args.cwd as string | undefined;
+      if (!cmd) return { value: undefined, key: 'cmd' };
+      return { value: cwd ? `${cmd} at ${cwd}` : cmd, key: 'cmd' };
+    }
     default:
       return { value: undefined, key: undefined };
   }

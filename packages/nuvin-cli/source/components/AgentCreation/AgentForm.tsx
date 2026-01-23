@@ -97,7 +97,7 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
               value={editedName}
               onChange={(value) => onFieldChange('name', value)}
               autoFocus
-              tabIndex={1}
+              tabIndex="0"
             />
           </Box>
 
@@ -106,12 +106,18 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
               label={`ID${mode === 'edit' ? '' : ' (auto-gen)'}:`}
               value={editedId}
               onChange={(value) => onFieldChange('id', value)}
-              tabIndex={2}
+              tabIndex="0"
             />
           </Box>
 
           <Box flexGrow={1} width={cols / 4}>
-            <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} placeHolder="(inherited)" tabIndex={3} />
+            <FormTextInput
+              label="Model:"
+              value={editedModel}
+              onChange={(value) => onFieldChange('model', value)}
+              placeHolder="(inherited)"
+              tabIndex="0"
+            />
           </Box>
 
           <Box flexGrow={1} width={cols / 4}>
@@ -119,13 +125,18 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
               label="Temp (0-2):"
               value={editedTemperature}
               onChange={(value) => onFieldChange('temperature', value)}
-              tabIndex={4}
+              tabIndex="0"
             />
           </Box>
         </ResponsiveBox>
 
         <Box flexDirection="column" marginBottom={1}>
-          <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} tabIndex={5} />
+          <ToolSelectInput
+            availableTools={availableTools}
+            selectedTools={editedTools}
+            onChange={onToolsChange}
+            tabIndex="0"
+          />
         </Box>
 
         <Box marginBottom={1}>
@@ -133,11 +144,11 @@ const AgentFormContent: React.FC<AgentFormProps> = ({
             label="Description:"
             value={editedDescription}
             onChange={(value) => onFieldChange('description', value)}
-            tabIndex={6}
+            tabIndex="0"
           />
         </Box>
 
-        <Focusable tabIndex={7}>
+        <Focusable tabIndex="0">
           {({ isFocused }) => (
             <Box flexDirection="column" marginBottom={1}>
               <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>

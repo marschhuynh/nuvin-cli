@@ -11,7 +11,7 @@ interface ButtonProps {
   autoFocus?: boolean;
   disabled?: boolean;
   focusId?: string;
-  tabIndex?: number;
+  tabIndex?: number | string;
 }
 
 export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus, disabled, focusId, tabIndex }) => {

@@ -11,7 +11,7 @@ interface FormTextInputProps {
   autoFocus?: boolean;
   hint?: string;
   placeHolder?: string;
-  tabIndex?: number;
+  tabIndex?: number | string;
 }
 
 export const FormTextInput: React.FC<FormTextInputProps> = ({

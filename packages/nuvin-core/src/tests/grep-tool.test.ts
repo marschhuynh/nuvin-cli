@@ -126,6 +126,12 @@ function greet(name) {
       expect(result.status).toBe('success');
       expect(result.result).toContain('No matches found');
     });
+
+    it('should respect limit parameter', async () => {
+      const result = await tool.execute({ pattern: 'function|greet', path: testDir, limit: 2 });
+      expect(result.status).toBe('success');
+      expect(result.metadata?.matchCount).toBeLessThanOrEqual(2);
+    });
   });
 
   describe('definition', () => {

@@ -110,7 +110,7 @@ export function FocusProvider({ children, active = true }: { children: ReactNode
 }
 
 export function useFocus(
-  { active = true, autoFocus = false, id: customId, tabIndex = DEFAULT_TAB_INDEX }: { active?: boolean; autoFocus?: boolean; id?: string; tabIndex?: number } = {},
+  { active = true, autoFocus = false, id: customId, tabIndex = DEFAULT_TAB_INDEX }: { active?: boolean; autoFocus?: boolean; id?: string; tabIndex?: number | string } = {},
 ): FocusContextValue {
   const context = useContext(FocusContext);
   if (!context) {
@@ -120,6 +120,7 @@ export function useFocus(
   const generatedId = useId();
   const id = customId ?? generatedId;
   const { focusedId, setFocusedId, clearFocus: contextClearFocus, focusableEntriesRef, registrationCounterRef } = context;
+  const numericTabIndex = typeof tabIndex === 'string' ? Number.parseInt(tabIndex, 10) : tabIndex;
 
   const isFocused = focusedId === id;
 
@@ -133,11 +134,11 @@ export function useFocus(
 
   const register = useCallback(() => {
     const order = registrationCounterRef.current++;
-    focusableEntriesRef.current.set(id, { id, tabIndex, registrationOrder: order });
+    focusableEntriesRef.current.set(id, { id, tabIndex: numericTabIndex, registrationOrder: order });
     return () => {
       focusableEntriesRef.current.delete(id);
     };
-  }, [id, focusableEntriesRef, registrationCounterRef, tabIndex]);
+  }, [id, focusableEntriesRef, registrationCounterRef, numericTabIndex]);
 
   useEffect(() => {
     if (!active) return;

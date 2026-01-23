@@ -17,7 +17,6 @@ import { ConfigBridge } from './components/ConfigBridge.js';
 import { ThemeProvider } from './contexts/ThemeContext.js';
 import { StdoutDimensionsProvider } from './contexts/StdoutDimensionsContext.js';
 import { InputProvider, defaultMiddleware } from './contexts/InputContext/index.js';
-import { FocusProvider } from './contexts/InputContext/FocusContext.js';
 
 import { getVersionInfo } from './utils/version.js';
 import { runConfigMigration } from './utils/config-migration.js';

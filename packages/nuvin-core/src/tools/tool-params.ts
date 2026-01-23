@@ -52,6 +52,7 @@ export type GrepArgs = {
   pattern: string;
   path?: string;
   include?: string;
+  limit?: number;
   description?: string;
 };
 

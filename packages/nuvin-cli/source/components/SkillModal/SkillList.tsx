@@ -149,6 +149,7 @@ export const SkillList: React.FC<SkillListProps> = ({
                 </Text>
                 {params.length > 0 &&
                   params.map((param, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: params may contain duplicates
                     <Text key={i}>
                       {param}
                       {i < params.length - 1 && <Text dimColor> - </Text>}

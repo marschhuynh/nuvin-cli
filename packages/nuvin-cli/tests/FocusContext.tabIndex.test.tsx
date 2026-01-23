@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from 'ink-testing-library';
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { FocusProvider, useFocus, useFocusCycle } from '../source/contexts/InputContext/FocusContext.js';
 import { Box, Text } from 'ink';
 
@@ -41,14 +42,14 @@ describe('FocusContext tabIndex logic', () => {
       { id: 'item2', tabIndex: 2, label: 'Second' },
     ];
 
-    const { lastFrame, waitUntilExit } = render(
+    const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
     // Wait for registration
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     expect(output).toContain('Ids: item1,item2,item3');
   });
@@ -63,10 +64,10 @@ describe('FocusContext tabIndex logic', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     // Should preserve registration order when tabIndex is the same
     expect(output).toContain('Ids: itemC,itemA,itemB');
@@ -82,10 +83,10 @@ describe('FocusContext tabIndex logic', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     expect(output).toContain('Ids: item-1,item0,item1');
   });
@@ -100,10 +101,10 @@ describe('FocusContext tabIndex logic', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     expect(output).toContain('Ids: item1,item5,item10');
   });
@@ -118,10 +119,10 @@ describe('FocusContext tabIndex logic', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     // Items without tabIndex default to 0, should come before tabIndex 1
     expect(output).toContain('Ids: itemNoTab1,itemNoTab2,itemWithTab');
@@ -138,10 +139,10 @@ describe('FocusContext tabIndex logic', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     expect(output).toContain('Ids: item-5,item-1,item0,item2');
   });
@@ -157,10 +158,10 @@ describe('FocusContext tabIndex logic', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     // Registration order should be preserved for items with same tabIndex
     expect(output).toContain('Ids: item1a,item1b,item1c,item2');
@@ -177,10 +178,10 @@ describe('FocusContext tabIndex edge cases', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     expect(output).toContain('Ids: item1,item999');
   });
@@ -194,10 +195,10 @@ describe('FocusContext tabIndex edge cases', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <FocusTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     const output = lastFrame();
     expect(output).toContain('Ids: item0,item1');
   });
@@ -219,7 +220,7 @@ describe('FocusContext tabIndex with dynamic changes', () => {
         setIds(getFocusableIds());
       }, 10);
       return () => clearTimeout(timer);
-    }, [getFocusableIds, items]);
+    }, [getFocusableIds]);
 
     return (
       <Box flexDirection="column">
@@ -240,10 +241,10 @@ describe('FocusContext tabIndex with dynamic changes', () => {
     const { lastFrame } = render(
       <FocusProvider>
         <DynamicTestApp items={items} />
-      </FocusProvider>
+      </FocusProvider>,
     );
 
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(lastFrame()).toContain('Ids: item1,item2');
   });
 });

@@ -239,7 +239,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
     const handleTextInputDownArrow = showCommandMenu ? undefined : handleDownArrow;
 
     const handleTab = useCallback(
-      (value: string, cursorOffset: number, isShiftTab: boolean) => {
+      (value: string, cursorOffset: number, _isShiftTab: boolean) => {
         const completedCommand = findCommandCompletion(value, cursorOffset);
         if (completedCommand) {
           const { newValue, newCursorOffset } = completeCommand(

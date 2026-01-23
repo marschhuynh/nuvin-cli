@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
+import type { Theme } from '@/theme.js';
 import { HelpText } from '../HelpText';
 import { Focusable } from '../Focusable/index.js';
 
@@ -10,7 +11,7 @@ interface ToolSelectInputProps {
   availableTools: string[];
   selectedTools: string[];
   onChange: (nextTools: string[]) => void;
-  tabIndex?: number;
+  tabIndex?: number | string;
 }
 
 export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools, selectedTools, onChange, tabIndex }) => {
@@ -41,7 +42,7 @@ const ToolSelectInputContent: React.FC<{
   onChange: (nextTools: string[]) => void;
   highlightIndex: number;
   setHighlightIndex: React.Dispatch<React.SetStateAction<number>>;
-  theme: any;
+  theme: Theme;
 }> = ({ isFocused, availableTools, selectedTools, onChange, highlightIndex, setHighlightIndex, theme }) => {
 
   const combinedTools = useMemo(() => {
@@ -59,7 +60,7 @@ const ToolSelectInputContent: React.FC<{
       return;
     }
     setHighlightIndex(0);
-  }, [isFocused]);
+  }, [isFocused, setHighlightIndex]);
 
   useEffect(() => {
     setHighlightIndex((current) => {
@@ -68,7 +69,7 @@ const ToolSelectInputContent: React.FC<{
       }
       return Math.min(current, combinedTools.length - 1);
     });
-  }, [combinedTools]);
+  }, [combinedTools, setHighlightIndex]);
 
   const toggleTool = useCallback(
     (toolName: string) => {

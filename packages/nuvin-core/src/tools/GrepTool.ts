@@ -11,6 +11,7 @@ export type GrepParams = {
   pattern: string;
   path?: string;
   include?: string;
+  limit?: number;
 };
 
 export type GrepSuccessResult = {
@@ -55,6 +56,11 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
         type: 'string',
         description: 'File pattern filter (e.g., "*.js", "*.{ts,tsx}")',
       },
+      limit: {
+        type: 'integer',
+        description: 'Maximum number of matches to return. Defaults to 100.',
+        minimum: 1,
+      },
     },
     required: ['pattern'],
   } as const;
@@ -89,7 +95,7 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
         return err(`Directory not found: ${params.path ?? '.'}`, undefined, ErrorReason.NotFound);
       }
 
-      const limit = 100;
+      const limit = params.limit ?? 100;
       const matches = await Ripgrep.search({
         cwd: searchPath,
         pattern: params.pattern,
@@ -111,8 +117,7 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
         filesWithMtime.get(fullPath)!.matches.push(match);
       }
 
-      const sortedFiles = Array.from(filesWithMtime.entries())
-        .sort((a, b) => b[1].mtime - a[1].mtime);
+      const sortedFiles = Array.from(filesWithMtime.entries()).sort((a, b) => b[1].mtime - a[1].mtime);
 
       const truncated = matches.length >= limit;
       const relativePath = path.relative(this.rootDir, searchPath) || '.';
@@ -128,9 +133,10 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
           output += `\n${relFilePath}:\n`;
 
           for (const match of fileData.matches) {
-            const lineText = match.lineText.length > MAX_LINE_LENGTH
-              ? match.lineText.substring(0, MAX_LINE_LENGTH) + '...'
-              : match.lineText;
+            const lineText =
+              match.lineText.length > MAX_LINE_LENGTH
+                ? match.lineText.substring(0, MAX_LINE_LENGTH) + '...'
+                : match.lineText;
             output += `  Line ${match.lineNum}: ${lineText}\n`;
           }
         }

@@ -12,7 +12,6 @@ import { useEditorState } from './useEditorState.js';
 import { useLineIndex } from './useLineIndex.js';
 import { TextInputScrollbar } from './TextInputScrollbar.js';
 import { useCursorBlink } from './useCursorBlink.js';
-import { findCommandCompletion, completeCommand } from './useCommandCompletion.js';
 
 export type Props = {
   readonly placeholder?: string;
@@ -27,7 +26,7 @@ export type Props = {
   readonly onVimModeChange?: (mode: 'insert' | 'normal') => void;
   readonly onUpArrow?: (lineInfo: LineInfo) => void;
   readonly onDownArrow?: (lineInfo: LineInfo) => void;
-  readonly onTab?: (value: string, cursorOffset: number, isShiftTab: boolean) => { value: string; cursorOffset: number } | void;
+  readonly onTab?: (value: string, cursorOffset: number, isShiftTab: boolean) => { value: string; cursorOffset: number } | undefined;
   readonly maxLines?: number;
   readonly showScrollbar?: boolean;
   readonly scrollbarColor?: string;
@@ -473,19 +472,19 @@ function TextInput({
       }
     },
     [
-      processPaste,
-      handleVimInput,
-      enterInsertMode,
-      onSubmit,
-      onUpArrow,
-      onDownArrow,
-      showCursor,
-      vimModeEnabled,
-      vimMode,
-      onChange,
-      effectiveWidth,
-      getVisualRowStart,
-      getVisualRowEnd,
+      processPaste, 
+      handleVimInput, 
+      enterInsertMode, 
+      onSubmit, 
+      onUpArrow, 
+      onDownArrow, 
+      showCursor, 
+      vimModeEnabled, 
+      vimMode, 
+      onChange, 
+      effectiveWidth, 
+      getVisualRowStart, 
+      getVisualRowEnd, onTab
     ],
   );
 

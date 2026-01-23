@@ -104,7 +104,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
                 value={editedName}
                 onChange={(value) => onFieldChange('name', value)}
                 autoFocus
-                tabIndex={1}
+                tabIndex="0"
               />
             </Box>
 
@@ -113,12 +113,12 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
                 label={`ID${mode === 'edit' ? '' : ' (auto-gen)'}:`}
                 value={editedId}
                 onChange={(value) => onFieldChange('id', value)}
-                tabIndex={2}
+                tabIndex="0"
               />
             </Box>
 
             <Box flexGrow={1} width={cols / 4}>
-              <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} tabIndex={3} />
+              <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} tabIndex="0" />
             </Box>
 
             <Box flexGrow={1} width={cols / 4}>
@@ -126,13 +126,13 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
                 label="Temp (0-2):"
                 value={editedTemperature}
                 onChange={(value) => onFieldChange('temperature', value)}
-                tabIndex={4}
+                tabIndex="0"
               />
             </Box>
           </ResponsiveBox>
 
           <Box flexDirection="column" marginBottom={1}>
-            <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} tabIndex={5} />
+            <ToolSelectInput availableTools={availableTools} selectedTools={editedTools} onChange={onToolsChange} tabIndex="0" />
           </Box>
 
           <Box marginBottom={1}>
@@ -140,14 +140,14 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
               label="Description:"
               value={editedDescription}
               onChange={(value) => onFieldChange('description', value)}
-              tabIndex={6}
+              tabIndex="0"
             />
           </Box>
         </Box>
 
         {mode === 'edit' && !isDefault && onDelete && (
           <Box marginY={1} alignItems="flex-end">
-            <Button label="Delete Agent" onSubmit={onDelete} variant="danger" tabIndex={7} />
+            <Button label="Delete Agent" onSubmit={onDelete} variant="danger" tabIndex="0" />
           </Box>
         )}
       </Box>
