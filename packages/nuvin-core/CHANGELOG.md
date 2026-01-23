@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.2
+
+### Patch Changes
+
+- [`9e42bc5`](https://github.com/marschhuynh/nuvin-space/commit/9e42bc5f0fce408de46718f2dfaaf5f391780a5f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: add mergeAgentConfig function for hot agent swapping
+
 ## 1.19.0-rc.1
 
 ### Minor Changes
