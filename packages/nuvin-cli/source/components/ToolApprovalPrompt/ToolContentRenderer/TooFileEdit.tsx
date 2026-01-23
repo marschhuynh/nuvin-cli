@@ -13,7 +13,13 @@ type FileEditArgs = {
 
 function parseArgs(call: ToolCall): FileEditArgs | null {
   try {
-    return call.function.arguments ? (JSON.parse(call.function.arguments) as FileEditArgs) : null;
+    if (!call.function.arguments) return null;
+    const parsed = JSON.parse(call.function.arguments) as Partial<FileEditArgs>;
+    // Validate required fields - old_text and new_text must be strings (can be empty)
+    if (typeof parsed.old_text !== 'string' || typeof parsed.new_text !== 'string') {
+      return null;
+    }
+    return parsed as FileEditArgs;
   } catch {
     return null;
   }

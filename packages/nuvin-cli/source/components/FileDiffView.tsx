@@ -30,9 +30,13 @@ export type LineNumbers = {
 };
 
 export function createSimpleDiff(search: string, replace: string, lineNumbers?: LineNumbers): DiffLine[] {
+  // Defensive check for undefined/null values
+  const searchStr = search ?? '';
+  const replaceStr = replace ?? '';
+  
   // Remove trailing newline to avoid empty line at end
-  const searchTrimmed = search.replace(/\n$/, '');
-  const replaceTrimmed = replace.replace(/\n$/, '');
+  const searchTrimmed = searchStr.replace(/\n$/, '');
+  const replaceTrimmed = replaceStr.replace(/\n$/, '');
 
   const searchLines = searchTrimmed.split('\n');
   const replaceLines = replaceTrimmed.split('\n');
