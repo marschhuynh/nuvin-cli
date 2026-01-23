@@ -39,7 +39,7 @@ export const COLOR_TOKENS = {
   magenta: '#ff79c6',
   white: '#e6e6e6',
   gray: '#9b9b9b',
-  black: '#2b2c2e',
+  black: '#1d1e1f',
   dim: '#303030',
   transparent: 'transparent',
 };

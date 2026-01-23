@@ -58,7 +58,7 @@ export const TextWrapper: React.FC<TextWrapperProps> = ({
   }, [children, containerWidth, trim, hard, wordWrap]);
 
   if (containerRef) {
-    return <Text {...textProps} color={"red"}>{wrappedText}</Text>;
+    return <Text {...textProps}>{wrappedText}</Text>;
   }
 
   return (

@@ -85,30 +85,40 @@ export const AgentList: React.FC<AgentListProps> = ({
               {statusIcon}
             </Text>
             <Text> </Text>
-            <Text color={isSelected ? accentColor : undefined}>
-              {isSelected ? '› ' : '  '}
-            </Text>
+            <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
             <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
               {agent.name}
             </Text>
-            {params.length > 0 && (
-              <>
-                <Text dimColor> - </Text>
-                {params.map((param, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since params are static
-                  <Text key={i}>
-                    {param}
-                    {i < params.length - 1 && <Text dimColor> - </Text>}
-                  </Text>
-                ))}
-              </>
-            )}
           </Box>
           {isSelected && (
-            <Box marginLeft={4}>
-              <Text dimColor wrap="wrap">
-                └─ {agent.description}
-              </Text>
+            <Box flexDirection="column">
+              <Box
+                marginLeft={4}
+                borderStyle={'single'}
+                borderTop={false}
+                borderBottom={false}
+                borderRight={false}
+                borderLeft
+                borderDimColor
+                paddingX={1}
+              >
+                <Text dimColor wrap="wrap">
+                  {agent.description}
+                </Text>
+              </Box>
+              <Box marginLeft={4}>
+                <Text dimColor wrap="wrap">
+                  └─{' '}
+                </Text>
+                {params.length > 0 &&
+                  params.map((param, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since params are static
+                    <Text key={i}>
+                      {param}
+                      {i < params.length - 1 && <Text dimColor> - </Text>}
+                    </Text>
+                  ))}
+              </Box>
             </Box>
           )}
         </Box>

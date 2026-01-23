@@ -154,9 +154,9 @@ const DefaultParameterRenderer: React.FC<DefaultParameterRendererProps> = ({ too
   }
 
   return (
-    <Box flexDirection="column" width={"100%"}>
+    <Box flexDirection="column" width={'100%'}>
       <Box>
-        <Text>Parameters:</Text>
+        <Text dimColor>Parameters:</Text>
       </Box>
       {visibleParams.map(({ key, label, format }) => {
         const value = args[key];
@@ -165,9 +165,7 @@ const DefaultParameterRenderer: React.FC<DefaultParameterRendererProps> = ({ too
 
         return (
           <Box ref={containerRef} key={key} marginLeft={2}>
-            <TextWrapper containerRef={containerRef} dimColor>
-              {`${displayLabel}: ${displayValue}`}
-            </TextWrapper>
+            <TextWrapper containerRef={containerRef}>{`${displayLabel}: ${displayValue}`}</TextWrapper>
           </Box>
         );
       })}

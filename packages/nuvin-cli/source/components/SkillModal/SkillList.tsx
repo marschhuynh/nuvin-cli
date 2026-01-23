@@ -49,6 +49,66 @@ export const SkillList: React.FC<SkillListProps> = ({
 
       const isGlobal = skill.location.includes('/.claude/') || skill.location.includes('/.nuvin/');
 
+      const extendedSkill = skill as SkillInfo & {
+        license?: string;
+        compatibility?: string;
+        allowedTools?: string[];
+        hasScripts?: boolean;
+        hasReferences?: boolean;
+        hasAssets?: boolean;
+      };
+
+      const params: React.ReactNode[] = [];
+
+      if (extendedSkill.license) {
+        params.push(
+          <Text key="license">
+            <Text dimColor>license: </Text>
+            <Text color="white">{extendedSkill.license}</Text>
+          </Text>,
+        );
+      }
+      if (extendedSkill.compatibility) {
+        params.push(
+          <Text key="compatibility">
+            <Text dimColor>compatibility: </Text>
+            <Text color="white">{extendedSkill.compatibility}</Text>
+          </Text>,
+        );
+      }
+      if (extendedSkill.allowedTools && extendedSkill.allowedTools.length > 0) {
+        params.push(
+          <Text key="allowed_tools">
+            <Text dimColor>allowed_tools: </Text>
+            <Text color="white">{extendedSkill.allowedTools.join(', ')}</Text>
+          </Text>,
+        );
+      }
+      if (extendedSkill.hasScripts) {
+        params.push(
+          <Text key="has_scripts">
+            <Text dimColor>has_scripts: </Text>
+            <Text color="white">true</Text>
+          </Text>,
+        );
+      }
+      if (extendedSkill.hasReferences) {
+        params.push(
+          <Text key="has_references">
+            <Text dimColor>has_references: </Text>
+            <Text color="white">true</Text>
+          </Text>,
+        );
+      }
+      if (extendedSkill.hasAssets) {
+        params.push(
+          <Text key="has_assets">
+            <Text dimColor>has_assets: </Text>
+            <Text color="white">true</Text>
+          </Text>,
+        );
+      }
+
       return (
         <Box flexDirection="column">
           <Box>
@@ -68,10 +128,33 @@ export const SkillList: React.FC<SkillListProps> = ({
             </Text>
           </Box>
           {isSelected && (
-            <Box marginLeft={4}>
-              <Text dimColor wrap="wrap">
-                └─ {skill.description}
-              </Text>
+            <Box flexDirection="column">
+              <Box
+                marginLeft={4}
+                borderStyle={'single'}
+                borderTop={false}
+                borderBottom={false}
+                borderRight={false}
+                borderLeft
+                borderDimColor
+                paddingX={1}
+              >
+                <Text dimColor wrap="wrap">
+                  {skill.description}
+                </Text>
+              </Box>
+              <Box marginLeft={4}>
+                <Text dimColor wrap="wrap">
+                  └─{' '}
+                </Text>
+                {params.length > 0 &&
+                  params.map((param, i) => (
+                    <Text key={i}>
+                      {param}
+                      {i < params.length - 1 && <Text dimColor> - </Text>}
+                    </Text>
+                  ))}
+              </Box>
             </Box>
           )}
         </Box>
