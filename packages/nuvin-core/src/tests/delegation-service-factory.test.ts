@@ -65,10 +65,9 @@ describe('DelegationServiceFactory', () => {
       const service = factory.create(config);
 
       await mockAgentRegistry.register({
-        id: 'test-agent',
-        name: 'Test Agent',
+        name: 'test-agent',
         description: 'A test agent',
-        systemPrompt: 'Test prompt',
+        instructions: 'Test prompt',
       });
 
       await mockAgentRegistry.waitForLoad();
@@ -109,9 +108,9 @@ describe('DelegationServiceFactory', () => {
 
       await mockAgentRegistry.register({
         id: 'test-agent',
-        name: 'Test Agent',
+        name: 'test-agent',
         description: 'A test agent',
-        systemPrompt: 'Test prompt',
+        instructions: 'Test prompt',
       });
 
       await mockAgentRegistry.waitForLoad();

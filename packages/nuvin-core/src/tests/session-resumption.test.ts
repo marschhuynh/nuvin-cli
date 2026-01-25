@@ -10,16 +10,15 @@ describe('Session Resumption', () => {
   let createMemoryForAgent: (agentKey: string) => MemoryPort<Message>;
 
   const template: AgentTemplate = {
-    id: 'code-investigator',
-    name: 'Code Investigator',
+    name: 'code-investigator',
     description: 'Investigates code',
-    systemPrompt: 'You are an investigator.',
-    tools: ['file_read', 'grep_tool'],
+    instructions: 'You are an investigator.',
+    allowed_tools: ['file_read', 'grep_tool'],
   };
 
   beforeEach(async () => {
     memory = new InMemoryMemory<Message>();
-    
+
     // Seed previous session data directly in memory
     await memory.set('prev-session-123', [
       { id: '1', role: 'user', content: 'Find all API endpoints', timestamp: new Date().toISOString() },

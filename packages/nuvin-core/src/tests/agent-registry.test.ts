@@ -14,38 +14,35 @@ describe('AgentRegistry', () => {
     const registry = new AgentRegistry();
 
     const customAgent: AgentTemplate = {
-      id: 'custom-agent',
       name: 'Custom Agent',
       description: 'A custom test agent',
-      systemPrompt: 'You are a custom agent',
-      tools: ['file_read'],
+      instructions: 'You are a custom agent',
+      allowed_tools: ['file_read'],
     };
 
     registry.register(customAgent);
 
-    expect(registry.exists('custom-agent')).toBe(true);
-    const retrieved = registry.get('custom-agent');
-    expect(retrieved).toMatchObject(customAgent);
+    expect(registry.exists('Custom Agent')).toBe(true);
+    const retrieved = registry.get('Custom Agent');
+    expect(retrieved?.name).toBe('Custom Agent');
     expect(retrieved?.temperature).toBe(0.7);
-    expect(retrieved?.maxTokens).toBe(64000);
   });
 
   it('should unregister an agent', () => {
     const registry = new AgentRegistry();
 
     const customAgent: AgentTemplate = {
-      id: 'temp-agent',
       name: 'Temporary Agent',
       description: 'A temporary agent',
-      systemPrompt: 'You are temporary',
-      tools: [],
+      instructions: 'You are temporary',
+      allowed_tools: [],
     };
 
     registry.register(customAgent);
-    expect(registry.exists('temp-agent')).toBe(true);
+    expect(registry.exists('Temporary Agent')).toBe(true);
 
-    registry.unregister('temp-agent');
-    expect(registry.exists('temp-agent')).toBe(false);
+    registry.unregister('Temporary Agent');
+    expect(registry.exists('Temporary Agent')).toBe(false);
   });
 
   it('should list all agents', () => {
@@ -57,21 +54,19 @@ describe('AgentRegistry', () => {
 
     // Add some agents
     registry.register({
-      id: 'agent-1',
       name: 'Agent 1',
-      systemPrompt: 'Test agent 1',
+      instructions: 'Test agent 1',
     });
     registry.register({
-      id: 'agent-2',
       name: 'Agent 2',
-      systemPrompt: 'Test agent 2',
+      instructions: 'Test agent 2',
     });
 
     const agents = registry.list();
     expect(agents.length).toBe(2);
-    const ids = agents.map((a) => a.id);
-    expect(ids).toContain('agent-1');
-    expect(ids).toContain('agent-2');
+    const names = agents.map((a) => a.name);
+    expect(names).toContain('Agent 1');
+    expect(names).toContain('Agent 2');
   });
 
   it('should return undefined for non-existent agent', () => {
@@ -86,9 +81,9 @@ describe('AgentRegistry', () => {
 
     const invalidAgent = {
       id: 'invalid',
-    } as AgentTemplate;
+    } as unknown as AgentTemplate;
 
-    expect(() => registry.register(invalidAgent)).toThrow(/systemPrompt/);
+    expect(() => registry.register(invalidAgent)).toThrow(/instructions/);
   });
 
   it('should get agent with all properties', () => {
@@ -96,21 +91,19 @@ describe('AgentRegistry', () => {
 
     // Register an agent
     registry.register({
-      id: 'test-agent',
       name: 'Test Agent',
       description: 'A test agent',
-      systemPrompt: 'You are a test agent',
-      tools: ['file_read', 'web_search'],
+      instructions: 'You are a test agent',
+      allowed_tools: ['file_read', 'web_search'],
     });
 
-    const agent = registry.get('test-agent');
+    const agent = registry.get('Test Agent');
 
     expect(agent).toBeDefined();
-    expect(agent?.id).toBe('test-agent');
     expect(agent?.name).toBe('Test Agent');
     expect(agent?.description).toBe('A test agent');
-    expect(agent?.systemPrompt).toBe('You are a test agent');
-    expect(Array.isArray(agent?.tools)).toBe(true);
-    expect(agent?.tools).toEqual(['file_read', 'web_search']);
+    expect(agent?.instructions).toBe('You are a test agent');
+    expect(Array.isArray(agent?.allowed_tools)).toBe(true);
+    expect(agent?.allowed_tools).toEqual(['file_read', 'web_search']);
   });
 });

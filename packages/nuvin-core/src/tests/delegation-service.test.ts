@@ -5,16 +5,15 @@ import type { AssignParams, SpecialistAgentConfig, SpecialistAgentResult, AgentT
 
 const createCatalog = (agents: AgentTemplate[]): AgentCatalog => ({
   list: () => agents,
-  get: (agentId: string) => agents.find((agent) => agent.id === agentId),
+  get: (agentId: string) => agents.find((agent) => agent.name === agentId),
 });
 
 describe('DefaultDelegationService', () => {
   const agent: AgentTemplate = {
-    id: 'researcher',
-    name: 'Researcher',
+    name: 'researcher',
     description: 'Does research',
-    systemPrompt: 'Prompt',
-    tools: ['web_search'],
+    instructions: 'Prompt',
+    allowed_tools: ['web_search'],
   };
 
   const params: AssignParams = {
@@ -26,28 +25,34 @@ describe('DefaultDelegationService', () => {
 
   const createDeps = () => {
     const factory: SpecialistAgentFactory = {
-      create: vi.fn(() => ({
-        agentId: 'researcher-1',
-        agentName: 'Researcher',
-        systemPrompt: 'Prompt',
-        taskDescription: params.task,
-        tools: ['web_search'],
-        delegationDepth: 1,
-        shareContext: false,
-      }) as unknown as SpecialistAgentConfig),
+      create: vi.fn(
+        () =>
+          ({
+            agentId: 'researcher-1',
+            agentName: 'Researcher',
+            systemPrompt: 'Prompt',
+            taskDescription: params.task,
+            tools: ['web_search'],
+            delegationDepth: 1,
+            shareContext: false,
+          }) as unknown as SpecialistAgentConfig,
+      ),
     };
 
     const runner: AgentCommandRunner = {
-      run: vi.fn(async () => ({
-        status: 'success',
-        result: 'All done',
-        metadata: {
-          agentId: 'researcher-1',
-          agentName: 'Researcher',
-          executionTimeMs: 100,
-          toolCallsExecuted: 2,
-        },
-      } satisfies SpecialistAgentResult)),
+      run: vi.fn(
+        async () =>
+          ({
+            status: 'success',
+            result: 'All done',
+            metadata: {
+              agentId: 'researcher-1',
+              agentName: 'Researcher',
+              executionTimeMs: 100,
+              toolCallsExecuted: 2,
+            },
+          }) satisfies SpecialistAgentResult,
+      ),
     };
 
     return { factory, runner };

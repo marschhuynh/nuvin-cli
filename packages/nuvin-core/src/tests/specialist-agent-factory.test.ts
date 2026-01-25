@@ -3,11 +3,10 @@ import { DefaultSpecialistAgentFactory } from '../delegation/agent-factory.js';
 import type { AgentTemplate, AssignParams } from '../agent-types.js';
 
 const template: AgentTemplate = {
-  id: 'analyst',
-  name: 'Analyst',
+  name: 'analyst',
   description: 'Analyzes data',
-  systemPrompt: 'You are an analyst.\n{{injectedSystem}}',
-  tools: ['file_read'],
+  instructions: 'You are an analyst.\n{{injectedSystem}}',
+  allowed_tools: ['file_read'],
 };
 
 const params: AssignParams = {
@@ -31,26 +30,26 @@ describe('DefaultSpecialistAgentFactory', () => {
     const config = await factory.create({ template, params, context: undefined, currentDepth: 2 });
 
     expect(config.agentId).toBe('custom-id');
-    expect(config.agentName).toBe('Analyst');
+    expect(config.agentName).toBe('analyst');
     expect(config.taskDescription).toBe(params.task);
     expect(config.delegationDepth).toBe(3);
-    expect(config.tools).toEqual(['file_read']);
-    expect(config.systemPrompt).toContain('You are an analyst.');
-    expect(config.systemPrompt).toContain("System info:\n- Today's date: 2025-01-01T00:00:00.000Z");
+    expect(config.allowed_tools).toEqual(['file_read']);
+    expect(config.instructions).toContain('You are an analyst.');
+    expect(config.instructions).toContain("System info:\n- Today's date: 2025-01-01T00:00:00.000Z");
   });
 
   it('falls back to sensible defaults when optional template fields are missing', async () => {
     const factory = new DefaultSpecialistAgentFactory({ idGenerator: () => 'id-123' });
 
     const minimalTemplate: AgentTemplate = {
-      systemPrompt: 'Just do it',
+      instructions: 'Just do it',
     };
 
     const config = await factory.create({ template: minimalTemplate, params, context: undefined, currentDepth: 0 });
 
     expect(config.agentId).toBe('id-123');
     expect(config.agentName).toBe(params.agent);
-    expect(config.tools).toEqual([]);
+    expect(config.allowed_tools).toEqual([]);
     expect(config.delegationDepth).toBe(1);
   });
 });

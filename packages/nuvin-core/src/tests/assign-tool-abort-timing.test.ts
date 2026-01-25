@@ -59,11 +59,10 @@ describe('AssignTool - Abort Timing Tests', () => {
 
     // Register a test agent
     agentRegistry.register({
-      id: 'test-reviewer',
-      name: 'Test Reviewer',
+      name: 'test-reviewer',
       description: 'A test reviewing agent',
-      systemPrompt: 'You are a test reviewer',
-      enabledTools: ['test_tool'],
+      instructions: 'You are a test reviewer',
+      allowed_tools: ['test_tool'],
     });
 
     const delegationService = new DefaultDelegationService(

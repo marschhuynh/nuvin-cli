@@ -20,20 +20,19 @@ describe('mergeAgentConfig', () => {
   };
 
   const createCompleteAgent = (overrides: Partial<CompleteAgent> = {}): CompleteAgent => ({
-    id: 'sub-agent',
     name: 'Sub Agent',
     description: 'A sub agent',
-    systemPrompt: 'You are a sub agent.',
-    tools: ['file_read'],
+    instructions: 'You are a sub agent.',
+    allowed_tools: ['file_read'],
     temperature: 0.7,
-    maxTokens: 4000,
+    max_tokens: 4000,
     ...overrides,
   });
 
   describe('systemPrompt', () => {
-    it('should use sub-agent systemPrompt when provided', () => {
+    it('should use sub-agent instructions when provided', () => {
       const subAgent = createCompleteAgent({
-        systemPrompt: 'You are a specialized sub-agent.',
+        instructions: 'You are a specialized sub-agent.',
       });
 
       const result = mergeAgentConfig(mainConfig, subAgent);
@@ -43,9 +42,9 @@ describe('mergeAgentConfig', () => {
   });
 
   describe('enabledTools', () => {
-    it('should use sub-agent tools when specified and non-empty', () => {
+    it('should use sub-agent allowed_tools when specified and non-empty', () => {
       const subAgent = createCompleteAgent({
-        tools: ['file_read', 'file_edit', 'web_search'],
+        allowed_tools: ['file_read', 'file_edit', 'web_search'],
       });
 
       const result = mergeAgentConfig(mainConfig, subAgent);
@@ -53,9 +52,9 @@ describe('mergeAgentConfig', () => {
       expect(result.enabledTools).toEqual(['file_read', 'file_edit', 'web_search']);
     });
 
-    it('should use main config tools when sub-agent tools is empty array', () => {
+    it('should use main config tools when sub-agent allowed_tools is empty array', () => {
       const subAgent = createCompleteAgent({
-        tools: [],
+        allowed_tools: [],
       });
 
       const result = mergeAgentConfig(mainConfig, subAgent);
@@ -67,7 +66,7 @@ describe('mergeAgentConfig', () => {
   describe('id', () => {
     it('should prefix id with swapped-', () => {
       const subAgent = createCompleteAgent({
-        id: 'security-auditor',
+        name: 'security-auditor',
       });
 
       const result = mergeAgentConfig(mainConfig, subAgent);
@@ -79,10 +78,10 @@ describe('mergeAgentConfig', () => {
   describe('other fields', () => {
     it('should use sub-agent values when provided', () => {
       const subAgent = createCompleteAgent({
-        topP: 0.9,
+        top_p: 0.9,
         model: 'claude-3-sonnet',
         temperature: 0.5,
-        maxTokens: 8000,
+        max_tokens: 8000,
       });
 
       const result = mergeAgentConfig(mainConfig, subAgent);
@@ -95,7 +94,7 @@ describe('mergeAgentConfig', () => {
 
     it('should fall back to main config when sub-agent values are undefined', () => {
       const subAgent = createCompleteAgent({
-        topP: undefined,
+        top_p: undefined,
         model: undefined,
       });
 
