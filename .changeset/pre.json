@@ -19,6 +19,7 @@
     "minimax-fix-changes",
     "quiet-ears-jam",
     "recent-sessions-width-fix",
+    "redesign-agent-creation-tui",
     "tool-call-header-args",
     "tool-display-names"
   ]

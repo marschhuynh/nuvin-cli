@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.7
+
+### Minor Changes
+
+- [`a916738`](https://github.com/marschhuynh/nuvin-space/commit/a9167387ba32d8958aca22bea4cdc7185a986106) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Redesign agent creation TUI: rename systemPrompt to instructions, simplify state machine, improve keyboard navigation
+
+### Patch Changes
+
+- Updated dependencies [[`a916738`](https://github.com/marschhuynh/nuvin-space/commit/a9167387ba32d8958aca22bea4cdc7185a986106)]:
+  - @nuvin/nuvin-core@1.19.0-rc.3
+
 ## 1.36.0-rc.6
 
 ### Patch Changes
