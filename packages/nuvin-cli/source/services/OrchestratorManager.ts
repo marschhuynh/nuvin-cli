@@ -48,6 +48,7 @@ import { getProviderAuth } from '@/config/utils.js';
 import { LLMFactory } from './LLMFactory.js';
 import { OrchestratorStatus } from '@/types/orchestrator.js';
 import { modelLimitsCache } from './ModelLimitsCache.js';
+import { createHookPortFromConfig, type ConfigHooks } from './HookLoader.js';
 import { sessionMetricsService } from './SessionMetricsService.js';
 import { theme } from '@/theme.js';
 import { LSP } from './lsp/index.js';
@@ -414,6 +415,12 @@ export class OrchestratorManager {
       };
       const orchestrator = new AgentOrchestrator(agentConfig, agentDeps);
 
+      // Wire up hooks from config
+      const hookPort = createHookPortFromConfig(currentConfig.config.hooks as ConfigHooks | undefined);
+      if (hookPort) {
+        orchestrator.setHookPort(hookPort);
+      }
+
       // Initialize AssignTool with orchestrator dependencies
       if (toolRegistry?.setOrchestrator) {
         // Config resolver provides fresh config values for sub-agents
@@ -449,6 +456,11 @@ export class OrchestratorManager {
       // Set initial LLM - will be refreshed on each send() call
       const initialLLM = this.createLLM();
       this.orchestrator.setLLM(initialLLM);
+
+      // Set session ID for hooks context
+      if (this.sessionId) {
+        this.orchestrator.setSessionId(this.sessionId);
+      }
 
       this.status = OrchestratorStatus.READY;
 
@@ -653,6 +665,7 @@ export class OrchestratorManager {
     this.orchestrator.setMemory(newMemory);
     this.orchestrator.setEvents(newEventAdapter);
     this.orchestrator.setMetrics(new SessionBoundMetricsPort(sessionId, sessionMetricsService));
+    this.orchestrator.setSessionId(sessionId);
 
     // Also reinitialize sub-agent memory with persisted storage
     if (this.toolRegistry) {
@@ -1040,6 +1053,9 @@ export class OrchestratorManager {
     this.orchestrator.setMemory(newMemory);
     this.orchestrator.setEvents(newEventAdapter);
     this.orchestrator.setMetrics(new SessionBoundMetricsPort(sessionId, sessionMetricsService));
+    if (memPersist) {
+      this.orchestrator.setSessionId(sessionId);
+    }
 
     this.memory = newMemory;
     this.conversationStore = new ConversationStore(newMemory);
@@ -1080,6 +1096,7 @@ export class OrchestratorManager {
     this.orchestrator.setMemory(newMemory);
     this.orchestrator.setEvents(newEventAdapter);
     this.orchestrator.setMetrics(new SessionBoundMetricsPort(sessionId, sessionMetricsService));
+    this.orchestrator.setSessionId(sessionId);
 
     this.memory = newMemory;
     this.conversationStore = new ConversationStore(newMemory);

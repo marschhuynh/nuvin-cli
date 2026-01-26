@@ -191,7 +191,7 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey,
   return (
     <Box flexDirection="column" flexShrink={1} overflow="hidden" width="100%">
       {staticItemsWithHeader.length > 0 && (
-        <Static items={staticItemsWithHeader}>
+        <Static items={staticItemsWithHeader} style={{ width: '100%' }}>
           {(item) => {
             if (item.type === 'logo') {
               return <WelcomeLogo key={item.id} recentSessions={item.sessions} />;

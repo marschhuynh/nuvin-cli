@@ -29,6 +29,8 @@ import {
   MessageRoles,
   ErrorReason,
 } from './ports.js';
+import type { HookPort, HookEventType, HookContext } from './hooks/types.js';
+import { HookEventTypes } from './hooks/types.js';
 import { NoopMetricsPort } from './metrics.js';
 import { SystemClock } from './clock.js';
 import { SimpleId } from './id.js';
@@ -169,6 +171,8 @@ export class AgentOrchestrator {
   private llm?: LLMPort;
   private tools: ToolPort;
   private memory: MemoryPort<Message>;
+  private hookPort?: HookPort;
+  private sessionId: string = 'default';
 
   constructor(
     private cfg: AgentConfig,
@@ -183,6 +187,7 @@ export class AgentOrchestrator {
       llm?: LLMPort;
       metrics?: MetricsPort;
       events?: EventPort;
+      hookPort?: HookPort;
     },
   ) {
     this.memory = deps.memory;
@@ -195,6 +200,7 @@ export class AgentOrchestrator {
     this.reminders = deps.reminders ?? this.reminders;
     this.metrics = deps.metrics ?? this.metrics;
     this.events = deps.events ?? this.events;
+    this.hookPort = deps.hookPort;
   }
 
   /**
@@ -271,6 +277,41 @@ export class AgentOrchestrator {
    */
   public getMetrics(): MetricsPort | undefined {
     return this.metrics;
+  }
+
+  /**
+   * Updates the hook port without reinitializing the entire orchestrator.
+   */
+  public setHookPort(newHookPort: HookPort): void {
+    this.hookPort = newHookPort;
+  }
+
+  /**
+   * Gets the current hook port.
+   */
+  public getHookPort(): HookPort | undefined {
+    return this.hookPort;
+  }
+
+  /**
+   * Updates the session ID for hook context.
+   */
+  public setSessionId(newSessionId: string): void {
+    this.sessionId = newSessionId;
+  }
+
+  /**
+   * Gets the current session ID.
+   */
+  public getSessionId(): string {
+    return this.sessionId;
+  }
+
+  /**
+   * Checks if hooks are registered for an event type.
+   */
+  public hasHooks(event: HookEventType, matcher?: string): boolean {
+    return this.hookPort?.hasHooks(event, matcher) ?? false;
   }
 
   /**
@@ -407,6 +448,56 @@ export class AgentOrchestrator {
         // Apply edit instruction if provided
         if (approvalResult.editInstruction) {
           toolCall.editInstruction = approvalResult.editInstruction;
+        }
+      }
+
+      // Execute pre_tool_use hook if configured
+      if (this.hookPort?.hasHooks(HookEventTypes.PreToolUse, toolCall.function.name)) {
+        const hookContext: HookContext = {
+          sessionId: this.sessionId,
+          conversationId,
+          messageId,
+          hookEvent: HookEventTypes.PreToolUse,
+          cwd: process.cwd(),
+          toolName: toolCall.function.name,
+          toolInput: typeof toolCall.function.arguments === 'string'
+            ? JSON.parse(toolCall.function.arguments)
+            : toolCall.function.arguments as Record<string, unknown>,
+          toolUseId: toolCall.id,
+        };
+
+        try {
+          const hookResult = await this.hookPort.executeHook(hookContext);
+
+          if (!hookResult.continue) {
+            // Hook blocked the tool
+            result = {
+              id: toolCall.id,
+              name: toolCall.function.name,
+              status: 'error',
+              type: 'text',
+              result: hookResult.stopReason ?? 'Blocked by pre_tool_use hook',
+              metadata: { errorReason: ErrorReason.Denied },
+              durationMs: hookResult.durationMs ?? 0,
+            };
+
+            await this.events?.emit({
+              type: AgentEventTypes.ToolResult,
+              conversationId,
+              messageId,
+              result,
+            });
+
+            return result;
+          }
+
+          // Apply updated input if hook modified it
+          if (hookResult.updatedInput) {
+            toolCall.function.arguments = JSON.stringify(hookResult.updatedInput);
+          }
+        } catch (hookError) {
+          // Log hook execution error but don't block tool execution
+          console.warn(`[Orchestrator] pre_tool_use hook error for ${toolCall.function.name}:`, hookError);
         }
       }
 
@@ -966,6 +1057,24 @@ export class AgentOrchestrator {
         toolCalls: allToolResults.length,
       },
     };
+
+    // Execute pre_stop hook if configured
+    if (this.hookPort?.hasHooks(HookEventTypes.PreStop)) {
+      const hookContext: HookContext = {
+        sessionId: this.sessionId,
+        conversationId: convo,
+        messageId: msgId,
+        hookEvent: HookEventTypes.PreStop,
+        cwd: process.cwd(),
+      };
+
+      try {
+        await this.hookPort.executeHook(hookContext);
+        // pre_stop hooks are informational - we don't block completion
+      } catch (hookError) {
+        console.warn('[Orchestrator] pre_stop hook error:', hookError);
+      }
+    }
 
     await this.events?.emit({
       type: AgentEventTypes.Done,

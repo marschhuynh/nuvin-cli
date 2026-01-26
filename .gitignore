@@ -5,4 +5,3 @@ dist
 .npmrc
 .releaserc.json.backup
 prebuilds
-packages/ink

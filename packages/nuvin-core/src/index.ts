@@ -308,6 +308,25 @@ export type { MCPConfig, MCPServerConfig } from './config.js';
 // Events
 export { PersistingConsoleEventPort } from './events.js';
 
+// Hooks
+export {
+  HookRegistry,
+  CompositeHookPort,
+  CommandHookExecutor,
+  loadHooksFromFrontmatter,
+} from './hooks/index.js';
+export type {
+  HookPort,
+  HookContext,
+  HookResult,
+  HookEventType,
+  HookDefinition,
+  HooksConfig,
+  HookDecisionType,
+  HookEventConfig,
+} from './hooks/index.js';
+export { HookEventTypes, HookDecision } from './hooks/index.js';
+
 // String utilities
 export {
   stripAnsiAndControls,
