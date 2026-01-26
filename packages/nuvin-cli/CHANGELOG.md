@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.8
+
+### Minor Changes
+
+- [`65ca384`](https://github.com/marschhuynh/nuvin-space/commit/65ca384d91f80ceef7618e866cd56bf8dd11472c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add hook system for intercepting agent lifecycle events (pre/post-tool, session start/end). Supports bash command hooks with pattern matching, JSON control flow, and integration with Orchestrator.
+
+### Patch Changes
+
+- Updated dependencies [[`65ca384`](https://github.com/marschhuynh/nuvin-space/commit/65ca384d91f80ceef7618e866cd56bf8dd11472c)]:
+  - @nuvin/nuvin-core@1.19.0-rc.4
+
 ## 1.36.0-rc.7
 
 ### Minor Changes
