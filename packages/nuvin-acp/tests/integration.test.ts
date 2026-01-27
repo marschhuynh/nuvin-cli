@@ -1113,5 +1113,57 @@ describe('ACP Server Integration Tests', () => {
         description: 'Run tests',
       });
     });
+
+    it('should invoke slash commands and pass them to orchestrator', async () => {
+      let receivedMessage: string | undefined;
+      
+      // Create custom orchestrator factory that captures sendMessage calls
+      const commandInvocationFactory: OrchestratorFactory = async () => {
+        const handlers: Array<(event: AgentEvent) => void> = [];
+
+        return {
+          sendMessage: vi.fn(async (text: string) => {
+            receivedMessage = text;
+          }),
+          onEvent: (handler) => {
+            handlers.push(handler);
+          },
+          handleToolApproval: vi.fn(),
+        };
+      };
+
+      const server = new ACPServer(commandInvocationFactory);
+      (server as any).transport.input = inputStream;
+      (server as any).transport.output = outputStream;
+      await server.start();
+
+      // Create session
+      sendMessage({
+        jsonrpc: '2.0',
+        id: 130,
+        method: 'session/new',
+        params: { cwd: '/tmp/test' } as NewSessionParams,
+      });
+
+      const sessionResponse = await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 130);
+      const sessionId = ('result' in sessionResponse && (sessionResponse.result as NewSessionResult).sessionId) || '';
+
+      // Send a slash command
+      sendMessage({
+        jsonrpc: '2.0',
+        id: 131,
+        method: 'session/prompt',
+        params: {
+          sessionId,
+          prompt: [{ type: 'text', text: '/help me' }],
+        } as PromptParams,
+      });
+
+      await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 131);
+
+      // Verify the command was processed
+      expect(receivedMessage).toBeDefined();
+      expect(receivedMessage).toContain('help');
+    });
   });
 });
