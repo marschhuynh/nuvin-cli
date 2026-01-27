@@ -1,6 +1,6 @@
 # ACP Slash Commands
 
-Nuvin supports the ACP slash commands protocol, allowing users to invoke commands via `//command` syntax in ACP-enabled editors.
+Nuvin supports the ACP slash commands protocol, allowing users to invoke commands via `/command` syntax in ACP-enabled editors.
 
 ## Available Commands
 
@@ -8,15 +8,15 @@ Nuvin supports the ACP slash commands protocol, allowing users to invoke command
 
 The following are frequently used built-in commands (additional commands are available):
 
-- `//help` - Show help information
-- `//clear` - Clear conversation history
-- `//sudo` - Enable sudo mode for elevated operations
-- `//export` - Export conversation
-- `//exit` - Exit the session
-- `//new` - Create new items
-- `//vim` - Vim mode
-- `//summary` - Generate summaries
-- `//brainstorm` - Brainstorm ideas
+- `/help` - Show help information
+- `/clear` - Clear conversation history
+- `/thinking` - Toggle thinking mode
+- `/models` - List available models
+- `/sudo` - Enable sudo mode for elevated operations
+- `/export` - Export conversation
+- `/stat` - Show session statistics
+- `/skills` - List available skills
+- `/swap` - Swap agent configuration
 
 ### Custom Commands
 
@@ -43,13 +43,13 @@ Focus on:
 - Best practices
 ```
 
-Usage: `//review src/api.ts`
+Usage: `/review src/api.ts`
 
 ## How It Works
 
 1. **Session Creation**: When an ACP session is created, Nuvin sends an `available_commands_update` notification with all enabled commands.
 
-2. **Command Invocation**: Users type `//command [input]` in the editor. The editor sends this as a regular prompt.
+2. **Command Invocation**: Users type `/command [input]` in the editor. The editor sends this as a regular prompt.
 
 3. **Command Execution**: Nuvin parses the slash command and either:
    - Executes the built-in command logic
@@ -93,7 +93,7 @@ Usage: `//review src/api.ts`
     "prompt": [
       {
         "type": "text",
-        "text": "//review src/api.ts"
+        "text": "/review src/api.ts"
       }
     ]
   }
