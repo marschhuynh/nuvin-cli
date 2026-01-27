@@ -37,6 +37,18 @@ export class EventAdapter {
 
   private convertToSessionUpdate(event: AgentEvent): SessionUpdate | null {
     switch (event.type) {
+      case AgentEventTypes.CommandsAvailable:
+        return {
+          sessionUpdate: 'available_commands_update',
+          availableCommands: event.commands.map(cmd => ({
+            name: cmd.id,
+            description: cmd.description,
+            input: cmd.requiresInput ? {
+              hint: 'Enter input for this command'
+            } : undefined,
+          })),
+        };
+
       case AgentEventTypes.AssistantChunk:
         return {
           sessionUpdate: 'agent_message_chunk',
