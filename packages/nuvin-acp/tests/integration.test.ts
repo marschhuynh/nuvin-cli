@@ -1036,4 +1036,82 @@ describe('ACP Server Integration Tests', () => {
       });
     });
   });
+
+  describe('Slash Command Advertising', () => {
+    it('should advertise available commands after session creation', async () => {
+      // Create custom orchestrator factory that emits CommandsAvailable event
+      const commandsFactory: OrchestratorFactory = async () => {
+        const handlers: Array<(event: AgentEvent) => void> = [];
+
+        // Simulate emitting CommandsAvailable event shortly after session creation
+        setTimeout(() => {
+          const event: AgentEvent = {
+            type: AgentEventTypes.CommandsAvailable,
+            commands: [
+              { id: 'web', description: 'Search the web' },
+              { id: 'test', description: 'Run tests' },
+            ],
+          };
+          for (const handler of handlers) {
+            handler(event);
+          }
+        }, 50);
+
+        return {
+          sendMessage: vi.fn(),
+          onEvent: (handler) => {
+            handlers.push(handler);
+          },
+          handleToolApproval: vi.fn(),
+        };
+      };
+
+      const server = new ACPServer(commandsFactory);
+      (server as any).transport.input = inputStream;
+      (server as any).transport.output = outputStream;
+      await server.start();
+
+      // Create session
+      sendMessage({
+        jsonrpc: '2.0',
+        id: 120,
+        method: 'session/new',
+        params: { cwd: '/tmp/test' } as NewSessionParams,
+      });
+
+      const sessionResponse = await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 120);
+      const sessionId = ('result' in sessionResponse && (sessionResponse.result as NewSessionResult).sessionId) || '';
+
+      expect(sessionId).toMatch(/^sess_/);
+
+      // Poll for the available_commands_update notification
+      let commandsNotification: JsonRpcNotification | undefined;
+      const startTime = Date.now();
+      const timeout = 1000; // 1 second max wait
+
+      while (!commandsNotification && Date.now() - startTime < timeout) {
+        commandsNotification = getNotifications('session/update').find((msg) => {
+          const params = msg.params as SessionUpdateParams;
+          return params.update.sessionUpdate === 'available_commands_update';
+        });
+        if (!commandsNotification) {
+          await new Promise((r) => setTimeout(r, 10)); // Poll every 10ms
+        }
+      }
+
+      expect(commandsNotification).toBeDefined();
+
+      const params = commandsNotification!.params as SessionUpdateParams;
+      expect(params.sessionId).toBe(sessionId);
+      expect(params.update.availableCommands).toHaveLength(2);
+      expect(params.update.availableCommands[0]).toMatchObject({
+        name: 'web',
+        description: 'Search the web',
+      });
+      expect(params.update.availableCommands[1]).toMatchObject({
+        name: 'test',
+        description: 'Run tests',
+      });
+    });
+  });
 });
