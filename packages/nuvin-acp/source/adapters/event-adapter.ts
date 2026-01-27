@@ -1,5 +1,5 @@
 // packages/nuvin-acp/source/adapters/event-adapter.ts
-import type { AgentEvent, ToolCall } from '@nuvin/nuvin-core';
+import type { AgentEvent } from '@nuvin/nuvin-core';
 import { AgentEventTypes } from '@nuvin/nuvin-core';
 import type {
   SessionId,
@@ -16,8 +16,8 @@ export class EventAdapter {
   ) {}
 
   async handleEvent(event: AgentEvent): Promise<void> {
-    const updates = this.convertToSessionUpdates(event);
-    for (const update of updates) {
+    const update = this.convertToSessionUpdate(event);
+    if (update) {
       await this.sendUpdate(update);
     }
   }
@@ -35,56 +35,49 @@ export class EventAdapter {
     });
   }
 
-  private convertToSessionUpdates(event: AgentEvent): SessionUpdate[] {
+  private convertToSessionUpdate(event: AgentEvent): SessionUpdate | null {
     switch (event.type) {
       case AgentEventTypes.AssistantChunk:
-        return [{
+        return {
           sessionUpdate: 'agent_message_chunk',
           content: { type: 'text', text: event.delta },
-        }];
+        };
 
       case AgentEventTypes.ReasoningChunk:
-        return [{
+        return {
           sessionUpdate: 'agent_thought_chunk',
           content: { type: 'text', text: event.delta },
-        }];
+        };
 
       case AgentEventTypes.ToolCalls:
-        // Map each tool call to a tool_call update
-        return event.toolCalls.map((toolCall) => ({
-          sessionUpdate: 'tool_call',
-          toolCallId: toolCall.id,
-          title: toolCall.function.name,
-          kind: this.mapToolKind(toolCall.function.name),
-          status: 'pending',
-          rawInput: this.safeParseJson(toolCall.function.arguments),
-        }));
+        // Convert first tool call to session update
+        if (event.toolCalls.length > 0) {
+          const toolCall = event.toolCalls[0];
+          return {
+            sessionUpdate: 'tool_call',
+            toolCallId: toolCall.id,
+            title: toolCall.function.name,
+            kind: this.mapToolKind(toolCall.function.name),
+            status: 'pending',
+            rawInput: this.safeParseJson(toolCall.function.arguments),
+          };
+        }
+        return null;
 
       case AgentEventTypes.ToolResult:
-        return [{
+        return {
           sessionUpdate: 'tool_call_update',
           toolCallId: event.result.id,
           status: event.result.status === 'success' ? 'completed' : 'failed',
           content: [{
             type: 'content',
-            content: { type: 'text', text: this.formatToolResult(event.result) },
+            content: { type: 'text', text: String(event.result.result) },
           }],
-        }];
+        };
 
       default:
-        return [];
+        return null;
     }
-  }
-
-  private formatToolResult(result: {
-    status: 'success' | 'error';
-    type?: 'text' | 'json';
-    result: string | Record<string, unknown> | unknown[];
-  }): string {
-    if (typeof result.result === 'string') {
-      return result.result;
-    }
-    return JSON.stringify(result.result, null, 2);
   }
 
   private mapToolKind(toolName: string): ToolKind {
