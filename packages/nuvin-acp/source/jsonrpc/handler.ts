@@ -36,10 +36,13 @@ export class RequestHandler {
       return null;
     }
 
+    // At this point, we know id is defined
+    const requestId = request.id as JsonRpcId;
+
     const handler = this.methods.get(request.method);
 
     if (!handler) {
-      return this.errorResponse(request.id, {
+      return this.errorResponse(requestId, {
         code: ErrorCodes.MethodNotFound,
         message: `Method not found: ${request.method}`,
       });
@@ -49,11 +52,11 @@ export class RequestHandler {
       const result = await handler(request.params);
       return {
         jsonrpc: '2.0',
-        id: request.id,
+        id: requestId,
         result,
       };
     } catch (error) {
-      return this.errorResponse(request.id, {
+      return this.errorResponse(requestId, {
         code: ErrorCodes.InternalError,
         message: error instanceof Error ? error.message : 'Internal error',
       });
