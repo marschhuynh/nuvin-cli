@@ -302,7 +302,18 @@ export function processAgentEvent(
     }
 
     case AgentEventTypes.Done: {
-      return state;
+      // Clear any remaining isStreaming flags to ensure loading indicator stops
+      if (state.streamingMessageId) {
+        callbacks.updateLineMetadata?.(state.streamingMessageId, { isStreaming: false });
+      }
+      if (state.reasoningMessageId) {
+        callbacks.updateLineMetadata?.(state.reasoningMessageId, { isStreaming: false });
+      }
+      return {
+        ...state,
+        streamingMessageId: null,
+        reasoningMessageId: null,
+      };
     }
 
     case AgentEventTypes.Error: {
@@ -403,9 +414,7 @@ export function processAgentEvent(
 
       // Create new tool calls array with updated tool call (immutable update)
       const updatedToolCalls = subAgent.toolCalls.map((tc) =>
-        tc.id === event.toolCallId
-          ? { ...tc, durationMs: event.durationMs, status: event.status }
-          : tc
+        tc.id === event.toolCallId ? { ...tc, durationMs: event.durationMs, status: event.status } : tc,
       );
 
       const updatedSubAgent = {

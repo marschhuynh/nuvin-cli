@@ -463,6 +463,107 @@ The codebase is well-structured, actively maintained, and follows modern TypeScr
     });
   });
 
+  describe('Done event clears isStreaming flag', () => {
+    it('should clear isStreaming flag on streamingMessageId when Done event fires', () => {
+      // Scenario: Agent streams content but ends without AssistantMessage
+      // (e.g., ends with tool calls only, or hook execution delays)
+      state = processAgentEvent(
+        { type: AgentEventTypes.MessageStarted, conversationId: 'cli', messageId: 'msg-done' },
+        state,
+        callbacks,
+      );
+
+      state = processAgentEvent(
+        { type: AgentEventTypes.AssistantChunk, conversationId: 'cli', messageId: 'msg-done', delta: 'Processing...' },
+        state,
+        callbacks,
+      );
+
+      const streamingMsgId = state.streamingMessageId;
+      expect(streamingMsgId).toBeTruthy();
+
+      vi.clearAllMocks();
+
+      // Done event fires (e.g., after pre_stop hook completes)
+      state = processAgentEvent(
+        { type: AgentEventTypes.Done, conversationId: 'cli', messageId: 'msg-done', responseTimeMs: 100 },
+        state,
+        callbacks,
+      );
+
+      // isStreaming should be cleared so loading indicator stops
+      expect(callbacks.updateLineMetadata).toHaveBeenCalledWith(streamingMsgId, { isStreaming: false });
+      expect(state.streamingMessageId).toBe(null);
+    });
+
+    it('should clear isStreaming flag on reasoningMessageId when Done event fires', () => {
+      // Scenario: Agent has reasoning/thinking content still streaming when Done fires
+      state = processAgentEvent(
+        { type: AgentEventTypes.MessageStarted, conversationId: 'cli', messageId: 'msg-done-reason' },
+        state,
+        callbacks,
+      );
+
+      state = processAgentEvent(
+        { type: AgentEventTypes.ReasoningChunk, conversationId: 'cli', messageId: 'msg-done-reason', delta: 'Thinking...' },
+        state,
+        callbacks,
+      );
+
+      const reasoningMsgId = state.reasoningMessageId;
+      expect(reasoningMsgId).toBeTruthy();
+
+      vi.clearAllMocks();
+
+      state = processAgentEvent(
+        { type: AgentEventTypes.Done, conversationId: 'cli', messageId: 'msg-done-reason', responseTimeMs: 100 },
+        state,
+        callbacks,
+      );
+
+      expect(callbacks.updateLineMetadata).toHaveBeenCalledWith(reasoningMsgId, { isStreaming: false });
+      expect(state.reasoningMessageId).toBe(null);
+    });
+
+    it('should clear isStreaming on both streaming and reasoning when Done fires', () => {
+      state = processAgentEvent(
+        { type: AgentEventTypes.MessageStarted, conversationId: 'cli', messageId: 'msg-both' },
+        state,
+        callbacks,
+      );
+
+      state = processAgentEvent(
+        { type: AgentEventTypes.ReasoningChunk, conversationId: 'cli', messageId: 'msg-both', delta: 'Thinking...' },
+        state,
+        callbacks,
+      );
+
+      state = processAgentEvent(
+        { type: AgentEventTypes.AssistantChunk, conversationId: 'cli', messageId: 'msg-both', delta: 'Response...' },
+        state,
+        callbacks,
+      );
+
+      const reasoningMsgId = state.reasoningMessageId;
+      const streamingMsgId = state.streamingMessageId;
+      expect(reasoningMsgId).toBeTruthy();
+      expect(streamingMsgId).toBeTruthy();
+
+      vi.clearAllMocks();
+
+      state = processAgentEvent(
+        { type: AgentEventTypes.Done, conversationId: 'cli', messageId: 'msg-both', responseTimeMs: 100 },
+        state,
+        callbacks,
+      );
+
+      expect(callbacks.updateLineMetadata).toHaveBeenCalledWith(streamingMsgId, { isStreaming: false });
+      expect(callbacks.updateLineMetadata).toHaveBeenCalledWith(reasoningMsgId, { isStreaming: false });
+      expect(state.streamingMessageId).toBe(null);
+      expect(state.reasoningMessageId).toBe(null);
+    });
+  });
+
   describe('Error handling during streaming', () => {
     it('should clear isStreaming flag when error occurs during streaming', () => {
       state = processAgentEvent(
