@@ -1,4 +1,4 @@
-import { startACPServer, type Session } from '@nuvin/nuvin-acp';
+import { startACPServer } from '@nuvin/nuvin-acp';
 import { OrchestratorManager } from './services/OrchestratorManager.js';
 import { ConfigManager } from './config/index.js';
 import { eventBus } from './services/EventBus.js';
@@ -23,7 +23,7 @@ export async function runACPMode(): Promise<void> {
         updateLine: () => {},
         updateLineMetadata: () => {},
         handleError: () => {},
-      }
+      },
     );
 
     // Change working directory
@@ -40,7 +40,7 @@ export async function runACPMode(): Promise<void> {
 
     return {
       sendMessage: async (text, options) => {
-        await manager.sendMessage(text, {
+        await manager.send(text, {
           stream: options.stream,
         });
       },
@@ -48,10 +48,7 @@ export async function runACPMode(): Promise<void> {
         eventHandlers.push(handler);
       },
       handleToolApproval: (approvalId, decision) => {
-        manager.getOrchestrator()?.handleToolApproval(
-          approvalId,
-          decision === 'approve' ? 'approve' : 'deny'
-        );
+        manager.getOrchestrator()?.handleToolApproval(approvalId, decision === 'approve' ? 'approve' : 'deny');
       },
     };
   });
