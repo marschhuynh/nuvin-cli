@@ -67,6 +67,9 @@ export class ACPServer {
   }
 
   async start(): Promise<void> {
+    // Log to stderr so it doesn't interfere with JSON-RPC on stdout
+    console.error('[ACP] Server starting - listening for JSON-RPC messages on stdin');
+    
     this.transport.onMessage(async (message) => {
       if (isResponse(message)) {
         this.permissionBridge.handleResponse(message);
@@ -82,6 +85,7 @@ export class ACPServer {
     });
 
     this.transport.start();
+    console.error('[ACP] Server ready');
   }
 
   private async handleInitialize(params: InitializeParams): Promise<InitializeResult> {
@@ -181,4 +185,10 @@ export class ACPServer {
 export async function startACPServer(factory: OrchestratorFactory): Promise<void> {
   const server = new ACPServer(factory);
   await server.start();
+  
+  // Keep the server running indefinitely
+  // The server will only exit when stdin is closed or the process is killed
+  await new Promise<void>(() => {
+    // Never resolves - server runs until process is terminated
+  });
 }

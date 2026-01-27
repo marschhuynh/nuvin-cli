@@ -33,17 +33,17 @@ export class StdioTransport {
           handler(message);
         }
       } catch (error) {
-        // Invalid JSON - ignore or log
+        // Invalid JSON - log to stderr only
+        console.error('[ACP Transport] Failed to parse JSON:', error);
       }
     });
 
     this.rl.on('close', () => {
-      // Cleanup only, don't force exit
+      // Cleanup - process will exit naturally when stdin closes
     });
 
     this.rl.on('error', (error) => {
-      // Ignore or log - don't let it crash the process
-      console.error('Readline error:', error);
+      console.error('[ACP Transport] Readline error:', error);
     });
   }
 

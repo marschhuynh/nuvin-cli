@@ -48,7 +48,12 @@ declare global {
   var __fullClear: () => void;
 }
 
-console.log('\x1b[?2004h');
+// Check for ACP mode BEFORE any console output (stdout must stay clean for JSON-RPC)
+const isACPMode = process.argv.includes('--acp');
+
+if (!isACPMode) {
+  console.log('\x1b[?2004h');
+}
 
 process.on('uncaughtException', (error) => {
   console.error('\n\n❌ Uncaught Exception:', error);
@@ -63,19 +68,29 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-// TODO: Remove migration call after v1.x release
-await runConfigMigration();
+// If ACP mode, start immediately without any setup that might write to stdout
+if (isACPMode) {
+  (async () => {
+    const { runACPMode } = await import('./acp-entry.js');
+    await runACPMode();
+    process.exit(0);
+  })();
+} else {
+  // Normal CLI mode continues with setup
+  (async () => {
+    // TODO: Remove migration call after v1.x release
+    await runConfigMigration();
 
-const nuvinDir = path.join(os.homedir(), '.nuvin');
-try {
-  if (!fs.existsSync(nuvinDir)) {
-    fs.mkdirSync(nuvinDir, { recursive: true });
-  }
-} catch (_error) {
-  // Silent fail
-}
+    const nuvinDir = path.join(os.homedir(), '.nuvin');
+    try {
+      if (!fs.existsSync(nuvinDir)) {
+        fs.mkdirSync(nuvinDir, { recursive: true });
+      }
+    } catch (_error) {
+      // Silent fail
+    }
 
-const cli = meow(
+    const cli = meow(
   `
   Nuvin
 
@@ -171,28 +186,27 @@ const cli = meow(
   },
 );
 
-(async () => {
-  // Handle version flag early
-  if (cli.flags.version) {
-    const { version, commit } = getVersionInfo();
-    console.log(`@nuvin/cli v${version} (${commit})`);
-    process.exit(0);
-  }
+// Handle version flag early
+if (cli.flags.version) {
+  const { version, commit } = getVersionInfo();
+  console.log(`@nuvin/cli v${version} (${commit})`);
+  process.exit(0);
+}
 
-  const ensureString = (value: string | undefined): string | undefined => {
-    if (typeof value !== 'string') return undefined;
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  };
+const ensureString = (value: string | undefined): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
 
-  const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
-    const providers = config.providers || {};
-    return Object.values(providers).some(
-      (p) => Array.isArray(p.auth) && p.auth.length > 0 && p.auth.some((a) => a.type === 'api-key' && a['api-key']),
-    );
-  };
+const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
+  const providers = config.providers || {};
+  return Object.values(providers).some(
+    (p) => Array.isArray(p.auth) && p.auth.length > 0 && p.auth.some((a) => a.type === 'api-key' && a['api-key']),
+  );
+};
 
-  // Extract --profile flag BEFORE processing subcommands
+// Extract --profile flag BEFORE processing subcommands
   const normalizedProfile = ensureString(cli.flags.profile as string | undefined);
 
   const processEnvironmentVariables = (): Partial<CLIConfig> => {
@@ -242,13 +256,6 @@ const cli = meow(
 
     return envConfig;
   };
-
-  // Handle ACP mode early
-  if (cli.flags.acp) {
-    const { runACPMode } = await import('./acp-entry.js');
-    await runACPMode();
-    process.exit(0);
-  }
 
   // Handle demo mode early
   if (cli.flags.demo) {
@@ -476,4 +483,5 @@ const cli = meow(
 
   cleanupTerminal(cli.flags.alt);
   process.exit(0);
-})();
+  })();
+}

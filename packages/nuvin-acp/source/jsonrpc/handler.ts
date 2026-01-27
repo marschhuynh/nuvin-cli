@@ -30,7 +30,8 @@ export class RequestHandler {
         try {
           await handler(request.params);
         } catch (error) {
-          // Notifications don't send responses
+          // Notifications don't send responses, but log errors
+          console.error(`[ACP Handler] Notification error for ${request.method}:`, error);
         }
       }
       return null;
@@ -56,6 +57,7 @@ export class RequestHandler {
         result,
       };
     } catch (error) {
+      console.error(`[ACP Handler] Error handling ${request.method}:`, error);
       return this.errorResponse(requestId, {
         code: ErrorCodes.InternalError,
         message: error instanceof Error ? error.message : 'Internal error',
