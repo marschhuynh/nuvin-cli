@@ -122,11 +122,26 @@ export type ToolCallStatusUpdate = {
   rawOutput?: unknown;
 };
 
+// Slash Commands
+export type AvailableCommand = {
+  name: string;
+  description: string;
+  input?: {
+    hint: string;
+  };
+};
+
+export type AvailableCommandsUpdate = {
+  sessionUpdate: 'available_commands_update';
+  availableCommands: AvailableCommand[];
+};
+
 export type SessionUpdate =
   | AgentMessageChunk
   | AgentThoughtChunk
   | ToolCallUpdate
-  | ToolCallStatusUpdate;
+  | ToolCallStatusUpdate
+  | AvailableCommandsUpdate;
 
 export type SessionUpdateParams = {
   sessionId: SessionId;
