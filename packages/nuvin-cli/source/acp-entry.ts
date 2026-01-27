@@ -95,8 +95,8 @@ export async function runACPMode(): Promise<void> {
           if (match) {
             const [, commandId, input] = match;
 
-            // Check if command exists in built-in registry (without / prefix)
-            const builtIn = commandRegistry.get(commandId);
+            // Check if command exists in built-in registry (commands are stored with / prefix)
+            const builtIn = commandRegistry.get(`/${commandId}`);
             if (builtIn) {
               // Execute built-in command
               // Note: Built-in commands typically use React UI, may need adaptation
@@ -112,9 +112,9 @@ export async function runACPMode(): Promise<void> {
               return;
             }
 
-            // Check custom commands (with / prefix)
+            // Check custom commands (custom registry stores IDs without / prefix)
             const customRegistry = getCustomCommandRegistry();
-            const customCmd = customRegistry?.get(commandId);
+            const customCmd = customRegistry?.get(commandId); // commandId is without /
             if (customCmd && customRegistry) {
               // Render custom command prompt with input
               const renderedPrompt = customRegistry.renderPrompt(commandId, input);
