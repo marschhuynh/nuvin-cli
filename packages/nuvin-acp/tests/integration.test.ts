@@ -1148,22 +1148,22 @@ describe('ACP Server Integration Tests', () => {
       const sessionResponse = await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 130);
       const sessionId = ('result' in sessionResponse && (sessionResponse.result as NewSessionResult).sessionId) || '';
 
-      // Send a slash command
+      // Send a slash command (use non-existent command to test fallback to sendMessage)
       sendMessage({
         jsonrpc: '2.0',
         id: 131,
         method: 'session/prompt',
         params: {
           sessionId,
-          prompt: [{ type: 'text', text: '/help me' }],
+          prompt: [{ type: 'text', text: '/nonexistent-command test' }],
         } as PromptParams,
       });
 
       await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 131);
 
-      // Verify the command was processed
+      // Verify the command was processed (sent as regular message since command doesn't exist)
       expect(receivedMessage).toBeDefined();
-      expect(receivedMessage).toContain('help');
+      expect(receivedMessage).toContain('/nonexistent-command');
     });
 
     it('should invoke custom slash commands with template rendering', async () => {

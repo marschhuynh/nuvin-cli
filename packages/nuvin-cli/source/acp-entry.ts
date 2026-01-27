@@ -7,6 +7,7 @@ import { AgentEventTypes } from '@nuvin/nuvin-core';
 import { commandRegistry } from './modules/commands/registry.js';
 import { registerCommands } from './modules/commands/definitions/index.js';
 import { getCustomCommandRegistry } from './services/CustomCommandLoader.js';
+import type { CommandContext, FunctionCommand } from './modules/commands/types.js';
 
 export async function runACPMode(): Promise<void> {
   const configManager = ConfigManager.getInstance();
@@ -101,18 +102,34 @@ export async function runACPMode(): Promise<void> {
             // Check if command exists in built-in registry (commands are stored with / prefix)
             const builtIn = commandRegistry.get(`/${commandId}`);
             if (builtIn) {
-              // Execute built-in command
-              // Note: Built-in commands typically use React UI, may need adaptation
-              // For ACP mode, we send a descriptive message to the LLM to handle the command intent
-              try {
-                await manager.send(
-                  `Execute the ${commandId} command${input ? ` with: ${input}` : ''}`,
-                  { stream: options.stream },
-                );
-              } catch (error) {
-                console.error(`Failed to execute built-in command '${commandId}':`, error);
+              // Execute built-in command handler directly
+              if (builtIn.type === 'function') {
+                const fnCmd = builtIn as FunctionCommand;
+                try {
+                  // Create command context for the handler
+                  const ctx: CommandContext = {
+                    rawInput: text,
+                    eventBus,
+                    registry: commandRegistry,
+                    config: {
+                      get: <T>(key: string, scope?: string) => configManager.get(key, scope as any) as T | undefined,
+                      set: (key: string, value: unknown, scope?: string) => configManager.set(key, value, scope as any),
+                      delete: (key: string, scope?: string) => configManager.delete(key, scope as any),
+                    },
+                    orchestratorManager: manager,
+                  };
+
+                  // Execute the command handler
+                  await fnCmd.handler(ctx);
+                  return;
+                } catch (error) {
+                  console.error(`Failed to execute built-in command '${commandId}':`, error);
+                  // Fall through to send as regular message
+                }
+              } else {
+                // Component commands (UI-based) not supported in ACP mode
+                console.warn(`Component command '${commandId}' not supported in ACP mode, sending as regular message`);
               }
-              return;
             }
 
             // Check custom commands (custom registry stores IDs without / prefix)
