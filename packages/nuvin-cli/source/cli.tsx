@@ -166,6 +166,7 @@ const cli = meow(
       profile: { type: 'string' },
       resume: { type: 'boolean', alias: 'r' },
       alt: { type: 'boolean' },
+      acp: { type: 'boolean' },
     },
   },
 );
@@ -241,6 +242,13 @@ const cli = meow(
 
     return envConfig;
   };
+
+  // Handle ACP mode early
+  if (cli.flags.acp) {
+    const { runACPMode } = await import('./acp-entry.js');
+    await runACPMode();
+    process.exit(0);
+  }
 
   // Handle demo mode early
   if (cli.flags.demo) {

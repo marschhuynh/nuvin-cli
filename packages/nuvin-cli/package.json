@@ -49,6 +49,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@nuvin/nuvin-acp": "workspace:*",
 		"@nuvin/nuvin-core": "workspace:^",
 		"ansi-escapes": "^7.2.0",
 		"ansi-regex": "^6.2.2",
