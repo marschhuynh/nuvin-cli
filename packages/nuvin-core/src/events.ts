@@ -63,7 +63,7 @@ export class PersistingConsoleEventPort implements EventPort {
   async emit(event: AgentEvent): Promise<void> {
     this.writeQueue = this.writeQueue.then(async () => {
       try {
-        const key = event?.conversationId ?? 'default';
+        const key = ('conversationId' in event ? event.conversationId : undefined) ?? 'default';
         const existing = await this.memory.get(key);
         const next = [...existing, { ...event }];
 
