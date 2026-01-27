@@ -2,8 +2,8 @@ import { startACPServer } from '@nuvin/nuvin-acp';
 import { OrchestratorManager } from './services/OrchestratorManager.js';
 import { ConfigManager } from './config/index.js';
 import { eventBus } from './services/EventBus.js';
-import type { AgentEvent } from '@nuvin/nuvin-core';
-import { AgentEventTypes } from '@nuvin/nuvin-core';
+import type { AgentEvent, ToolCall } from '@nuvin/nuvin-core';
+import { AgentEventTypes, ErrorReason } from '@nuvin/nuvin-core';
 import { commandRegistry } from './modules/commands/registry.js';
 import { registerCommands } from './modules/commands/definitions/index.js';
 import { getCustomCommandRegistry } from './services/CustomCommandLoader.js';
@@ -12,6 +12,15 @@ import type { CommandContext, FunctionCommand } from './modules/commands/types.j
 export async function runACPMode(): Promise<void> {
   const configManager = ConfigManager.getInstance();
   await configManager.load({});
+
+  // Utility functions for tool approval
+  function generateApprovalId(): string {
+    return `approval_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  function generateMessageId(): string {
+    return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
 
   await startACPServer(async (session) => {
     const manager = new OrchestratorManager();
@@ -36,6 +45,101 @@ export async function runACPMode(): Promise<void> {
 
     // Register commands (built-in and custom)
     await registerCommands(manager);
+
+    // Track pending approvals
+    const pendingApprovals = new Map<string, (decision: 'approve' | 'deny') => void>();
+
+    // Wrap tool execution to request approval for tools in ACP mode
+    const orchestrator = manager.getOrchestrator();
+    if (orchestrator) {
+      const tools = orchestrator.getTools();
+      const originalExecuteToolCalls = tools.executeToolCalls.bind(tools);
+
+      // Helper to convert ToolInvocation to ToolCall format
+      function toToolCall(invocation: any): ToolCall {
+        return {
+          id: invocation.id,
+          type: 'function',
+          function: {
+            name: invocation.name,
+            arguments: JSON.stringify(invocation.parameters),
+          },
+          editInstruction: invocation.editInstruction,
+        };
+      }
+
+      tools.executeToolCalls = async (calls, context, maxConcurrent, signal) => {
+        // For each tool call, request approval before executing
+        const approvalPromises = calls.map(async (call) => {
+          const approvalId = generateApprovalId();
+
+          // Convert ToolInvocation to ToolCall format for the event
+          const toolCall: ToolCall = toToolCall(call);
+
+          // Emit ToolApprovalRequired event
+          eventBus.emit('agent:event', {
+            type: AgentEventTypes.ToolApprovalRequired,
+            conversationId: manager.getConversationContext().getActiveConversationId(),
+            messageId: generateMessageId(),
+            toolCalls: [toolCall],
+            approvalId,
+          } as AgentEvent);
+
+          // Wait for handleToolApproval to be called
+          const decision = await new Promise<'approve' | 'deny'>((resolve) => {
+            // Set up timeout to reject if no response
+            const timeout = setTimeout(() => {
+              pendingApprovals.delete(approvalId);
+              resolve('deny'); // Default to deny on timeout
+            }, 30000); // 30 second timeout
+
+            // Store resolver that will be called by handleToolApproval
+            pendingApprovals.set(approvalId, (decision) => {
+              clearTimeout(timeout);
+              resolve(decision);
+            });
+          });
+
+          return { call, decision, approvalId };
+        });
+
+        const approvals = await Promise.all(approvalPromises);
+
+        // Filter out denied calls and execute approved ones
+        const approvedCalls = approvals.filter((a) => a.decision === 'approve').map((a) => a.call);
+
+        // If all calls were denied, return error results
+        if (approvedCalls.length === 0) {
+          return approvals.map((a) => ({
+            id: a.call.id,
+            name: a.call.name,
+            status: 'error' as const,
+            type: 'text' as const,
+            result: `Tool execution denied: ${a.call.name}`,
+            metadata: { errorReason: ErrorReason.Denied },
+            durationMs: 0,
+          }));
+        }
+
+        // Execute only approved calls
+        const results = await originalExecuteToolCalls(approvedCalls, context, maxConcurrent, signal);
+
+        // Add error results for denied calls
+        const deniedResults = approvals
+          .filter((a) => a.decision === 'deny')
+          .map((a) => ({
+            id: a.call.id,
+            name: a.call.name,
+            status: 'error' as const,
+            type: 'text' as const,
+            result: `Tool execution denied: ${a.call.name}`,
+            metadata: { errorReason: ErrorReason.Denied },
+            durationMs: 0,
+          }));
+
+        return [...results, ...deniedResults];
+      };
+    }
 
     const eventHandlers: Array<(event: AgentEvent) => void> = [];
 
@@ -186,6 +290,14 @@ export async function runACPMode(): Promise<void> {
         }
       },
       handleToolApproval: (approvalId, decision) => {
+        // Resolve the pending approval promise
+        const resolver = pendingApprovals.get(approvalId);
+        if (resolver) {
+          resolver(decision === 'approve' ? 'approve' : 'deny');
+          pendingApprovals.delete(approvalId);
+        }
+
+        // Also call the orchestrator's handleToolApproval for compatibility
         manager.getOrchestrator()?.handleToolApproval(approvalId, decision === 'approve' ? 'approve' : 'deny');
       },
     };
