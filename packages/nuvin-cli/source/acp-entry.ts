@@ -99,11 +99,31 @@ export async function runACPMode(): Promise<void> {
           if (match) {
             const [, commandId, input] = match;
 
+            // Check custom commands FIRST (before built-in)
+            // Custom commands are registered in commandRegistry but need special handling
+            const customRegistry = getCustomCommandRegistry();
+            const customCmd = customRegistry?.get(commandId); // commandId is without /
+            if (customCmd && customRegistry) {
+              // Render custom command prompt with input
+              const renderedPrompt = customRegistry.renderPrompt(commandId, input);
+              if (renderedPrompt) {
+                try {
+                  await manager.send(renderedPrompt, { stream: options.stream });
+                } catch (error) {
+                  console.error(`Failed to execute custom command '${commandId}':`, error);
+                }
+              }
+              return;
+            }
+
             // Check if command exists in built-in registry (commands are stored with / prefix)
             const builtIn = commandRegistry.get(`/${commandId}`);
             if (builtIn) {
-              // Execute built-in command handler directly
-              if (builtIn.type === 'function') {
+              // Skip custom commands (already handled above)
+              if ((builtIn as any).isCustomCommand) {
+                // Should not reach here since we handle custom commands first
+                console.warn(`Custom command '${commandId}' not handled by custom registry`);
+              } else if (builtIn.type === 'function') {
                 const fnCmd = builtIn as FunctionCommand;
                 try {
                   // Create command context for the handler
@@ -130,22 +150,6 @@ export async function runACPMode(): Promise<void> {
                 // Component commands (UI-based) not supported in ACP mode
                 console.warn(`Component command '${commandId}' not supported in ACP mode, sending as regular message`);
               }
-            }
-
-            // Check custom commands (custom registry stores IDs without / prefix)
-            const customRegistry = getCustomCommandRegistry();
-            const customCmd = customRegistry?.get(commandId); // commandId is without /
-            if (customCmd && customRegistry) {
-              // Render custom command prompt with input
-              const renderedPrompt = customRegistry.renderPrompt(commandId, input);
-              if (renderedPrompt) {
-                try {
-                  await manager.send(renderedPrompt, { stream: options.stream });
-                } catch (error) {
-                  console.error(`Failed to execute custom command '${commandId}':`, error);
-                }
-              }
-              return;
             }
 
             // Command not found, send as regular message
