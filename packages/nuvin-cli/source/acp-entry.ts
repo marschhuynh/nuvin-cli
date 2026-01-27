@@ -115,7 +115,7 @@ export async function runACPMode(): Promise<void> {
             // Check custom commands (with / prefix)
             const customRegistry = getCustomCommandRegistry();
             const customCmd = customRegistry?.get(commandId);
-            if (customCmd) {
+            if (customCmd && customRegistry) {
               // Render custom command prompt with input
               const renderedPrompt = customRegistry.renderPrompt(commandId, input);
               if (renderedPrompt) {
