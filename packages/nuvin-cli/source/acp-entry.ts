@@ -89,9 +89,9 @@ export async function runACPMode(): Promise<void> {
 
     return {
       sendMessage: async (text, options) => {
-        // Check if this is a slash command
-        if (text.trim().startsWith('/')) {
-          const match = text.match(/^\/([a-z][a-z0-9_-]*)\s*(.*)/);
+        // Check if this is a slash command (Nuvin uses // prefix)
+        if (text.trim().startsWith('//')) {
+          const match = text.match(/^\/\/([a-z][a-z0-9_-]*)\s*(.*)/);
           if (match) {
             const [, commandId, input] = match;
 
