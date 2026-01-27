@@ -28,7 +28,6 @@ describe('ACP Server Integration Tests', () => {
   let mockOrchestrator: ReturnType<OrchestratorFactory> extends Promise<infer T> ? T : never;
   let mockOrchestratorFactory: OrchestratorFactory;
   let eventHandlers: ((event: AgentEvent) => void)[];
-  let approvalHandlers: Map<string, { decision: 'approve' | 'deny'; resolved: boolean }>;
 
   beforeEach(() => {
     // Create fresh streams for each test
@@ -47,7 +46,6 @@ describe('ACP Server Integration Tests', () => {
 
     receivedMessages = [];
     eventHandlers = [];
-    approvalHandlers = new Map();
 
     // Mock orchestrator
     mockOrchestrator = {
@@ -100,13 +98,7 @@ describe('ACP Server Integration Tests', () => {
       onEvent: vi.fn((handler) => {
         eventHandlers.push(handler);
       }),
-      handleToolApproval: vi.fn((approvalId, decision) => {
-        const entry = approvalHandlers.get(approvalId);
-        if (entry) {
-          entry.decision = decision;
-          entry.resolved = true;
-        }
-      }),
+      handleToolApproval: vi.fn(),
     };
 
     mockOrchestratorFactory = vi.fn(async () => mockOrchestrator);
@@ -169,6 +161,23 @@ describe('ACP Server Integration Tests', () => {
       (msg): msg is JsonRpcNotification =>
         'method' in msg && msg.method === method && !('id' in msg && msg.id !== undefined),
     );
+  }
+
+  /**
+   * Helper to wait for handleToolApproval to be called
+   */
+  async function waitForApproval(
+    mockFn: ReturnType<typeof vi.fn>,
+    timeoutMs = 1000,
+  ): Promise<[approvalId: string, decision: 'approve' | 'deny']> {
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeoutMs) {
+      if (mockFn.mock.calls.length > 0) {
+        return mockFn.mock.calls[0] as [string, 'approve' | 'deny'];
+      }
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    throw new Error('Timeout waiting for handleToolApproval to be called');
   }
 
   describe('Protocol Initialization', () => {
@@ -538,14 +547,13 @@ describe('ACP Server Integration Tests', () => {
 
   describe('Permission Flow', () => {
     it('should handle tool approval request and response', async () => {
-      // Orchestrator that requires approval
+      // Orchestrator that requires approval - simulates the real tool approval wrapper
       const approvalOrchestrator = {
         ...mockOrchestrator,
         sendMessage: vi.fn(async (text, options) => {
           for (const handler of eventHandlers) {
-            // Emit approval required event
+            // Emit approval required event (simulating the tool wrapper in acp-entry.ts)
             const approvalId = 'approval_123';
-            approvalHandlers.set(approvalId, { decision: 'deny', resolved: false });
 
             handler({
               type: AgentEventTypes.ToolApprovalRequired,
@@ -563,12 +571,6 @@ describe('ACP Server Integration Tests', () => {
               ],
               approvalId,
             });
-
-            // Wait for approval decision
-            const startTime = Date.now();
-            while (!approvalHandlers.get(approvalId)?.resolved && Date.now() - startTime < 2000) {
-              await new Promise((r) => setTimeout(r, 10));
-            }
 
             if (options.signal.aborted) return;
 
@@ -651,11 +653,10 @@ describe('ACP Server Integration Tests', () => {
         } as RequestPermissionResult,
       });
 
-      // Wait a bit for processing
-      await new Promise((r) => setTimeout(r, 50));
-
-      // Verify handleToolApproval was called with 'approve'
-      expect(approvalOrchestrator.handleToolApproval).toHaveBeenCalledWith('approval_123', 'approve');
+      // Wait for handleToolApproval to be called
+      const [approvalId, decision] = await waitForApproval(approvalOrchestrator.handleToolApproval);
+      expect(approvalId).toBe('approval_123');
+      expect(decision).toBe('approve');
     });
 
     it('should handle permission denial', async () => {
@@ -664,7 +665,6 @@ describe('ACP Server Integration Tests', () => {
         sendMessage: vi.fn(async (text, options) => {
           for (const handler of eventHandlers) {
             const approvalId = 'approval_456';
-            approvalHandlers.set(approvalId, { decision: 'deny', resolved: false });
 
             handler({
               type: AgentEventTypes.ToolApprovalRequired,
@@ -682,11 +682,6 @@ describe('ACP Server Integration Tests', () => {
               ],
               approvalId,
             });
-
-            const startTime = Date.now();
-            while (!approvalHandlers.get(approvalId)?.resolved && Date.now() - startTime < 2000) {
-              await new Promise((r) => setTimeout(r, 10));
-            }
 
             handler({
               type: AgentEventTypes.Done,
@@ -746,9 +741,10 @@ describe('ACP Server Integration Tests', () => {
         } as RequestPermissionResult,
       });
 
-      await new Promise((r) => setTimeout(r, 50));
-
-      expect(approvalOrchestrator.handleToolApproval).toHaveBeenCalledWith('approval_456', 'deny');
+      // Wait for handleToolApproval to be called
+      const [approvalId, decision] = await waitForApproval(approvalOrchestrator.handleToolApproval);
+      expect(approvalId).toBe('approval_456');
+      expect(decision).toBe('deny');
     });
   });
 
