@@ -48,11 +48,12 @@ export async function runACPMode(): Promise<void> {
         // Skip component commands that are modal/UI-based (not suitable for slash commands)
         if (cmd.type === 'component') continue;
 
-        // Note: Built-in commands use bare IDs (e.g., "help", "exit")
-        // while custom commands are prefixed with "/" (e.g., "/mycommand")
-        // This maintains consistency with existing command invocation patterns
+        // Strip the leading '/' from command IDs for ACP protocol
+        // Commands are stored as '/exit' but should be advertised as 'exit'
+        const commandName = cmd.id.startsWith('/') ? cmd.id.slice(1) : cmd.id;
+        
         allCommands.push({
-          id: cmd.id,
+          id: commandName,
           description: cmd.description,
           requiresInput: false, // Built-in commands typically don't require input
         });
@@ -68,8 +69,10 @@ export async function runACPMode(): Promise<void> {
         const customCommands = customRegistry.list({ includeHidden: false });
         for (const cmd of customCommands) {
           if (cmd.enabled) {
+            // Custom command IDs should NOT have '/' prefix in ACP protocol
+            // The slash is part of invocation syntax, not the command name
             allCommands.push({
-              id: `/${cmd.id}`,
+              id: cmd.id,
               description: cmd.description,
               requiresInput: true, // Custom commands typically need context
             });
