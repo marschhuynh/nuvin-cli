@@ -1165,5 +1165,107 @@ describe('ACP Server Integration Tests', () => {
       expect(receivedMessage).toBeDefined();
       expect(receivedMessage).toContain('help');
     });
+
+    it('should invoke custom slash commands with template rendering', async () => {
+      let receivedMessage: string | undefined;
+
+      // Mock custom command definition
+      const mockCustomCommand = {
+        id: 'review',
+        description: 'Review code',
+        prompt: 'Please review this code: {{user_prompt}}',
+        enabled: true,
+        source: 'global' as const,
+        filePath: '/fake/path/review.md',
+      };
+
+      // Mock custom command registry
+      const mockCustomRegistry = {
+        get: vi.fn((commandId: string) => {
+          if (commandId === 'review') {
+            return mockCustomCommand;
+          }
+          return undefined;
+        }),
+        renderPrompt: vi.fn((commandId: string, userInput: string) => {
+          if (commandId === 'review') {
+            return `Please review this code: ${userInput}`;
+          }
+          return userInput;
+        }),
+      };
+
+      // Create orchestrator factory that handles custom slash commands
+      const customCommandFactory: OrchestratorFactory = async () => {
+        const handlers: Array<(event: AgentEvent) => void> = [];
+
+        return {
+          sendMessage: vi.fn(async (text: string) => {
+            // Simulate slash command parsing logic from acp-entry.ts
+            if (text.trim().startsWith('/')) {
+              const match = text.match(/^\/([a-z][a-z0-9_-]*)\s*(.*)/);
+              if (match) {
+                const [, commandId, input] = match;
+
+                // Check custom commands (simulating getCustomCommandRegistry())
+                const customCmd = mockCustomRegistry.get(commandId);
+                if (customCmd) {
+                  // Render custom command prompt with input
+                  const renderedPrompt = mockCustomRegistry.renderPrompt(commandId, input);
+                  if (renderedPrompt) {
+                    receivedMessage = renderedPrompt;
+                  }
+                  return;
+                }
+              }
+            }
+
+            // If not a slash command, just store the message
+            receivedMessage = text;
+          }),
+          onEvent: (handler) => {
+            handlers.push(handler);
+          },
+          handleToolApproval: vi.fn(),
+        };
+      };
+
+      const server = new ACPServer(customCommandFactory);
+      (server as any).transport.input = inputStream;
+      (server as any).transport.output = outputStream;
+      await server.start();
+
+      // Create session
+      sendMessage({
+        jsonrpc: '2.0',
+        id: 140,
+        method: 'session/new',
+        params: { cwd: '/tmp/test' } as NewSessionParams,
+      });
+
+      const sessionResponse = await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 140);
+      const sessionId = ('result' in sessionResponse && (sessionResponse.result as NewSessionResult).sessionId) || '';
+
+      // Send a custom slash command
+      sendMessage({
+        jsonrpc: '2.0',
+        id: 141,
+        method: 'session/prompt',
+        params: {
+          sessionId,
+          prompt: [{ type: 'text', text: '/review src/api.ts' }],
+        } as PromptParams,
+      });
+
+      await waitForMessage((msg): msg is JsonRpcResponse => 'id' in msg && msg.id === 141);
+
+      // Verify the rendered template was sent to sendMessage
+      expect(receivedMessage).toBeDefined();
+      expect(receivedMessage).toBe('Please review this code: src/api.ts');
+
+      // Verify the mock methods were called correctly
+      expect(mockCustomRegistry.get).toHaveBeenCalledWith('review');
+      expect(mockCustomRegistry.renderPrompt).toHaveBeenCalledWith('review', 'src/api.ts');
+    });
   });
 });
