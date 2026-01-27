@@ -89,9 +89,61 @@ export async function runACPMode(): Promise<void> {
 
     return {
       sendMessage: async (text, options) => {
-        await manager.send(text, {
-          stream: options.stream,
-        });
+        // Check if this is a slash command
+        if (text.trim().startsWith('/')) {
+          const match = text.match(/^\/([a-z][a-z0-9_-]*)\s*(.*)/);
+          if (match) {
+            const [, commandId, input] = match;
+
+            // Check if command exists in built-in registry (without / prefix)
+            const builtIn = commandRegistry.get(commandId);
+            if (builtIn) {
+              // Execute built-in command
+              // Note: Built-in commands typically use React UI, may need adaptation
+              // For ACP mode, we send a descriptive message to the LLM to handle the command intent
+              try {
+                await manager.send(
+                  `Execute the ${commandId} command${input ? ` with: ${input}` : ''}`,
+                  { stream: options.stream },
+                );
+              } catch (error) {
+                console.error(`Failed to execute built-in command '${commandId}':`, error);
+              }
+              return;
+            }
+
+            // Check custom commands (with / prefix)
+            const customRegistry = getCustomCommandRegistry();
+            const customCmd = customRegistry?.get(commandId);
+            if (customCmd) {
+              // Render custom command prompt with input
+              const renderedPrompt = customRegistry.renderPrompt(commandId, input);
+              if (renderedPrompt) {
+                try {
+                  await manager.send(renderedPrompt, { stream: options.stream });
+                } catch (error) {
+                  console.error(`Failed to execute custom command '${commandId}':`, error);
+                }
+              }
+              return;
+            }
+
+            // Command not found, send as regular message
+            try {
+              await manager.send(text, { stream: options.stream });
+            } catch (error) {
+              console.error('Failed to send message:', error);
+            }
+            return;
+          }
+        }
+
+        // Regular message
+        try {
+          await manager.send(text, { stream: options.stream });
+        } catch (error) {
+          console.error('Failed to send message:', error);
+        }
       },
       onEvent: (handler) => {
         eventHandlers.push(handler);
