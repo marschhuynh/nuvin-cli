@@ -57,11 +57,13 @@ export type McpServerStdio = {
 };
 
 export type NewSessionParams = {
+  _meta?: Record<string, unknown>;
   cwd: string;
   mcpServers?: McpServerStdio[];
 };
 
 export type NewSessionResult = {
+  _meta?: Record<string, unknown>;
   sessionId: SessionId;
 };
 
@@ -220,6 +222,7 @@ export type ContentBlock = TextContent | ImageContent | ResourceLink | EmbeddedR
 
 // Prompt
 export type PromptParams = {
+  _meta?: Record<string, unknown>;
   sessionId: SessionId;
   prompt: ContentBlock[];
 };
@@ -227,16 +230,18 @@ export type PromptParams = {
 export type StopReason = 'end_turn' | 'max_tokens' | 'max_turn_requests' | 'refusal' | 'cancelled';
 
 export type PromptResult = {
+  _meta?: Record<string, unknown>;
   stopReason: StopReason;
 };
 
 // Cancel (notification)
 export type CancelParams = {
+  _meta?: Record<string, unknown>;
   sessionId: SessionId;
 };
 
 // Session Updates
-export type ToolKind = 'read' | 'edit' | 'delete' | 'search' | 'execute' | 'fetch' | 'other';
+export type ToolKind = 'read' | 'edit' | 'delete' | 'move' | 'search' | 'execute' | 'think' | 'fetch' | 'switch_mode' | 'other';
 export type ToolCallStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
 
 export type AgentMessageChunk = {
@@ -360,6 +365,7 @@ export type PermissionOption = {
 };
 
 export type RequestPermissionParams = {
+  _meta?: Record<string, unknown>;
   sessionId: SessionId;
   toolCall: {
     toolCallId: ToolCallId;
@@ -371,6 +377,7 @@ export type RequestPermissionParams = {
 };
 
 export type RequestPermissionResult = {
+  _meta?: Record<string, unknown>;
   outcome:
     | { outcome: 'cancelled' }
     | { outcome: 'selected'; optionId: string };
