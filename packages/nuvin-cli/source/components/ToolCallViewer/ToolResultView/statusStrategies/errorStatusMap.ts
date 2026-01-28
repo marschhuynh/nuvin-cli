@@ -21,8 +21,8 @@ const errorStatusMap: Record<ErrorReason, ErrorConfig> = {
   [ErrorReason.Unknown]: { text: 'Unknown error', colorKey: 'error' },
   [ErrorReason.ValidationFailed]: {
     text: 'Validation failed',
-    colorKey: 'warning'
-  }
+    colorKey: 'warning',
+  },
 };
 
 export function getErrorStatus(

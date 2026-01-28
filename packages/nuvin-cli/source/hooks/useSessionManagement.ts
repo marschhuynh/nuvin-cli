@@ -5,7 +5,6 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import type { Message } from '@nuvin/nuvin-core';
 import type { MessageLine, MessageMetadata } from '@/adapters/index.js';
-import { getDefaultLogger } from '@/utils/file-logger.js';
 import type { SessionInfo } from '@/types.js';
 import { ConfigManager } from '@/config/manager.js';
 import { DEFAULT_PROFILE } from '@/config/profile-types.js';
@@ -13,11 +12,11 @@ import { DEFAULT_PROFILE } from '@/config/profile-types.js';
 function sessionsDir(profile?: string): string {
   const configManager = ConfigManager.getInstance();
   const profileManager = configManager.getProfileManager();
-  
+
   if (!profileManager) {
     return path.join(os.homedir(), '.nuvin', 'sessions');
   }
-  
+
   const activeProfile = profile ?? configManager.getCurrentProfile();
   return profileManager.getProfileSessionsDir(activeProfile);
 }
@@ -57,8 +56,6 @@ const CACHE_TTL = 10000; // 10 seconds
 // Promise for deduplication
 const scanPromises = new Map<CacheKey, Promise<SessionData>>();
 
-const logger = getDefaultLogger();
-
 function getCacheKey(limit?: number, profile?: string): CacheKey {
   return `${profile ?? DEFAULT_PROFILE}_${limit ?? 'all'}`;
 }
@@ -70,7 +67,6 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
   // Check cache
   const cached = sessionCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    logger.info('Cache hit:', cacheKey);
     return cached.data;
   }
 
@@ -163,7 +159,10 @@ export type LoadResult =
   | { kind: 'messages'; lines: MessageLine[]; metadata: MessageMetadata | null; cliMessages: Message[]; count: number }
   | { kind: 'empty'; reason: 'no_messages' | 'not_found' };
 
-export const createNewSession = async (customId?: string, profile?: string): Promise<{ sessionId: string; sessionDir: string }> => {
+export const createNewSession = async (
+  customId?: string,
+  profile?: string,
+): Promise<{ sessionId: string; sessionDir: string }> => {
   const id = customId ?? String(Date.now());
   const dir = sessionsDir(profile);
   const sessionDir = path.join(dir, id);

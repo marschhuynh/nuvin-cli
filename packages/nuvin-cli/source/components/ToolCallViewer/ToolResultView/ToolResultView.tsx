@@ -52,7 +52,15 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
         return <Markdown maxWidth={cols - LAYOUT.MARKDOWN_MARGIN}>{errorStr}</Markdown>;
       }
       case 'ask_user_tool':
-        return <AskUserRenderer toolResult={toolResult} toolCall={toolCall} messageId={messageId} fullMode={fullMode} cols={cols} />;
+        return (
+          <AskUserRenderer
+            toolResult={toolResult}
+            toolCall={toolCall}
+            messageId={messageId}
+            fullMode={fullMode}
+            cols={cols}
+          />
+        );
       case 'todo_write':
         return <TodoWriteRenderer toolResult={toolResult} messageId={messageId} fullMode={fullMode} />;
       case 'file_edit':

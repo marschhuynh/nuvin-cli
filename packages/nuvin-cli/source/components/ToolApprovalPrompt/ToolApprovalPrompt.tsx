@@ -58,7 +58,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(currentTool.function.arguments);
-    } catch { }
+    } catch {}
 
     const displayName =
       args.description && typeof args.description === 'string' && args.description.trim()

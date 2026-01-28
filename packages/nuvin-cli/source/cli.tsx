@@ -69,29 +69,23 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // If ACP mode, start immediately without any setup that might write to stdout
-if (isACPMode) {
-  (async () => {
-    const { runACPMode } = await import('./acp-entry.js');
-    await runACPMode();
-    process.exit(0);
-  })();
-} else {
-  // Normal CLI mode continues with setup
-  (async () => {
-    // TODO: Remove migration call after v1.x release
+(async () => {
+  // TODO: Remove migration call after v1.x release
+  if (!isACPMode) {
     await runConfigMigration();
+  }
 
-    const nuvinDir = path.join(os.homedir(), '.nuvin');
-    try {
-      if (!fs.existsSync(nuvinDir)) {
-        fs.mkdirSync(nuvinDir, { recursive: true });
-      }
-    } catch (_error) {
-      // Silent fail
+  const nuvinDir = path.join(os.homedir(), '.nuvin');
+  try {
+    if (!fs.existsSync(nuvinDir)) {
+      fs.mkdirSync(nuvinDir, { recursive: true });
     }
+  } catch (_error) {
+    // Silent fail
+  }
 
-    const cli = meow(
-  `
+  const cli = meow(
+    `
   Nuvin
 
   Welcome to Nuvin! Transform your natural language requests into automated coding tasks
@@ -167,46 +161,46 @@ if (isACPMode) {
     $ nuvin-cli --provider openrouter --model openai/gpt-4o
     $ nuvin-cli --provider github
   `,
-  {
-    importMeta: import.meta,
-    flags: {
-      provider: { type: 'string' },
-      config: { type: 'string' },
-      model: { type: 'string' },
-      apiKey: { type: 'string' },
-      reasoningEffort: { type: 'string' },
-      version: { type: 'boolean', alias: 'v' },
-      demo: { type: 'string' },
-      history: { type: 'string' },
-      profile: { type: 'string' },
-      resume: { type: 'boolean', alias: 'r' },
-      alt: { type: 'boolean' },
-      acp: { type: 'boolean' },
+    {
+      importMeta: import.meta,
+      flags: {
+        provider: { type: 'string' },
+        config: { type: 'string' },
+        model: { type: 'string' },
+        apiKey: { type: 'string' },
+        reasoningEffort: { type: 'string' },
+        version: { type: 'boolean', alias: 'v' },
+        demo: { type: 'string' },
+        history: { type: 'string' },
+        profile: { type: 'string' },
+        resume: { type: 'boolean', alias: 'r' },
+        alt: { type: 'boolean' },
+        acp: { type: 'boolean' },
+      },
     },
-  },
-);
-
-// Handle version flag early
-if (cli.flags.version) {
-  const { version, commit } = getVersionInfo();
-  console.log(`@nuvin/cli v${version} (${commit})`);
-  process.exit(0);
-}
-
-const ensureString = (value: string | undefined): string | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
-
-const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
-  const providers = config.providers || {};
-  return Object.values(providers).some(
-    (p) => Array.isArray(p.auth) && p.auth.length > 0 && p.auth.some((a) => a.type === 'api-key' && a['api-key']),
   );
-};
 
-// Extract --profile flag BEFORE processing subcommands
+  // Handle version flag early
+  if (cli.flags.version) {
+    const { version, commit } = getVersionInfo();
+    console.log(`@nuvin/cli v${version} (${commit})`);
+    process.exit(0);
+  }
+
+  const ensureString = (value: string | undefined): string | undefined => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  };
+
+  const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
+    const providers = config.providers || {};
+    return Object.values(providers).some(
+      (p) => Array.isArray(p.auth) && p.auth.length > 0 && p.auth.some((a) => a.type === 'api-key' && a['api-key']),
+    );
+  };
+
+  // Extract --profile flag BEFORE processing subcommands
   const normalizedProfile = ensureString(cli.flags.profile as string | undefined);
 
   const processEnvironmentVariables = (): Partial<CLIConfig> => {
@@ -271,7 +265,7 @@ const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
     process.exit(0);
   }
 
-  if (cli.flags.alt) {
+  if (cli.flags.alt && !isACPMode) {
     process.stdout.write(ENTER_ALT_SCREEN);
   }
 
@@ -436,6 +430,13 @@ const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
   // Register commands (including custom commands)
   await registerCommands(orchestratorManager);
 
+  if (isACPMode) {
+    // Hand off to ACP entry point
+    const { runACPMode } = await import('./acp-entry.js');
+    await runACPMode();
+    process.exit(0);
+  }
+
   console.log(ansiEscapes.clearTerminal);
 
   const App = cli.flags.alt ? AppVirtualized : AppLegacy;
@@ -483,5 +484,4 @@ const hasValidProviders = (config: Partial<CLIConfig>): boolean => {
 
   cleanupTerminal(cli.flags.alt);
   process.exit(0);
-  })();
-}
+})();

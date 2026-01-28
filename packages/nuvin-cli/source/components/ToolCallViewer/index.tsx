@@ -5,7 +5,13 @@ import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { ToolResultView } from './ToolResultView/index.js';
-import { FileEditParamRender, FileNewParamRender, DefaultParamRender, AssignTaskParamRender, AskUserParamRender } from './params/index.js';
+import {
+  FileEditParamRender,
+  FileNewParamRender,
+  DefaultParamRender,
+  AssignTaskParamRender,
+  AskUserParamRender,
+} from './params/index.js';
 import { ToolTimer } from '@/components/ToolTimer.js';
 import { getToolDisplayName } from '@/components/toolRegistry.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
@@ -16,7 +22,10 @@ type ToolCallProps = {
   messageId: string;
 };
 
-const getMainArgument = (toolName: string, args: Record<string, unknown>): { value: string | undefined; key: string | undefined } => {
+const getMainArgument = (
+  toolName: string,
+  args: Record<string, unknown>,
+): { value: string | undefined; key: string | undefined } => {
   switch (toolName) {
     case 'file_read':
     case 'ls_tool': {
@@ -86,7 +95,7 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
     const toolExecutionResult = toolResult?.metadata?.toolResult as ToolExecutionResult | undefined;
     const metadata = toolExecutionResult?.metadata as { answers?: Record<string, string | string[]> } | undefined;
     const hasAnswers = metadata?.answers && Object.keys(metadata.answers).length > 0;
-    
+
     if (!hasAnswers) {
       return null;
     }
@@ -109,9 +118,10 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
     toolExecutionResult?.status === 'error' && toolExecutionResult.metadata?.errorReason === ErrorReason.Edited;
   const hasResult = !!toolExecutionResult && !isDenied && !isEdited;
 
-  let displayName = args.description && typeof args.description === 'string' && args.description.trim()
-    ? args.description
-    : getToolDisplayName(toolName);
+  let displayName =
+    args.description && typeof args.description === 'string' && args.description.trim()
+      ? args.description
+      : getToolDisplayName(toolName);
 
   // Special handling for ask_user_tool to show question count
   if (toolName === 'ask_user_tool') {
@@ -154,22 +164,26 @@ export const ToolCallViewer: React.FC<ToolCallProps> = ({ toolCall, toolResult, 
   const ParamRenderer = getParameterRenderer();
 
   return (
-    <Box flexDirection="column" width={cols - 2} overflow='hidden'>
+    <Box flexDirection="column" width={cols - 2} overflow="hidden">
       <Box flexDirection="row">
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
             {'⚙︎'}
           </Text>
         </Box>
-        <Text wrap="truncate-middle" >
+        <Text wrap="truncate-middle">
           <Text bold>{displayName}</Text>
-          {mainArg && (
-            <Text dimColor> {mainArg}</Text>
-          )}
+          {mainArg && <Text dimColor> {mainArg}</Text>}
         </Text>
       </Box>
 
-      <ParamRenderer toolCall={toolCall} args={args} statusColor={statusColor} formatValue={formatValue} mainArgKey={mainArgKey} />
+      <ParamRenderer
+        toolCall={toolCall}
+        args={args}
+        statusColor={statusColor}
+        formatValue={formatValue}
+        mainArgKey={mainArgKey}
+      />
 
       {!hasResult && !isDenied && !isEdited && toolName !== 'ask_user_tool' && (
         <Box flexDirection="row" marginLeft={2}>

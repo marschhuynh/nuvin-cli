@@ -505,7 +505,12 @@ The codebase is well-structured, actively maintained, and follows modern TypeScr
       );
 
       state = processAgentEvent(
-        { type: AgentEventTypes.ReasoningChunk, conversationId: 'cli', messageId: 'msg-done-reason', delta: 'Thinking...' },
+        {
+          type: AgentEventTypes.ReasoningChunk,
+          conversationId: 'cli',
+          messageId: 'msg-done-reason',
+          delta: 'Thinking...',
+        },
         state,
         callbacks,
       );
@@ -601,7 +606,12 @@ The codebase is well-structured, actively maintained, and follows modern TypeScr
 
     it('should handle error when no streaming message exists', () => {
       state = processAgentEvent(
-        { type: AgentEventTypes.Error, conversationId: 'cli', messageId: 'msg-err', error: new Error('connection failed') },
+        {
+          type: AgentEventTypes.Error,
+          conversationId: 'cli',
+          messageId: 'msg-err',
+          error: new Error('connection failed'),
+        },
         state,
         callbacks,
       );

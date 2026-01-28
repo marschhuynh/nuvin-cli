@@ -209,13 +209,7 @@ const ModelsV2CommandComponent = ({ context, deactivate, isActive }: CommandComp
 
   if (authenticatedProviders.length === 0) {
     return (
-      <AppModal
-        visible={true}
-        title="Select Model"
-        onClose={deactivate}
-        closeOnEscape={true}
-        height={8}
-      >
+      <AppModal visible={true} title="Select Model" onClose={deactivate} closeOnEscape={true} height={8}>
         <Box flexDirection="column">
           <Text color="yellow">No providers configured.</Text>
           <Text color={theme.colors.muted} dimColor>

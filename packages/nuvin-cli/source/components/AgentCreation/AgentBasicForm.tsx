@@ -81,7 +81,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
 
   return (
     <AppModal visible={true} title={editingTitle} footer={footerContent} height={modalHeight}>
-      <Box flexDirection="column" flexShrink={1} height={"100%"}>
+      <Box flexDirection="column" flexShrink={1} height={'100%'}>
         <Box flexGrow={1} flexDirection="column" flexShrink={1}>
           {error ? (
             <Box marginBottom={1}>
@@ -107,7 +107,12 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
             </Box>
 
             <Box flexGrow={1} width={cols / 4}>
-              <FormTextInput label="Model:" value={editedModel} onChange={(value) => onFieldChange('model', value)} tabIndex="0" />
+              <FormTextInput
+                label="Model:"
+                value={editedModel}
+                onChange={(value) => onFieldChange('model', value)}
+                tabIndex="0"
+              />
             </Box>
 
             <Box flexGrow={1} width={cols / 4}>
@@ -121,7 +126,12 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
           </ResponsiveBox>
 
           <Box flexDirection="column" marginBottom={1}>
-            <ToolSelectInput availableTools={availableTools} selectedTools={editedAllowedTools} onChange={onToolsChange} tabIndex="0" />
+            <ToolSelectInput
+              availableTools={availableTools}
+              selectedTools={editedAllowedTools}
+              onChange={onToolsChange}
+              tabIndex="0"
+            />
           </Box>
 
           <Box marginBottom={1}>

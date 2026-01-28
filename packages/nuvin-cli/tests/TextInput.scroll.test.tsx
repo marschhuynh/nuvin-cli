@@ -51,7 +51,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
           }
           const nextSpace = line.indexOf(' ', nextPos);
           const firstWordLength = nextSpace === -1 ? line.length - nextPos : nextSpace - nextPos;
-          
+
           if (firstWordLength > 0 && firstWordLength < 15) {
             const remainingLength = line.length - nextPos;
             if (remainingLength > width && firstWordLength < width * 0.3) {
@@ -85,9 +85,9 @@ describe('TextInput Scroll and Visual Navigation', () => {
 
       // Should create multiple rows
       expect(rows.length).toBeGreaterThanOrEqual(2);
-      
+
       // Verify all text is captured
-      const combined = rows.map(r => r.text).join('');
+      const combined = rows.map((r) => r.text).join('');
       expect(combined.replace(/\s+/g, ' ').trim()).toBe(text.replace(/\s+/g, ' ').trim());
     });
 
@@ -129,7 +129,8 @@ describe('TextInput Scroll and Visual Navigation', () => {
     });
 
     it('should handle the $10 billion text correctly', () => {
-      const text = 'As part of the partnership, NVIDIA and Microsoft are committing to invest up to $10 billion and up to $5 billion respectively in Anthropic.';
+      const text =
+        'As part of the partnership, NVIDIA and Microsoft are committing to invest up to $10 billion and up to $5 billion respectively in Anthropic.';
       const width = 90;
 
       const rows = wrapLine(text, width);
@@ -143,7 +144,8 @@ describe('TextInput Scroll and Visual Navigation', () => {
 
     it('should not create orphan lines with single short words', () => {
       // This text at width 80 was creating "only" on its own line
-      const text = 'Claude Opus 4.1, and Claude Haiku 4.5. This partnership will make Claude the only frontier model available on all three';
+      const text =
+        'Claude Opus 4.1, and Claude Haiku 4.5. This partnership will make Claude the only frontier model available on all three';
       const width = 85;
 
       const rows = wrapLine(text, width);
@@ -177,9 +179,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
       const numRowsForCurrentLine = Math.max(1, Math.ceil(currentLineLen / width));
       const maxRowIndexInLine = numRowsForCurrentLine - 1;
 
-      let wrappedRowInLine = currentLineLen > 0
-        ? Math.floor(logicalCol / width)
-        : 0;
+      let wrappedRowInLine = currentLineLen > 0 ? Math.floor(logicalCol / width) : 0;
       wrappedRowInLine = Math.min(wrappedRowInLine, maxRowIndexInLine);
 
       visualRow += wrappedRowInLine;
@@ -440,7 +440,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
       visualRow: number,
       visualLineCount: number,
       visibleLines: number,
-      currentScrollOffset: number
+      currentScrollOffset: number,
     ): number {
       const maxScroll = Math.max(0, visualLineCount - visibleLines);
 
@@ -460,12 +460,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
       const cursorVisualRow = 24; // Last row (0-indexed)
       const currentScrollOffset = 0;
 
-      const newOffset = calculateScrollOffset(
-        cursorVisualRow,
-        visualLineCount,
-        visibleLines,
-        currentScrollOffset
-      );
+      const newOffset = calculateScrollOffset(cursorVisualRow, visualLineCount, visibleLines, currentScrollOffset);
 
       // Should scroll so that row 24 is visible (rows 20-24)
       expect(newOffset).toBe(20);
@@ -481,12 +476,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
       const cursorVisualRow = 5;
       const currentScrollOffset = 10; // Currently showing rows 10-14
 
-      const newOffset = calculateScrollOffset(
-        cursorVisualRow,
-        visualLineCount,
-        visibleLines,
-        currentScrollOffset
-      );
+      const newOffset = calculateScrollOffset(cursorVisualRow, visualLineCount, visibleLines, currentScrollOffset);
 
       // Should scroll to show row 5 at top
       expect(newOffset).toBe(5);
@@ -498,12 +488,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
       const cursorVisualRow = 12;
       const currentScrollOffset = 10; // Currently showing rows 10-14
 
-      const newOffset = calculateScrollOffset(
-        cursorVisualRow,
-        visualLineCount,
-        visibleLines,
-        currentScrollOffset
-      );
+      const newOffset = calculateScrollOffset(cursorVisualRow, visualLineCount, visibleLines, currentScrollOffset);
 
       // Should not change
       expect(newOffset).toBe(10);
@@ -515,12 +500,7 @@ describe('TextInput Scroll and Visual Navigation', () => {
       const cursorVisualRow = 8;
       const currentScrollOffset = 15; // Invalid - was set when content was longer
 
-      const newOffset = calculateScrollOffset(
-        cursorVisualRow,
-        visualLineCount,
-        visibleLines,
-        currentScrollOffset
-      );
+      const newOffset = calculateScrollOffset(cursorVisualRow, visualLineCount, visibleLines, currentScrollOffset);
 
       // Cursor at row 8 with 10 lines and 5 visible
       // maxScroll = 10 - 5 = 5
@@ -547,7 +527,7 @@ server clients and configuration updated: 1 clients (1 auth entries + 0 keys)
     it('should correctly calculate visual rows for log content', () => {
       const width = 80;
       const lines = logContent.split('\n');
-      
+
       let totalVisualRows = 0;
       for (const line of lines) {
         totalVisualRows += Math.max(1, Math.ceil(line.length / width));
@@ -581,9 +561,7 @@ server clients and configuration updated: 1 clients (1 auth entries + 0 keys)
       const numRowsForCurrentLine = Math.max(1, Math.ceil(currentLineLen / width));
       const maxRowIndexInLine = numRowsForCurrentLine - 1;
 
-      let wrappedRowInLine = currentLineLen > 0
-        ? Math.floor(info.column / width)
-        : 0;
+      let wrappedRowInLine = currentLineLen > 0 ? Math.floor(info.column / width) : 0;
       wrappedRowInLine = Math.min(wrappedRowInLine, maxRowIndexInLine);
 
       visualRow += wrappedRowInLine;
@@ -600,13 +578,13 @@ server clients and configuration updated: 1 clients (1 auth entries + 0 keys)
       // Navigate up through all rows
       let upCount = 0;
       let currentOffset: number | null = cursorOffset;
-      
+
       while (currentOffset !== null) {
         const nextOffset = moveCursorVisually(logContent, currentOffset, 'up', width);
         if (nextOffset === null) break;
         currentOffset = nextOffset;
         upCount++;
-        
+
         // Safety limit
         if (upCount > 100) break;
       }
@@ -621,7 +599,7 @@ server clients and configuration updated: 1 clients (1 auth entries + 0 keys)
         if (nextOffset === null) break;
         currentOffset = nextOffset;
         downCount++;
-        
+
         // Safety limit
         if (downCount > 100) break;
       }
@@ -684,9 +662,7 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       const numRowsForCurrentLine = Math.max(1, Math.ceil(currentLineLen / w));
       const maxRowIndexInLine = numRowsForCurrentLine - 1;
 
-      let wrappedRowInLine = currentLineLen > 0
-        ? Math.floor(logicalCol / w)
-        : 0;
+      let wrappedRowInLine = currentLineLen > 0 ? Math.floor(logicalCol / w) : 0;
       wrappedRowInLine = Math.min(wrappedRowInLine, maxRowIndexInLine);
 
       visualRow += wrappedRowInLine;
@@ -797,7 +773,7 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       }
 
       const cursorInfo = calculateCursorInfoDetailed(announcementText, secondParaStart, width);
-      
+
       // Moving up should go to previous row
       const upResult = moveCursorVisually(announcementText, secondParaStart, 'up', width);
       expect(upResult).not.toBeNull();
@@ -809,9 +785,9 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
     it('should scroll correctly when cursor is at end', () => {
       const visualRows = calculateVisualRowsDetailed(announcementText, width);
       const cursorInfo = calculateCursorInfoDetailed(announcementText, announcementText.length, width);
-      
+
       const visibleLines = 5; // maxLines
-      
+
       // Calculate expected scroll
       const maxScroll = Math.max(0, visualRows.length - visibleLines);
       const expectedScroll = Math.min(maxScroll, cursorInfo.visualRow - visibleLines + 1);
@@ -823,7 +799,7 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
 
     it('should traverse every visual row exactly once going down then up', () => {
       const visualRows = calculateVisualRowsDetailed(announcementText, width);
-      
+
       // Go down from start
       const downPositions: number[] = [0];
       let currentOffset: number | null = 0;
@@ -848,12 +824,8 @@ Anthropic co-founder and CEO Dario Amodei, Microsoft Chairman and CEO Satya Nade
       expect(upPositions.length).toBe(visualRows.length);
 
       // Verify we visited each visual row
-      const downRows = downPositions.map(pos => 
-        calculateCursorInfoDetailed(announcementText, pos, width).visualRow
-      );
-      const upRows = upPositions.map(pos => 
-        calculateCursorInfoDetailed(announcementText, pos, width).visualRow
-      );
+      const downRows = downPositions.map((pos) => calculateCursorInfoDetailed(announcementText, pos, width).visualRow);
+      const upRows = upPositions.map((pos) => calculateCursorInfoDetailed(announcementText, pos, width).visualRow);
 
       // Down should go 0, 1, 2, ... 24
       for (let i = 0; i < visualRows.length; i++) {

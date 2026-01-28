@@ -165,7 +165,6 @@ export const SelectInput = forwardRef<SelectInputHandle, SelectInputProps<unknow
         const isSelected = actualIndex === selectedIndex;
         const key = _key || String(actualIndex);
 
-
         return (
           <Box key={key} width="100%">
             <IndicatorComponent isSelected={focus && isSelected} />

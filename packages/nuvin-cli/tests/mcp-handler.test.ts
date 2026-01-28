@@ -227,7 +227,14 @@ describe('MCPCliHandler', () => {
 
       const handler = new MCPCliHandler();
 
-      await handler.handleMCPCommand(['add', 'filesystem', 'npx', '-y', '@anthropic-ai/mcp-server-filesystem', '/home']);
+      await handler.handleMCPCommand([
+        'add',
+        'filesystem',
+        'npx',
+        '-y',
+        '@anthropic-ai/mcp-server-filesystem',
+        '/home',
+      ]);
 
       const config = manager.get('mcp.servers.filesystem') as MCPServerConfig;
       expect(config.transport).toBeUndefined();
@@ -320,12 +327,16 @@ describe('MCPCliHandler', () => {
       manager.globalDir = testDir;
       manager.localDir = testDir;
 
-      await manager.set('mcp.servers.figma', {
-        transport: 'http',
-        url: 'http://127.0.0.1:3845/mcp',
-        enabled: true,
-        prefix: 'mcp_figma_',
-      }, 'global');
+      await manager.set(
+        'mcp.servers.figma',
+        {
+          transport: 'http',
+          url: 'http://127.0.0.1:3845/mcp',
+          enabled: true,
+          prefix: 'mcp_figma_',
+        },
+        'global',
+      );
 
       const handler = new MCPCliHandler();
 
@@ -338,12 +349,16 @@ describe('MCPCliHandler', () => {
       manager.globalDir = testDir;
       manager.localDir = testDir;
 
-      await manager.set('mcp.servers.filesystem', {
-        command: 'npx',
-        args: ['-y', '@anthropic-ai/mcp-server-filesystem', '/home'],
-        enabled: true,
-        prefix: 'mcp_fs_',
-      }, 'global');
+      await manager.set(
+        'mcp.servers.filesystem',
+        {
+          command: 'npx',
+          args: ['-y', '@anthropic-ai/mcp-server-filesystem', '/home'],
+          enabled: true,
+          prefix: 'mcp_fs_',
+        },
+        'global',
+      );
 
       const handler = new MCPCliHandler();
 
@@ -621,19 +636,27 @@ describe('MCPCliHandler', () => {
       manager.globalDir = testDir;
       manager.localDir = testDir;
 
-      await manager.set('mcp.servers.oauth-server', {
-        transport: 'http',
-        url: 'https://api.example.com/mcp',
-        enabled: true,
-        auth: { type: 'oauth', oauth: { clientId: 'client' } },
-      }, 'global');
+      await manager.set(
+        'mcp.servers.oauth-server',
+        {
+          transport: 'http',
+          url: 'https://api.example.com/mcp',
+          enabled: true,
+          auth: { type: 'oauth', oauth: { clientId: 'client' } },
+        },
+        'global',
+      );
 
-      await manager.set('mcp.servers.bearer-server', {
-        transport: 'http',
-        url: 'https://api2.example.com/mcp',
-        enabled: true,
-        auth: { type: 'bearer', token: 'token' },
-      }, 'global');
+      await manager.set(
+        'mcp.servers.bearer-server',
+        {
+          transport: 'http',
+          url: 'https://api2.example.com/mcp',
+          enabled: true,
+          auth: { type: 'bearer', token: 'token' },
+        },
+        'global',
+      );
 
       const handler = new MCPCliHandler();
 

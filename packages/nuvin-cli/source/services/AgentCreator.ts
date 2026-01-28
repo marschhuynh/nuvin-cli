@@ -131,7 +131,11 @@ export class AgentCreator {
           agentConfig.temperature = DEFAULT_TEMPERATURE;
         }
 
-        if (!agentConfig.allowed_tools || !Array.isArray(agentConfig.allowed_tools) || agentConfig.allowed_tools.length === 0) {
+        if (
+          !agentConfig.allowed_tools ||
+          !Array.isArray(agentConfig.allowed_tools) ||
+          agentConfig.allowed_tools.length === 0
+        ) {
           agentConfig.allowed_tools = ['Read', 'WebSearch'];
         }
 

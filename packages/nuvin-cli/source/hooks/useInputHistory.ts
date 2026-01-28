@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { MemoryPort, Message } from '@nuvin/nuvin-core';
-import { logger } from '@/utils/file-logger.js';
 import { useNotification } from '@/hooks/useNotification.js';
 import { scanAvailableSessions } from '@/hooks/useSessionManagement.js';
 import { ConfigManager } from '@/config/manager.js';
@@ -17,7 +16,12 @@ type UseInputHistoryOptions = {
   onRecall: (message: string) => void;
 };
 
-export const useInputHistory = ({ memory, conversationId = 'default', currentInput, onRecall }: UseInputHistoryOptions) => {
+export const useInputHistory = ({
+  memory,
+  conversationId = 'default',
+  currentInput,
+  onRecall,
+}: UseInputHistoryOptions) => {
   const { setNotification } = useNotification();
   const [messages, setMessages] = useState<string[]>([]);
   const [index, setIndex] = useState(-1);
@@ -26,14 +30,14 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
   const historyNextArmedRef = useRef(false);
   const lastUpArrowTimeRef = useRef(0);
   const lastDownArrowTimeRef = useRef(0);
-  
+
   // Use refs to avoid recreating callbacks when these values change
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
-  
+
   const indexRef = useRef(index);
   indexRef.current = index;
-  
+
   const currentInputRef = useRef(currentInput);
   currentInputRef.current = currentInput;
 
@@ -41,7 +45,7 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
     const loadHistory = async () => {
       const configManager = ConfigManager.getInstance();
       const currentProfile = configManager.getCurrentProfile();
-      
+
       let lastSessionMessage: string | null = null;
       try {
         const sessions = await scanAvailableSessions(1, currentProfile);
@@ -75,7 +79,6 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
 
         const history = lastSessionMessage ? [lastSessionMessage, ...userMessages] : userMessages;
         setMessages(history);
-        logger.debug('Loaded history', { count: history.length });
       } catch {
         if (lastSessionMessage) {
           setMessages([lastSessionMessage]);
@@ -89,10 +92,8 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
   const navigatePrev = useCallback((): string | null => {
     const currentMessages = messagesRef.current;
     const currentIndex = indexRef.current;
-    logger.debug('navigatePrev', { messages: currentMessages, currentIndex });
 
     if (currentMessages.length === 0 || currentIndex === 0) {
-      logger.debug('navigatePrev: early return');
       return null;
     }
 
@@ -100,17 +101,14 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
     setIndex(newIndex);
 
     const message = currentMessages[newIndex];
-    logger.debug('navigatePrev: recalling', { newIndex, message });
     return message ?? null;
   }, []);
 
   const navigateNext = useCallback((): string | null => {
     const currentMessages = messagesRef.current;
     const currentIndex = indexRef.current;
-    logger.debug('navigateNext', { messages: currentMessages, currentIndex });
 
     if (currentIndex === -1) {
-      logger.debug('navigateNext: early return');
       return null;
     }
 
@@ -118,12 +116,10 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
       const newIndex = currentIndex + 1;
       setIndex(newIndex);
       const message = currentMessages[newIndex];
-      logger.debug('navigateNext: recalling', { newIndex, message });
       return message ?? null;
     }
 
     setIndex(-1);
-    logger.debug('navigateNext: reset to empty');
     return '';
   }, []);
 

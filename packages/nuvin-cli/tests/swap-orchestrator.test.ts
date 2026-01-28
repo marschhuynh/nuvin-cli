@@ -32,20 +32,23 @@ vi.mock('../source/config/manager.js', () => ({
 // Import after mocking
 import { OrchestratorManager } from '../source/services/OrchestratorManager.js';
 
+interface TestOrchestratorManager extends OrchestratorManager {
+  activeAgentId: string;
+  previousOrchestrator: OrchestratorManager | null;
+}
+
 describe('OrchestratorManager - Hot Agent Swap State', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should initialize activeAgentId to "main"', () => {
-    const manager = new OrchestratorManager();
-    // Access the private property via type casting
-    expect((manager as any).activeAgentId).toBe('main');
+    const manager = new OrchestratorManager() as TestOrchestratorManager;
+    expect(manager.activeAgentId).toBe('main');
   });
 
   it('should initialize previousOrchestrator to null', () => {
-    const manager = new OrchestratorManager();
-    // Access the private property via type casting
-    expect((manager as any).previousOrchestrator).toBeNull();
+    const manager = new OrchestratorManager() as TestOrchestratorManager;
+    expect(manager.previousOrchestrator).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import { useFocus, useInput } from '@/contexts/InputContext/index.js';
 import type { MemoryPort, Message } from '@nuvin/nuvin-core';
 import Spinner from 'ink-spinner';
-import { useTheme } from '@/contexts/ThemeContext.js';
+import { useTheme, type Theme } from '@/contexts/ThemeContext.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
 import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
@@ -306,7 +306,7 @@ const InputAreaComponent = forwardRef<InputAreaHandle, InputAreaProps>(
   },
 );
 
-const BusyIndicator = ({ busy, isFocused, theme }: { busy: boolean; isFocused: boolean; theme: any }) => {
+const BusyIndicator = ({ busy, isFocused, theme }: { busy: boolean; isFocused: boolean; theme: Theme }) => {
   const [activeAgentId, setActiveAgentId] = useState<string>('main');
 
   useEffect(() => {

@@ -78,7 +78,6 @@ export function SkillToolContent({ call }: { call: ToolCall }) {
 
   return (
     <Box flexDirection="column" marginTop={1} width={width - 8} overflow="hidden">
-
       {lines.map((line) => (
         <Box key={`${line.lineNumber}-${line.content.slice(0, 20)}`}>
           <Box flexWrap="nowrap" width={lineNumberWidth + 1}>

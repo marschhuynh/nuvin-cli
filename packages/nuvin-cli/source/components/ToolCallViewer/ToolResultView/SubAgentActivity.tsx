@@ -1,11 +1,6 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import {
-  type ToolCall,
-  type ToolExecutionResult,
-  type SubAgentState,
-  parseToolArguments,
-} from '@nuvin/nuvin-core';
+import { type ToolCall, type ToolExecutionResult, type SubAgentState, parseToolArguments } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters/index';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ToolResultView } from './ToolResultView';
@@ -104,12 +99,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
   return (
     <Box flexDirection="column" marginTop={1}>
       {/* Header: [Agent Name] - sticky with background to cover scrolled content */}
-      <Box
-        flexDirection="row"
-        flexShrink={0}
-        top={0}
-        position="sticky"
-      >
+      <Box flexDirection="row" flexShrink={0} top={0} position="sticky">
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
             »
@@ -159,7 +149,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
             }
 
             return (
-              <Box key={toolCall.id} width={'100%'} overflow='hidden' flexDirection="row" height={1}>
+              <Box key={toolCall.id} width={'100%'} overflow="hidden" flexDirection="row" height={1}>
                 {statusIcon ? <Text color={statusIconColor}>{statusIcon}</Text> : null}
                 <Box flexWrap="nowrap" width="100%" overflow="hidden">
                   <Text wrap="truncate-middle" dimColor>

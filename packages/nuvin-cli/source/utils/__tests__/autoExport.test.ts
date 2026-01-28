@@ -52,7 +52,7 @@ describe('autoExportHistory', () => {
 
     const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
     const exportData = JSON.parse(writeCall[1] as string);
-    
+
     expect(exportData.cli).toEqual(mockMessages);
     expect(exportData.metadata.exportReason).toBe('Application crashed');
     expect(exportData.metadata.messageCount).toBe(2);
@@ -69,10 +69,7 @@ describe('autoExportHistory', () => {
     const result = await autoExportHistory(mockMemory, 'test error');
 
     expect(result).toBeNull();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to auto-export history:',
-      expect.any(Error),
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to auto-export history:', expect.any(Error));
 
     consoleErrorSpy.mockRestore();
   });

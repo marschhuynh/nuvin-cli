@@ -44,16 +44,19 @@ export const AskUserRenderer: React.FC<AskUserRendererProps> = ({ toolResult, to
         const displayAnswer = Array.isArray(answer) ? answer.join(', ') : answer;
 
         return (
-          <Box key={`${messageId}-qa-${idx}`} flexDirection="column">
+          <Box key={`${messageId}-qa-${q.header}-${q.question.slice(0, 20)}`} flexDirection="column">
             <Text dimColor>
-              <Text bold color={theme.tokens.blue}>{q.header}:</Text> {q.question}
+              <Text bold color={theme.tokens.blue}>
+                {q.header}:
+              </Text>{' '}
+              {q.question}
             </Text>
             <Box marginLeft={2}>
               <Text color={theme.tokens.green}>→ {displayAnswer}</Text>
             </Box>
             {idx < questions.length - 1 && (
               <Box marginY={0}>
-                <Text>{' '}</Text>
+                <Text> </Text>
               </Box>
             )}
           </Box>

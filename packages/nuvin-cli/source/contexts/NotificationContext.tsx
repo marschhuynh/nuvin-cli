@@ -14,7 +14,7 @@ export interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notification, setNotificationState] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   const setNotification = useCallback((content: string | null, duration = 3000) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -48,7 +48,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       notification,
       setNotification,
     }),
-    [notification, setNotification]
+    [notification, setNotification],
   );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

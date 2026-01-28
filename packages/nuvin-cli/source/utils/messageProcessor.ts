@@ -245,14 +245,14 @@ export function processMessageToUILines(msg: {
     };
 
     // Preserve full metadata for both success and error cases
-    const toolResult = finalStatus === 'success' 
-      ? { ...baseResult, status: 'success' as const, metadata: msgMetadata }
-      : { 
-          ...baseResult, 
-          status: 'error' as const, 
-          metadata: msgMetadata 
-        };
-
+    const toolResult =
+      finalStatus === 'success'
+        ? { ...baseResult, status: 'success' as const, metadata: msgMetadata }
+        : {
+            ...baseResult,
+            status: 'error' as const,
+            metadata: msgMetadata,
+          };
 
     const statusIcon = toolResult.status === 'success' ? '[+]' : '[!]';
     const durationText =

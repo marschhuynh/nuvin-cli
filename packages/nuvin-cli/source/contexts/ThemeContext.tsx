@@ -1,6 +1,8 @@
 import { createContext, useContext, useCallback, useMemo, type ReactNode } from 'react';
 import { theme, type Theme } from '@/theme.js';
 
+export type { Theme };
+
 type ThemeContextValue = {
   theme: Theme;
   getColor: (path: string) => string;

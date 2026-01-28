@@ -14,7 +14,12 @@ interface ToolSelectInputProps {
   tabIndex?: number | string;
 }
 
-export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({ availableTools, selectedTools, onChange, tabIndex }) => {
+export const ToolSelectInput: React.FC<ToolSelectInputProps> = ({
+  availableTools,
+  selectedTools,
+  onChange,
+  tabIndex,
+}) => {
   const { theme } = useTheme();
   const [highlightIndex, setHighlightIndex] = useState(0);
 
@@ -44,7 +49,6 @@ const ToolSelectInputContent: React.FC<{
   setHighlightIndex: React.Dispatch<React.SetStateAction<number>>;
   theme: Theme;
 }> = ({ isFocused, availableTools, selectedTools, onChange, highlightIndex, setHighlightIndex, theme }) => {
-
   const combinedTools = useMemo(() => {
     const ordered = [...availableTools];
     for (const tool of selectedTools) {
@@ -115,16 +119,18 @@ const ToolSelectInputContent: React.FC<{
   return (
     <Box flexDirection="column">
       <Text>
-        <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>Tools: </Text>
+        <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
+          Tools:{' '}
+        </Text>
         <Text color={theme.tokens.dim}>
           (
           <HelpText
             segments={[
-              { text: '←/→', },
+              { text: '←/→' },
               { text: ' cycle fields • ' },
-              { text: 'Space', },
+              { text: 'Space' },
               { text: ' toggle • ' },
-              { text: 'Tab', },
+              { text: 'Tab' },
               { text: ' continue' },
             ]}
           />

@@ -66,7 +66,7 @@ export function moveCursorVisually(
   value: string,
   offset: number,
   direction: 'up' | 'down',
-  wrapWidth: number
+  wrapWidth: number,
 ): number | null {
   if (wrapWidth <= 0) {
     return moveCursorVertically(value, offset, direction);

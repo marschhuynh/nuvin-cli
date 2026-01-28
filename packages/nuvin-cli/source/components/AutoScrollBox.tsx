@@ -293,7 +293,6 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
         case 'bottom':
           targetY = Math.max(0, dims.content.height - dims.container.height);
           break;
-        case 'middle':
         default:
           targetY = Math.max(0, Math.floor((dims.content.height - dims.container.height) / 2));
           break;

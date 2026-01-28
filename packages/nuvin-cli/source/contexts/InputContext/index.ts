@@ -5,13 +5,13 @@ export { useMouse } from './useMouse.js';
 export { useFocus, useFocusCycle } from './FocusContext.js';
 export { ctrlCMiddleware, pasteDetectionMiddleware, defaultMiddleware } from './middleware.js';
 export { setKittyProtocolEnabled, isKittyProtocolEnabled } from './parseKeypress.js';
-export type { 
-  Key, 
-  InputHandler, 
-  InputMiddleware, 
-  UseInputOptions, 
-  InputContextValue, 
-  MouseEvent, 
+export type {
+  Key,
+  InputHandler,
+  InputMiddleware,
+  UseInputOptions,
+  InputContextValue,
+  MouseEvent,
   MouseHandler,
   UseMouseOptions,
 } from './types.js';

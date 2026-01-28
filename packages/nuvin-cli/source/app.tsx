@@ -376,7 +376,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
         onUpdateCompleted: (_success, message) => {
           setNotification(message, 5000);
         },
-        onError: (_error) => { },
+        onError: (_error) => {},
       });
     };
 
@@ -421,12 +421,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
         </Box>
       }
     >
-      <Box
-        flexDirection="column"
-        maxHeight={rows - 2}
-        flexShrink={0}
-        overflow="hidden"
-      >
+      <Box flexDirection="column" maxHeight={rows - 2} flexShrink={0} overflow="hidden">
         <ChatDisplay
           key={`chat-display-${headerKey}`}
           messages={messages}

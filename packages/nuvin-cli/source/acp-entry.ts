@@ -1,31 +1,21 @@
 import { startACPServer } from '@nuvin/nuvin-acp';
-import { OrchestratorManager } from './services/OrchestratorManager.js';
-import { ConfigManager } from './config/index.js';
+import { orchestratorManager as manager } from './services/OrchestratorManager.js';
+import type { MCPServerManager } from './services/MCPServerManager.js';
+import { ConfigManager, type ConfigScope } from './config/index.js';
 import { eventBus } from './services/EventBus.js';
-import type { AgentEvent, ToolCall } from '@nuvin/nuvin-core';
-import { AgentEventTypes, ErrorReason } from '@nuvin/nuvin-core';
+import type { AgentEvent } from '@nuvin/nuvin-core';
+import { AgentEventTypes } from '@nuvin/nuvin-core';
 import { commandRegistry } from './modules/commands/registry.js';
-import { registerCommands } from './modules/commands/definitions/index.js';
 import { getCustomCommandRegistry } from './services/CustomCommandLoader.js';
 import type { CommandContext, FunctionCommand } from './modules/commands/types.js';
 
 export async function runACPMode(): Promise<void> {
-  const configManager = ConfigManager.getInstance();
-  await configManager.load({});
 
   // Utility functions for tool approval
-  function generateApprovalId(): string {
-    return `approval_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  }
-
-  function generateMessageId(): string {
-    return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  }
+  // generateApprovalId and generateMessageId removed as they are no longer needed
 
   await startACPServer(async (session) => {
-    const manager = new OrchestratorManager();
-
-    // Initialize with session config
+    // Initialize with session config - force session ID for ACP
     await manager.init(
       {
         sessionId: session.id,
@@ -43,108 +33,44 @@ export async function runACPMode(): Promise<void> {
     // Change working directory
     process.chdir(session.cwd);
 
-    // Register commands (built-in and custom)
-    await registerCommands(manager);
+    // Register commands (built-in and custom) - ALREADY DONE IN CLI.TSX
+    // await registerCommands(manager);
 
-    // Track pending approvals
-    const pendingApprovals = new Map<string, (decision: 'approve' | 'deny') => void>();
-
-    // Wrap tool execution to request approval for tools in ACP mode
-    const orchestrator = manager.getOrchestrator();
-    if (orchestrator) {
-      const tools = orchestrator.getTools();
-      const originalExecuteToolCalls = tools.executeToolCalls.bind(tools);
-
-      // Helper to convert ToolInvocation to ToolCall format
-      function toToolCall(invocation: any): ToolCall {
-        return {
-          id: invocation.id,
-          type: 'function',
-          function: {
-            name: invocation.name,
-            arguments: JSON.stringify(invocation.parameters),
-          },
-          editInstruction: invocation.editInstruction,
-        };
-      }
-
-      tools.executeToolCalls = async (calls, context, maxConcurrent, signal) => {
-        // For each tool call, request approval before executing
-        const approvalPromises = calls.map(async (call) => {
-          const approvalId = generateApprovalId();
-
-          // Convert ToolInvocation to ToolCall format for the event
-          const toolCall: ToolCall = toToolCall(call);
-
-          // Emit ToolApprovalRequired event
-          eventBus.emit('agent:event', {
-            type: AgentEventTypes.ToolApprovalRequired,
-            conversationId: manager.getConversationContext().getActiveConversationId(),
-            messageId: generateMessageId(),
-            toolCalls: [toolCall],
-            approvalId,
-          } as AgentEvent);
-
-          // Wait for handleToolApproval to be called
-          const decision = await new Promise<'approve' | 'deny'>((resolve) => {
-            // Set up timeout to reject if no response
-            const timeout = setTimeout(() => {
-              pendingApprovals.delete(approvalId);
-              resolve('deny'); // Default to deny on timeout
-            }, 30000); // 30 second timeout
-
-            // Store resolver that will be called by handleToolApproval
-            pendingApprovals.set(approvalId, (decision) => {
-              clearTimeout(timeout);
-              resolve(decision);
-            });
-          });
-
-          return { call, decision, approvalId };
-        });
-
-        const approvals = await Promise.all(approvalPromises);
-
-        // Filter out denied calls and execute approved ones
-        const approvedCalls = approvals.filter((a) => a.decision === 'approve').map((a) => a.call);
-
-        // If all calls were denied, return error results
-        if (approvedCalls.length === 0) {
-          return approvals.map((a) => ({
-            id: a.call.id,
-            name: a.call.name,
-            status: 'error' as const,
-            type: 'text' as const,
-            result: `Tool execution denied: ${a.call.name}`,
-            metadata: { errorReason: ErrorReason.Denied },
-            durationMs: 0,
-          }));
+    // Wait for MCP servers to finish initializing (they start in background)
+    // We need to wrap tools AFTER MCP servers are registered, otherwise
+    // the CompositeToolPort will replace our wrapped tools
+    const maxWaitTime = 5000; // Wait up to 5 seconds
+    const checkInterval = 100; // Check every 100ms
+    let waited = 0;
+    while (waited < maxWaitTime) {
+      // biome-ignore lint/complexity/useLiteralKeys: accessing private property
+      const mcpManager = (manager as unknown as Record<string, MCPServerManager | null>)['mcpManager'];
+      if (mcpManager) {
+        const servers = mcpManager.getAllServers();
+        // Check if all servers are either connected or failed (not in "pending" state)
+        const allDone = Object.values(servers).every((s) => s.status === 'connected' || s.status === 'failed');
+        if (allDone) {
+          break;
         }
-
-        // Execute only approved calls
-        const results = await originalExecuteToolCalls(approvedCalls, context, maxConcurrent, signal);
-
-        // Add error results for denied calls
-        const deniedResults = approvals
-          .filter((a) => a.decision === 'deny')
-          .map((a) => ({
-            id: a.call.id,
-            name: a.call.name,
-            status: 'error' as const,
-            type: 'text' as const,
-            result: `Tool execution denied: ${a.call.name}`,
-            metadata: { errorReason: ErrorReason.Denied },
-            durationMs: 0,
-          }));
-
-        return [...results, ...deniedResults];
-      };
+      }
+      await new Promise((resolve) => setTimeout(resolve, checkInterval));
+      waited += checkInterval;
     }
+    if (waited >= maxWaitTime) {
+      // MCP initialization timeout - proceeding anyway
+    }
+
+    // Track pending approvals - NO LONGER NEEDED as AgentOrchestrator handles this
+    // const pendingApprovals = new Map<string, (decision: 'approve' | 'deny') => void>();
 
     const eventHandlers: Array<(event: AgentEvent) => void> = [];
 
     // Gather available commands
-    const allCommands: Array<{ id: string; description: string; requiresInput?: boolean }> = [];
+    const allCommands: Array<{
+      id: string;
+      description: string;
+      requiresInput?: boolean;
+    }> = [];
 
     // Get built-in commands with error handling
     try {
@@ -156,7 +82,7 @@ export async function runACPMode(): Promise<void> {
         // Strip the leading '/' from command IDs for ACP protocol
         // Commands are stored as '/exit' but should be advertised as 'exit'
         const commandName = cmd.id.startsWith('/') ? cmd.id.slice(1) : cmd.id;
-        
+
         allCommands.push({
           id: commandName,
           description: cmd.description,
@@ -190,13 +116,19 @@ export async function runACPMode(): Promise<void> {
 
     // Subscribe to agent events
     eventBus.on('agent:event', (event: AgentEvent) => {
+
+      // Forward to all eventHandlers (including ACP server's handler)
       for (const handler of eventHandlers) {
-        handler(event);
+        try {
+          handler(event);
+        } catch (_error) {
+          // Error in event handler
+        }
       }
     });
 
     return {
-      sendMessage: async (text, options) => {
+      sendMessage: async (text: string, options: { stream: boolean; signal?: AbortSignal }) => {
         // Check if this is a slash command
         if (text.trim().startsWith('/')) {
           const match = text.match(/^\/([a-z][a-z0-9_-]*)\s*(.*)/);
@@ -212,7 +144,9 @@ export async function runACPMode(): Promise<void> {
               const renderedPrompt = customRegistry.renderPrompt(commandId, input);
               if (renderedPrompt) {
                 try {
-                  await manager.send(renderedPrompt, { stream: options.stream });
+                  await manager.send(renderedPrompt, {
+                    stream: options.stream,
+                  });
                 } catch (error) {
                   console.error(`Failed to execute custom command '${commandId}':`, error);
                 }
@@ -223,11 +157,7 @@ export async function runACPMode(): Promise<void> {
             // Check if command exists in built-in registry (commands are stored with / prefix)
             const builtIn = commandRegistry.get(`/${commandId}`);
             if (builtIn) {
-              // Skip custom commands (already handled above)
-              if ((builtIn as any).isCustomCommand) {
-                // Should not reach here since we handle custom commands first
-                console.warn(`Custom command '${commandId}' not handled by custom registry`);
-              } else if (builtIn.type === 'function') {
+              if (builtIn.type === 'function') {
                 const fnCmd = builtIn as FunctionCommand;
                 try {
                   // Create command context for the handler
@@ -236,9 +166,11 @@ export async function runACPMode(): Promise<void> {
                     eventBus,
                     registry: commandRegistry,
                     config: {
-                      get: <T>(key: string, scope?: string) => configManager.get(key, scope as any) as T | undefined,
-                      set: (key: string, value: unknown, scope?: string) => configManager.set(key, value, scope as any),
-                      delete: (key: string, scope?: string) => configManager.delete(key, scope as any),
+                      get: <T>(key: string, scope?: ConfigScope) =>
+                        ConfigManager.getInstance().get(key, scope) as T | undefined,
+                      set: (key: string, value: unknown, scope?: ConfigScope) =>
+                        ConfigManager.getInstance().set(key, value, scope as ConfigScope),
+                      delete: (key: string, scope?: ConfigScope) => ConfigManager.getInstance().delete(key, scope),
                     },
                     orchestratorManager: manager,
                   };
@@ -273,7 +205,7 @@ export async function runACPMode(): Promise<void> {
           console.error('Failed to send message:', error);
         }
       },
-      onEvent: (handler) => {
+      onEvent: (handler: (event: AgentEvent) => void) => {
         eventHandlers.push(handler);
 
         // CRITICAL: Emit CommandsAvailable event AFTER the first handler is registered
@@ -290,15 +222,16 @@ export async function runACPMode(): Promise<void> {
         }
       },
       handleToolApproval: (approvalId, decision) => {
-        // Resolve the pending approval promise
-        const resolver = pendingApprovals.get(approvalId);
-        if (resolver) {
-          resolver(decision === 'approve' ? 'approve' : 'deny');
-          pendingApprovals.delete(approvalId);
+        // Call the REAL orchestrator's handleToolApproval
+        const agentOrchestrator = manager.getOrchestrator();
+        if (agentOrchestrator) {
+          try {
+            // Map 'approve' | 'deny' from ACP to ToolApprovalDecision
+            agentOrchestrator.handleToolApproval(approvalId, decision === 'approve' ? 'approve' : 'deny');
+          } catch (_error) {
+            // Error forwarding approval
+          }
         }
-
-        // Also call the orchestrator's handleToolApproval for compatibility
-        manager.getOrchestrator()?.handleToolApproval(approvalId, decision === 'approve' ? 'approve' : 'deny');
       },
     };
   });

@@ -1,6 +1,6 @@
 /**
  * @deprecated This module is deprecated. Use error classification from @nuvin/nuvin-core instead.
- * 
+ *
  * Import from nuvin-core:
  * ```typescript
  * import { isRetryableError, isRetryableStatusCode, LLMError } from '@nuvin/nuvin-core';

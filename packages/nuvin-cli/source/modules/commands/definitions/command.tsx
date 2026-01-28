@@ -70,10 +70,10 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
         const configManager = ConfigManager.getInstance();
         const globalDir = configManager.globalDir || path.join(os.homedir(), '.nuvin');
         const localDir = configManager.localDir || path.join(process.cwd(), '.nuvin');
-        
+
         const profile = configManager.getCurrentProfile();
         const profileManager = configManager.getProfileManager();
-        
+
         let profileDir: string | undefined;
         if (profile && profile !== DEFAULT_PROFILE && profileManager) {
           profileDir = profileManager.getProfileCommandsDir(profile);
@@ -109,93 +109,101 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
     });
   }, [navState.selectedIndex]);
 
-  const handleEdit = useCallback((commandId: string) => {
-    setNavState({
-      activeView: 'edit',
-      editingCommandId: commandId,
-      selectedIndex: navState.selectedIndex,
-    });
-  }, [navState.selectedIndex]);
-
-  const handleDelete = useCallback(async (commandId: string) => {
-    if (!registry) return;
-
-    try {
-      const command = registry.get(commandId);
-      if (!command) return;
-
-      await registry.deleteFromFile(commandId, command.source);
-      
-      const updatedCommands = registry.list({ includeHidden: true });
-      setCommands(updatedCommands);
-      
-      const newSelectedIndex = Math.min(navState.selectedIndex, Math.max(0, updatedCommands.length - 1));
-      
+  const handleEdit = useCallback(
+    (commandId: string) => {
       setNavState({
-        activeView: 'list',
-        editingCommandId: null,
-        selectedIndex: newSelectedIndex,
+        activeView: 'edit',
+        editingCommandId: commandId,
+        selectedIndex: navState.selectedIndex,
       });
+    },
+    [navState.selectedIndex],
+  );
 
-      await reloadCustomCommands(commandRegistry);
-      eventBus.emit('ui:commands:refresh');
-    } catch (err) {
-      setError(`Failed to delete command: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }, [registry, navState.selectedIndex]);
+  const handleDelete = useCallback(
+    async (commandId: string) => {
+      if (!registry) return;
 
-  const handleSave = useCallback(async (
-    command: CustomCommandTemplate,
-    originalCommandId?: string,
-    originalSource?: CommandSource
-  ) => {
-    if (!registry) return;
+      try {
+        const command = registry.get(commandId);
+        if (!command) return;
 
-    try {
-      // If editing and ID or source changed, delete the old command first
-      const idChanged = originalCommandId && originalCommandId !== command.id;
-      const sourceChanged = originalSource && originalSource !== command.source;
-      
-      if (originalCommandId && (idChanged || sourceChanged)) {
-        await registry.deleteFromFile(originalCommandId, originalSource || command.source);
+        await registry.deleteFromFile(commandId, command.source);
+
+        const updatedCommands = registry.list({ includeHidden: true });
+        setCommands(updatedCommands);
+
+        const newSelectedIndex = Math.min(navState.selectedIndex, Math.max(0, updatedCommands.length - 1));
+
+        setNavState({
+          activeView: 'list',
+          editingCommandId: null,
+          selectedIndex: newSelectedIndex,
+        });
+
+        await reloadCustomCommands(commandRegistry);
+        eventBus.emit('ui:commands:refresh');
+      } catch (err) {
+        setError(`Failed to delete command: ${err instanceof Error ? err.message : String(err)}`);
       }
+    },
+    [registry, navState.selectedIndex],
+  );
 
-      await registry.saveToFile({
-        ...command,
-        enabled: true,
-        filePath: registry.getCommandFilePath(command.id, command.source),
-      });
+  const handleSave = useCallback(
+    async (command: CustomCommandTemplate, originalCommandId?: string, originalSource?: CommandSource) => {
+      if (!registry) return;
 
-      const updatedCommands = registry.list({ includeHidden: true });
-      setCommands(updatedCommands);
+      try {
+        // If editing and ID or source changed, delete the old command first
+        const idChanged = originalCommandId && originalCommandId !== command.id;
+        const sourceChanged = originalSource && originalSource !== command.source;
 
-      const newIndex = updatedCommands.findIndex(c => c.id === command.id);
-      
-      setNavState({
-        activeView: 'list',
-        editingCommandId: null,
-        selectedIndex: newIndex >= 0 ? newIndex : 0,
-      });
+        if (originalCommandId && (idChanged || sourceChanged)) {
+          await registry.deleteFromFile(originalCommandId, originalSource || command.source);
+        }
 
-      await reloadCustomCommands(commandRegistry);
-      eventBus.emit('ui:commands:refresh');
-    } catch (err) {
-      setError(`Failed to save command: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }, [registry]);
+        await registry.saveToFile({
+          ...command,
+          enabled: true,
+          filePath: registry.getCommandFilePath(command.id, command.source),
+        });
+
+        const updatedCommands = registry.list({ includeHidden: true });
+        setCommands(updatedCommands);
+
+        const newIndex = updatedCommands.findIndex((c) => c.id === command.id);
+
+        setNavState({
+          activeView: 'list',
+          editingCommandId: null,
+          selectedIndex: newIndex >= 0 ? newIndex : 0,
+        });
+
+        await reloadCustomCommands(commandRegistry);
+        eventBus.emit('ui:commands:refresh');
+      } catch (err) {
+        setError(`Failed to save command: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    },
+    [registry],
+  );
 
   const handleCancel = useCallback(() => {
-    setNavState(prev => ({
+    setNavState((prev) => ({
       ...prev,
       activeView: 'list',
       editingCommandId: null,
     }));
   }, []);
 
-  const getShadowedCommands = useCallback((commandId: string): CompleteCustomCommand[] => {
-    if (!registry) return [];
-    return registry.getShadowed(commandId);
-  }, [registry]);
+  const getShadowedCommands = useCallback(
+    (commandId: string): CompleteCustomCommand[] => {
+      if (!registry) return [];
+      return registry.getShadowed(commandId);
+    },
+    [registry],
+  );
 
   if (navState.activeView === 'create') {
     return (
@@ -230,12 +238,7 @@ const CommandCommandComponent = ({ deactivate }: CommandComponentProps) => {
 
   if (loading) {
     return (
-      <AppModal
-        visible={true}
-        title="Custom Commands"
-        onClose={deactivate}
-        closeOnEscape={true}
-      >
+      <AppModal visible={true} title="Custom Commands" onClose={deactivate} closeOnEscape={true}>
         <Text color={theme.colors.warning}>Loading commands...</Text>
       </AppModal>
     );

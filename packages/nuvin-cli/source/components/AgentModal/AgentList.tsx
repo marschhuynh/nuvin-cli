@@ -126,7 +126,7 @@ export const AgentList: React.FC<AgentListProps> = ({
         </Box>
       );
     },
-    [agents, isAgentEnabled, theme],
+    [agents, isAgentEnabled, theme, showStatus],
   );
 
   const handleSelect = useCallback(

@@ -134,7 +134,15 @@ const SwapCommandComponent = ({ context, deactivate }: CommandComponentProps) =>
   // Show error state
   if (error) {
     return (
-      <AppModal visible={true} title="Swap Agent" titleColor={theme.colors.error} type="error" onClose={deactivate} closeOnEscape={true} footer={footerContent}>
+      <AppModal
+        visible={true}
+        title="Swap Agent"
+        titleColor={theme.colors.error}
+        type="error"
+        onClose={deactivate}
+        closeOnEscape={true}
+        footer={footerContent}
+      >
         <Text color={theme.colors.error}>{error}</Text>
       </AppModal>
     );
@@ -154,7 +162,14 @@ const SwapCommandComponent = ({ context, deactivate }: CommandComponentProps) =>
     >
       <AgentList
         agents={[
-          { name: 'main', description: 'Default main agent', instructions: '', allowed_tools: [], temperature: 0.7, isDefault: true },
+          {
+            name: 'main',
+            description: 'Default main agent',
+            instructions: '',
+            allowed_tools: [],
+            temperature: 0.7,
+            isDefault: true,
+          },
           ...agents,
         ]}
         isAgentEnabled={() => true}

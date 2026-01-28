@@ -85,7 +85,7 @@ export function FocusProvider({ children, active = true }: { children: ReactNode
 
   useEffect(() => {
     if (!active) return;
-    
+
     const handleFocusCycle = (direction: 'forward' | 'backward') => {
       cycleFocus(direction);
     };
@@ -109,9 +109,17 @@ export function FocusProvider({ children, active = true }: { children: ReactNode
   return <FocusContext.Provider value={value}>{children}</FocusContext.Provider>;
 }
 
-export function useFocus(
-  { active = true, autoFocus = false, id: customId, tabIndex = DEFAULT_TAB_INDEX }: { active?: boolean; autoFocus?: boolean; id?: string; tabIndex?: number | string } = {},
-): FocusContextValue {
+export function useFocus({
+  active = true,
+  autoFocus = false,
+  id: customId,
+  tabIndex = DEFAULT_TAB_INDEX,
+}: {
+  active?: boolean;
+  autoFocus?: boolean;
+  id?: string;
+  tabIndex?: number | string;
+} = {}): FocusContextValue {
   const context = useContext(FocusContext);
   if (!context) {
     throw new Error('useFocus must be used within a FocusProvider');
@@ -119,7 +127,13 @@ export function useFocus(
 
   const generatedId = useId();
   const id = customId ?? generatedId;
-  const { focusedId, setFocusedId, clearFocus: contextClearFocus, focusableEntriesRef, registrationCounterRef } = context;
+  const {
+    focusedId,
+    setFocusedId,
+    clearFocus: contextClearFocus,
+    focusableEntriesRef,
+    registrationCounterRef,
+  } = context;
   const numericTabIndex = typeof tabIndex === 'string' ? Number.parseInt(tabIndex, 10) : tabIndex;
 
   const isFocused = focusedId === id;
@@ -183,5 +197,8 @@ export function useFocusCycle(): FocusCycleValue {
       .map((e) => e.id);
   }, [focusableEntriesRef]);
 
-  return useMemo(() => ({ cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds }), [cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds]);
+  return useMemo(
+    () => ({ cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds }),
+    [cycleFocus, cycleNext, cycleBack, focusedId, setFocusedId, getFocusableIds],
+  );
 }

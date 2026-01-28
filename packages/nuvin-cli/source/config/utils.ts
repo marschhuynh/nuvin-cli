@@ -29,7 +29,9 @@ export function deepMerge<T extends Record<string, unknown>>(target: T, source: 
         }
         output[key] = merged;
       } else {
-        output[key] = value.map((item) => (isPlainObject(item) ? deepMerge({}, item as Record<string, unknown>) : item));
+        output[key] = value.map((item) =>
+          isPlainObject(item) ? deepMerge({}, item as Record<string, unknown>) : item,
+        );
       }
       continue;
     }

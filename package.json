@@ -6,9 +6,10 @@
   "scripts": {
     "run:dev": "pnpm --filter @nuvin/nuvin-cli run:dev",
     "run:prod": "pnpm --filter @nuvin/nuvin-cli run:prod",
-    "build": "pnpm --filter @nuvin/nuvin-core build && pnpm --filter @nuvin/nuvin-cli build",
+    "build": "pnpm --filter @nuvin/nuvin-core build && pnpm --filter @nuvin/nuvin-cli build && pnpm --filter @nuvin/nuvin-acp build",
     "build:core": "pnpm --filter @nuvin/nuvin-core build",
     "build:cli": "pnpm --filter @nuvin/nuvin-cli build",
+    "build:acp": "pnpm --filter @nuvin/nuvin-acp build",
     "clean": "pnpm --filter @nuvin/nuvin-core clean && pnpm --filter @nuvin/nuvin-cli clean",
     "dev": "pnpm --filter @nuvin/nuvin-cli dev",
     "lint": "pnpm --filter @nuvin/nuvin-cli lint",

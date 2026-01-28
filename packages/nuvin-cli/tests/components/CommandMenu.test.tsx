@@ -4,9 +4,17 @@ import { Box, Text } from 'ink';
 import { CommandMenu } from '../../source/components/CommandMenu/CommandMenu.js';
 
 vi.mock('../../source/components/SelectInput/SelectInput.js', () => ({
-  SelectInput: ({ items, itemComponent: ItemComponent, indicatorComponent: IndicatorComponent }: {
+  SelectInput: ({
+    items,
+    itemComponent: ItemComponent,
+    indicatorComponent: IndicatorComponent,
+  }: {
     items: Array<{ label: string; value: { value: string; description?: string } }>;
-    itemComponent: React.ComponentType<{ isSelected?: boolean; label: string; value: { value: string; description?: string } }>;
+    itemComponent: React.ComponentType<{
+      isSelected?: boolean;
+      label: string;
+      value: { value: string; description?: string };
+    }>;
     indicatorComponent: React.ComponentType<{ isSelected?: boolean }>;
   }) => (
     <Box flexDirection="column">

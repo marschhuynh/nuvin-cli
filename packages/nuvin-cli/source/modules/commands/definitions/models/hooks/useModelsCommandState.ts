@@ -193,7 +193,7 @@ export function useModelsCommandState(
         payload: errorMessage,
       });
       dispatch({ type: 'SET_MODELS', payload: [] });
-      
+
       // Check if this is an auth error and show navigation prompt
       if (errorMessage.includes('not configured') || errorMessage.includes('/auth')) {
         dispatch({ type: 'SET_AUTH_PROMPT', payload: true });
@@ -263,7 +263,7 @@ export function useModelsCommandState(
 
   const navigateToAuth = () => {
     onCancel(); // Close the current /model command
-    const authCommand = state.selectedProvider 
+    const authCommand = state.selectedProvider
       ? `/auth ${state.selectedProvider} --return-to-model`
       : '/auth --return-to-model';
     context.registry.execute(authCommand); // Execute the /auth command with provider parameter

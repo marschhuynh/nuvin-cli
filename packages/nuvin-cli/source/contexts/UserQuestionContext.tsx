@@ -45,13 +45,10 @@ export function UserQuestionProvider({
       }
 
       submittedRef.current.add(pendingQuestion.questionId);
-      orchestratorManager.getOrchestrator()?.handleUserQuestionResponse(
-        pendingQuestion.questionId,
-        answers
-      );
+      orchestratorManager.getOrchestrator()?.handleUserQuestionResponse(pendingQuestion.questionId, answers);
       setPendingQuestion(null);
     },
-    [pendingQuestion, orchestratorManager]
+    [pendingQuestion, orchestratorManager],
   );
 
   useEffect(() => {

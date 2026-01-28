@@ -1320,8 +1320,8 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
    * @throws Error if orchestrator is not initialized or agent is not found
    */
   async swapToAgent(agentId: string): Promise<void> {
-    if (!this.orchestrator) {
-      throw new Error('Orchestrator not initialized');
+    if (!this.orchestrator || !this.handlers) {
+      throw new Error('Orchestrator or handlers not initialized');
     }
 
     // Get agent registry from tools
@@ -1372,7 +1372,7 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     // Create new event adapter
     const newEventAdapter = this.createEventAdapter(
       this.sessionDir || '',
-      this.handlers!,
+      this.handlers,
       persistEventLog,
       this.streamingChunks,
     );
@@ -1419,8 +1419,8 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
    * @throws Error if orchestrator is not initialized
    */
   async swapToMain(): Promise<void> {
-    if (!this.orchestrator) {
-      throw new Error('Orchestrator not initialized');
+    if (!this.orchestrator || !this.handlers) {
+      throw new Error('Orchestrator or handlers not initialized');
     }
 
     // Early return if already on main agent
@@ -1484,7 +1484,7 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     // Create new event adapter
     const newEventAdapter = this.createEventAdapter(
       this.sessionDir || '',
-      this.handlers!,
+      this.handlers,
       persistEventLog,
       this.streamingChunks,
     );

@@ -20,7 +20,7 @@ export const FileNewParamRender: React.FC<ToolParamRendererProps> = ({
       key !== 'filePath' &&
       key !== 'line' &&
       key !== 'character' &&
-      key !== 'operation'
+      key !== 'operation',
   );
 
   if (entries.length === 0) {

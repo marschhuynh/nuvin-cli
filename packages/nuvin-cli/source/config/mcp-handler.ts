@@ -30,7 +30,7 @@ export class MCPCliHandler {
     await this.configManager.load({ profile: this.profile });
 
     const remaining = [...args];
-    
+
     // Parse scope flags before subcommand: mcp --local add ...
     while (remaining.length > 0) {
       if (remaining[0] === '--local') {
@@ -233,10 +233,22 @@ export class MCPCliHandler {
     const config: MCPServerConfig = { enabled: true };
     const positionalArgs: string[] = [];
     const knownFlags = new Set([
-      '--command', '--args', '--env', '--transport', '--url', '--header',
-      '--prefix', '--timeout', '--disabled',
-      '--auth-type', '--auth-token', '--oauth', '--client-id', '--client-metadata-url',
-      '--auth-server', '--scopes',
+      '--command',
+      '--args',
+      '--env',
+      '--transport',
+      '--url',
+      '--header',
+      '--prefix',
+      '--timeout',
+      '--disabled',
+      '--auth-type',
+      '--auth-token',
+      '--oauth',
+      '--client-id',
+      '--client-metadata-url',
+      '--auth-server',
+      '--scopes',
     ]);
 
     const isUrl = (str: string): boolean => str.startsWith('http://') || str.startsWith('https://');
@@ -598,11 +610,11 @@ export class MCPCliHandler {
 
     if (authType === 'oauth') {
       console.log(`Client ID: ${config.auth?.oauth?.clientId || config.auth?.oauth?.clientMetadataUrl || 'Dynamic'}`);
-      
+
       if (config.auth?.oauth?.authorizationServer) {
         console.log(`Auth Server: ${config.auth.oauth.authorizationServer}`);
       }
-      
+
       if (config.auth?.oauth?.scopes?.length) {
         console.log(`Scopes: ${config.auth.oauth.scopes.join(', ')}`);
       }
@@ -694,7 +706,7 @@ export class MCPCliHandler {
       if (config.headers && Object.keys(config.headers).length > 0) {
         console.log(`Headers:    ${Object.keys(config.headers).join(', ')}`);
       }
-      
+
       const authType = config.auth?.type || 'none';
       console.log(`Auth:       ${authType}`);
       if (authType === 'oauth' && config.auth?.oauth?.clientId) {
@@ -738,8 +750,8 @@ export class MCPCliHandler {
     }
 
     const config = this.scopeExplicit
-      ? this.configManager.get(`mcp.servers.${name}`, this.globalScope) as MCPServerConfig | undefined
-      : this.configManager.get(`mcp.servers.${name}`) as MCPServerConfig | undefined;
+      ? (this.configManager.get(`mcp.servers.${name}`, this.globalScope) as MCPServerConfig | undefined)
+      : (this.configManager.get(`mcp.servers.${name}`) as MCPServerConfig | undefined);
     if (!config) {
       const scopeMsg = this.scopeExplicit ? ` in ${this.globalScope} config` : '';
       console.error(`Error: MCP server '${name}' not found${scopeMsg}`);
@@ -747,10 +759,10 @@ export class MCPCliHandler {
     }
 
     const verbose = options.includes('--verbose') || options.includes('-v');
-    
+
     const timeoutIdx = options.indexOf('--timeout');
     const customTimeout = timeoutIdx !== -1 ? Number.parseInt(options[timeoutIdx + 1] || '', 10) : null;
-    const timeoutMs = customTimeout && !Number.isNaN(customTimeout) ? customTimeout : (config.timeoutMs || 120000);
+    const timeoutMs = customTimeout && !Number.isNaN(customTimeout) ? customTimeout : config.timeoutMs || 120000;
 
     console.log(`Testing MCP server '${name}'...`);
     if (verbose) {
@@ -770,10 +782,7 @@ export class MCPCliHandler {
         if (!config.url) {
           throw new Error('HTTP transport requires a URL');
         }
-        client = new CoreMCPClient(
-          { type: 'http', url: config.url, headers: config.headers },
-          timeoutMs,
-        );
+        client = new CoreMCPClient({ type: 'http', url: config.url, headers: config.headers }, timeoutMs);
       } else {
         if (!config.command) {
           throw new Error('Stdio transport requires a command');
@@ -819,14 +828,14 @@ export class MCPCliHandler {
       const message = err instanceof Error ? err.message : String(err);
       console.log('✗ FAILED');
       console.error(`\n✗ Error: ${message}`);
-      
+
       if (stderrOutput.trim()) {
         console.error('\n  Server stderr:');
         for (const line of stderrOutput.trim().split('\n')) {
           console.error(`    ${line}`);
         }
       }
-      
+
       process.exit(1);
     }
   }

@@ -26,7 +26,11 @@ export type Props = {
   readonly onVimModeChange?: (mode: 'insert' | 'normal') => void;
   readonly onUpArrow?: (lineInfo: LineInfo) => void;
   readonly onDownArrow?: (lineInfo: LineInfo) => void;
-  readonly onTab?: (value: string, cursorOffset: number, isShiftTab: boolean) => { value: string; cursorOffset: number } | undefined;
+  readonly onTab?: (
+    value: string,
+    cursorOffset: number,
+    isShiftTab: boolean,
+  ) => { value: string; cursorOffset: number } | undefined;
   readonly maxLines?: number;
   readonly showScrollbar?: boolean;
   readonly scrollbarColor?: string;
@@ -173,13 +177,9 @@ function TextInput({
     }
 
     const currentLineLen = lines[logicalRow]?.length ?? 0;
-    const wrappedRowsBeforeCursor = currentLineLen > 0
-      ? Math.floor(logicalCol / effectiveWidth)
-      : 0;
+    const wrappedRowsBeforeCursor = currentLineLen > 0 ? Math.floor(logicalCol / effectiveWidth) : 0;
     visualRow += wrappedRowsBeforeCursor;
-    const visualCol = currentLineLen > 0
-      ? logicalCol % effectiveWidth
-      : logicalCol;
+    const visualCol = currentLineLen > 0 ? logicalCol % effectiveWidth : logicalCol;
 
     return {
       row: logicalRow,
@@ -243,25 +243,31 @@ function TextInput({
   const lineIndexRef = useRef(lineIndex);
   lineIndexRef.current = lineIndex;
 
-  const getVisualRowStart = useCallback((cursorOffset: number): number => {
-    const lineInfo = lineIndexRef.current.getLineInfo(cursorOffset);
-    if (effectiveWidth && effectiveWidth > 0) {
-      const visualRowStart = Math.floor(lineInfo.column / effectiveWidth) * effectiveWidth;
-      return lineInfo.lineStart + visualRowStart;
-    }
-    return lineInfo.lineStart;
-  }, [effectiveWidth]);
+  const getVisualRowStart = useCallback(
+    (cursorOffset: number): number => {
+      const lineInfo = lineIndexRef.current.getLineInfo(cursorOffset);
+      if (effectiveWidth && effectiveWidth > 0) {
+        const visualRowStart = Math.floor(lineInfo.column / effectiveWidth) * effectiveWidth;
+        return lineInfo.lineStart + visualRowStart;
+      }
+      return lineInfo.lineStart;
+    },
+    [effectiveWidth],
+  );
 
-  const getVisualRowEnd = useCallback((cursorOffset: number): number => {
-    const lineInfo = lineIndexRef.current.getLineInfo(cursorOffset);
-    if (effectiveWidth && effectiveWidth > 0) {
-      const currentLine = lineInfo.lines[lineInfo.lineIndex] ?? '';
-      const visualRowStart = Math.floor(lineInfo.column / effectiveWidth) * effectiveWidth;
-      const visualRowEnd = Math.min(visualRowStart + effectiveWidth - 1, currentLine.length);
-      return lineInfo.lineStart + visualRowEnd;
-    }
-    return lineInfo.lineEnd;
-  }, [effectiveWidth]);
+  const getVisualRowEnd = useCallback(
+    (cursorOffset: number): number => {
+      const lineInfo = lineIndexRef.current.getLineInfo(cursorOffset);
+      if (effectiveWidth && effectiveWidth > 0) {
+        const currentLine = lineInfo.lines[lineInfo.lineIndex] ?? '';
+        const visualRowStart = Math.floor(lineInfo.column / effectiveWidth) * effectiveWidth;
+        const visualRowEnd = Math.min(visualRowStart + effectiveWidth - 1, currentLine.length);
+        return lineInfo.lineStart + visualRowEnd;
+      }
+      return lineInfo.lineEnd;
+    },
+    [effectiveWidth],
+  );
 
   useEffect(() => {
     setInitialCursor(focus);
@@ -356,10 +362,7 @@ function TextInput({
 
       if (key.return) {
         if (key.shift) {
-          const nextValue =
-            currentValue.slice(0, currentCursorOffset) +
-            '\n' +
-            currentValue.slice(currentCursorOffset);
+          const nextValue = `${currentValue.slice(0, currentCursorOffset)}\n${currentValue.slice(currentCursorOffset)}`;
           const nextCursorOffset = currentCursorOffset + 1;
           setValueRef.current(nextValue, nextCursorOffset);
           return true;
@@ -405,17 +408,17 @@ function TextInput({
         const lineInfo = lineIndexRef.current.getLineInfo(currentCursorOffset);
 
         // Check if we're at the visual top (first row of first line)
-        const isAtVisualTop = lineInfo.lineIndex === 0 &&
-          (!effectiveWidth || lineInfo.column < effectiveWidth);
+        const isAtVisualTop = lineInfo.lineIndex === 0 && (!effectiveWidth || lineInfo.column < effectiveWidth);
 
         if (onUpArrow && isAtVisualTop) {
           onUpArrow(lineInfo);
           return true;
         }
 
-        const target = effectiveWidth && effectiveWidth > 0
-          ? moveCursorVisually(currentValue, currentCursorOffset, 'up', effectiveWidth)
-          : moveCursorVertically(currentValue, currentCursorOffset, 'up');
+        const target =
+          effectiveWidth && effectiveWidth > 0
+            ? moveCursorVisually(currentValue, currentCursorOffset, 'up', effectiveWidth)
+            : moveCursorVertically(currentValue, currentCursorOffset, 'up');
         if (target !== null) {
           moveCursorRef.current(target);
         }
@@ -429,23 +432,21 @@ function TextInput({
         const lastLineIndex = lineInfo.lines.length - 1;
 
         // Check if we're at the visual bottom (last row of last line)
-        const totalWrappedRows = effectiveWidth && effectiveWidth > 0
-          ? Math.max(1, Math.ceil(currentLine.length / effectiveWidth))
-          : 1;
-        const currentWrappedRow = effectiveWidth && effectiveWidth > 0
-          ? Math.floor(lineInfo.column / effectiveWidth)
-          : 0;
-        const isAtVisualBottom = lineInfo.lineIndex === lastLineIndex &&
-          currentWrappedRow >= totalWrappedRows - 1;
+        const totalWrappedRows =
+          effectiveWidth && effectiveWidth > 0 ? Math.max(1, Math.ceil(currentLine.length / effectiveWidth)) : 1;
+        const currentWrappedRow =
+          effectiveWidth && effectiveWidth > 0 ? Math.floor(lineInfo.column / effectiveWidth) : 0;
+        const isAtVisualBottom = lineInfo.lineIndex === lastLineIndex && currentWrappedRow >= totalWrappedRows - 1;
 
         if (onDownArrow && isAtVisualBottom) {
           onDownArrow(lineInfo);
           return true;
         }
 
-        const target = effectiveWidth && effectiveWidth > 0
-          ? moveCursorVisually(currentValue, currentCursorOffset, 'down', effectiveWidth)
-          : moveCursorVertically(currentValue, currentCursorOffset, 'down');
+        const target =
+          effectiveWidth && effectiveWidth > 0
+            ? moveCursorVisually(currentValue, currentCursorOffset, 'down', effectiveWidth)
+            : moveCursorVertically(currentValue, currentCursorOffset, 'down');
         if (target !== null) {
           moveCursorRef.current(target);
         }
@@ -472,26 +473,30 @@ function TextInput({
       }
     },
     [
-      processPaste, 
-      handleVimInput, 
-      enterInsertMode, 
-      onSubmit, 
-      onUpArrow, 
-      onDownArrow, 
-      showCursor, 
-      vimModeEnabled, 
-      vimMode, 
-      onChange, 
-      effectiveWidth, 
-      getVisualRowStart, 
-      getVisualRowEnd, onTab
+      processPaste,
+      handleVimInput,
+      enterInsertMode,
+      onSubmit,
+      onUpArrow,
+      onDownArrow,
+      showCursor,
+      vimModeEnabled,
+      vimMode,
+      onChange,
+      effectiveWidth,
+      getVisualRowStart,
+      getVisualRowEnd,
+      onTab,
     ],
   );
 
   useInput(handleInput, { isActive: focus });
 
   const renderVisualRow = useCallback(
-    (row: { text: string; logicalLine: number; startCol: number; endCol: number; isFullLine: boolean }, visualIndex: number) => {
+    (
+      row: { text: string; logicalLine: number; startCol: number; endCol: number; isFullLine: boolean },
+      visualIndex: number,
+    ) => {
       const isCursorRow = visualIndex === cursorInfo.visualRow;
       if (!isCursorRow || !showCursor || !focus) {
         return <Text>{row.text || ' '}</Text>;
@@ -522,7 +527,9 @@ function TextInput({
           <Text dimColor>
             {showCursor && focus ? (
               <>
-                <Text inverse={cursorVisible} dimColor={!cursorVisible}>{placeholder[0] || ' '}</Text>
+                <Text inverse={cursorVisible} dimColor={!cursorVisible}>
+                  {placeholder[0] || ' '}
+                </Text>
                 {placeholder.slice(1)}
               </>
             ) : (
@@ -536,14 +543,8 @@ function TextInput({
 
   if (hasScrolling && maxLines) {
     return (
-      <Box key="scrolling" flexDirection="row" maxHeight={maxLines} width={"100%"}>
-        <Box
-          ref={boxRef}
-          flexDirection="column"
-          flexGrow={1}
-          maxHeight={maxLines}
-          overflow="scroll"
-        >
+      <Box key="scrolling" flexDirection="row" maxHeight={maxLines} width={'100%'}>
+        <Box ref={boxRef} flexDirection="column" flexGrow={1} maxHeight={maxLines} overflow="scroll">
           {visualRows.map((row, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since rows are stable
             <Box key={i} flexShrink={0} minHeight={1}>
@@ -565,7 +566,7 @@ function TextInput({
   }
 
   return (
-    <Box key="non-scrolling" ref={boxRef} flexDirection="column" flexGrow={1} width={"100%"}>
+    <Box key="non-scrolling" ref={boxRef} flexDirection="column" flexGrow={1} width={'100%'}>
       {visualRows.map((row, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since rows are stable
         <Box key={i} flexShrink={0} minHeight={1}>

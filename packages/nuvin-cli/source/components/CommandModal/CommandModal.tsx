@@ -55,9 +55,8 @@ export const CommandModal: React.FC<CommandModalProps> = ({
 
   const modalHeight = rows - 4;
 
-  const title = activeProfile && activeProfile !== 'default'
-    ? `Custom Commands (Profile: ${activeProfile})`
-    : 'Custom Commands';
+  const title =
+    activeProfile && activeProfile !== 'default' ? `Custom Commands (Profile: ${activeProfile})` : 'Custom Commands';
 
   const footerContent = (
     <Box marginLeft={1} flexGrow={1} marginRight={1} flexShrink={0}>

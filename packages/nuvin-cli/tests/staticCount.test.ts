@@ -125,9 +125,7 @@ describe('calculateStaticCount', () => {
   });
 
   it('should return 0 when first message is streaming', () => {
-    const messages = [
-      createMessage({ type: 'assistant', metadata: { isStreaming: true } }),
-    ];
+    const messages = [createMessage({ type: 'assistant', metadata: { isStreaming: true } })];
     expect(calculateStaticCount(messages)).toBe(0);
   });
 

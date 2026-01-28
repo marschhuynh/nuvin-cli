@@ -64,17 +64,13 @@ function OptionItem({ option, idx, isSelected, isMultiSelect }: OptionItemProps)
   };
 
   return (
-    <Box ref={containerRef} flexWrap='nowrap'>
+    <Box ref={containerRef} flexWrap="nowrap">
       <Box flexShrink={0} flexWrap="nowrap">
         <Box>
-          <Text color={isFocused ? theme.tokens.cyan : undefined}>
-            {isFocused ? '❯ ' : '  '}
-          </Text>
+          <Text color={isFocused ? theme.tokens.cyan : undefined}>{isFocused ? '❯ ' : '  '}</Text>
         </Box>
         <Box>
-          <Text color={isSelected ? theme.tokens.green : undefined}>
-            {getIcon()}
-          </Text>
+          <Text color={isSelected ? theme.tokens.green : undefined}>{getIcon()}</Text>
         </Box>
       </Box>
       <Text>
@@ -118,12 +114,8 @@ function OtherOption({
   return (
     <Box>
       <Box flexShrink={0}>
-        <Text color={isFocused ? theme.tokens.cyan : undefined}>
-          {isFocused ? '❯ ' : '  '}
-        </Text>
-        <Text color={isSelected ? theme.tokens.green : undefined}>
-          {getIcon()}
-        </Text>
+        <Text color={isFocused ? theme.tokens.cyan : undefined}>{isFocused ? '❯ ' : '  '}</Text>
+        <Text color={isSelected ? theme.tokens.green : undefined}>{getIcon()}</Text>
         <Text bold={isFocused} color={isFocused ? theme.tokens.cyan : isSelected ? theme.tokens.green : undefined}>
           Other
         </Text>
@@ -154,7 +146,10 @@ function UserQuestionPromptContent({ questionData }: Props) {
 
   const currentQuestion = questionData.questions[currentQuestionIndex];
   const questionId = currentQuestion.id;
-  const optionsWithOther = useMemo(() => [...currentQuestion.options, { label: 'Other', description: '' }], [currentQuestion.options]);
+  const optionsWithOther = useMemo(
+    () => [...currentQuestion.options, { label: 'Other', description: '' }],
+    [currentQuestion.options],
+  );
   const otherIndex = optionsWithOther.length - 1;
   const hasMultipleQuestions = questionData.questions.length > 1;
 
@@ -164,13 +159,16 @@ function UserQuestionPromptContent({ questionData }: Props) {
   const isSubmitFocused = focusedId === FOCUS_ID.SUBMIT;
   const focusedOptionIndex = parseFocusedIndex(focusedId);
 
-  const isQuestionAnswered = useCallback((qId: string) => {
-    const answer = answers[qId];
-    if (Array.isArray(answer)) {
-      return answer.length > 0;
-    }
-    return answer && answer.length > 0;
-  }, [answers]);
+  const isQuestionAnswered = useCallback(
+    (qId: string) => {
+      const answer = answers[qId];
+      if (Array.isArray(answer)) {
+        return answer.length > 0;
+      }
+      return answer && answer.length > 0;
+    },
+    [answers],
+  );
 
   const allQuestionsAnswered = useMemo(() => {
     return questionData.questions.every((q) => isQuestionAnswered(q.id));
@@ -348,7 +346,18 @@ function UserQuestionPromptContent({ questionData }: Props) {
         }
       }
     },
-    [currentQuestion.multiSelect, questionId, otherIndex, setSelectedOptions, selectedOptions, optionsWithOther, answers, questionData.questions, findNextUnansweredQuestion, setFocusedId],
+    [
+      currentQuestion.multiSelect,
+      questionId,
+      otherIndex,
+      setSelectedOptions,
+      selectedOptions,
+      optionsWithOther,
+      answers,
+      questionData.questions,
+      findNextUnansweredQuestion,
+      setFocusedId,
+    ],
   );
 
   const handleToggle = useCallback(() => {
@@ -404,7 +413,15 @@ function UserQuestionPromptContent({ questionData }: Props) {
         setFocusedId(FOCUS_ID.OPTION(0));
       }
     }
-  }, [focusedOptionIndex, optionsWithOther, questionId, answers, questionData.questions, findNextUnansweredQuestion, setFocusedId]);
+  }, [
+    focusedOptionIndex,
+    optionsWithOther,
+    questionId,
+    answers,
+    questionData.questions,
+    findNextUnansweredQuestion,
+    setFocusedId,
+  ]);
 
   const handleMultiSelectNext = useCallback(() => {
     saveCurrentAnswer();
@@ -435,7 +452,18 @@ function UserQuestionPromptContent({ questionData }: Props) {
         setFocusedId(FOCUS_ID.OPTION(0));
       }
     }
-  }, [saveCurrentAnswer, selectedOptions, otherIndex, customInput, optionsWithOther, answers, questionId, questionData.questions, findNextUnansweredQuestion, setFocusedId]);
+  }, [
+    saveCurrentAnswer,
+    selectedOptions,
+    otherIndex,
+    customInput,
+    optionsWithOther,
+    answers,
+    questionId,
+    questionData.questions,
+    findNextUnansweredQuestion,
+    setFocusedId,
+  ]);
 
   const submitAllAnswers = useCallback(() => {
     if (allQuestionsAnswered) {
@@ -486,24 +514,26 @@ function UserQuestionPromptContent({ questionData }: Props) {
   const title = <Text>{currentQuestion.header}</Text>;
 
   const rightTitle = (
-    <Text>{currentQuestionIndex + 1}/{questionData.questions.length}</Text>
+    <Text>
+      {currentQuestionIndex + 1}/{questionData.questions.length}
+    </Text>
   );
 
   const footerSegments = currentQuestion.multiSelect
     ? [
-      { text: '↑↓/←→/Tab', highlight: true },
-      { text: ' navigate • ' },
-      { text: 'Enter', highlight: true },
-      { text: ' submit • ' },
-      { text: 'Space', highlight: true },
-      { text: ' toggle' },
-    ]
+        { text: '↑↓/←→/Tab', highlight: true },
+        { text: ' navigate • ' },
+        { text: 'Enter', highlight: true },
+        { text: ' submit • ' },
+        { text: 'Space', highlight: true },
+        { text: ' toggle' },
+      ]
     : [
-      { text: '↑↓/←→/Tab', highlight: true },
-      { text: ' navigate • ' },
-      { text: 'Enter', highlight: true },
-      { text: ' submit' },
-    ];
+        { text: '↑↓/←→/Tab', highlight: true },
+        { text: ' navigate • ' },
+        { text: 'Enter', highlight: true },
+        { text: ' submit' },
+      ];
 
   const footer = (
     <Box marginLeft={1} flexGrow={1} marginRight={1}>
@@ -529,7 +559,8 @@ function UserQuestionPromptContent({ questionData }: Props) {
         {optionsWithOther.map((option, idx) => {
           const isSelected = currentQuestion.multiSelect
             ? selectedOptions.has(idx)
-            : answers[questionId] === option.label || (idx === otherIndex && !!customInput.trim() && answers[questionId] === customInput.trim());
+            : answers[questionId] === option.label ||
+              (idx === otherIndex && !!customInput.trim() && answers[questionId] === customInput.trim());
           const isOther = idx === otherIndex;
 
           if (isOther) {

@@ -196,11 +196,18 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   );
 
   const commandItems = useMemo(
-    () => commands.map((cmd) => ({ label: `${cmd.id} - ${cmd.description}`, value: cmd.id, description: cmd.description })),
+    () =>
+      commands.map((cmd) => ({ label: `${cmd.id} - ${cmd.description}`, value: cmd.id, description: cmd.description })),
     [commands],
   );
 
-  const mode = hasPendingQuestion ? 'question' : hasPendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
+  const mode = hasPendingQuestion
+    ? 'question'
+    : hasPendingApproval
+      ? 'approval'
+      : hasActiveCommand
+        ? 'command'
+        : 'input';
 
   const renderDynamicContent = () => {
     switch (mode) {
