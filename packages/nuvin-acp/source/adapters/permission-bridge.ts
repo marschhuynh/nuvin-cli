@@ -9,10 +9,17 @@ import type {
 } from '../protocol/types.js';
 import type { StdioTransport } from '../transport/stdio.js';
 import type { JsonRpcResponse } from '../jsonrpc/types.js';
+import { appendFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 
+const logsDir = join(homedir(), '.nuvin', 'logs');
+if (!existsSync(logsDir)) {
+  mkdirSync(logsDir, { recursive: true });
+}
 type PendingRequest = {
-  resolve: (result: RequestPermissionResult) => void;
-  reject: (error: Error) => void;
+  resolve: (value: RequestPermissionResult | PromiseLike<RequestPermissionResult>) => void;
+  reject: (reason?: Error) => void;
 };
 
 export class PermissionBridge {
@@ -21,10 +28,7 @@ export class PermissionBridge {
 
   constructor(private transport: StdioTransport) {}
 
-  async requestPermission(
-    sessionId: SessionId,
-    toolCall: ToolCall,
-  ): Promise<'approve' | 'deny'> {
+  async requestPermission(sessionId: SessionId, toolCall: ToolCall): Promise<'approve' | 'approve_always' | 'deny'> {
     const requestId = this.nextRequestId++;
 
     const params: RequestPermissionParams = {
@@ -41,6 +45,9 @@ export class PermissionBridge {
     const result = await this.sendRequest(requestId, params);
 
     if (result.outcome.outcome === 'selected') {
+      if (result.outcome.optionId === 'allow-always') {
+        return 'approve_always';
+      }
       return result.outcome.optionId.startsWith('allow') ? 'approve' : 'deny';
     }
 
@@ -60,19 +67,18 @@ export class PermissionBridge {
     }
   }
 
-  private sendRequest(
-    id: number,
-    params: RequestPermissionParams
-  ): Promise<RequestPermissionResult> {
+  private sendRequest(id: number, params: RequestPermissionParams): Promise<RequestPermissionResult> {
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject });
 
-      this.transport.send({
-        jsonrpc: '2.0',
-        id,
-        method: 'session/request_permission',
-        params,
-      }).catch(reject);
+      this.transport
+        .send({
+          jsonrpc: '2.0',
+          id,
+          method: 'session/request_permission',
+          params,
+        })
+        .catch(reject);
     });
   }
 

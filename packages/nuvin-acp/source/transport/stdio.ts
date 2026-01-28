@@ -51,8 +51,11 @@ export class StdioTransport {
     const line = JSON.stringify(message) + '\n';
     return new Promise((resolve, reject) => {
       this.output.write(line, (error) => {
-        if (error) reject(error);
-        else resolve();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
       });
     });
   }
