@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.9
+
+### Patch Changes
+
+- [`42b4cc7`](https://github.com/marschhuynh/nuvin-space/commit/42b4cc7099826b964d821bdc79c74e72a2bb8ee6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(ToolResultView): remove unused duration formatting and adjust layout for better display
+
 ## 1.36.0-rc.8
 
 ### Minor Changes
