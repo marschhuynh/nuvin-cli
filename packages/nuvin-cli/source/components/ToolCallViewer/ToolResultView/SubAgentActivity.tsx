@@ -8,6 +8,7 @@ import {
 } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters/index';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions';
 import { ToolResultView } from './ToolResultView';
 import { ToolTimer } from '../../ToolTimer';
 import { GradientRunText } from '../../Gradient';
@@ -72,6 +73,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
   messageId,
 }) => {
   const { theme } = useTheme();
+  const { cols } = useStdoutDimensions();
 
   // Parse arguments to display
   const args =
@@ -119,7 +121,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
       </Box>
 
       {/* Parameters: agent and task */}
-      <Box flexDirection="column" marginLeft={2} width="100%">
+      <Box flexDirection="column" marginLeft={2}>
         <Box
           flexDirection="column"
           borderStyle="single"
@@ -130,6 +132,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
           borderTop={false}
           paddingLeft={2}
           flexShrink={0}
+          width={cols - 4}
         >
           {subAgentState.toolCalls.slice(-3).map((toolCall) => {
             let argsDisplay = '';
@@ -159,12 +162,12 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
             }
 
             return (
-              <Box key={toolCall.id} width={'100%'} overflow='hidden' flexDirection="row" height={1}>
+              <Box key={toolCall.id} overflow="hidden" flexDirection="row" height={1}>
                 {statusIcon ? <Text color={statusIconColor}>{statusIcon}</Text> : null}
-                <Box flexWrap="nowrap" width="100%" overflow="hidden">
-                  <Text wrap="truncate-middle" dimColor>
+                <Box flexWrap="nowrap" flexGrow={1} overflow="hidden">
+                  <Text wrap="truncate-middle">
                     <Text dimColor={false}>{getToolDisplayName(toolCall.name)}</Text>
-                    <Text dimColor wrap="truncate-middle">
+                    <Text dimColor>
                       {argsDisplay}
                     </Text>
                   </Text>
