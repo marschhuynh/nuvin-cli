@@ -12,7 +12,6 @@ import { BashToolRenderer } from './renderers/BashToolRenderer.js';
 import { DefaultRenderer } from './renderers/DefaultRenderer.js';
 import { AskUserRenderer } from './renderers/AskUserRenderer.js';
 import { LAYOUT } from './renderers/constants.js';
-import { formatDuration } from '@/utils/formatters.js';
 import { getStatusMessage } from './statusStrategies/index.js';
 import { isCollapsedTool } from '@/components/toolRegistry.js';
 
@@ -37,7 +36,6 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
 }) => {
   const { theme } = useTheme();
   const { cols } = useStdoutDimensions();
-  const durationText = formatDuration(toolResult.durationMs);
   const { text, color, statusPosition = 'top' } = getStatusMessage(toolResult, toolCall, theme, subAgentMetrics);
 
   const renderContent = () => {
@@ -156,9 +154,9 @@ export const ToolResultView: React.FC<ToolResultViewProps> = ({
         </Box>
       )}
       {showDone && (
-        <Box flexDirection="row">
-          <Text dimColor color={color}>
-            {`└─ Done${durationText && (toolResult.durationMs ?? 0) > 1000 ? ` in ${durationText}` : ''}`}
+        <Box flexDirection="row" flexGrow={1}>
+          <Text dimColor color={color} wrap="wrap">
+            {`└─ ${text}`}
           </Text>
         </Box>
       )}
