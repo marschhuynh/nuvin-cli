@@ -510,6 +510,7 @@ export const AgentEventTypes = {
   SubAgentMetrics: 'sub_agent_metrics',
   UserQuestionRequired: 'user_question_required',
   UserQuestionResponse: 'user_question_response',
+  CommandsAvailable: 'commands_available',
 } as const;
 
 export type ToolApprovalDecision = 'approve' | 'deny' | 'approve_all' | 'edit';
@@ -667,6 +668,19 @@ export type AgentEvent =
       messageId: string;
       questionId: string;
       answers: Record<string, string | string[]>;
+    }
+  | {
+      type: typeof AgentEventTypes.CommandsAvailable;
+      conversationId?: string;
+      commands: Array<{
+        name: string;
+        description: string;
+        arguments?: Array<{
+          name: string;
+          description?: string;
+          required?: boolean;
+        }>;
+      }>;
     };
 
 export interface EventPort {

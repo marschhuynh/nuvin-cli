@@ -470,10 +470,10 @@ export class AnthropicAISDKLLM {
   async streamCompletion(
     params: CompletionParams,
     handlers: {
-      onChunk?: (delta: string, usage?: UsageData) => void;
-      onToolCallDelta?: (tc: ToolCall) => void;
-      onStreamFinish?: (finishReason?: string, usage?: UsageData) => void;
-      onUsage?: (usage: UsageData) => void;
+      onChunk?: (delta: string, usage?: UsageData) => Promise<void>;
+      onToolCallDelta?: (tc: ToolCall) => Promise<void>;
+      onStreamFinish?: (finishReason?: string, usage?: UsageData) => Promise<void>;
+      onUsage?: (usage: UsageData) => Promise<void>;
     } = {},
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
@@ -512,7 +512,7 @@ export class AnthropicAISDKLLM {
 
       for await (const chunk of result.textStream) {
         content += chunk;
-        handlers.onChunk?.(chunk);
+        await handlers.onChunk?.(chunk);
       }
 
       if (streamError) {

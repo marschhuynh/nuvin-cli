@@ -1,0 +1,29 @@
+{
+  "name": "@nuvin/nuvin-acp",
+  "version": "0.1.0",
+  "description": "ACP (Agent Client Protocol) server for Nuvin",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "lint": "biome lint source/"
+  },
+  "dependencies": {
+    "@nuvin/nuvin-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.0.0"
+  }
+}
