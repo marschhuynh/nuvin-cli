@@ -57,15 +57,12 @@
     {
       "key": "kimi",
       "label": "Kimi for Coding",
-      "type": "openai-compat",
+      "type": "anthropic-compat",
       "baseUrl": "https://api.kimi.com/coding/v1",
       "features": {
         "promptCaching": true,
         "getModels": true,
         "includeUsage": true
-      },
-      "customHeaders": {
-        "User-Agent": "KimiCLI/0.59"
       }
     },
     {

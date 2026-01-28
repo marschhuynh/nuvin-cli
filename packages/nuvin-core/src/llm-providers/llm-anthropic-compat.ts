@@ -19,6 +19,7 @@ export interface GenericAnthropicLLMOptions {
   httpLogFile?: string;
   enablePromptCaching?: boolean;
   providerName?: string;
+  version?: string;
   customHeaders?: Record<string, string>;
   retry?: Partial<RetryConfig>;
   modelConfig?: ModelConfig;
@@ -121,7 +122,7 @@ export class GenericAnthropicLLM implements LLMPort {
       ...this.opts.customHeaders,
     };
 
-    const authTransport = createTransport(base, this.apiUrl, undefined, undefined, undefined, headers);
+    const authTransport = createTransport(base, this.apiUrl, undefined, undefined, this.opts.version, headers);
     const transport = this.opts.retry ? new RetryTransport(authTransport, this.opts.retry) : authTransport;
     return new LLMErrorTransport(transport);
   }
