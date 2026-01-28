@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.5
+
+### Minor Changes
+
+- [`93da975`](https://github.com/marschhuynh/nuvin-space/commit/93da9755fc17231a4d1608bdfe49c85699bb84f5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add version option to GenericAnthropicLLM for User-Agent header; migrate Kimi provider from openai-compat to anthropic-compat
+
 ## 1.19.0-rc.4
 
 ### Minor Changes

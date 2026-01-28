@@ -16,6 +16,7 @@
     "fix-tabindex-focus-order",
     "github-responses-api",
     "hook-system-implementation",
+    "kimi-anthropic-compat",
     "lsp-history-refresh",
     "minimax-fix-changes",
     "quiet-ears-jam",
