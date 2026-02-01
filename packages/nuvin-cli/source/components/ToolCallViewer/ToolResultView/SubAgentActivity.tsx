@@ -4,22 +4,55 @@ import {
   type ToolCall,
   type ToolExecutionResult,
   type SubAgentState,
+  type MetricsSnapshot,
   parseToolArguments,
+  isAssignSuccess,
 } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters/index';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions';
-import { ToolResultView } from './ToolResultView';
 import { ToolTimer } from '../../ToolTimer';
 import { GradientRunText } from '../../Gradient';
-import { formatCost, formatTokens } from '@/utils/formatters';
+import { Markdown } from '../../Markdown/index.js';
+import { formatCost, formatDuration, formatTokens } from '@/utils/formatters';
 import { getToolDisplayName } from '@/components/toolRegistry';
+import { get } from '@/utils/get.js';
 
 type SubAgentActivityProps = {
   toolCall: ToolCall;
   subAgentState: SubAgentState;
   toolResult?: MessageLineType;
   messageId: string;
+};
+
+/**
+ * Generate status text for assign_task result
+ */
+const getAssignTaskStatusText = (
+  result: ToolExecutionResult,
+  subAgentMetrics?: MetricsSnapshot,
+): string => {
+  if (isAssignSuccess(result)) {
+    const parts: string[] = ['Done'];
+    const executionTimeMs = get(result, 'metadata.executionTimeMs') as number | undefined;
+    const toolCallsExecuted = get(result, 'metadata.toolCallsExecuted') as number | undefined;
+    const tokensUsed = get(result, 'metadata.tokensUsed') as number | undefined;
+
+    if (subAgentMetrics) {
+      parts.push(`${subAgentMetrics.llmCallCount} calls`);
+      parts.push(`${formatTokens(subAgentMetrics.totalTokens)} tokens`);
+      if (subAgentMetrics.totalCost > 0) parts.push(`$${formatCost(subAgentMetrics.totalCost)}`);
+      if (executionTimeMs) parts.push(`${formatDuration(executionTimeMs)}`);
+    } else {
+      if (toolCallsExecuted) parts.push(`${toolCallsExecuted} tools`);
+      if (tokensUsed) parts.push(`${formatTokens(tokensUsed)} tokens`);
+      if (executionTimeMs) parts.push(`${formatDuration(executionTimeMs)}`);
+    }
+
+    return parts.join(' • ');
+  }
+
+  return 'Error';
 };
 
 const getMainArgument = (toolName: string, args: Record<string, unknown>): string | undefined => {
@@ -70,7 +103,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
   toolCall,
   subAgentState,
   toolResult,
-  messageId,
+  messageId: _messageId,
 }) => {
   const { theme } = useTheme();
   const { cols } = useStdoutDimensions();
@@ -198,17 +231,33 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
         </Box>
       )}
 
-      {/* Tool Result (when available) - handled by ToolResultView with assign_task special case */}
-      {isCompleted && toolExecutionResult && toolResult ? (
-        <Box marginBottom={1}>
-          <ToolResultView
-            toolResult={toolExecutionResult}
-            toolCall={toolCall}
-            messageId={`${messageId}-result-${toolCall.id}`}
-            messageContent={toolResult.content || ''}
-            fullMode={false}
-            subAgentMetrics={subAgentState.metrics}
-          />
+      {/* Tool Result (when available) - inline rendering for assign_task */}
+      {isCompleted && toolExecutionResult ? (
+        <Box marginLeft={2} marginBottom={1} flexDirection="column">
+          {/* Result content */}
+          {toolExecutionResult.result && (
+            <Box
+              borderStyle="single"
+              borderColor={statusColor}
+              borderDimColor
+              borderBottom={false}
+              borderRight={false}
+              borderTop={false}
+              flexDirection="column"
+              paddingLeft={2}
+              width={cols - 10}
+            >
+              <Markdown maxWidth={cols - 16}>
+                {typeof toolExecutionResult.result === 'string'
+                  ? toolExecutionResult.result.replace(/\\n/g, '\n')
+                  : JSON.stringify(toolExecutionResult.result, null, 2)}
+              </Markdown>
+            </Box>
+          )}
+          {/* Status line */}
+          <Box flexDirection="row">
+            <Text dimColor color={statusColor}>{`└─ ${getAssignTaskStatusText(toolExecutionResult, subAgentState.metrics)}`}</Text>
+          </Box>
         </Box>
       ) : null}
     </Box>
