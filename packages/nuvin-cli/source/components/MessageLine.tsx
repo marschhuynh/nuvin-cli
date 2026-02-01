@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import { Markdown } from './Markdown';
-import type { ToolCall } from '@nuvin/nuvin-core';
+import type { ToolCall, ToolExecutionResult } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { SubAgentState } from '@/utils/eventProcessor.js';
@@ -10,6 +10,7 @@ import { useToolApproval } from '@/contexts/ToolApprovalContext';
 import { ToolCallViewer } from './ToolCallViewer';
 import { AutoScrollBox } from './AutoScrollBox.js';
 import { SubAgentActivity } from './ToolCallViewer/ToolResultView';
+import { computeToolState } from './ToolCallViewer/computeToolState.js';
 
 type MessageLineProps = {
   key: string;
@@ -121,6 +122,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                       key={toolCall.id || `${message.id}-tool-${callIndex}`}
                       toolCall={toolCall}
                       toolResult={toolResultMsg}
+                      toolState={computeToolState(toolResultMsg?.metadata?.toolResult as ToolExecutionResult | undefined)}
                       messageId={message.id}
                     />
                   </Box>
