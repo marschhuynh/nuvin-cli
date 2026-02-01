@@ -1,5 +1,5 @@
 import type { AgentConfig, LLMPort, ToolPort, Message, MessageResponse, AgentEvent, LLMFactory, MemoryPort } from './ports.js';
-import { AgentEventTypes } from './ports.js';
+import { AgentEventTypes, ErrorReason } from './ports.js';
 import { LLMResolver } from './delegation/llm-resolver.js';
 import { DefaultAgentStateManager, type AgentStateManager } from './delegation/agent-manager.js';
 import type { SpecialistAgentConfig, SpecialistAgentResult } from './agent-types.js';
@@ -60,6 +60,7 @@ export class AgentManager {
           toolCallsExecuted: 0,
           executionTimeMs: 0,
           errorMessage: 'Aborted before execution',
+          errorReason: ErrorReason.Aborted,
         },
       };
     }
@@ -287,6 +288,14 @@ export class AgentManager {
       const isAborted = error instanceof Error && (error.message.includes('aborted') || error.name === 'AbortError');
       const status = isTimeout ? 'timeout' : isAborted ? 'error' : 'error';
 
+      // Determine error reason for metadata
+      let errorReason: ErrorReason | undefined;
+      if (isAborted) {
+        errorReason = ErrorReason.Aborted;
+      } else if (isTimeout) {
+        errorReason = ErrorReason.Timeout;
+      }
+
       // Update state manager on failure
       this.stateManager.update(agentId, {
         state: 'failed',
@@ -315,6 +324,7 @@ export class AgentManager {
           toolCallsExecuted: events.filter((e) => e.type === 'tool_calls').length,
           executionTimeMs,
           errorMessage,
+          errorReason,
           events,
           sessionId: agentId,
         },

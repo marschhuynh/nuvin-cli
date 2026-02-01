@@ -5,14 +5,7 @@ import type { Theme } from '@/theme.js';
 /**
  * Computed tool state - determined once in merge logic
  */
-export type ComputedToolState = 
-  | 'running' 
-  | 'success' 
-  | 'error' 
-  | 'denied' 
-  | 'edited' 
-  | 'aborted' 
-  | 'timeout';
+export type ComputedToolState = 'running' | 'success' | 'error' | 'denied' | 'edited' | 'aborted' | 'timeout';
 
 /**
  * Context passed to all render functions
@@ -36,9 +29,13 @@ export type RenderFn = (ctx: ToolRenderContext) => React.ReactNode | null;
  * Tool configuration - single source of truth for each tool
  */
 export type ToolConfig = {
-  /** Display name shown in header (e.g., "Edit", "Read", "Run") */
-  displayName: string;
-  
+  /** 
+   * Display name shown in header (e.g., "Edit", "Read", "Run")
+   * - string: static display name
+   * - function: dynamic display name based on context
+   */
+  displayName: string | ((ctx: ToolRenderContext) => string);
+
   /** Status text configuration */
   statusText?: {
     /** Success message - string or function for dynamic text */
@@ -46,25 +43,51 @@ export type ToolConfig = {
     /** Error message */
     error?: string;
   };
-  
+
   /** Where to show status line: 'top' (default) or 'bottom' */
   statusPosition?: 'top' | 'bottom';
-  
-  /** Custom header renderer (tool name + inline args) */
-  renderHeader?: RenderFn;
-  
-  /** Custom params renderer (expanded parameter details) */
-  renderParams?: RenderFn;
-  
-  /** Custom result renderer (tool execution result content) */
-  renderResult?: RenderFn;
-  
-  /** Custom status renderer (status line) */
-  renderStatus?: RenderFn;
-  
+
+  /**
+   * Parameter keys to exclude from default params renderer
+   * These are typically shown in the header or are internal metadata
+   */
+  excludeParams?: string[];
+
+  /**
+   * Custom header renderer (tool name + inline args)
+   * - undefined: use default renderer
+   * - null: don't render header
+   * - function: use custom renderer
+   */
+  renderHeader?: RenderFn | null;
+
+  /**
+   * Custom params renderer (expanded parameter details)
+   * - undefined: use default renderer
+   * - null: don't render params
+   * - function: use custom renderer
+   */
+  renderParams?: RenderFn | null;
+
+  /**
+   * Custom result renderer (tool execution result content)
+   * - undefined: use default renderer
+   * - null: don't render result
+   * - function: use custom renderer
+   */
+  renderResult?: RenderFn | null;
+
+  /**
+   * Custom status renderer (status line)
+   * - undefined: use default renderer
+   * - null: don't render status
+   * - function: use custom renderer
+   */
+  renderStatus?: RenderFn | null;
+
   /** Collapse result content by default */
   collapsedByDefault?: boolean;
-  
+
   /** Hide entire tool until it has a result (e.g., ask_user_tool) */
   hideUntilComplete?: boolean;
 };

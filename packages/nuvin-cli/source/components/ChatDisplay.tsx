@@ -78,8 +78,8 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
 
           const output: MessageLineType = {
             ...msg,
-            metadata: { 
-              ...msg.metadata, 
+            metadata: {
+              ...msg.metadata,
               toolResultsByCallId: resultsByCallId,
               toolStates, // Add computed states
             },

@@ -292,17 +292,33 @@ export class AssignTool implements FunctionTool<AssignParams, ToolExecutionConte
 
     const outcome = await this.delegationService.delegate(params, context);
     if (!outcome.success || !outcome.summary) {
-      const isNotFound = outcome.error?.includes('not found');
-      const isPolicyDenied = outcome.error?.includes('policy') || outcome.error?.includes('denied');
+      const errorMsg = outcome.error ?? 'Failed to delegate task.';
+      const isNotFound = errorMsg.includes('not found');
+      const isPolicyDenied = errorMsg.includes('policy') || errorMsg.includes('denied');
+      const isAborted = errorMsg.includes('aborted');
+      const isTimeout = errorMsg.includes('timeout');
+
+      // Determine appropriate error reason
+      let errorReason = ErrorReason.Unknown;
+      if (isAborted) {
+        errorReason = ErrorReason.Aborted;
+      } else if (isTimeout) {
+        errorReason = ErrorReason.Timeout;
+      } else if (isNotFound) {
+        errorReason = ErrorReason.NotFound;
+      } else if (isPolicyDenied) {
+        errorReason = ErrorReason.PermissionDenied;
+      }
+
       return err(
-        outcome.error ?? 'Failed to delegate task.',
+        errorMsg,
         {
           agentId: params.agent,
           agentNotFound: isNotFound,
           policyDenied: isPolicyDenied,
           delegationDepth: context?.delegationDepth,
         },
-        ErrorReason.Unknown,
+        errorReason,
       );
     }
 

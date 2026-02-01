@@ -31,22 +31,22 @@ describe('todo_write - Snapshot Tests', () => {
       {
         id: '1',
         content: 'Implement feature X',
-        status: 'completed',
-        priority: 'high',
+        status: 'completed' as const,
+        priority: 'high' as const,
         createdAt: '2024-01-31T10:00:00Z',
       },
       {
         id: '2',
         content: 'Write tests for feature X',
-        status: 'in_progress',
-        priority: 'high',
+        status: 'in_progress' as const,
+        priority: 'high' as const,
         createdAt: '2024-01-31T10:05:00Z',
       },
       {
         id: '3',
         content: 'Update documentation',
-        status: 'pending',
-        priority: 'medium',
+        status: 'pending' as const,
+        priority: 'medium' as const,
         createdAt: '2024-01-31T10:10:00Z',
       },
     ];
@@ -55,6 +55,7 @@ describe('todo_write - Snapshot Tests', () => {
       todos,
     });
     const toolResult = createMockToolResult('todo_write', 'Todo list updated successfully', {
+      items: todos,
       stats: {
         completed: 1,
         total: 3,
@@ -80,15 +81,15 @@ describe('todo_write - Snapshot Tests', () => {
       {
         id: '1',
         content: 'Task 1',
-        status: 'completed',
-        priority: 'high',
+        status: 'completed' as const,
+        priority: 'high' as const,
         createdAt: '2024-01-31T10:00:00Z',
       },
       {
         id: '2',
         content: 'Task 2',
-        status: 'completed',
-        priority: 'medium',
+        status: 'completed' as const,
+        priority: 'medium' as const,
         createdAt: '2024-01-31T10:05:00Z',
       },
     ];
@@ -97,6 +98,7 @@ describe('todo_write - Snapshot Tests', () => {
       todos,
     });
     const toolResult = createMockToolResult('todo_write', 'Todo list updated successfully', {
+      items: todos,
       stats: {
         completed: 2,
         total: 2,
@@ -122,6 +124,7 @@ describe('todo_write - Snapshot Tests', () => {
       todos: [],
     });
     const toolResult = createMockToolResult('todo_write', 'Todo list updated successfully', {
+      items: [],
       stats: {
         completed: 0,
         total: 0,
@@ -147,8 +150,8 @@ describe('todo_write - Snapshot Tests', () => {
       {
         id: '1',
         content: 'Simple task',
-        status: 'pending',
-        priority: 'low',
+        status: 'pending' as const,
+        priority: 'low' as const,
         createdAt: '2024-01-31T10:00:00Z',
       },
     ];
@@ -156,7 +159,9 @@ describe('todo_write - Snapshot Tests', () => {
     const toolCall = createMockToolCall('todo_write', {
       todos,
     });
-    const toolResult = createMockToolResult('todo_write', 'Todo list updated successfully');
+    const toolResult = createMockToolResult('todo_write', 'Todo list updated successfully', {
+      items: todos,
+    });
     const resultMessage = createMockToolResultMessage(toolResult, 67);
 
     const { lastFrame } = render(

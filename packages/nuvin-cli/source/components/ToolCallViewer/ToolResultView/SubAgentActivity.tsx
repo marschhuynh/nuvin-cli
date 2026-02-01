@@ -15,7 +15,8 @@ import { ToolTimer } from '../../ToolTimer';
 import { GradientRunText } from '../../Gradient';
 import { Markdown } from '../../Markdown/index.js';
 import { formatCost, formatDuration, formatTokens } from '@/utils/formatters';
-import { getToolDisplayName } from '@/components/toolRegistry';
+import { getToolConfig } from '@/components/ToolCallViewer/registry';
+import type { ToolRenderContext, ComputedToolState } from '@/components/ToolCallViewer/types';
 import { get } from '@/utils/get.js';
 
 type SubAgentActivityProps = {
@@ -28,10 +29,7 @@ type SubAgentActivityProps = {
 /**
  * Generate status text for assign_task result
  */
-const getAssignTaskStatusText = (
-  result: ToolExecutionResult,
-  subAgentMetrics?: MetricsSnapshot,
-): string => {
+const getAssignTaskStatusText = (result: ToolExecutionResult, subAgentMetrics?: MetricsSnapshot): string => {
   if (isAssignSuccess(result)) {
     const parts: string[] = ['Done'];
     const executionTimeMs = get(result, 'metadata.executionTimeMs') as number | undefined;
@@ -52,7 +50,8 @@ const getAssignTaskStatusText = (
     return parts.join(' • ');
   }
 
-  return 'Error';
+  // For errors, show the actual error message
+  return typeof result.result === 'string' ? result.result : 'Error';
 };
 
 const getMainArgument = (toolName: string, args: Record<string, unknown>): string | undefined => {
@@ -139,12 +138,7 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
   return (
     <Box flexDirection="column" marginTop={1}>
       {/* Header: [Agent Name] - sticky with background to cover scrolled content */}
-      <Box
-        flexDirection="row"
-        flexShrink={0}
-        top={0}
-        position="sticky"
-      >
+      <Box flexDirection="row" flexShrink={0} top={0} position="sticky">
         <Box flexShrink={0} marginRight={1}>
           <Text color={theme.messageTypes.tool} bold>
             »
@@ -169,10 +163,11 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
         >
           {subAgentState.toolCalls.slice(-3).map((toolCall) => {
             let argsDisplay = '';
+            let args: Record<string, unknown> = {};
 
             if (toolCall.arguments) {
               try {
-                const args = parseToolArguments(toolCall.arguments) as Record<string, unknown>;
+                args = parseToolArguments(toolCall.arguments) as Record<string, unknown>;
                 const mainArg = getMainArgument(toolCall.name, args);
 
                 if (mainArg) {
@@ -186,23 +181,45 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
             // Determine status icon and color
             let statusIcon = '  ';
             let statusIconColor = theme.colors.textDim;
+            let toolState: ComputedToolState = 'running';
+
             if (toolCall.status === 'success') {
               statusIcon = '✓ ';
               statusIconColor = theme.status.success;
+              toolState = 'success';
             } else if (toolCall.status === 'error') {
               statusIcon = '✗ ';
               statusIconColor = theme.status.error;
+              toolState = 'error';
             }
+
+            // Get tool config and resolve displayName
+            const config = getToolConfig(toolCall.name);
+            const ctx: ToolRenderContext = {
+              toolCall: {
+                id: toolCall.id,
+                type: 'function',
+                function: {
+                  name: toolCall.name,
+                  arguments: JSON.stringify(args),
+                },
+              },
+              toolState,
+              args,
+              theme,
+              cols,
+              config,
+            };
+
+            const displayName = typeof config.displayName === 'function' ? config.displayName(ctx) : config.displayName;
 
             return (
               <Box key={toolCall.id} overflow="hidden" flexDirection="row" height={1}>
                 {statusIcon ? <Text color={statusIconColor}>{statusIcon}</Text> : null}
                 <Box flexWrap="nowrap" flexGrow={1} overflow="hidden">
                   <Text wrap="truncate-middle">
-                    <Text dimColor={false}>{getToolDisplayName(toolCall.name)}</Text>
-                    <Text dimColor>
-                      {argsDisplay}
-                    </Text>
+                    <Text dimColor={false}>{displayName}</Text>
+                    <Text dimColor>{argsDisplay}</Text>
                   </Text>
                 </Box>
               </Box>
@@ -234,8 +251,8 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
       {/* Tool Result (when available) - inline rendering for assign_task */}
       {isCompleted && toolExecutionResult ? (
         <Box marginLeft={2} marginBottom={1} flexDirection="column">
-          {/* Result content */}
-          {toolExecutionResult.result && (
+          {/* Result content - only show for successful completions */}
+          {toolExecutionResult.result && subAgentState.finalStatus === 'success' && (
             <Box
               borderStyle="single"
               borderColor={statusColor}
@@ -256,7 +273,10 @@ export const SubAgentActivity: React.FC<SubAgentActivityProps> = ({
           )}
           {/* Status line */}
           <Box flexDirection="row">
-            <Text dimColor color={statusColor}>{`└─ ${getAssignTaskStatusText(toolExecutionResult, subAgentState.metrics)}`}</Text>
+            <Text
+              dimColor
+              color={statusColor}
+            >{`└─ ${getAssignTaskStatusText(toolExecutionResult, subAgentState.metrics)}`}</Text>
           </Box>
         </Box>
       ) : null}

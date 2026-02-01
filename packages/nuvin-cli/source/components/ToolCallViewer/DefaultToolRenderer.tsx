@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Text } from 'ink';
 import type { ToolRenderContext } from './types.js';
 import { LAYOUT } from './types.js';
@@ -10,8 +9,14 @@ import { Markdown } from '@/components/Markdown/index.js';
  * Default header renderer: ⚙︎ {displayName} {mainArg}
  */
 export function defaultRenderHeader(ctx: ToolRenderContext): React.ReactNode {
-  const { config, args, theme, toolCall } = ctx;
+  const { config, args, theme, toolCall, toolState } = ctx;
   const mainArg = getMainArg(toolCall.function.name, args);
+
+  // Resolve displayName - can be string or function
+  const displayName = typeof config.displayName === 'function' ? config.displayName(ctx) : config.displayName;
+
+  // Use error color for error state, otherwise use default tool color
+  const displayNameColor = toolState === 'error' ? theme.status.error : undefined;
 
   return (
     <Box flexDirection="row">
@@ -21,7 +26,9 @@ export function defaultRenderHeader(ctx: ToolRenderContext): React.ReactNode {
         </Text>
       </Box>
       <Text wrap="truncate-middle">
-        <Text bold>{config.displayName}</Text>
+        <Text bold color={displayNameColor}>
+          {displayName}
+        </Text>
         {mainArg && <Text dimColor> {mainArg}</Text>}
       </Text>
     </Box>
@@ -29,37 +36,17 @@ export function defaultRenderHeader(ctx: ToolRenderContext): React.ReactNode {
 }
 
 /**
- * Keys to exclude from default params display
- */
-const EXCLUDED_PARAM_KEYS = new Set([
-  'old_text',
-  'new_text',
-  'description',
-  'content',
-  'file_path',
-  'path',
-  'lineStart',
-  'lineEnd',
-  'filePath',
-  'line',
-  'character',
-  'operation',
-  'cmd',
-  'cwd',
-  'pattern',
-  'url',
-  'query',
-]);
-
-/**
  * Default params renderer: key-value pairs
  */
 export function defaultRenderParams(ctx: ToolRenderContext): React.ReactNode {
-  const { args, theme, cols, toolState } = ctx;
+  const { args, theme, cols, toolState, config } = ctx;
   const color = getStateColor(toolState, theme);
 
+  // Get excluded params from config, or use empty array
+  const excludedParams = new Set(config.excludeParams || []);
+
   const entries = Object.entries(args).filter(
-    ([key, value]) => !EXCLUDED_PARAM_KEYS.has(key) && value !== undefined && value !== '',
+    ([key, value]) => !excludedParams.has(key) && value !== undefined && value !== '',
   );
 
   if (entries.length === 0) return null;
@@ -100,7 +87,31 @@ export function defaultRenderResult(ctx: ToolRenderContext): React.ReactNode {
 
   if (!toolResult?.result) return null;
 
-  const resultStr = typeof toolResult.result === 'string' ? toolResult.result : JSON.stringify(toolResult.result, null, 2);
+  let resultStr =
+    typeof toolResult.result === 'string' ? toolResult.result : JSON.stringify(toolResult.result, null, 2);
+
+  // Truncate result to max 10 lines or 1000 characters
+  const MAX_LINES = 10;
+  const MAX_CHARS = 1000;
+  let wasTruncated = false;
+
+  // First, check character limit - take last MAX_CHARS characters
+  if (resultStr.length > MAX_CHARS) {
+    resultStr = resultStr.substring(resultStr.length - MAX_CHARS);
+    wasTruncated = true;
+  }
+
+  // Then, check line limit - take last MAX_LINES lines
+  const lines = resultStr.split('\n');
+  if (lines.length > MAX_LINES) {
+    resultStr = lines.slice(-MAX_LINES).join('\n');
+    wasTruncated = true;
+  }
+
+  // Add truncation indicator if needed
+  if (wasTruncated) {
+    resultStr = '... (truncated)\n\n' + resultStr;
+  }
 
   const color = getStateColor(toolState, theme);
 

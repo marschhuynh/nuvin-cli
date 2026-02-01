@@ -14,14 +14,14 @@ import {
 } from '@nuvin/nuvin-core';
 import { formatDuration, formatTokens } from '@/utils/formatters.js';
 import { get } from '@/utils/get.js';
-import type { ToolConfig, RenderFn } from './ToolCallViewer/types.js';
+import type { ToolConfig, RenderFn } from './types.js';
 import {
   defaultRenderHeader,
   defaultRenderParams,
   defaultRenderResult,
   defaultRenderStatus,
-} from './ToolCallViewer/DefaultToolRenderer.js';
-import { fileEditRenderer, todoWriteRenderer, askUserRenderer } from './ToolCallViewer/renderers/index.js';
+} from './DefaultToolRenderer.js';
+import { fileEditRenderer, todoWriteRenderer, askUserRenderer } from './renderers/index.js';
 
 /**
  * Tool configuration registry using the new ToolConfig format.
@@ -29,7 +29,12 @@ import { fileEditRenderer, todoWriteRenderer, askUserRenderer } from './ToolCall
  */
 const TOOL_REGISTRY: Record<string, ToolConfig> = {
   file_read: {
-    displayName: 'Read',
+    displayName: (ctx) => {
+      const { toolState } = ctx;
+      if (toolState === 'running') return 'Reading';
+      if (toolState === 'error') return 'Read failed';
+      return 'Read';
+    },
     statusText: {
       success: (r: ToolExecutionResult) => {
         if (isFileReadSuccess(r)) {
@@ -40,7 +45,9 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Read failed',
     },
+    excludeParams: ['path', 'description', 'lineStart', 'lineEnd'],
     collapsedByDefault: true,
+    renderStatus: null,
   },
 
   file_edit: {
@@ -55,8 +62,9 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Edit failed',
     },
+    excludeParams: ['file_path', 'old_text', 'new_text', 'description', 'dry_run'],
     renderParams: fileEditRenderer.params,
-    renderResult: fileEditRenderer.result,
+    renderResult: null, // No separate result section - diff is shown in params
   },
 
   file_new: {
@@ -80,6 +88,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Creation failed',
     },
+    excludeParams: ['file_path', 'content', 'description'],
     collapsedByDefault: true,
   },
 
@@ -95,6 +104,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Execution failed',
     },
+    excludeParams: ['cmd', 'cwd', 'description'],
   },
 
   web_search: {
@@ -109,6 +119,8 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Search failed',
     },
+    excludeParams: ['query', 'description'],
+    renderResult: null,
   },
 
   web_fetch: {
@@ -118,14 +130,14 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
         if (isWebFetchSuccess(r)) {
           const size = get(r, 'metadata.size') as number | undefined;
           const statusCode = get(r, 'metadata.statusCode') as number | undefined;
-          return size !== undefined && statusCode !== undefined
-            ? `Fetched (${statusCode}, ${size} bytes)`
-            : 'Fetched';
+          return size !== undefined && statusCode !== undefined ? `Fetched (${statusCode}, ${size} bytes)` : 'Fetched';
         }
         return 'Fetched';
       },
       error: 'Fetch failed',
     },
+    excludeParams: ['url', 'description'],
+    renderResult: null,
   },
 
   ls_tool: {
@@ -143,6 +155,8 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Listing failed',
     },
+    excludeParams: ['path', 'description'],
+    renderResult: null,
     collapsedByDefault: true,
   },
 
@@ -161,6 +175,9 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Search failed',
     },
+    excludeParams: ['pattern', 'path', 'description'],
+    renderParams: null,
+    renderResult: null,
   },
 
   grep_tool: {
@@ -171,6 +188,12 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
           const matchCount = get(r, 'metadata.matchCount') as number | undefined;
           const fileCount = get(r, 'metadata.fileCount') as number | undefined;
           const truncated = get(r, 'metadata.truncated') as boolean | undefined;
+
+          // Show "Not found" when there are 0 matches
+          if (matchCount === 0) {
+            return 'Not found';
+          }
+
           let text = matchCount !== undefined ? `Found ${matchCount} matches` : 'Search complete';
           if (fileCount !== undefined) text += ` in ${fileCount} files`;
           if (truncated) text += ' (truncated)';
@@ -180,6 +203,9 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Search failed',
     },
+    excludeParams: ['pattern', 'path', 'include', 'description'],
+    renderParams: null,
+    renderResult: null,
   },
 
   todo_write: {
@@ -195,6 +221,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Update failed',
     },
+    renderParams: null,
     statusPosition: 'bottom',
     renderResult: todoWriteRenderer.result,
   },
@@ -228,6 +255,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       success: 'Completed',
       error: 'Failed',
     },
+    excludeParams: ['filePath', 'line', 'character', 'operation', 'query'],
   },
 
   skill: {
@@ -236,6 +264,9 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       success: 'Completed',
       error: 'Failed',
     },
+    renderResult: null,
+    renderParams: null,
+    renderStatus: null,
   },
 
   ask_user_tool: {
@@ -245,6 +276,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       error: 'Failed',
     },
     hideUntilComplete: true,
+    renderParams: null,
     renderResult: askUserRenderer.result,
   },
 };
@@ -273,9 +305,22 @@ export function getToolConfig(toolName: string): ToolConfig {
 
 /**
  * Get the display name for a tool
+ * Note: If displayName is a function, returns the toolName as fallback
+ * since we don't have context to call the function here.
  */
 export function getToolDisplayName(toolName: string): string {
-  return TOOL_REGISTRY[toolName]?.displayName || toolName;
+  const config = TOOL_REGISTRY[toolName];
+  if (!config) return toolName;
+
+  const displayName = config.displayName;
+
+  // If displayName is a function, return toolName as fallback
+  // (Context-aware rendering will call the function)
+  if (typeof displayName === 'function') {
+    return toolName;
+  }
+
+  return displayName || toolName;
 }
 
 /**
@@ -301,15 +346,19 @@ export function getRenderFn(toolName: string, phase: RenderPhase): RenderFn {
   if (config) {
     switch (phase) {
       case 'header':
+        if (config.renderHeader === null) return () => null; // Explicitly skip
         if (config.renderHeader) return config.renderHeader;
         break;
       case 'params':
+        if (config.renderParams === null) return () => null; // Explicitly skip
         if (config.renderParams) return config.renderParams;
         break;
       case 'result':
+        if (config.renderResult === null) return () => null; // Explicitly skip
         if (config.renderResult) return config.renderResult;
         break;
       case 'status':
+        if (config.renderStatus === null) return () => null; // Explicitly skip
         if (config.renderStatus) return config.renderStatus;
         break;
     }

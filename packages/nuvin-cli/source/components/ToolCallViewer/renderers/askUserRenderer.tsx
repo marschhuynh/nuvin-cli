@@ -3,6 +3,7 @@ import type { AskUserMetadata } from '@nuvin/nuvin-core';
 import { parseToolArguments } from '@nuvin/nuvin-core';
 import type { ToolRenderContext, RenderFn } from '../types.js';
 import { LAYOUT } from '../types.js';
+import { getStateColor } from '../computeToolState.js';
 
 type Question = {
   question: string;
@@ -12,7 +13,7 @@ type Question = {
 
 export const askUserRenderer = {
   result: ((ctx: ToolRenderContext) => {
-    const { toolCall, toolResult, theme, cols } = ctx;
+    const { toolCall, toolResult, theme, cols, toolState } = ctx;
     const metadata = toolResult?.metadata as AskUserMetadata | undefined;
 
     if (!metadata?.answers || Object.keys(metadata.answers).length === 0) {
@@ -30,9 +31,21 @@ export const askUserRenderer = {
     const questions = (args && 'questions' in args ? args.questions : []) as Question[];
 
     const answers = metadata.answers;
+    const color = getStateColor(toolState, theme);
 
     return (
-      <Box flexDirection="column" marginLeft={2} width={cols - LAYOUT.CONTENT_MARGIN}>
+      <Box
+        flexDirection="column"
+        marginLeft={2}
+        borderStyle="single"
+        borderColor={color}
+        borderDimColor
+        borderBottom={false}
+        borderRight={false}
+        borderTop={false}
+        paddingLeft={2}
+        width={cols - LAYOUT.CONTENT_MARGIN}
+      >
         {questions.map((q, idx) => {
           const qId = `q${idx}`;
           const answer = answers[qId];

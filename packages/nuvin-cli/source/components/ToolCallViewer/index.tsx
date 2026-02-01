@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { ToolTimer } from '@/components/ToolTimer.js';
-import { getToolConfig, getRenderFn } from '@/components/toolRegistry.js';
+import { getToolConfig, getRenderFn } from '@/components/ToolCallViewer/registry.js';
 import { getStateColor } from './computeToolState.js';
 import type { ComputedToolState, ToolRenderContext } from './types.js';
 
@@ -70,8 +70,23 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
 
   const color = getStateColor(toolState, theme);
   const isRunning = toolState === 'running';
-  const showResult = !isRunning && !config.collapsedByDefault && toolExecutionResult?.result;
+
+  // Show result if:
+  // 1. Not running, AND
+  // 2. Not denied or edited (status-only states), AND
+  // 3. Not collapsed by default, AND
+  // 4. Either: has result content OR has custom result renderer (but not if explicitly null)
+  const hasCustomResultRenderer = config.renderResult !== undefined && config.renderResult !== null;
+  const showResult =
+    !isRunning &&
+    toolState !== 'denied' &&
+    toolState !== 'edited' &&
+    !config.collapsedByDefault &&
+    (toolExecutionResult?.result || hasCustomResultRenderer);
   const finalDuration = toolResult?.metadata?.duration;
+
+  // When renderStatus is explicitly null, don't render any status lines
+  const shouldRenderStatus = config.renderStatus !== null;
 
   return (
     <Box flexDirection="column" width={cols - 2} overflow="hidden">
@@ -82,9 +97,11 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
       {renderParams(ctx)}
 
       {/* Running indicator */}
-      {isRunning && toolName !== 'ask_user_tool' && (
+      {shouldRenderStatus && isRunning && toolName !== 'ask_user_tool' && (
         <Box flexDirection="row" marginLeft={2}>
-          <Text dimColor color={color}>└─ </Text>
+          <Text dimColor color={color}>
+            └─{' '}
+          </Text>
           <Text>Running ...</Text>
           <Box marginLeft={1}>
             <ToolTimer hasResult={false} finalDuration={finalDuration} />
@@ -93,16 +110,20 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
       )}
 
       {/* Denied state */}
-      {toolState === 'denied' && (
+      {shouldRenderStatus && toolState === 'denied' && (
         <Box flexDirection="row" marginLeft={2}>
-          <Text dimColor color={theme.colors.warning}>└─ Denied</Text>
+          <Text dimColor color={theme.colors.warning}>
+            └─ Denied
+          </Text>
         </Box>
       )}
 
       {/* Edited state */}
-      {toolState === 'edited' && (
+      {shouldRenderStatus && toolState === 'edited' && (
         <Box flexDirection="row" marginLeft={2}>
-          <Text dimColor color={theme.colors.warning}>└─ Edited</Text>
+          <Text dimColor color={theme.colors.warning}>
+            └─ Edited
+          </Text>
         </Box>
       )}
 
@@ -110,9 +131,12 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
       {showResult && renderResult(ctx)}
 
       {/* Status line (for success/error states) */}
-      {!isRunning && toolState !== 'denied' && toolState !== 'edited' && toolExecutionResult && (
-        renderStatus(ctx)
-      )}
+      {shouldRenderStatus &&
+        !isRunning &&
+        toolState !== 'denied' &&
+        toolState !== 'edited' &&
+        toolExecutionResult &&
+        renderStatus(ctx)}
     </Box>
   );
 };

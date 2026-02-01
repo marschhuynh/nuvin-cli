@@ -3,125 +3,21 @@
 exports[`web_search - Snapshot Tests > renders successful web search with results 1`] = `
 "⚙ Search React documentation
   │  count: 3
-  │  {
-  │    "count": 3,
-  │    "results": [
-  │      {
-  │        "title": "React Documentation",
-  │        "url": "https://react.dev",
-  │        "snippet": "The library for web and native user interfaces"
-  │      },
-  │      {
-  │        "title": "React Tutorial",
-  │        "url": "https://react.dev/learn",
-  │        "snippet": "Learn React step by step with interactive examples"
-  │      },
-  │      {
-  │        "title": "React Hooks",
-  │        "url": "https://react.dev/reference/react",
-  │        "snippet": "Built-in React Hooks for state and effects"
-  │      }
-  │    ]
-  │  }
   └─ Searched"
 `;
 
 exports[`web_search - Snapshot Tests > renders web search with many results 1`] = `
 "⚙ Search TypeScript best practices
   │  count: 10
-  │  {
-  │    "count": 10,
-  │    "results": [
-  │      {
-  │        "title": "Result 1: TypeScript Best Practices",
-  │        "url": "https://example.com/result-1",
-  │        "snippet": "This is a detailed snippet for result 1 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 2: TypeScript Best Practices",
-  │        "url": "https://example.com/result-2",
-  │        "snippet": "This is a detailed snippet for result 2 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 3: TypeScript Best Practices",
-  │        "url": "https://example.com/result-3",
-  │        "snippet": "This is a detailed snippet for result 3 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 4: TypeScript Best Practices",
-  │        "url": "https://example.com/result-4",
-  │        "snippet": "This is a detailed snippet for result 4 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 5: TypeScript Best Practices",
-  │        "url": "https://example.com/result-5",
-  │        "snippet": "This is a detailed snippet for result 5 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 6: TypeScript Best Practices",
-  │        "url": "https://example.com/result-6",
-  │        "snippet": "This is a detailed snippet for result 6 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 7: TypeScript Best Practices",
-  │        "url": "https://example.com/result-7",
-  │        "snippet": "This is a detailed snippet for result 7 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 8: TypeScript Best Practices",
-  │        "url": "https://example.com/result-8",
-  │        "snippet": "This is a detailed snippet for result 8 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 9: TypeScript Best Practices",
-  │        "url": "https://example.com/result-9",
-  │        "snippet": "This is a detailed snippet for result 9 about TypeScript best
-  │  practices and patterns."
-  │      },
-  │      {
-  │        "title": "Result 10: TypeScript Best Practices",
-  │        "url": "https://example.com/result-10",
-  │        "snippet": "This is a detailed snippet for result 10 about TypeScript best
-  │  practices and patterns."
-  │      }
-  │    ]
-  │  }
   └─ Searched"
 `;
 
 exports[`web_search - Snapshot Tests > renders web search with no results 1`] = `
 "⚙ Search asdfjkl123xyz999
-  │  {
-  │    "count": 0,
-  │    "results": []
-  │  }
   └─ Searched"
 `;
 
 exports[`web_search - Snapshot Tests > renders web search with special characters in query 1`] = `
 "⚙ Search C++ programming "best practices"
-  │  {
-  │    "count": 2,
-  │    "results": [
-  │      {
-  │        "title": "C++ Programming Guide",
-  │        "url": "https://example.com/cpp",
-  │        "snippet": "Learn C++ with examples: pointers, references & templates"
-  │      },
-  │      {
-  │        "title": "C++ Best Practices",
-  │        "url": "https://example.com/cpp-best",
-  │        "snippet": "Modern C++ (C++17/C++20) best practices"
-  │      }
-  │    ]
-  │  }
   └─ Searched"
 `;

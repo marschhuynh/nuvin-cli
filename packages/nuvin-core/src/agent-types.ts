@@ -1,4 +1,5 @@
 import type { AgentEvent, Message, MetricsSnapshot } from './ports.js';
+import { ErrorReason } from './ports.js';
 
 export type AgentFrontmatter = {
   name?: string;
@@ -91,6 +92,7 @@ export type SpecialistAgentResult = {
     conversationHistory?: Message[];
     events?: AgentEvent[];
     errorMessage?: string;
+    errorReason?: ErrorReason;
     metrics?: MetricsSnapshot;
     sessionId?: string;
   };

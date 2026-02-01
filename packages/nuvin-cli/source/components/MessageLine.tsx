@@ -33,7 +33,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
     switch (message.type) {
       case 'user':
         return (
-          <Box flexDirection="column" marginY={1} flexShrink={0}>
+          <Box flexDirection="column" flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.user} bold>
                 ❯ [you]
@@ -48,7 +48,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       case 'assistant': {
         if (isStreaming && !altMode) {
           return (
-            <Box flexDirection="column" marginY={1} maxHeight={'100%'} width={'100%'} flexShrink={0}>
+            <Box flexDirection="column" maxHeight={'100%'} width={'100%'} flexShrink={0}>
               <Box flexShrink={0} marginRight={1} position="sticky" top={0}>
                 <Text color={theme.messageTypes.assistant} bold>
                   ● [assistant]
@@ -64,7 +64,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         }
 
         return (
-          <Box flexDirection="column" marginY={1} flexShrink={0}>
+          <Box flexDirection="column" flexShrink={0}>
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.assistant} bold>
                 ● [assistant]
@@ -87,7 +87,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         const hasRunningToolCall = toolCalls.some((toolCall) => !toolResultsByCallId?.has(toolCall.id));
 
         const _render = (
-          <Box flexDirection="column" flexShrink={0}>
+          <Box flexDirection="column" flexShrink={0} rowGap={1}>
             {toolCalls.length > 0 ? (
               toolCalls.map((toolCall: ToolCall, callIndex: number) => {
                 const isAwaitingApproval = pendingApprovalTools.some((tc) => tc.id === toolCall.id);
@@ -117,19 +117,21 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 }
 
                 return (
-                  <Box key={toolCall.id || `${message.id}-tool-${callIndex}`} marginY={1}>
+                  <Box key={toolCall.id || `${message.id}-tool-${callIndex}`}>
                     <ToolCallViewer
                       key={toolCall.id || `${message.id}-tool-${callIndex}`}
                       toolCall={toolCall}
                       toolResult={toolResultMsg}
-                      toolState={computeToolState(toolResultMsg?.metadata?.toolResult as ToolExecutionResult | undefined)}
+                      toolState={computeToolState(
+                        toolResultMsg?.metadata?.toolResult as ToolExecutionResult | undefined,
+                      )}
                       messageId={message.id}
                     />
                   </Box>
                 );
               })
             ) : (
-              <Box flexDirection="row" marginY={1}>
+              <Box flexDirection="row">
                 <Box flexShrink={0} marginRight={1}>
                   <Text color={theme.messageTypes.tool} bold>
                     ⚙︎
@@ -155,7 +157,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       }
 
       case 'tool_result': {
-        return null; // Tool results are rendered inline with their tool calls
+        return undefined; // Tool results are rendered inline with their tool calls
       }
 
       case 'error':
@@ -209,7 +211,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       case 'thinking': {
         if (isStreaming && !altMode) {
           return (
-            <Box flexDirection="column" marginY={1} maxHeight="100%" width={'100%'} flexShrink={0}>
+            <Box flexDirection="column" maxHeight="100%" width={'100%'} flexShrink={0}>
               <Box flexShrink={0} marginRight={1} position="sticky" top={0}>
                 <Text color={theme.messageTypes.thinking} bold>
                   ● [thinking]
@@ -225,7 +227,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         }
 
         return (
-          <Box flexDirection="column" marginY={1} flexShrink={0} maxHeight="100%">
+          <Box flexDirection="column" flexShrink={0} maxHeight="100%">
             <Box flexShrink={0} marginRight={1}>
               <Text color={theme.messageTypes.thinking} bold>
                 ● [thinking]
@@ -245,24 +247,29 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
     }
   };
 
-  return (
-    <Box
-      width="100%"
-      flexShrink={0}
-      backgroundColor={backgroundColor}
-      {...(liveMessage
-        ? {
-            borderStyle: 'single',
-            borderColor: theme.colors.accent,
-            borderBottom: false,
-            borderTop: false,
-            borderLeft: false,
-          }
-        : {})}
-    >
-      {renderMessage()}
-    </Box>
-  );
+  const content = renderMessage();
+
+  if (content) {
+    return (
+      <Box
+        width="100%"
+        flexShrink={0}
+        backgroundColor={backgroundColor}
+        marginY={1}
+        {...(liveMessage
+          ? {
+              borderStyle: 'single',
+              borderColor: theme.colors.accent,
+              borderBottom: false,
+              borderTop: false,
+              borderLeft: false,
+            }
+          : {})}
+      >
+        {content}
+      </Box>
+    );
+  }
 };
 
 export const MessageLine = MessageLineComponent;

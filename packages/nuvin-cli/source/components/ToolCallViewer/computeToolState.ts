@@ -9,22 +9,25 @@ export function computeToolState(toolResult?: ToolExecutionResult): ComputedTool
   if (!toolResult) {
     return 'running';
   }
-  
+
   // errorReason is only present on error results via ToolErrorMetadata
   const errorReason = (toolResult.metadata as ToolErrorMetadata | undefined)?.errorReason;
-  
+
   if (errorReason === ErrorReason.Denied) return 'denied';
   if (errorReason === ErrorReason.Edited) return 'edited';
   if (errorReason === ErrorReason.Aborted) return 'aborted';
   if (errorReason === ErrorReason.Timeout) return 'timeout';
-  
+
   return toolResult.status; // 'success' | 'error'
 }
 
 /**
  * Get the color for a tool state from theme
  */
-export function getStateColor(state: ComputedToolState, theme: { status: { success: string; error: string; idle: string; warning?: string }; colors: { warning: string } }): string {
+export function getStateColor(
+  state: ComputedToolState,
+  theme: { status: { success: string; error: string; idle: string; warning?: string }; colors: { warning: string } },
+): string {
   switch (state) {
     case 'running':
       return theme.status.idle;

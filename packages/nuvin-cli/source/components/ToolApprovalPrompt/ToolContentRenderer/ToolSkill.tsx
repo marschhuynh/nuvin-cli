@@ -4,7 +4,7 @@ import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { EnrichedToolCall } from '@/utils/enrichToolCalls.js';
-import { getToolDisplayName } from '@/components/toolRegistry.js';
+import { getToolDisplayName } from '@/components/ToolCallViewer/registry.js';
 
 type SkillArgs = {
   name: string;
@@ -78,7 +78,6 @@ export function SkillToolContent({ call }: { call: ToolCall }) {
 
   return (
     <Box flexDirection="column" marginTop={1} width={width - 8} overflow="hidden">
-
       {lines.map((line) => (
         <Box key={`${line.lineNumber}-${line.content.slice(0, 20)}`}>
           <Box flexWrap="nowrap" width={lineNumberWidth + 1}>

@@ -6,7 +6,7 @@ import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { theme } from '@/theme.js';
-import { getToolDisplayName } from '@/components/toolRegistry.js';
+import { getToolDisplayName } from '@/components/ToolCallViewer/registry.js';
 import { ToolParameters } from './ToolParameters.js';
 import { ToolProgressInfo } from './ToolProgressInfo.js';
 import { ToolActions } from './ToolActions.js';
@@ -58,7 +58,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     let args: Record<string, unknown> = {};
     try {
       args = JSON.parse(currentTool.function.arguments);
-    } catch { }
+    } catch {}
 
     const displayName =
       args.description && typeof args.description === 'string' && args.description.trim()

@@ -27,15 +27,24 @@ import { createMockToolCall, createMockToolResult, createMockToolResultMessage }
 
 describe('ask_user_tool - Snapshot Tests', () => {
   it('renders successful ask_user interaction with detailed answer', () => {
-    const result = JSON.stringify({
-      question: 'What authentication strategy should we use for the new API?',
-      answer: 'We should use JWT tokens with refresh token rotation. This provides good security while maintaining a stateless architecture.',
-    });
-
     const toolCall = createMockToolCall('ask_user_tool', {
-      question: 'What authentication strategy should we use for the new API?',
+      questions: [
+        {
+          question: 'What authentication strategy should we use for the new API?',
+          header: 'Auth Strategy',
+          multiSelect: false,
+        },
+      ],
     });
-    const toolResult = createMockToolResult('ask_user_tool', result);
+    const toolResult = createMockToolResult(
+      'ask_user_tool',
+      '',
+      {
+        answers: {
+          q0: 'We should use JWT tokens with refresh token rotation. This provides good security while maintaining a stateless architecture.',
+        },
+      }
+    );
     const resultMessage = createMockToolResultMessage(toolResult, 12345);
 
     const { lastFrame } = render(
@@ -51,15 +60,24 @@ describe('ask_user_tool - Snapshot Tests', () => {
   });
 
   it('renders successful ask_user interaction with short answer', () => {
-    const result = JSON.stringify({
-      question: 'Should we proceed with the deployment?',
-      answer: 'Yes',
-    });
-
     const toolCall = createMockToolCall('ask_user_tool', {
-      question: 'Should we proceed with the deployment?',
+      questions: [
+        {
+          question: 'Should we proceed with the deployment?',
+          header: 'Deployment',
+          multiSelect: false,
+        },
+      ],
     });
-    const toolResult = createMockToolResult('ask_user_tool', result);
+    const toolResult = createMockToolResult(
+      'ask_user_tool',
+      '',
+      {
+        answers: {
+          q0: 'Yes',
+        },
+      }
+    );
     const resultMessage = createMockToolResultMessage(toolResult, 5678);
 
     const { lastFrame } = render(
@@ -75,21 +93,30 @@ describe('ask_user_tool - Snapshot Tests', () => {
   });
 
   it('renders successful ask_user interaction with multi-line answer', () => {
-    const result = JSON.stringify({
-      question: 'Can you provide the requirements for the new feature?',
-      answer: `Here are the requirements:
+    const toolCall = createMockToolCall('ask_user_tool', {
+      questions: [
+        {
+          question: 'Can you provide the requirements for the new feature?',
+          header: 'Requirements',
+          multiSelect: false,
+        },
+      ],
+    });
+    const toolResult = createMockToolResult(
+      'ask_user_tool',
+      '',
+      {
+        answers: {
+          q0: `Here are the requirements:
 
 1. Users should be able to create projects
 2. Each project can have multiple tasks
 3. Tasks can be assigned to team members
 4. All changes should be tracked in an audit log
 5. Email notifications for important events`,
-    });
-
-    const toolCall = createMockToolCall('ask_user_tool', {
-      question: 'Can you provide the requirements for the new feature?',
-    });
-    const toolResult = createMockToolResult('ask_user_tool', result);
+        },
+      }
+    );
     const resultMessage = createMockToolResultMessage(toolResult, 8901);
 
     const { lastFrame } = render(
@@ -105,15 +132,24 @@ describe('ask_user_tool - Snapshot Tests', () => {
   });
 
   it('renders successful ask_user interaction with technical details', () => {
-    const result = JSON.stringify({
-      question: 'What is the database connection string for production?',
-      answer: 'postgresql://user:password@db.example.com:5432/production_db?sslmode=require',
-    });
-
     const toolCall = createMockToolCall('ask_user_tool', {
-      question: 'What is the database connection string for production?',
+      questions: [
+        {
+          question: 'What is the database connection string for production?',
+          header: 'DB Connection',
+          multiSelect: false,
+        },
+      ],
     });
-    const toolResult = createMockToolResult('ask_user_tool', result);
+    const toolResult = createMockToolResult(
+      'ask_user_tool',
+      '',
+      {
+        answers: {
+          q0: 'postgresql://user:password@db.example.com:5432/production_db?sslmode=require',
+        },
+      }
+    );
     const resultMessage = createMockToolResultMessage(toolResult, 3456);
 
     const { lastFrame } = render(

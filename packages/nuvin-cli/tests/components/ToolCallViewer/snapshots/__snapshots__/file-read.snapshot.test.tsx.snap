@@ -1,21 +1,9 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`file_read - Snapshot Tests > renders file read with empty file 1`] = `
-"⚙ Read empty.txt
-  └─ Read 1 lines"
-`;
+exports[`file_read - Snapshot Tests > renders file read with empty file 1`] = `"⚙ Read empty.txt"`;
 
-exports[`file_read - Snapshot Tests > renders file read with long content (50+ lines) 1`] = `
-"⚙ Read long-file.txt
-  └─ Read 50 lines"
-`;
+exports[`file_read - Snapshot Tests > renders file read with long content (50+ lines) 1`] = `"⚙ Read long-file.txt"`;
 
-exports[`file_read - Snapshot Tests > renders file read with special characters 1`] = `
-"⚙ Read special.txt
-  └─ Read 2 lines"
-`;
+exports[`file_read - Snapshot Tests > renders file read with special characters 1`] = `"⚙ Read special.txt"`;
 
-exports[`file_read - Snapshot Tests > renders successful file read with TypeScript content 1`] = `
-"⚙ Read src/components/MyComponent.tsx:1-6
-  └─ Read 6 lines"
-`;
+exports[`file_read - Snapshot Tests > renders successful file read with TypeScript content 1`] = `"⚙ Read src/components/MyComponent.tsx:1-6"`;
