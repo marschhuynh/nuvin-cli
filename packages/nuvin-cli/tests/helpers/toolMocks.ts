@@ -1,5 +1,5 @@
 import type { ToolCall, ToolExecutionResult } from '@nuvin/nuvin-core';
-import type { MessageLine } from '@/adapters/index.js';
+import type { MessageLine } from '../../source/adapters/index.js';
 
 /**
  * Create a mock ToolCall with given tool name and arguments
@@ -11,6 +11,7 @@ export function createMockToolCall(
 ): ToolCall {
   return {
     id,
+    type: 'function',
     function: {
       name,
       arguments: JSON.stringify(args),
@@ -24,15 +25,17 @@ export function createMockToolCall(
 export function createMockToolResult(
   name: string,
   result: unknown,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  id = 'test-result-1'
 ): ToolExecutionResult {
   return {
+    id,
     name,
     status: 'success',
     type: 'text',
     result,
     metadata,
-  };
+  } as ToolExecutionResult;
 }
 
 /**
@@ -41,15 +44,17 @@ export function createMockToolResult(
 export function createMockToolError(
   name: string,
   error: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  id = 'test-error-1'
 ): ToolExecutionResult {
   return {
+    id,
     name,
     status: 'error',
     type: 'text',
     result: error,
     metadata,
-  };
+  } as ToolExecutionResult;
 }
 
 /**
