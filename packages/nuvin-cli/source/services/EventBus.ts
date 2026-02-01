@@ -40,7 +40,13 @@ type EventMap = {
   'ui:command:activated': string;
   'ui:command:deactivated': string;
   'ui:commands:refresh': undefined;
-  'custom-command:execute': { commandId: string; renderedPrompt: string; userInput: string };
+  'custom-command:execute': {
+    commandId: string;
+    renderedPrompt: string;
+    userInput: string;
+    onComplete?: () => void;
+    onError?: (error: Error) => void;
+  };
   'lsp:status': LspStatusInfo;
   'lsp:diagnostics': { path: string; serverId: string; diagnostics: Diagnostic[] };
   'agent:event': AgentEvent;
@@ -60,7 +66,7 @@ export class TypedEventBus {
     this.emitter.setMaxListeners(30);
   }
 
-  on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void) {
+  on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void | Promise<void>) {
     this.emitter.on(event, handler);
   }
 

@@ -10,6 +10,11 @@ declare global {
   var __clipboardFiles: Buffer[] | undefined;
 }
 
+export type QueuedItem = {
+  type: 'message' | 'command';
+  content: string;
+};
+
 export function useHandleSubmit(deps: {
   appendLine: (line: MessageLine) => void;
   handleError: (message: string) => void;
@@ -18,7 +23,41 @@ export function useHandleSubmit(deps: {
 }) {
   const { appendLine, handleError, executeCommand, processMessage } = deps;
 
-  return useCallback(
+  const shouldQueueItem = useCallback(
+    (value: string, busy: boolean): { shouldQueue: boolean; queueItem: QueuedItem | null } => {
+      if (!busy) {
+        return { shouldQueue: false, queueItem: null };
+      }
+
+      const trimmed = value.trim();
+
+      // Check if it's a built-in command that should execute immediately
+      if (trimmed.startsWith('/')) {
+        const commandId = trimmed.split(' ')[0];
+        const def = commandRegistry.get(commandId);
+        const isCustomCommand = !!(def as { isCustomCommand?: boolean } | undefined)?.isCustomCommand;
+
+        // Only queue custom commands; built-in commands execute immediately
+        if (!isCustomCommand) {
+          return { shouldQueue: false, queueItem: null };
+        }
+
+        return {
+          shouldQueue: true,
+          queueItem: { type: 'command', content: trimmed },
+        };
+      }
+
+      // Queue regular messages
+      return {
+        shouldQueue: true,
+        queueItem: { type: 'message', content: trimmed },
+      };
+    },
+    [],
+  );
+
+  const handleSubmit = useCallback(
     async (value: string) => {
       const trimmed = value.trim();
       if (!trimmed) return;
@@ -83,4 +122,6 @@ export function useHandleSubmit(deps: {
     },
     [appendLine, handleError, executeCommand, processMessage],
   );
+
+  return { handleSubmit, shouldQueueItem };
 }
