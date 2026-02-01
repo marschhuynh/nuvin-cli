@@ -21,6 +21,7 @@ import {
   defaultRenderResult,
   defaultRenderStatus,
 } from './ToolCallViewer/DefaultToolRenderer.js';
+import { fileEditRenderer } from './ToolCallViewer/renderers/index.js';
 
 /**
  * Tool configuration registry using the new ToolConfig format.
@@ -54,6 +55,8 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Edit failed',
     },
+    renderParams: fileEditRenderer.params,
+    renderResult: fileEditRenderer.result,
   },
 
   file_new: {
