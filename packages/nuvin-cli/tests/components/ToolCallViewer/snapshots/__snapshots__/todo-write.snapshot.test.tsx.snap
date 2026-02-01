@@ -1,0 +1,32 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`todo_write - Snapshot Tests > renders empty todo list 1`] = `
+"⚙ Update todo
+  │  todos: []
+  └─ Updated (0/0 - 0%)"
+`;
+
+exports[`todo_write - Snapshot Tests > renders successful todo list update with progress 1`] = `
+"⚙ Update todo
+  │  todos: [{"id":"1","content":"Implement feature X","status":"completed","priority":"high","c
+  │  reatedAt":"2024-01-31T10:00:00Z"},{"id":"2","content":"Write tests for feature
+  │  X","status":"in_progress","priority":"high","createdAt":"2024-01-31T10:05:00Z"},{"id":"3","
+  │  content":"Update
+  │  documentation","status":"pending","priority":"medium","createdAt":"2024-01-31T10:10:00Z"}]
+  └─ Updated (1/3 - 33%)"
+`;
+
+exports[`todo_write - Snapshot Tests > renders todo list with all completed tasks 1`] = `
+"⚙ Update todo
+  │  todos: [{"id":"1","content":"Task 1","status":"completed","priority":"high","createdAt":"20
+  │  24-01-31T10:00:00Z"},{"id":"2","content":"Task
+  │  2","status":"completed","priority":"medium","createdAt":"2024-01-31T10:05:00Z"}]
+  └─ Updated (2/2 - 100%)"
+`;
+
+exports[`todo_write - Snapshot Tests > renders todo list without metadata 1`] = `
+"⚙ Update todo
+  │  todos: [{"id":"1","content":"Simple
+  │  task","status":"pending","priority":"low","createdAt":"2024-01-31T10:00:00Z"}]
+  └─ Updated"
+`;

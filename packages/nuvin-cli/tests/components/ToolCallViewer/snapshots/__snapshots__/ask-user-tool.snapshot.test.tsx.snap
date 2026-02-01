@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ask_user_tool - Snapshot Tests > renders successful ask_user interaction with detailed answer 1`] = `""`;
+
+exports[`ask_user_tool - Snapshot Tests > renders successful ask_user interaction with multi-line answer 1`] = `""`;
+
+exports[`ask_user_tool - Snapshot Tests > renders successful ask_user interaction with short answer 1`] = `""`;
+
+exports[`ask_user_tool - Snapshot Tests > renders successful ask_user interaction with technical details 1`] = `""`;

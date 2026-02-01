@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`lsp - Snapshot Tests > renders successful LSP diagnostics operation 1`] = `
+"⚙ Language server diagnostics src/types/user.ts:1:1
+  │  [{"range":{"start":{"line":10,"character":5},"end":{"line":10,"character":15}},"severit
+  │  y":1,"message":"Property 'value' does not exist on type
+  │  'User'","source":"typescript"},{"range":{"start":{"line":23,"character":8},"end":{"line
+  │  ":23,"character":12}},"severity":2,"message":"Unused variable","source":"typescript"}]
+  └─ Completed"
+`;
+
+exports[`lsp - Snapshot Tests > renders successful LSP findReferences operation 1`] = `
+"⚙ Language server findReferences src/utils/helpers.ts:42:15
+  │  [{"uri":"file:///Users/user/project/src/components/App.tsx","range":{"start":{"line":15
+  │  ,"character":10},"end":{"line":15,"character":23}}},{"uri":"file:///Users/user/project/
+  │  src/components/Button.tsx","range":{"start":{"line":8,"character":5},"end":{"line":8,"c
+  │  haracter":18}}},{"uri":"file:///Users/user/project/src/hooks/useData.ts","range":{"star
+  │  t":{"line":23,"character":12},"end":{"line":23,"character":25}}}]
+  └─ Completed"
+`;
+
+exports[`lsp - Snapshot Tests > renders successful LSP goToDefinition operation 1`] = `
+"⚙ Language server goToDefinition src/components/App.tsx:15:10
+  │  {"uri":"file:///Users/user/project/src/utils/helpers.ts","range":{"start":{"line":42,"c
+  │  haracter":8},"end":{"line":42,"character":23}}}
+  └─ Completed"
+`;
+
+exports[`lsp - Snapshot Tests > renders successful LSP hover operation 1`] = `
+"⚙ Language server hover src/components/Button.tsx:8:15
+  │  {"contents":{"kind":"markdown","value":"typescript\\nfunction useState<S>(initialState:
+  │  S | (() => S)): [S, Dispatch<SetStateAction<S>>]\\n\\n\\nReturns a stateful value, and a
+  │  function to update it."}}
+  └─ Completed"
+`;

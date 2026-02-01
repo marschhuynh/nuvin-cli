@@ -1,0 +1,132 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`grep_tool - Snapshot Tests > renders grep search with many matches (truncated) 1`] = `
+"⚙ Search const value
+  │  limit: 100
+  │  src/file1.ts:1:  const value = "test";
+  │  src/file2.ts:2:  const value = "test";
+  │  src/file3.ts:3:  const value = "test";
+  │  src/file4.ts:4:  const value = "test";
+  │  src/file5.ts:5:  const value = "test";
+  │  src/file6.ts:6:  const value = "test";
+  │  src/file7.ts:7:  const value = "test";
+  │  src/file8.ts:8:  const value = "test";
+  │  src/file9.ts:9:  const value = "test";
+  │  src/file10.ts:10:  const value = "test";
+  │  src/file11.ts:11:  const value = "test";
+  │  src/file12.ts:12:  const value = "test";
+  │  src/file13.ts:13:  const value = "test";
+  │  src/file14.ts:14:  const value = "test";
+  │  src/file15.ts:15:  const value = "test";
+  │  src/file16.ts:16:  const value = "test";
+  │  src/file17.ts:17:  const value = "test";
+  │  src/file18.ts:18:  const value = "test";
+  │  src/file19.ts:19:  const value = "test";
+  │  src/file20.ts:20:  const value = "test";
+  │  src/file21.ts:21:  const value = "test";
+  │  src/file22.ts:22:  const value = "test";
+  │  src/file23.ts:23:  const value = "test";
+  │  src/file24.ts:24:  const value = "test";
+  │  src/file25.ts:25:  const value = "test";
+  │  src/file26.ts:26:  const value = "test";
+  │  src/file27.ts:27:  const value = "test";
+  │  src/file28.ts:28:  const value = "test";
+  │  src/file29.ts:29:  const value = "test";
+  │  src/file30.ts:30:  const value = "test";
+  │  src/file31.ts:31:  const value = "test";
+  │  src/file32.ts:32:  const value = "test";
+  │  src/file33.ts:33:  const value = "test";
+  │  src/file34.ts:34:  const value = "test";
+  │  src/file35.ts:35:  const value = "test";
+  │  src/file36.ts:36:  const value = "test";
+  │  src/file37.ts:37:  const value = "test";
+  │  src/file38.ts:38:  const value = "test";
+  │  src/file39.ts:39:  const value = "test";
+  │  src/file40.ts:40:  const value = "test";
+  │  src/file41.ts:41:  const value = "test";
+  │  src/file42.ts:42:  const value = "test";
+  │  src/file43.ts:43:  const value = "test";
+  │  src/file44.ts:44:  const value = "test";
+  │  src/file45.ts:45:  const value = "test";
+  │  src/file46.ts:46:  const value = "test";
+  │  src/file47.ts:47:  const value = "test";
+  │  src/file48.ts:48:  const value = "test";
+  │  src/file49.ts:49:  const value = "test";
+  │  src/file50.ts:50:  const value = "test";
+  │  src/file51.ts:51:  const value = "test";
+  │  src/file52.ts:52:  const value = "test";
+  │  src/file53.ts:53:  const value = "test";
+  │  src/file54.ts:54:  const value = "test";
+  │  src/file55.ts:55:  const value = "test";
+  │  src/file56.ts:56:  const value = "test";
+  │  src/file57.ts:57:  const value = "test";
+  │  src/file58.ts:58:  const value = "test";
+  │  src/file59.ts:59:  const value = "test";
+  │  src/file60.ts:60:  const value = "test";
+  │  src/file61.ts:61:  const value = "test";
+  │  src/file62.ts:62:  const value = "test";
+  │  src/file63.ts:63:  const value = "test";
+  │  src/file64.ts:64:  const value = "test";
+  │  src/file65.ts:65:  const value = "test";
+  │  src/file66.ts:66:  const value = "test";
+  │  src/file67.ts:67:  const value = "test";
+  │  src/file68.ts:68:  const value = "test";
+  │  src/file69.ts:69:  const value = "test";
+  │  src/file70.ts:70:  const value = "test";
+  │  src/file71.ts:71:  const value = "test";
+  │  src/file72.ts:72:  const value = "test";
+  │  src/file73.ts:73:  const value = "test";
+  │  src/file74.ts:74:  const value = "test";
+  │  src/file75.ts:75:  const value = "test";
+  │  src/file76.ts:76:  const value = "test";
+  │  src/file77.ts:77:  const value = "test";
+  │  src/file78.ts:78:  const value = "test";
+  │  src/file79.ts:79:  const value = "test";
+  │  src/file80.ts:80:  const value = "test";
+  │  src/file81.ts:81:  const value = "test";
+  │  src/file82.ts:82:  const value = "test";
+  │  src/file83.ts:83:  const value = "test";
+  │  src/file84.ts:84:  const value = "test";
+  │  src/file85.ts:85:  const value = "test";
+  │  src/file86.ts:86:  const value = "test";
+  │  src/file87.ts:87:  const value = "test";
+  │  src/file88.ts:88:  const value = "test";
+  │  src/file89.ts:89:  const value = "test";
+  │  src/file90.ts:90:  const value = "test";
+  │  src/file91.ts:91:  const value = "test";
+  │  src/file92.ts:92:  const value = "test";
+  │  src/file93.ts:93:  const value = "test";
+  │  src/file94.ts:94:  const value = "test";
+  │  src/file95.ts:95:  const value = "test";
+  │  src/file96.ts:96:  const value = "test";
+  │  src/file97.ts:97:  const value = "test";
+  │  src/file98.ts:98:  const value = "test";
+  │  src/file99.ts:99:  const value = "test";
+  │  src/file100.ts💯   const value = "test";
+  └─ Found 100 matches in 100 files (truncated)"
+`;
+
+exports[`grep_tool - Snapshot Tests > renders grep search with multiple matches in same file 1`] = `
+"⚙ Search TODO
+  │  src/api/client.ts:12:  // TODO: Add error handling
+  │  src/api/client.ts:45:  // TODO: Implement retry logic
+  │  src/api/client.ts:89:  // TODO: Add caching
+  │  src/utils/helpers.ts:23:  // TODO: Optimize performance
+  │  src/utils/helpers.ts:67:  // TODO: Add tests
+  └─ Found 5 matches in 2 files"
+`;
+
+exports[`grep_tool - Snapshot Tests > renders grep search with no matches 1`] = `
+"⚙ Search nonexistent_pattern_xyz123
+  └─ Found 0 matches in 0 files"
+`;
+
+exports[`grep_tool - Snapshot Tests > renders successful grep search with matches 1`] = `
+"⚙ Search useState
+  │  include: *.{ts,tsx}
+  │  src/components/App.tsx:15:  const [count, setCount] = useState(0);
+  │  src/components/Button.tsx:8:  const [isActive, setIsActive] = useState(false);
+  │  src/hooks/useData.ts:23:  const [data, setData] = useState(null);
+  │  src/utils/state.ts:12:  const [value, setValue] = useState(initial);
+  └─ Found 4 matches in 4 files"
+`;

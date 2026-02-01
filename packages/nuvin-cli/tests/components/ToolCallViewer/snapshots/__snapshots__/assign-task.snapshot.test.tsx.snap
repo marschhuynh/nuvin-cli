@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`assign_task - Snapshot Tests > renders successful task delegation with metrics 1`] = `
+"⚙ Delegate
+  │  instructions: Implement a new user authentication feature with JWT tokens
+  │  context: Working on the backend API
+  └─ Done • 12 tools • 8.5k tokens • 45.7s"
+`;
+
+exports[`assign_task - Snapshot Tests > renders task delegation with long instructions 1`] = `
+"⚙ Delegate
+  │  instructions: Refactor the authentication module to use a new provider pattern. Update all
+  │  existing tests to work with the new structure. Add integration tests for the new flow.
+  │  Update documentation to reflect the changes.
+  │  context: Part of the Q1 2024 architecture refactor initiative
+  └─ Done • 45 tools • 25.7k tokens • 2m 3s"
+`;
+
+exports[`assign_task - Snapshot Tests > renders task delegation with minimal metrics 1`] = `
+"⚙ Delegate
+  │  instructions: Fix typo in README
+  └─ Done • 2 tools • 256 tokens • 1.2s"
+`;
+
+exports[`assign_task - Snapshot Tests > renders task delegation without metrics 1`] = `
+"⚙ Delegate
+  │  instructions: Run the tests
+  └─ Done"
+`;

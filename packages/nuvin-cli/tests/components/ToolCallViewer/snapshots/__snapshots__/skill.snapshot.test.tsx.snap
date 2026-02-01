@@ -1,0 +1,78 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`skill - Snapshot Tests > renders successful skill load with content 1`] = `
+"⚙ Load skill test-driven-development
+  │  name: test-driven-development
+  │  # Test-Driven Development Skill
+  │
+  │  ## When to Use
+  │
+  │  Use when implementing any feature or bugfix, before writing implementation code.
+  │
+  │  ## Steps
+  │
+  │    1. Write the test first
+  │      2. Define the expected behavior
+  │      3. Write failing test cases
+  │    4. Implement the minimum code
+  │      5. Make the test pass
+  │      6. Keep it simple
+  │    7. Refactor
+  │      8. Clean up code
+  │      9. Maintain passing tests
+  └─ Completed"
+`;
+
+exports[`skill - Snapshot Tests > renders successful skill load with detailed instructions 1`] = `
+"⚙ Load skill systematic-debugging
+  │  name: systematic-debugging
+  │  # Systematic Debugging Skill
+  │
+  │  ## When to Use
+  │
+  │  Use when encountering any bug, test failure, or unexpected behavior, before proposing
+  │  fixes.
+  │
+  │  ## Core Principles
+  │
+  │    * Evidence before assumptions
+  │    * Reproduce before fixing
+  │    * Understand before changing
+  │
+  │  ## Steps
+  │
+  │    1. Reproduce the issue
+  │      2. Create minimal reproduction case
+  │      3. Document exact steps
+  │      4. Note environment details
+  │    5. Gather evidence
+  │      6. Read error messages carefully
+  │      7. Check logs and stack traces
+  │      8. Identify affected code paths
+  │    9. Form hypothesis
+  │      10. What could cause this?
+  │      11. What evidence supports it?
+  │      12. What would disprove it?
+  │    13. Test hypothesis
+  │      14. Add debug logging
+  │      15. Use debugger breakpoints
+  │      16. Write test cases
+  │    17. Implement fix
+  │      18. Address root cause
+  │      19. Add regression tests
+  │      20. Verify fix works
+  │    21. Validate
+  │      22. Run full test suite
+  │      23. Test edge cases
+  │      24. Document the fix
+  └─ Completed"
+`;
+
+exports[`skill - Snapshot Tests > renders successful skill load with short content 1`] = `
+"⚙ Load skill quick-skill
+  │  name: quick-skill
+  │  # Quick Skill
+  │
+  │  Just a brief instruction for a simple task.
+  └─ Completed"
+`;
