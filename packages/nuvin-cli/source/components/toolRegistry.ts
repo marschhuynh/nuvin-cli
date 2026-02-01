@@ -21,7 +21,7 @@ import {
   defaultRenderResult,
   defaultRenderStatus,
 } from './ToolCallViewer/DefaultToolRenderer.js';
-import { fileEditRenderer } from './ToolCallViewer/renderers/index.js';
+import { fileEditRenderer, todoWriteRenderer, askUserRenderer } from './ToolCallViewer/renderers/index.js';
 
 /**
  * Tool configuration registry using the new ToolConfig format.
@@ -196,6 +196,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       error: 'Update failed',
     },
     statusPosition: 'bottom',
+    renderResult: todoWriteRenderer.result,
   },
 
   assign_task: {
@@ -244,6 +245,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       error: 'Failed',
     },
     hideUntilComplete: true,
+    renderResult: askUserRenderer.result,
   },
 };
 
