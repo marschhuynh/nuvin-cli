@@ -5,6 +5,8 @@ import { calculateStaticCount } from '@/utils/staticCount.js';
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import { MessageLine } from './MessageLine.js';
 import { WelcomeLogo } from './RecentSessions.js';
+import { computeToolState } from './ToolCallViewer/computeToolState.js';
+import type { ComputedToolState } from './ToolCallViewer/types.js';
 
 type ChatDisplayProps = {
   key: string;
@@ -66,9 +68,21 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
         if (cached && cached.inputRef === msg && arraysEqual(cached.resultIds, resultIds)) {
           result.push(cached.output);
         } else {
+          // Compute tool states for each tool call
+          const toolStates = new Map<string, ComputedToolState>();
+          for (const toolCall of toolCalls) {
+            const toolResultMsg = resultsByCallId.get(toolCall.id);
+            const toolExecutionResult = toolResultMsg?.metadata?.toolResult;
+            toolStates.set(toolCall.id, computeToolState(toolExecutionResult));
+          }
+
           const output: MessageLineType = {
             ...msg,
-            metadata: { ...msg.metadata, toolResultsByCallId: resultsByCallId },
+            metadata: { 
+              ...msg.metadata, 
+              toolResultsByCallId: resultsByCallId,
+              toolStates, // Add computed states
+            },
           };
           cache.set(msg.id, { inputRef: msg, resultIds, output });
           result.push(output);

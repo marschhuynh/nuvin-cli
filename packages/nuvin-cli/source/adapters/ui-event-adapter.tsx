@@ -13,6 +13,7 @@ import {
   type SubAgentState,
 } from '@/utils/eventProcessor.js';
 import { eventBus } from '@/services/EventBus.js';
+import type { ComputedToolState } from '@/components/ToolCallViewer/types.js';
 
 export type MessageMetadata = {
   promptTokens?: number;
@@ -35,6 +36,7 @@ export type LineMetadata = {
   toolResult?: ToolExecutionResult;
   toolCall?: ToolCall;
   toolResultsByCallId?: Map<string, MessageLine>;
+  toolStates?: Map<string, ComputedToolState>;
   isStreaming?: boolean;
   isTransient?: boolean;
   subAgentState?: SubAgentState;
