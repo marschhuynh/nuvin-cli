@@ -3,58 +3,8 @@ import { Box, Text } from 'ink';
 import type { ToolRenderContext } from './types.js';
 import { LAYOUT } from './types.js';
 import { getStateColor } from './computeToolState.js';
+import { getMainArg, TOOL_ICON } from './utils.js';
 import { Markdown } from '@/components/Markdown/index.js';
-
-/**
- * Get the main argument to display inline with tool name
- */
-function getMainArg(toolName: string, args: Record<string, unknown>): string | undefined {
-  switch (toolName) {
-    case 'file_read':
-    case 'ls_tool': {
-      const path = args.path as string | undefined;
-      if (!path) return undefined;
-      const lineStart = args.lineStart as number | undefined;
-      const lineEnd = args.lineEnd as number | undefined;
-      if (lineStart !== undefined && lineEnd !== undefined) {
-        return `${path}:${lineStart}-${lineEnd}`;
-      }
-      if (lineStart !== undefined) {
-        return `${path}:${lineStart}`;
-      }
-      return path;
-    }
-    case 'file_new':
-    case 'file_edit':
-      return args.file_path as string | undefined;
-    case 'grep_tool':
-    case 'glob_tool':
-      return args.pattern as string | undefined;
-    case 'lsp': {
-      const operation = args.operation as string | undefined;
-      const filePath = args.filePath as string | undefined;
-      const line = args.line as number | undefined;
-      if (!filePath) return operation;
-      let formatted = filePath;
-      if (line !== undefined) {
-        formatted += `:${line}`;
-        const character = args.character as number | undefined;
-        if (character !== undefined) formatted += `:${character}`;
-      }
-      return operation ? `${operation} ${formatted}` : formatted;
-    }
-    case 'web_fetch':
-      return args.url as string | undefined;
-    case 'bash_tool': {
-      const cmd = args.cmd as string | undefined;
-      const cwd = args.cwd as string | undefined;
-      if (!cmd) return undefined;
-      return cwd ? `${cmd} at ${cwd}` : cmd;
-    }
-    default:
-      return undefined;
-  }
-}
 
 /**
  * Default header renderer: ⚙︎ {displayName} {mainArg}
@@ -67,7 +17,7 @@ export function defaultRenderHeader(ctx: ToolRenderContext): React.ReactNode {
     <Box flexDirection="row">
       <Box flexShrink={0} marginRight={1}>
         <Text color={theme.messageTypes.tool} bold>
-          {'⚙︎'}
+          {TOOL_ICON}
         </Text>
       </Box>
       <Text wrap="truncate-middle">
@@ -173,6 +123,13 @@ export function defaultRenderResult(ctx: ToolRenderContext): React.ReactNode {
 }
 
 /**
+ * Helper for exhaustive switch checks - ensures all cases are handled at compile time
+ */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled tool state: ${value}`);
+}
+
+/**
  * Get status text from config or use defaults
  */
 function getStatusText(ctx: ToolRenderContext): string {
@@ -202,6 +159,8 @@ function getStatusText(ctx: ToolRenderContext): string {
     case 'error': {
       return config.statusText?.error ?? 'Failed';
     }
+    default:
+      return assertNever(toolState);
   }
 }
 
