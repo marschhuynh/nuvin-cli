@@ -1,5 +1,18 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.6
+
+### Patch Changes
+
+- [`f0c801c`](https://github.com/marschhuynh/nuvin-space/commit/f0c801cd5230fcdacbe337188d4d457fb62c51aa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor tool call rendering with comprehensive improvements:
+
+  - Show last lines in result truncation instead of first for better visibility
+  - Fix denied/edited states to avoid duplicate content display
+  - Add per-tool excludeParams config for cleaner parameter display
+  - Use dynamic tool names in SubAgentActivity (Reading/Read/Read failed)
+  - Fix abort errorReason to return 'aborted' instead of 'unknown'
+  - Show actual error messages in sub-agent status lines
+
 ## 1.19.0-rc.5
 
 ### Minor Changes

@@ -8,6 +8,7 @@
   "changesets": [
     "INSTRUCTIONS",
     "ask-user-tool-display",
+    "bordered-message-styles",
     "command-menu-description-wrap",
     "command-tab-completion",
     "enhance-agent-skill-lists",
@@ -22,6 +23,7 @@
     "quiet-ears-jam",
     "recent-sessions-width-fix",
     "redesign-agent-creation-tui",
+    "refactor-tool-call-render",
     "tiny-lemons-jam",
     "tool-call-header-args",
     "tool-display-names"

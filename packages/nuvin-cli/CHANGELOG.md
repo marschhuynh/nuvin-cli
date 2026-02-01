@@ -1,5 +1,25 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.10
+
+### Minor Changes
+
+- [`f0c801c`](https://github.com/marschhuynh/nuvin-space/commit/f0c801cd5230fcdacbe337188d4d457fb62c51aa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor tool call rendering with comprehensive improvements:
+
+  - Show last lines in result truncation instead of first for better visibility
+  - Fix denied/edited states to avoid duplicate content display
+  - Add per-tool excludeParams config for cleaner parameter display
+  - Use dynamic tool names in SubAgentActivity (Reading/Read/Read failed)
+  - Fix abort errorReason to return 'aborted' instead of 'unknown'
+  - Show actual error messages in sub-agent status lines
+
+### Patch Changes
+
+- [`3d12819`](https://github.com/marschhuynh/nuvin-space/commit/3d128190f8c6369ca105238c941e9e175f31d7d9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Polish message styles for error, warning, info, and system types with bordered boxes
+
+- Updated dependencies [[`f0c801c`](https://github.com/marschhuynh/nuvin-space/commit/f0c801cd5230fcdacbe337188d4d457fb62c51aa)]:
+  - @nuvin/nuvin-core@1.19.0-rc.6
+
 ## 1.36.0-rc.9
 
 ### Patch Changes
@@ -27,7 +47,6 @@
 
 - Updated dependencies [[`a916738`](https://github.com/marschhuynh/nuvin-space/commit/a9167387ba32d8958aca22bea4cdc7185a986106)]:
   - @nuvin/nuvin-core@1.19.0-rc.3
-
 
 ## 1.36.0-rc.5
 
