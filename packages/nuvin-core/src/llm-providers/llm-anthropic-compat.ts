@@ -85,7 +85,15 @@ type AnthropicResponse = {
 type AnthropicStreamEvent =
   | { type: 'message_start'; message: Partial<AnthropicResponse> }
   | { type: 'content_block_start'; index: number; content_block: AnthropicContentBlock }
-  | { type: 'content_block_delta'; index: number; delta: { type: 'text_delta'; text: string } | { type: 'thinking_delta'; thinking: string } | { type: 'signature_delta'; signature: string } | { type: 'input_json_delta'; partial_json: string } }
+  | {
+      type: 'content_block_delta';
+      index: number;
+      delta:
+        | { type: 'text_delta'; text: string }
+        | { type: 'thinking_delta'; thinking: string }
+        | { type: 'signature_delta'; signature: string }
+        | { type: 'input_json_delta'; partial_json: string };
+    }
   | { type: 'content_block_stop'; index: number }
   | { type: 'message_delta'; delta: { stop_reason: string }; usage?: Partial<AnthropicUsage> }
   | { type: 'message_stop' }
@@ -134,7 +142,10 @@ export class GenericAnthropicLLM implements LLMPort {
     return this.transport;
   }
 
-  private transformMessages(messages: ChatMessage[]): { system?: AnthropicRequestBody['system']; messages: AnthropicMessage[] } {
+  private transformMessages(messages: ChatMessage[]): {
+    system?: AnthropicRequestBody['system'];
+    messages: AnthropicMessage[];
+  } {
     const systemMessages = messages.filter((m) => m.role === 'system');
     const nonSystemMessages = messages.filter((m) => m.role !== 'system');
 
@@ -147,7 +158,9 @@ export class GenericAnthropicLLM implements LLMPort {
           ...(idx < 2 && { cache_control: { type: 'ephemeral' as const } }),
         }));
       } else {
-        system = systemMessages.map((msg) => (typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content))).join('\n\n');
+        system = systemMessages
+          .map((msg) => (typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)))
+          .join('\n\n');
       }
     }
 
@@ -186,7 +199,11 @@ export class GenericAnthropicLLM implements LLMPort {
         if (thinkingBlocks && thinkingBlocks.length > 0) {
           for (const block of thinkingBlocks) {
             if (block.type === 'thinking') {
-              content.push({ type: 'thinking', thinking: block.thinking, ...(block.signature && { signature: block.signature }) });
+              content.push({
+                type: 'thinking',
+                thinking: block.thinking,
+                ...(block.signature && { signature: block.signature }),
+              });
             } else if (block.type === 'redacted_thinking') {
               content.push({ type: 'redacted_thinking', data: block.data });
             }
@@ -249,7 +266,10 @@ export class GenericAnthropicLLM implements LLMPort {
     }
 
     if (this.enablePromptCaching && anthropicMessages.length > 0) {
-      const lastTwoIndices = anthropicMessages.length >= 2 ? [anthropicMessages.length - 2, anthropicMessages.length - 1] : [anthropicMessages.length - 1];
+      const lastTwoIndices =
+        anthropicMessages.length >= 2
+          ? [anthropicMessages.length - 2, anthropicMessages.length - 1]
+          : [anthropicMessages.length - 1];
 
       for (const idx of lastTwoIndices) {
         const msg = anthropicMessages[idx];
@@ -385,11 +405,11 @@ export class GenericAnthropicLLM implements LLMPort {
   async streamCompletion(
     params: CompletionParams,
     handlers: {
-      onChunk?: (delta: string, usage?: UsageData) => void;
-      onReasoningChunk?: (delta: string) => void;
-      onToolCallDelta?: (tc: ToolCall) => void;
-      onStreamFinish?: (finishReason?: string, usage?: UsageData) => void;
-      onUsage?: (usage: UsageData) => void;
+      onChunk?: (delta: string, usage?: UsageData) => Promise<void>;
+      onReasoningChunk?: (delta: string) => Promise<void>;
+      onToolCallDelta?: (tc: ToolCall) => Promise<void>;
+      onStreamFinish?: (finishReason?: string, usage?: UsageData) => Promise<void>;
+      onUsage?: (usage: UsageData) => Promise<void>;
     } = {},
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
@@ -430,11 +450,14 @@ export class GenericAnthropicLLM implements LLMPort {
     let reasoning = '';
     const toolCalls: ToolCall[] = [];
     const toolCallArgs: Map<number, string> = new Map();
-    const thinkingBlocksMap: Map<number, { type: 'thinking'; thinking: string; signature?: string } | { type: 'redacted_thinking'; data: string }> = new Map();
+    const thinkingBlocksMap: Map<
+      number,
+      { type: 'thinking'; thinking: string; signature?: string } | { type: 'redacted_thinking'; data: string }
+    > = new Map();
     let usage: UsageData | undefined;
     let stopReason: string | undefined;
 
-    const processEvent = (eventData: string) => {
+    const processEvent = async (eventData: string) => {
       const lines = eventData.split('\n');
       let data = '';
 
@@ -468,7 +491,7 @@ export class GenericAnthropicLLM implements LLMPort {
               };
               toolCalls.push(tc);
               toolCallArgs.set(evt.index, '');
-              handlers.onToolCallDelta?.(tc);
+              await handlers.onToolCallDelta?.(tc);
             } else if (evt.content_block.type === 'thinking') {
               thinkingBlocksMap.set(evt.index, { type: 'thinking', thinking: '' });
             } else if (evt.content_block.type === 'redacted_thinking') {
@@ -479,10 +502,10 @@ export class GenericAnthropicLLM implements LLMPort {
           case 'content_block_delta':
             if (evt.delta.type === 'text_delta') {
               content += evt.delta.text;
-              handlers.onChunk?.(evt.delta.text);
+              await handlers.onChunk?.(evt.delta.text);
             } else if (evt.delta.type === 'thinking_delta') {
               reasoning += evt.delta.thinking;
-              handlers.onReasoningChunk?.(evt.delta.thinking);
+              await handlers.onReasoningChunk?.(evt.delta.thinking);
               const block = thinkingBlocksMap.get(evt.index);
               if (block && block.type === 'thinking') {
                 block.thinking += evt.delta.thinking;
@@ -500,7 +523,7 @@ export class GenericAnthropicLLM implements LLMPort {
               const tcIndex = toolCalls.length - 1;
               if (tcIndex >= 0 && toolCalls[tcIndex]) {
                 toolCalls[tcIndex].function.arguments = newArgs;
-                handlers.onToolCallDelta?.(toolCalls[tcIndex]);
+                await handlers.onToolCallDelta?.(toolCalls[tcIndex]);
               }
             }
             break;
@@ -519,7 +542,7 @@ export class GenericAnthropicLLM implements LLMPort {
             break;
 
           case 'message_stop':
-            handlers.onStreamFinish?.(stopReason, usage);
+            await handlers.onStreamFinish?.(stopReason, usage);
             break;
 
           case 'error':
@@ -539,11 +562,11 @@ export class GenericAnthropicLLM implements LLMPort {
       buffer = events.pop() ?? '';
 
       for (const event of events) {
-        if (event.trim()) processEvent(event);
+        if (event.trim()) await processEvent(event);
       }
     }
 
-    if (buffer.trim()) processEvent(buffer);
+    if (buffer.trim()) await processEvent(buffer);
 
     const thinkingBlocks = Array.from(thinkingBlocksMap.values());
 

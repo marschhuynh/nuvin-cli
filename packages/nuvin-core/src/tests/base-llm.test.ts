@@ -491,6 +491,40 @@ describe('BaseLLM', () => {
       expect(onChunk).toHaveBeenNthCalledWith(2, ' world');
     });
 
+    it('should await async onChunk handlers before returning', async () => {
+      const chunks = [
+        'data: {"choices":[{"delta":{"content":"Hello"}}]}',
+        'data: {"choices":[{"delta":{"content":" world"}}]}',
+        'data: [DONE]',
+      ];
+
+      const mockResponse = createMockStreamResponse(chunks);
+      vi.spyOn(llm.getTransportForSpy(), 'post').mockResolvedValueOnce(mockResponse as Response);
+
+      const processedChunks: string[] = [];
+      let streamCompletionReturned = false;
+
+      const onChunk = vi.fn(async (chunk: string) => {
+        // Simulate async work (like emitting events)
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        processedChunks.push(chunk);
+      });
+
+      const params: CompletionParams = {
+        model: 'gpt-4',
+        messages: [],
+        temperature: 1,
+        topP: 1,
+      };
+
+      await llm.streamCompletion(params, { onChunk });
+      streamCompletionReturned = true;
+
+      // All async onChunk handlers should have completed BEFORE streamCompletion returns
+      expect(processedChunks).toEqual(['Hello', ' world']);
+      expect(streamCompletionReturned).toBe(true);
+    });
+
     it('should handle tool call deltas', async () => {
       const chunks = [
         'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"get_weather","arguments":""}}]}}]}',

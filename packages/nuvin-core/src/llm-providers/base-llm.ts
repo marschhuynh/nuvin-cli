@@ -282,11 +282,11 @@ export abstract class BaseLLM implements LLMPort {
   async streamCompletion(
     params: CompletionParams,
     handlers: {
-      onChunk?: (delta: string, usage?: UsageData) => void;
-      onReasoningChunk?: (delta: string) => void;
-      onToolCallDelta?: (tc: ToolCall) => void;
-      onStreamFinish?: (finishReason?: string, usage?: UsageData) => void;
-      onUsage?: (usage: UsageData) => void;
+      onChunk?: (delta: string, usage?: UsageData) => Promise<void>;
+      onReasoningChunk?: (delta: string) => Promise<void>;
+      onToolCallDelta?: (tc: ToolCall) => Promise<void>;
+      onStreamFinish?: (finishReason?: string, usage?: UsageData) => Promise<void>;
+      onUsage?: (usage: UsageData) => Promise<void>;
     } = {},
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
@@ -326,7 +326,7 @@ export abstract class BaseLLM implements LLMPort {
     let lastFinishReason: string | undefined;
     const extraFields: Record<string, unknown> = {};
 
-    const flushEvent = (rawEvent: string) => {
+    const flushEvent = async (rawEvent: string) => {
       const lines = rawEvent.split('\n');
       const dataLines: string[] = [];
       for (const ln of lines) {
@@ -351,9 +351,9 @@ export abstract class BaseLLM implements LLMPort {
           usage = this.transformUsage(usageData);
           if (usage) {
             if (lastFinishReason && handlers.onStreamFinish) {
-              handlers.onStreamFinish(lastFinishReason, usage);
+              await handlers.onStreamFinish(lastFinishReason, usage);
             } else {
-              handlers.onUsage?.(usage);
+              await handlers.onUsage?.(usage);
             }
           }
         }
@@ -361,11 +361,12 @@ export abstract class BaseLLM implements LLMPort {
         for (const ch of choices) {
           const delta: LLMMessageDelta = ch.delta ?? ch.message ?? {};
           const textDelta: string | undefined = delta.content ?? undefined;
-          const reasoningDelta: string | undefined = delta.reasoning_content ?? delta.reasoning ?? delta.reasoning_text ?? undefined;
+          const reasoningDelta: string | undefined =
+            delta.reasoning_content ?? delta.reasoning ?? delta.reasoning_text ?? undefined;
 
           if (typeof reasoningDelta === 'string' && reasoningDelta.length > 0) {
             reasoning += reasoningDelta;
-            handlers.onReasoningChunk?.(reasoningDelta);
+            await handlers.onReasoningChunk?.(reasoningDelta);
           }
 
           if (typeof textDelta === 'string' && textDelta.length > 0) {
@@ -373,11 +374,11 @@ export abstract class BaseLLM implements LLMPort {
               const trimmedDelta = textDelta.replace(/^\n+/, '');
               if (trimmedDelta) {
                 content += trimmedDelta;
-                handlers.onChunk?.(trimmedDelta);
+                await handlers.onChunk?.(trimmedDelta);
               }
             } else {
               content += textDelta;
-              handlers.onChunk?.(textDelta);
+              await handlers.onChunk?.(textDelta);
             }
           }
 
@@ -429,7 +430,7 @@ export abstract class BaseLLM implements LLMPort {
             if (typeof td.function?.arguments === 'string' && td.function.arguments) {
               toolCall.function.arguments += td.function.arguments;
             }
-            if (handlers.onToolCallDelta) handlers.onToolCallDelta(toolCall);
+            await handlers?.onToolCallDelta?.(toolCall);
           }
         }
       } catch {}
@@ -447,9 +448,9 @@ export abstract class BaseLLM implements LLMPort {
       buffer += chunk;
       const parts = buffer.split('\n\n');
       buffer = parts.pop() ?? '';
-      for (const part of parts) flushEvent(part);
+      for (const part of parts) await flushEvent(part);
     }
-    if (buffer.trim()) flushEvent(buffer);
+    if (buffer.trim()) await flushEvent(buffer);
 
     content = content.replace(/^\n+/, '');
 
