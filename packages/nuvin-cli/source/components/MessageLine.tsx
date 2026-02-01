@@ -162,48 +162,76 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'error':
         return (
-          <Box flexDirection="row" marginTop={1} flexShrink={0}>
-            <Box flexShrink={0} marginRight={1}>
-              <Text color={theme.messageTypes.error} bold>
-                ●
-              </Text>
-            </Box>
+          <Box
+            flexDirection="row"
+            marginTop={1}
+            flexShrink={0}
+            borderStyle="doubleSingle"
+            borderBottom={false}
+            borderTop={false}
+            borderRight={false}
+            borderColor={theme.messageTypes.error}
+            backgroundColor={theme.tokens.dim}
+            width={'100%'}
+            paddingLeft={2}
+          >
             <Text>{message.content}</Text>
           </Box>
         );
 
       case 'warning':
         return (
-          <Box flexDirection="row" marginTop={1} flexShrink={0}>
-            <Box flexShrink={0} marginRight={1}>
-              <Text color={theme.messageTypes.warning} bold>
-                ●
-              </Text>
-            </Box>
+          <Box
+            flexDirection="row"
+            marginTop={1}
+            flexShrink={0}
+            borderStyle="doubleSingle"
+            borderBottom={false}
+            borderTop={false}
+            borderRight={false}
+            borderColor={theme.messageTypes.warning}
+            backgroundColor={theme.tokens.dim}
+            width={'100%'}
+            paddingLeft={2}
+          >
             <Text>{message.content}</Text>
           </Box>
         );
 
       case 'info':
         return (
-          <Box flexDirection="row" marginTop={1} flexShrink={0}>
-            <Box flexShrink={0} marginRight={1}>
-              <Text color={message.color || theme.messageTypes.info} bold>
-                ●
-              </Text>
-            </Box>
+          <Box
+            flexDirection="row"
+            marginTop={1}
+            flexShrink={0}
+            borderStyle="doubleSingle"
+            borderBottom={false}
+            borderTop={false}
+            borderRight={false}
+            borderColor={theme.messageTypes.info}
+            backgroundColor={theme.tokens.dim}
+            width={'100%'}
+            paddingLeft={2}
+          >
             <Text color={message.color}>{message.content}</Text>
           </Box>
         );
 
       case 'system':
         return (
-          <Box flexDirection="row" marginTop={1} flexShrink={0}>
-            <Box flexShrink={0} marginRight={1}>
-              <Text color={theme.messageTypes.system} bold>
-                ●
-              </Text>
-            </Box>
+          <Box
+            flexDirection="row"
+            marginTop={1}
+            flexShrink={0}
+            borderStyle="doubleSingle"
+            borderBottom={false}
+            borderTop={false}
+            borderRight={false}
+            borderColor={theme.messageTypes.system}
+            backgroundColor={theme.tokens.dim}
+            width={'100%'}
+            paddingLeft={2}
+          >
             <Text>{message.content}</Text>
           </Box>
         );
