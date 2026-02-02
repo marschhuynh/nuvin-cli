@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.11
+
+### Patch Changes
+
+- [#160](https://github.com/marschhuynh/nuvin-cli/pull/160) [`fad37c2`](https://github.com/marschhuynh/nuvin-space/commit/fad37c2880d5733ef561a84cbcacbcbd0f526060) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(events): add completion callbacks to custom-command:execute event
+
 ## 1.36.0-rc.10
 
 ### Minor Changes
