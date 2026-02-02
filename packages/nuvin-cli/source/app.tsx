@@ -268,12 +268,19 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
     onNotification: setNotification,
   });
 
-  const handleSubmit = useHandleSubmit({
+  const { handleSubmit, shouldQueueItem } = useHandleSubmit({
     appendLine,
     handleError,
     executeCommand,
     processMessage,
   });
+
+  // Use ref to avoid stale closure - handleSubmit changes frequently but we want
+  // the event listener to always use the latest version without re-registering
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
 
   const onViewRefresh = useCallback(() => {
     setHeaderKey((prev) => prev + 1);
@@ -288,18 +295,31 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
       setVimModeEnabled((prev) => !prev);
     };
 
-    const onCustomCommandExecute = (payload: { commandId: string; renderedPrompt: string; userInput: string }) => {
-      if (payload.renderedPrompt) {
-        void handleSubmit(payload.renderedPrompt);
-      }
-    };
-
     const onExitStart = () => {
       setIsExiting(true);
     };
 
     const onAgentSwapped = (event: { agentId: string; agentName: string }) => {
       setNotification(`${event.agentName} is now active`, 3000);
+    };
+
+    const onCustomCommandExecute = async (payload: {
+      commandId: string;
+      renderedPrompt: string;
+      userInput: string;
+      onComplete?: () => void;
+      onError?: (error: Error) => void;
+    }) => {
+      if (payload.renderedPrompt) {
+        try {
+          await handleSubmitRef.current(payload.renderedPrompt);
+          payload.onComplete?.();
+        } catch (error) {
+          payload.onError?.(error instanceof Error ? error : new Error(String(error)));
+        }
+      } else {
+        payload.onComplete?.();
+      }
     };
 
     eventBus.on('command:sudo:toggle', onSudoToggle);
@@ -317,7 +337,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
       eventBus.off('ui:exit:start', onExitStart);
       eventBus.off('agent:swapped', onAgentSwapped);
     };
-  }, [onViewRefresh, setToolApprovalMode, handleSubmit, setNotification]);
+  }, [onViewRefresh, setToolApprovalMode, setNotification]);
 
   useEffect(() => {
     if (previousVimModeRef.current === null) {
@@ -445,6 +465,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
             onNotification={setNotification}
             onBusyChange={setBusy}
             onInputSubmit={handleSubmit}
+            shouldQueueItem={shouldQueueItem}
             onVimModeToggle={() => setVimModeEnabled((prev) => !prev)}
             onVimModeChanged={setVimMode}
           />

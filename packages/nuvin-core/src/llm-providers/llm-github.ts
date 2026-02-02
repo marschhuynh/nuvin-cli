@@ -187,11 +187,11 @@ export class GithubLLM extends BaseLLM implements LLMPort {
   private async streamCompletionViaResponses(
     params: CompletionParams,
     handlers: {
-      onChunk?: (delta: string, usage?: UsageData) => void;
-      onReasoningChunk?: (delta: string) => void;
-      onToolCallDelta?: (tc: ToolCall) => void;
-      onStreamFinish?: (finishReason?: string, usage?: UsageData) => void;
-      onUsage?: (usage: UsageData) => void;
+      onChunk?: (delta: string, usage?: UsageData) => Promise<void>;
+      onReasoningChunk?: (delta: string) => Promise<void>;
+      onToolCallDelta?: (tc: ToolCall) => Promise<void>;
+      onStreamFinish?: (finishReason?: string, usage?: UsageData) => Promise<void>;
+      onUsage?: (usage: UsageData) => Promise<void>;
     } = {},
     signal?: AbortSignal,
   ): Promise<CompletionResult> {
@@ -215,7 +215,7 @@ export class GithubLLM extends BaseLLM implements LLMPort {
     let usage: UsageData | undefined;
     let finalResponse: ResponsesApiResponse | undefined;
 
-    const processEvent = (eventData: string) => {
+    const processEvent = async (eventData: string) => {
       const lines = eventData.split('\n');
       let eventType = '';
       let data = '';
@@ -240,7 +240,7 @@ export class GithubLLM extends BaseLLM implements LLMPort {
             const textEvt = evt as { delta?: string };
             if (textEvt.delta) {
               content += textEvt.delta;
-              handlers.onChunk?.(textEvt.delta);
+              await handlers.onChunk?.(textEvt.delta);
             }
             break;
           }
@@ -261,14 +261,16 @@ export class GithubLLM extends BaseLLM implements LLMPort {
               if (itemEvt.output_index !== undefined) {
                 outputIndexToCallId.set(itemEvt.output_index, itemEvt.item.call_id);
               }
-              handlers.onToolCallDelta?.(tc);
+              await handlers.onToolCallDelta?.(tc);
             }
             break;
           }
 
           case 'response.function_call_arguments.delta': {
             const argEvt = evt as { call_id?: string; output_index?: number; delta?: string };
-            const callId = argEvt.call_id ?? (argEvt.output_index !== undefined ? outputIndexToCallId.get(argEvt.output_index) : undefined);
+            const callId =
+              argEvt.call_id ??
+              (argEvt.output_index !== undefined ? outputIndexToCallId.get(argEvt.output_index) : undefined);
             if (callId && argEvt.delta) {
               const currentArgs = toolCallArgsMap.get(callId) ?? '';
               const newArgs = currentArgs + argEvt.delta;
@@ -277,7 +279,7 @@ export class GithubLLM extends BaseLLM implements LLMPort {
               const tc = toolCalls.find((t) => t.id === callId);
               if (tc) {
                 tc.function.arguments = newArgs;
-                handlers.onToolCallDelta?.(tc);
+                await handlers.onToolCallDelta?.(tc);
               }
             }
             break;
@@ -285,12 +287,14 @@ export class GithubLLM extends BaseLLM implements LLMPort {
 
           case 'response.function_call_arguments.done': {
             const doneEvt = evt as { call_id?: string; output_index?: number; arguments?: string };
-            const callId = doneEvt.call_id ?? (doneEvt.output_index !== undefined ? outputIndexToCallId.get(doneEvt.output_index) : undefined);
+            const callId =
+              doneEvt.call_id ??
+              (doneEvt.output_index !== undefined ? outputIndexToCallId.get(doneEvt.output_index) : undefined);
             if (callId && doneEvt.arguments) {
               const tc = toolCalls.find((t) => t.id === callId);
               if (tc) {
                 tc.function.arguments = doneEvt.arguments;
-                handlers.onToolCallDelta?.(tc);
+                await handlers.onToolCallDelta?.(tc);
               }
             }
             break;
@@ -302,9 +306,9 @@ export class GithubLLM extends BaseLLM implements LLMPort {
               finalResponse = completedEvt.response;
               if (finalResponse.usage) {
                 usage = transformResponsesUsage(finalResponse.usage);
-                handlers.onUsage?.(usage);
+                await handlers.onUsage?.(usage);
               }
-              handlers.onStreamFinish?.('stop', usage);
+              await handlers.onStreamFinish?.('stop', usage);
             }
             break;
           }
@@ -339,11 +343,11 @@ export class GithubLLM extends BaseLLM implements LLMPort {
       buffer = events.pop() ?? '';
 
       for (const event of events) {
-        if (event.trim()) processEvent(event);
+        if (event.trim()) await processEvent(event);
       }
     }
 
-    if (buffer.trim()) processEvent(buffer);
+    if (buffer.trim()) await processEvent(buffer);
 
     return {
       content,
@@ -371,11 +375,11 @@ export class GithubLLM extends BaseLLM implements LLMPort {
   async streamCompletion(
     params: CompletionParams,
     handlers?: {
-      onChunk?: (delta: string, usage?: UsageData) => void;
-      onReasoningChunk?: (delta: string) => void;
-      onToolCallDelta?: (tc: ToolCall) => void;
-      onStreamFinish?: (finishReason?: string, usage?: UsageData) => void;
-      onUsage?: (usage: UsageData) => void;
+      onChunk?: (delta: string, usage?: UsageData) => Promise<void>;
+      onReasoningChunk?: (delta: string) => Promise<void>;
+      onToolCallDelta?: (tc: ToolCall) => Promise<void>;
+      onStreamFinish?: (finishReason?: string, usage?: UsageData) => Promise<void>;
+      onUsage?: (usage: UsageData) => Promise<void>;
     },
     signal?: AbortSignal,
   ): Promise<CompletionResult> {

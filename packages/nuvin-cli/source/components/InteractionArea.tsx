@@ -11,6 +11,7 @@ import { useAltMode } from '@/contexts/AltModeContext.js';
 import { ToolApprovalPrompt } from './ToolApprovalPrompt/ToolApprovalPrompt.js';
 import { UserQuestionPrompt } from './UserQuestionPrompt/index.js';
 import { InputArea, type InputAreaHandle } from './InputArea.js';
+import type { QueuedItem } from '@/hooks/useHandleSubmit.js';
 
 type InteractionAreaProps = {
   busy?: boolean;
@@ -26,6 +27,7 @@ type InteractionAreaProps = {
 
   onInputChanged?: (value: string) => void;
   onInputSubmit?: (value: string) => Promise<void>;
+  shouldQueueItem?: (value: string, busy: boolean) => { shouldQueue: boolean; queueItem: QueuedItem | null };
   onVimModeToggle?: () => void;
   onVimModeChanged?: (mode: 'insert' | 'normal') => void;
 };
@@ -44,6 +46,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
 
     onInputChanged,
     onInputSubmit,
+    shouldQueueItem,
     onVimModeToggle,
     onVimModeChanged,
   },
@@ -59,17 +62,17 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   const hasPendingQuestion = pendingQuestion !== null;
 
   const escStageRef = useRef<'none' | 'armed-clear' | 'armed-stop'>('none');
-  const [queuedMessages, setQueuedMessages] = useState<string[]>([]);
+  const [queuedMessages, setQueuedMessages] = useState<QueuedItem[]>([]);
   const isProcessingQueueRef = useRef(false);
   const escTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!busy && queuedMessages.length > 0 && onInputSubmit && !isProcessingQueueRef.current) {
+    if (!busy && queuedMessages.length > 0 && !isProcessingQueueRef.current) {
       isProcessingQueueRef.current = true;
-      const [messageToSubmit, ...remaining] = queuedMessages;
+      const [itemToProcess, ...remaining] = queuedMessages;
       setQueuedMessages(remaining);
 
-      onInputSubmit(messageToSubmit).finally(() => {
+      void onInputSubmit?.(itemToProcess.content).finally(() => {
         isProcessingQueueRef.current = false;
       });
     }
@@ -80,14 +83,20 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
       if (!value.trim()) {
         return;
       }
-      if (busy && !value.startsWith('/')) {
-        setQueuedMessages((prev) => [...prev, value]);
-        onNotification?.(`Message queued, will be sent when current request completes`, 1000);
-      } else {
-        await onInputSubmit?.(value);
+
+      if (shouldQueueItem) {
+        const { shouldQueue, queueItem } = shouldQueueItem(value, busy ?? false);
+        if (shouldQueue && queueItem) {
+          setQueuedMessages((prev) => [...prev, queueItem]);
+          const itemLabel = queueItem.type === 'command' ? `Command ${queueItem.content.split(' ')[0]}` : 'Message';
+          onNotification?.(`${itemLabel} queued, will be sent when current request completes`, 1000);
+          return;
+        }
       }
+
+      await onInputSubmit?.(value);
     },
-    [busy, onNotification, onInputSubmit],
+    [busy, onNotification, onInputSubmit, shouldQueueItem],
   );
 
   useInput(
@@ -151,6 +160,10 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
               const controller = abortRef.current;
               if (controller) {
                 controller.abort();
+                
+                // Clear the queue to prevent remaining items from processing
+                setQueuedMessages([]);
+                
                 onBusyChange(false);
               }
             } catch (_error) {
@@ -249,7 +262,11 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             {queuedMessages.length > 0 && (
               <Box flexDirection="row" marginLeft={2}>
                 <Text color={theme.colors.secondary} dimColor>
-                  ⟀ {queuedMessages[0]}
+                  {queuedMessages[0].type === 'command' ? (
+                    <>⌘ {queuedMessages[0].content.split(' ')[0]}</>
+                  ) : (
+                    <>⟀ {queuedMessages[0].content.slice(0, 30)}{queuedMessages[0].content.length > 30 ? '...' : ''}</>
+                  )}
                 </Text>
                 {queuedMessages.length > 1 && (
                   <Text color={theme.colors.secondary} dimColor>

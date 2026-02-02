@@ -74,10 +74,14 @@ function registerCustomCommandsToRegistry(commandRegistry: CommandRegistry): voi
         const userInput = ctx.rawInput.replace(commandId, '').trim();
         const renderedPrompt = customCommandRegistry.renderPrompt(cmd.id, userInput);
 
-        eventBus.emit('custom-command:execute', {
-          commandId: cmd.id,
-          renderedPrompt,
-          userInput,
+        return new Promise<void>((resolve, reject) => {
+          eventBus.emit('custom-command:execute', {
+            commandId: cmd.id,
+            renderedPrompt,
+            userInput,
+            onComplete: resolve,
+            onError: reject,
+          });
         });
       },
     };

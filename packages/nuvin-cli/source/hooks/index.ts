@@ -3,7 +3,7 @@ export { useGlobalKeyboard } from './useGlobalKeyboard.js';
 export { useSessionManagement, scanAvailableSessions } from './useSessionManagement.js';
 export { useNotification } from './useNotification.js';
 export { useStdoutDimensions } from './useStdoutDimensions.js';
-export { useHandleSubmit } from './useHandleSubmit.js';
+export { useHandleSubmit, type QueuedItem } from './useHandleSubmit.js';
 export { useDeviceFlow } from './useDeviceFlow.js';
 export { useOAuth } from './useOAuth.js';
 export { useAuthStorage } from './useAuthStorage.js';
