@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.12
+
+### Patch Changes
+
+- [`d5a7511`](https://github.com/marschhuynh/nuvin-space/commit/d5a7511f697917d5c43b8af8c01cb1b830608fec) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix UI layout issues with flex properties, scroll behavior, and React hook dependencies
+
 ## 1.36.0-rc.11
 
 ### Patch Changes

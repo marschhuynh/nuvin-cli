@@ -27,6 +27,7 @@
     "refactor-tool-call-render",
     "tiny-lemons-jam",
     "tool-call-header-args",
-    "tool-display-names"
+    "tool-display-names",
+    "ui-layout-fixes"
   ]
 }
