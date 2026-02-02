@@ -41,12 +41,7 @@ describe('assign_task - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 45678);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -66,12 +61,7 @@ describe('assign_task - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 1234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -87,12 +77,7 @@ describe('assign_task - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 5000);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -102,7 +87,8 @@ describe('assign_task - Snapshot Tests', () => {
     const result = 'Complex task completed with multiple steps executed successfully.';
 
     const toolCall = createMockToolCall('assign_task', {
-      instructions: 'Refactor the authentication module to use a new provider pattern. Update all existing tests to work with the new structure. Add integration tests for the new flow. Update documentation to reflect the changes.',
+      instructions:
+        'Refactor the authentication module to use a new provider pattern. Update all existing tests to work with the new structure. Add integration tests for the new flow. Update documentation to reflect the changes.',
       context: 'Part of the Q1 2024 architecture refactor initiative',
     });
     const toolResult = createMockToolResult('assign_task', result, {
@@ -113,12 +99,7 @@ describe('assign_task - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 123456);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

@@ -32,18 +32,13 @@ describe('file_read - Snapshot Tests', () => {
     const toolCall = createMockToolCall('file_read', {
       path: 'src/components/MyComponent.tsx',
       lineStart: 1,
-      lineEnd: 6
+      lineEnd: 6,
     });
     const toolResult = createMockToolResult('file_read', content);
     const resultMessage = createMockToolResultMessage(toolResult, 45);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -55,31 +50,24 @@ describe('file_read - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 12);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
   });
 
   it('renders file read with long content (50+ lines)', () => {
-    const longContent = Array(50).fill(0).map((_, i) => `Line ${i + 1}: This is a line of text in the file`).join('\n');
+    const longContent = Array(50)
+      .fill(0)
+      .map((_, i) => `Line ${i + 1}: This is a line of text in the file`)
+      .join('\n');
 
     const toolCall = createMockToolCall('file_read', { path: 'long-file.txt' });
     const toolResult = createMockToolResult('file_read', longContent);
     const resultMessage = createMockToolResultMessage(toolResult, 230);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -93,12 +81,7 @@ describe('file_read - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 18);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

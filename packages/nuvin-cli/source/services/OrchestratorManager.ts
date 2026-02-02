@@ -80,7 +80,7 @@ const baseEnabledTools: string[] = [
   'assign_task',
   'lsp',
   'skill',
-  'ask_user_tool'
+  'ask_user_tool',
 ];
 
 function getEnabledTools(): string[] {
@@ -289,9 +289,7 @@ export class OrchestratorManager {
       // const llm = this.createLLM(httpLogFile);
 
       // Start with in-memory unless explicit session provided
-      const memory = hasExplicitSession
-        ? this.createMemory(sessionDir, 'cli')
-        : new InMemoryMemory<Message>();
+      const memory = hasExplicitSession ? this.createMemory(sessionDir, 'cli') : new InMemoryMemory<Message>();
 
       // Initialize agent persistence and registry
       const { agentsDir } = this.getProfilePaths();
@@ -1323,6 +1321,9 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     if (!this.orchestrator) {
       throw new Error('Orchestrator not initialized');
     }
+    if (!this.handlers) {
+      throw new Error('Handlers not initialized');
+    }
 
     // Get agent registry from tools
     const tools = this.orchestrator.getTools();
@@ -1364,24 +1365,22 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     }
 
     // Create new LLM for the agent's model
-    const httpLogFile = this.memPersist && this.sessionDir && this.sessionDir.length > 0
-      ? path.join(this.sessionDir, 'http-log.json')
-      : undefined;
+    const httpLogFile =
+      this.memPersist && this.sessionDir && this.sessionDir.length > 0
+        ? path.join(this.sessionDir, 'http-log.json')
+        : undefined;
     const newLLM = this.createLLM(httpLogFile);
 
     // Create new event adapter
     const newEventAdapter = this.createEventAdapter(
       this.sessionDir || '',
-      this.handlers!,
+      this.handlers,
       persistEventLog,
       this.streamingChunks,
     );
 
     // Create new metrics port
-    const newMetrics = new SessionBoundMetricsPort(
-      `swapped-${agentId}`,
-      sessionMetricsService,
-    );
+    const newMetrics = new SessionBoundMetricsPort(`swapped-${agentId}`, sessionMetricsService);
 
     // Create new orchestrator with merged config
     const newOrchestrator = new AgentOrchestrator(mergedConfig, {
@@ -1421,6 +1420,9 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
   async swapToMain(): Promise<void> {
     if (!this.orchestrator) {
       throw new Error('Orchestrator not initialized');
+    }
+    if (!this.handlers) {
+      throw new Error('Handlers not initialized');
     }
 
     // Early return if already on main agent
@@ -1476,15 +1478,16 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     }
 
     // Create new LLM for the main agent's model
-    const httpLogFile = this.memPersist && this.sessionDir && this.sessionDir.length > 0
-      ? path.join(this.sessionDir, 'http-log.json')
-      : undefined;
+    const httpLogFile =
+      this.memPersist && this.sessionDir && this.sessionDir.length > 0
+        ? path.join(this.sessionDir, 'http-log.json')
+        : undefined;
     const newLLM = this.createLLM(httpLogFile);
 
     // Create new event adapter
     const newEventAdapter = this.createEventAdapter(
       this.sessionDir || '',
-      this.handlers!,
+      this.handlers,
       persistEventLog,
       this.streamingChunks,
     );

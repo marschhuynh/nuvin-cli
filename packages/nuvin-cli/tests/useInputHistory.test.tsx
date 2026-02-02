@@ -41,12 +41,12 @@ interface UseInputHistoryResult {
 }
 
 // Helper component to expose hook internals
-function HookWrapper({ 
-  hookProps, 
-  onRender 
-}: { 
-  hookProps: UseInputHistoryProps, 
-  onRender: (result: UseInputHistoryResult) => void 
+function HookWrapper({
+  hookProps,
+  onRender,
+}: {
+  hookProps: UseInputHistoryProps;
+  onRender: (result: UseInputHistoryResult) => void;
 }) {
   const result = useInputHistory(hookProps);
   useEffect(() => {
@@ -61,7 +61,7 @@ describe('useInputHistory Hook', () => {
 
   beforeEach(() => {
     storedMessages = [];
-    
+
     mockMemory = {
       get: vi.fn().mockImplementation(async () => [...storedMessages]),
       set: vi.fn().mockImplementation(async (_key: string, messages: Message[]) => {
@@ -83,10 +83,12 @@ describe('useInputHistory Hook', () => {
   const getHookResult = (props: UseInputHistoryProps): UseInputHistoryResult => {
     let result: UseInputHistoryResult | undefined;
     render(
-      <HookWrapper 
-        hookProps={props} 
-        onRender={(r) => { result = r; }} 
-      />
+      <HookWrapper
+        hookProps={props}
+        onRender={(r) => {
+          result = r;
+        }}
+      />,
     );
     return result as UseInputHistoryResult;
   };
@@ -113,45 +115,47 @@ describe('useInputHistory Hook', () => {
         currentInput: '',
         onRecall: vi.fn(),
       };
-      
+
       render(
-        <HookWrapper 
-          hookProps={props} 
-          onRender={(r) => { hookResult = r; }} 
-        />
+        <HookWrapper
+          hookProps={props}
+          onRender={(r) => {
+            hookResult = r;
+          }}
+        />,
       );
 
       // Add same message 3 times
       hookResult.addMessage('same message');
       await delay(10);
-      
+
       hookResult.addMessage('same message');
       await delay(10);
-      
+
       hookResult.addMessage('same message');
       await delay(10);
 
       // Verify via navigation (since we can't inspect state directly easily without more exposure)
       // Navigating Up (prev) should recall the message once.
-      // If it was added 3 times, we'd have 3 entries. 
+      // If it was added 3 times, we'd have 3 entries.
       // Current index starts at -1 (empty/new).
       // navigatePrev -> index 0 (last item).
-      
+
       // We must mock onRecall to verify what is recalled
       const onRecall = props.onRecall;
-      
+
       // Simulate Up Arrow
       // NOTE: handleUpArrow checks lineInfo. Usually expects { lineIndex: 0, lines: [...] }
       hookResult.handleUpArrow({ lineIndex: 0, lines: [''] });
       expect(onRecall).toHaveBeenCalledWith('same message');
-      
+
       onRecall.mockClear();
       await delay(10); // Wait for index state update
-      
+
       // If there was only 1 message, another Up Arrow should do nothing (if at top) or stay at same?
       // navigatePrev implementation:
       // if index=0, returns null (early return).
-      
+
       hookResult.handleUpArrow({ lineIndex: 0, lines: [''] });
       // Should NOT recall again if we reached the top
       expect(onRecall).not.toHaveBeenCalled();
@@ -161,22 +165,24 @@ describe('useInputHistory Hook', () => {
       let hookResult: UseInputHistoryResult | undefined;
       const onRecall = vi.fn();
       const props = { memory: mockMemory, currentInput: '', onRecall };
-      
+
       render(
-        <HookWrapper 
-          hookProps={props} 
-          onRender={(r) => { hookResult = r; }} 
-        />
+        <HookWrapper
+          hookProps={props}
+          onRender={(r) => {
+            hookResult = r;
+          }}
+        />,
       );
 
       if (hookResult) {
         hookResult.addMessage('');
         hookResult.addMessage('   ');
-        
+
         // Navigate Up
         hookResult.handleUpArrow({ lineIndex: 0, lines: [''] });
       }
-      
+
       // Should handle empty history gracefully (navigatePrev returns null)
       expect(onRecall).not.toHaveBeenCalled();
     });

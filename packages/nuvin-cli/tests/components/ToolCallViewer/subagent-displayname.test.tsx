@@ -49,7 +49,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -87,7 +87,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -124,7 +124,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -161,7 +161,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -199,7 +199,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -237,7 +237,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -287,7 +287,7 @@ describe('SubAgentActivity - Tool Display Names', () => {
     };
 
     const { lastFrame } = render(
-      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />
+      <SubAgentActivity toolCall={toolCall} subAgentState={subAgentState} messageId="msg-1" />,
     );
 
     const output = lastFrame();

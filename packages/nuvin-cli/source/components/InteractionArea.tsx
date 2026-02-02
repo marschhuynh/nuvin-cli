@@ -160,10 +160,10 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
               const controller = abortRef.current;
               if (controller) {
                 controller.abort();
-                
+
                 // Clear the queue to prevent remaining items from processing
                 setQueuedMessages([]);
-                
+
                 onBusyChange(false);
               }
             } catch (_error) {
@@ -209,11 +209,18 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
   );
 
   const commandItems = useMemo(
-    () => commands.map((cmd) => ({ label: `${cmd.id} - ${cmd.description}`, value: cmd.id, description: cmd.description })),
+    () =>
+      commands.map((cmd) => ({ label: `${cmd.id} - ${cmd.description}`, value: cmd.id, description: cmd.description })),
     [commands],
   );
 
-  const mode = hasPendingQuestion ? 'question' : hasPendingApproval ? 'approval' : hasActiveCommand ? 'command' : 'input';
+  const mode = hasPendingQuestion
+    ? 'question'
+    : hasPendingApproval
+      ? 'approval'
+      : hasActiveCommand
+        ? 'command'
+        : 'input';
 
   const renderDynamicContent = () => {
     switch (mode) {
@@ -265,7 +272,10 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
                   {queuedMessages[0].type === 'command' ? (
                     <>⌘ {queuedMessages[0].content.split(' ')[0]}</>
                   ) : (
-                    <>⟀ {queuedMessages[0].content.slice(0, 30)}{queuedMessages[0].content.length > 30 ? '...' : ''}</>
+                    <>
+                      ⟀ {queuedMessages[0].content.slice(0, 30)}
+                      {queuedMessages[0].content.length > 30 ? '...' : ''}
+                    </>
                   )}
                 </Text>
                 {queuedMessages.length > 1 && (

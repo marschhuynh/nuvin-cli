@@ -24,7 +24,7 @@ export function OAuthUI({ state, code, onCodeChange, onSubmit, onOpenBrowser, th
         onOpenBrowser();
       }
     },
-    { isActive: state.status === 'ready' }
+    { isActive: state.status === 'ready' },
   );
 
   return (

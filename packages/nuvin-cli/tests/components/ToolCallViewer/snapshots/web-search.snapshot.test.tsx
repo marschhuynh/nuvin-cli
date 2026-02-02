@@ -56,12 +56,7 @@ describe('web_search - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 567);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -80,12 +75,7 @@ describe('web_search - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -94,11 +84,13 @@ describe('web_search - Snapshot Tests', () => {
   it('renders web search with many results', () => {
     const searchResults = {
       count: 10,
-      results: Array(10).fill(0).map((_, i) => ({
-        title: `Result ${i + 1}: TypeScript Best Practices`,
-        url: `https://example.com/result-${i + 1}`,
-        snippet: `This is a detailed snippet for result ${i + 1} about TypeScript best practices and patterns.`,
-      })),
+      results: Array(10)
+        .fill(0)
+        .map((_, i) => ({
+          title: `Result ${i + 1}: TypeScript Best Practices`,
+          url: `https://example.com/result-${i + 1}`,
+          snippet: `This is a detailed snippet for result ${i + 1} about TypeScript best practices and patterns.`,
+        })),
     };
 
     const toolCall = createMockToolCall('web_search', {
@@ -109,12 +101,7 @@ describe('web_search - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 892);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -144,12 +131,7 @@ describe('web_search - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 456);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

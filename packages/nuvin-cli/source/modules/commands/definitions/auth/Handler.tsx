@@ -3,12 +3,7 @@ import { Box, Text } from 'ink';
 import { ScrollableSelectList, type ScrollableSelectItem } from '@/components/ScrollableSelectList/index.js';
 import { AppModal } from '@/components/AppModal.js';
 import type { CommandComponentProps } from '@/modules/commands/types.js';
-import {
-  getProviderAuthMethods,
-  type ProviderKey,
-  type ProviderItem,
-  type AuthMethodItem,
-} from '@/const.js';
+import { getProviderAuthMethods, type ProviderKey, type ProviderItem, type AuthMethodItem } from '@/const.js';
 import { buildProviderOptions, getProviderLabel } from '@/config/providers.js';
 
 import { exchangeCodeForToken, createApiKey } from './anthropic-oauth.js';
@@ -181,8 +176,9 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
       } catch (error) {
         resetToProviderStage({
           type: 'error',
-          message: `Failed to save ${getProviderLabel(provider)} API key: ${error instanceof Error ? error.message : String(error)
-            }`,
+          message: `Failed to save ${getProviderLabel(provider)} API key: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
         });
       }
     },
@@ -267,9 +263,7 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
 
   const renderSelectItem = (item: { label: string }, isSelected: boolean) => (
     <Box>
-      <Text color={isSelected ? theme.colors.accent : undefined}>
-        {isSelected ? '❯ ' : '  '}
-      </Text>
+      <Text color={isSelected ? theme.colors.accent : undefined}>{isSelected ? '❯ ' : '  '}</Text>
       <Text color={isSelected ? theme.colors.accent : undefined} bold={isSelected}>
         {item.label}
       </Text>

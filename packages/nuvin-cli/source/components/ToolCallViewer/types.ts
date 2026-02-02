@@ -29,7 +29,7 @@ export type RenderFn = (ctx: ToolRenderContext) => React.ReactNode | null;
  * Tool configuration - single source of truth for each tool
  */
 export type ToolConfig = {
-  /** 
+  /**
    * Display name shown in header (e.g., "Edit", "Read", "Run")
    * - string: static display name
    * - function: dynamic display name based on context

@@ -30,14 +30,14 @@ export interface CommandCreationActions {
 }
 
 export const useCommandCreationState = (
-  options: UseCommandCreationStateOptions
+  options: UseCommandCreationStateOptions,
 ): CommandCreationState & CommandCreationActions => {
   const { mode, initialCommand, availableScopes } = options;
 
   const [editedName, setEditedName] = useState(initialCommand?.id || '');
   const [editedDescription, setEditedDescription] = useState(initialCommand?.description || '');
   const [editedScope, setEditedScope] = useState<CommandSource>(
-    initialCommand?.source || (availableScopes.includes('local') ? 'local' : availableScopes[0] || 'global')
+    initialCommand?.source || (availableScopes.includes('local') ? 'local' : availableScopes[0] || 'global'),
   );
   const [editedPrompt, setEditedPrompt] = useState(initialCommand?.prompt || '{{user_prompt}}');
   const [error, setError] = useState<string | undefined>();
@@ -57,19 +57,22 @@ export const useCommandCreationState = (
     }
   }, []);
 
-  const handleScopeChange = useCallback((direction: 'left' | 'right') => {
-    const currentIndex = availableScopes.indexOf(editedScope);
-    let newIndex: number;
-    
-    if (direction === 'left') {
-      newIndex = (currentIndex - 1 + availableScopes.length) % availableScopes.length;
-    } else {
-      newIndex = (currentIndex + 1) % availableScopes.length;
-    }
-    
-    const newScope = availableScopes[newIndex];
-    if (newScope) setEditedScope(newScope);
-  }, [editedScope, availableScopes]);
+  const handleScopeChange = useCallback(
+    (direction: 'left' | 'right') => {
+      const currentIndex = availableScopes.indexOf(editedScope);
+      let newIndex: number;
+
+      if (direction === 'left') {
+        newIndex = (currentIndex - 1 + availableScopes.length) % availableScopes.length;
+      } else {
+        newIndex = (currentIndex + 1) % availableScopes.length;
+      }
+
+      const newScope = availableScopes[newIndex];
+      if (newScope) setEditedScope(newScope);
+    },
+    [editedScope, availableScopes],
+  );
 
   const validate = useCallback((): boolean => {
     if (!editedName.trim()) {

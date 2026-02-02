@@ -44,12 +44,7 @@ src/utils/validators.ts`;
     const resultMessage = createMockToolResultMessage(toolResult, 234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -67,19 +62,17 @@ src/utils/validators.ts`;
     const resultMessage = createMockToolResultMessage(toolResult, 89);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
   });
 
   it('renders glob search with truncated results', () => {
-    const files = Array(100).fill(0).map((_, i) => `src/file${i + 1}.ts`).join('\n');
+    const files = Array(100)
+      .fill(0)
+      .map((_, i) => `src/file${i + 1}.ts`)
+      .join('\n');
 
     const toolCall = createMockToolCall('glob_tool', {
       pattern: '**/*.ts',
@@ -92,12 +85,7 @@ src/utils/validators.ts`;
     const resultMessage = createMockToolResultMessage(toolResult, 456);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -121,12 +109,7 @@ src/components/layout/Footer/Footer.tsx`;
     const resultMessage = createMockToolResultMessage(toolResult, 178);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

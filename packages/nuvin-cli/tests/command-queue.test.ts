@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useHandleSubmit, type QueuedItem } from '../source/hooks/useHandleSubmit.js';
+import type { useHandleSubmit, QueuedItem } from '../source/hooks/useHandleSubmit.js';
 import { commandRegistry } from '../source/modules/commands/registry.js';
 
 // Mock the command registry
@@ -10,20 +10,20 @@ vi.mock('../source/modules/commands/registry.js', () => ({
 }));
 
 describe('useHandleSubmit - Command Queuing', () => {
-  const mockAppendLine = vi.fn();
-  const mockHandleError = vi.fn();
-  const mockExecuteCommand = vi.fn();
-  const mockProcessMessage = vi.fn();
+  const _mockAppendLine = vi.fn();
+  const _mockHandleError = vi.fn();
+  const _mockExecuteCommand = vi.fn();
+  const _mockProcessMessage = vi.fn();
 
   let shouldQueueItem: ReturnType<typeof useHandleSubmit>['shouldQueueItem'];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Call the hook to get shouldQueueItem function
     // Note: We can't use renderHook, so we'll create a minimal test setup
     // In a real scenario, you'd need to properly mock React hooks context
-    
+
     // For now, we'll just test the function logic by recreating it
     shouldQueueItem = (value: string, busy: boolean): { shouldQueue: boolean; queueItem: QueuedItem | null } => {
       if (!busy) {
@@ -82,7 +82,7 @@ describe('useHandleSubmit - Command Queuing', () => {
         description: 'My custom command',
         isCustomCommand: true,
         handler: vi.fn(),
-      } as any);
+      } as ReturnType<typeof commandRegistry.get>);
 
       const result_check = shouldQueueItem('/my-custom some input', true);
 
@@ -99,7 +99,7 @@ describe('useHandleSubmit - Command Queuing', () => {
         type: 'component',
         description: 'Agent selection',
         component: vi.fn(),
-      } as any);
+      } as ReturnType<typeof commandRegistry.get>);
 
       const result_check = shouldQueueItem('/agent', true);
 
@@ -113,7 +113,7 @@ describe('useHandleSubmit - Command Queuing', () => {
         type: 'function',
         description: 'Show help',
         handler: vi.fn(),
-      } as any);
+      } as ReturnType<typeof commandRegistry.get>);
 
       const result_check = shouldQueueItem('/help', true);
 

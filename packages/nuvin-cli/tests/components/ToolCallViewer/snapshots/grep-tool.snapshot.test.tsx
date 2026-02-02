@@ -45,12 +45,7 @@ src/utils/state.ts:12:  const [value, setValue] = useState(initial);`;
     const resultMessage = createMockToolResultMessage(toolResult, 345);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -69,21 +64,17 @@ src/utils/state.ts:12:  const [value, setValue] = useState(initial);`;
     const resultMessage = createMockToolResultMessage(toolResult, 123);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
   });
 
   it('renders grep search with many matches (truncated)', () => {
-    const matches = Array(100).fill(0).map((_, i) => 
-      `src/file${i + 1}.ts:${i + 1}:  const value = "test";`
-    ).join('\n');
+    const matches = Array(100)
+      .fill(0)
+      .map((_, i) => `src/file${i + 1}.ts:${i + 1}:  const value = "test";`)
+      .join('\n');
 
     const toolCall = createMockToolCall('grep_tool', {
       pattern: 'const value',
@@ -98,12 +89,7 @@ src/utils/state.ts:12:  const [value, setValue] = useState(initial);`;
     const resultMessage = createMockToolResultMessage(toolResult, 678);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -128,12 +114,7 @@ src/utils/helpers.ts:67:  // TODO: Add tests`;
     const resultMessage = createMockToolResultMessage(toolResult, 234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

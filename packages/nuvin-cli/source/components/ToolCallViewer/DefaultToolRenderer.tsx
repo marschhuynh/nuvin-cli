@@ -110,7 +110,7 @@ export function defaultRenderResult(ctx: ToolRenderContext): React.ReactNode {
 
   // Add truncation indicator if needed
   if (wasTruncated) {
-    resultStr = '... (truncated)\n\n' + resultStr;
+    resultStr = `... (truncated)\n\n${resultStr}`;
   }
 
   const color = getStateColor(toolState, theme);

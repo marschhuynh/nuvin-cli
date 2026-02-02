@@ -151,11 +151,14 @@ export function ScrollableSelectList<T>({
     { isActive: focus },
   );
 
-  const handleScrollChange = useCallback((info: { containerHeight: number; scrollY: number; contentHeight: number }) => {
-    setContainerHeight(info.containerHeight);
-    setScrollY(info.scrollY);
-    setContentHeight(info.contentHeight);
-  }, []);
+  const handleScrollChange = useCallback(
+    (info: { containerHeight: number; scrollY: number; contentHeight: number }) => {
+      setContainerHeight(info.containerHeight);
+      setScrollY(info.scrollY);
+      setContentHeight(info.contentHeight);
+    },
+    [],
+  );
 
   const setItemRef = useCallback((index: number, ref: BoxRef | null) => {
     if (ref) {
@@ -168,51 +171,54 @@ export function ScrollableSelectList<T>({
   const hasMoreAbove = scrollY > 0;
   const hasMoreBelow = contentHeight > containerHeight && scrollY + containerHeight < contentHeight;
 
-  const calculateHiddenItems = useCallback((direction: 'above' | 'below') => {
-    if (!canScroll) return 0;
+  const calculateHiddenItems = useCallback(
+    (direction: 'above' | 'below') => {
+      if (!canScroll) return 0;
 
-    let count = 0;
-    let accumulatedHeight = 0;
+      let count = 0;
+      let accumulatedHeight = 0;
 
-    if (direction === 'above') {
-      for (let i = 0; i < items.length; i++) {
-        const ref = itemRefs.current.get(i);
-        if (ref) {
-          const height = measureElement(ref).height;
-          if (accumulatedHeight + height <= scrollY) {
-            count++;
-            accumulatedHeight += height;
-          } else {
-            break;
+      if (direction === 'above') {
+        for (let i = 0; i < items.length; i++) {
+          const ref = itemRefs.current.get(i);
+          if (ref) {
+            const height = measureElement(ref).height;
+            if (accumulatedHeight + height <= scrollY) {
+              count++;
+              accumulatedHeight += height;
+            } else {
+              break;
+            }
+          }
+        }
+      } else {
+        const viewportBottom = scrollY + containerHeight;
+        accumulatedHeight = 0;
+        for (let i = 0; i < items.length; i++) {
+          const ref = itemRefs.current.get(i);
+          if (ref) {
+            accumulatedHeight += measureElement(ref).height;
+          }
+        }
+        let heightFromBottom = 0;
+        for (let i = items.length - 1; i >= 0; i--) {
+          const ref = itemRefs.current.get(i);
+          if (ref) {
+            const height = measureElement(ref).height;
+            const itemTop = accumulatedHeight - heightFromBottom - height;
+            if (itemTop >= viewportBottom) {
+              count++;
+            } else {
+              break;
+            }
+            heightFromBottom += height;
           }
         }
       }
-    } else {
-      const viewportBottom = scrollY + containerHeight;
-      accumulatedHeight = 0;
-      for (let i = 0; i < items.length; i++) {
-        const ref = itemRefs.current.get(i);
-        if (ref) {
-          accumulatedHeight += measureElement(ref).height;
-        }
-      }
-      let heightFromBottom = 0;
-      for (let i = items.length - 1; i >= 0; i--) {
-        const ref = itemRefs.current.get(i);
-        if (ref) {
-          const height = measureElement(ref).height;
-          const itemTop = accumulatedHeight - heightFromBottom - height;
-          if (itemTop >= viewportBottom) {
-            count++;
-          } else {
-            break;
-          }
-          heightFromBottom += height;
-        }
-      }
-    }
-    return count;
-  }, [canScroll, items.length, scrollY, containerHeight]);
+      return count;
+    },
+    [canScroll, items.length, scrollY, containerHeight],
+  );
 
   const itemsAbove = hasMoreAbove ? calculateHiddenItems('above') : 0;
   const itemsBelow = hasMoreBelow ? calculateHiddenItems('below') : 0;

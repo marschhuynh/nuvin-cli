@@ -42,21 +42,17 @@ drwxr-xr-x  2024-01-29T14:00:00.000Z  2048  tests`;
     const resultMessage = createMockToolResultMessage(toolResult, 123);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
   });
 
   it('renders directory listing with truncation', () => {
-    const entries = Array(50).fill(0).map((_, i) => 
-      `-rw-r--r--  2024-01-31T10:00:00.000Z  ${1000 + i}  file${i + 1}.txt`
-    ).join('\n');
+    const entries = Array(50)
+      .fill(0)
+      .map((_, i) => `-rw-r--r--  2024-01-31T10:00:00.000Z  ${1000 + i}  file${i + 1}.txt`)
+      .join('\n');
     const listing = `total: 50\n\n${entries}\n\ntruncated: true (50 of 100 entries shown)`;
 
     const toolCall = createMockToolCall('ls_tool', {
@@ -67,12 +63,7 @@ drwxr-xr-x  2024-01-29T14:00:00.000Z  2048  tests`;
     const resultMessage = createMockToolResultMessage(toolResult, 345);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -88,12 +79,7 @@ drwxr-xr-x  2024-01-29T14:00:00.000Z  2048  tests`;
     const resultMessage = createMockToolResultMessage(toolResult, 67);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -114,12 +100,7 @@ drwxr-xr-x  2024-01-29T14:00:00.000Z  2048  tests`;
     const resultMessage = createMockToolResultMessage(toolResult, 89);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

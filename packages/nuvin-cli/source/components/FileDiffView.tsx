@@ -33,7 +33,7 @@ export function createSimpleDiff(search: string, replace: string, lineNumbers?: 
   // Defensive check for undefined/null values
   const searchStr = search ?? '';
   const replaceStr = replace ?? '';
-  
+
   // Remove trailing newline to avoid empty line at end
   const searchTrimmed = searchStr.replace(/\n$/, '');
   const replaceTrimmed = replaceStr.replace(/\n$/, '');

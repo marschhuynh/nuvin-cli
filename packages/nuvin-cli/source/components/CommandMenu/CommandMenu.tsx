@@ -58,7 +58,11 @@ export const CommandMenu = forwardRef<CommandMenuHandle, CommandMenuProps>(
             showScrollIndicators={true}
             onHighlight={(item) => onHighlight?.(item.value)}
             itemComponent={(props) => <CommandMenuItemComponent {...props} commandWidth={maxCommandWidth} />}
-            indicatorComponent={({ isSelected }) => <Box flexShrink={0}><Text>{isSelected ? '❯ ' : '  '}</Text></Box>}
+            indicatorComponent={({ isSelected }) => (
+              <Box flexShrink={0}>
+                <Text>{isSelected ? '❯ ' : '  '}</Text>
+              </Box>
+            )}
           />
         </Box>
       </Box>

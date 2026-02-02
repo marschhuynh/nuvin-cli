@@ -45,12 +45,7 @@ describe('lsp - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 123);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -60,7 +55,8 @@ describe('lsp - Snapshot Tests', () => {
     const result = JSON.stringify({
       contents: {
         kind: 'markdown',
-        value: '```typescript\nfunction useState<S>(initialState: S | (() => S)): [S, Dispatch<SetStateAction<S>>]\n```\n\nReturns a stateful value, and a function to update it.',
+        value:
+          '```typescript\nfunction useState<S>(initialState: S | (() => S)): [S, Dispatch<SetStateAction<S>>]\n```\n\nReturns a stateful value, and a function to update it.',
       },
     });
 
@@ -74,12 +70,7 @@ describe('lsp - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 89);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -111,12 +102,7 @@ describe('lsp - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -148,12 +134,7 @@ describe('lsp - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 156);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

@@ -13,11 +13,11 @@ import { DEFAULT_PROFILE } from '@/config/profile-types.js';
 function sessionsDir(profile?: string): string {
   const configManager = ConfigManager.getInstance();
   const profileManager = configManager.getProfileManager();
-  
+
   if (!profileManager) {
     return path.join(os.homedir(), '.nuvin', 'sessions');
   }
-  
+
   const activeProfile = profile ?? configManager.getCurrentProfile();
   return profileManager.getProfileSessionsDir(activeProfile);
 }
@@ -163,7 +163,10 @@ export type LoadResult =
   | { kind: 'messages'; lines: MessageLine[]; metadata: MessageMetadata | null; cliMessages: Message[]; count: number }
   | { kind: 'empty'; reason: 'no_messages' | 'not_found' };
 
-export const createNewSession = async (customId?: string, profile?: string): Promise<{ sessionId: string; sessionDir: string }> => {
+export const createNewSession = async (
+  customId?: string,
+  profile?: string,
+): Promise<{ sessionId: string; sessionDir: string }> => {
   const id = customId ?? String(Date.now());
   const dir = sessionsDir(profile);
   const sessionDir = path.join(dir, id);

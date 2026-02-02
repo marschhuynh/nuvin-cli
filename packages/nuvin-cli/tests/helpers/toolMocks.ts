@@ -4,11 +4,7 @@ import type { MessageLine } from '../../source/adapters/index.js';
 /**
  * Create a mock ToolCall with given tool name and arguments
  */
-export function createMockToolCall(
-  name: string,
-  args: Record<string, unknown>,
-  id = 'test-call-1'
-): ToolCall {
+export function createMockToolCall(name: string, args: Record<string, unknown>, id = 'test-call-1'): ToolCall {
   return {
     id,
     type: 'function',
@@ -26,7 +22,7 @@ export function createMockToolResult(
   name: string,
   result: unknown,
   metadata?: Record<string, unknown>,
-  id = 'test-result-1'
+  id = 'test-result-1',
 ): ToolExecutionResult {
   return {
     id,
@@ -45,7 +41,7 @@ export function createMockToolError(
   name: string,
   error: string,
   metadata?: Record<string, unknown>,
-  id = 'test-error-1'
+  id = 'test-error-1',
 ): ToolExecutionResult {
   return {
     id,
@@ -60,10 +56,7 @@ export function createMockToolError(
 /**
  * Create a mock MessageLine with tool result
  */
-export function createMockToolResultMessage(
-  toolResult: ToolExecutionResult,
-  duration?: number
-): MessageLine {
+export function createMockToolResultMessage(toolResult: ToolExecutionResult, duration?: number): MessageLine {
   return {
     id: 'msg-result-1',
     type: 'tool_result',

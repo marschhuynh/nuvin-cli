@@ -3,10 +3,10 @@ import { describe, it, expect } from 'vitest';
 describe('FocusContext unit tests', () => {
   it('should add id to focusableIdsRef when register is called', () => {
     const focusableIdsRef = { current: new Set<string>() };
-    
+
     const id = 'test-id-1';
     focusableIdsRef.current.add(id);
-    
+
     expect(focusableIdsRef.current.size).toBe(1);
     expect(focusableIdsRef.current.has(id)).toBe(true);
   });
@@ -31,16 +31,16 @@ describe('FocusContext unit tests', () => {
     };
 
     expect(focusedId).toBeNull();
-    
+
     cycleFocus('forward');
     expect(focusedId).toBe('id1');
-    
+
     cycleFocus('forward');
     expect(focusedId).toBe('id2');
-    
+
     cycleFocus('forward');
     expect(focusedId).toBe('id3');
-    
+
     cycleFocus('forward');
     expect(focusedId).toBe('id1');
 

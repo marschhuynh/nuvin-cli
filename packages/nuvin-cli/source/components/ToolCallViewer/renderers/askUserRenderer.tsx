@@ -52,7 +52,7 @@ export const askUserRenderer = {
           const displayAnswer = Array.isArray(answer) ? answer.join(', ') : answer;
 
           return (
-            <Box key={`qa-${idx}`} flexDirection="column">
+            <Box key={qId} flexDirection="column">
               <Text dimColor>
                 <Text bold color={theme.tokens.blue}>
                   {q.header}:
@@ -64,7 +64,7 @@ export const askUserRenderer = {
               </Box>
               {idx < questions.length - 1 && (
                 <Box marginY={0}>
-                  <Text>{' '}</Text>
+                  <Text> </Text>
                 </Box>
               )}
             </Box>

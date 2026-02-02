@@ -145,7 +145,10 @@ export class MCPServerManager {
           type: 'oauth' as const,
           getToken: async () => oauthClient.getAccessToken(),
           onAuthRequired: async () => {
-            this.logInfo(`MCP server '${serverId}' requires authentication. Run: nuvin mcp login ${serverId}`, 'yellow');
+            this.logInfo(
+              `MCP server '${serverId}' requires authentication. Run: nuvin mcp login ${serverId}`,
+              'yellow',
+            );
             return null;
           },
         };

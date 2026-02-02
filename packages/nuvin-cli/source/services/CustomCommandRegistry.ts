@@ -48,7 +48,7 @@ export class CustomCommandRegistry {
 
     for (const template of allTemplates) {
       const complete = this.toComplete(template);
-      
+
       if (!this.allCommands.has(complete.id)) {
         this.allCommands.set(complete.id, []);
       }
@@ -58,7 +58,7 @@ export class CustomCommandRegistry {
     for (const [id, versions] of this.allCommands) {
       const sorted = this.sortByPriority(versions);
       const firstItem = sorted[0];
-      
+
       for (let i = 1; i < sorted.length; i++) {
         const item = sorted[i];
         if (item && firstItem) {
@@ -109,15 +109,15 @@ export class CustomCommandRegistry {
 
   register(command: CustomCommandTemplate): void {
     const complete = this.toComplete(command);
-    
+
     if (!this.allCommands.has(complete.id)) {
       this.allCommands.set(complete.id, []);
     }
-    
+
     const versions = this.allCommands.get(complete.id);
     if (!versions) return;
-    
-    const existingIndex = versions.findIndex(v => v.source === complete.source);
+
+    const existingIndex = versions.findIndex((v) => v.source === complete.source);
     if (existingIndex >= 0) {
       versions[existingIndex] = complete;
     } else {
@@ -142,11 +142,11 @@ export class CustomCommandRegistry {
     if (source) {
       const versions = this.allCommands.get(commandId);
       if (versions) {
-        const index = versions.findIndex(v => v.source === source);
+        const index = versions.findIndex((v) => v.source === source);
         if (index >= 0) {
           versions.splice(index, 1);
         }
-        
+
         if (versions.length === 0) {
           this.allCommands.delete(commandId);
           this.commands.delete(commandId);
@@ -180,7 +180,7 @@ export class CustomCommandRegistry {
     if (options?.includeHidden) {
       return commands;
     }
-    return commands.filter(cmd => cmd.enabled);
+    return commands.filter((cmd) => cmd.enabled);
   }
 
   listAll(): CompleteCustomCommand[] {

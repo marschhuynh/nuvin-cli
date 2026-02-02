@@ -38,12 +38,7 @@ describe('grep_tool - Status Text for No Matches', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -59,23 +54,14 @@ describe('grep_tool - Status Text for No Matches', () => {
       include: '*.ts',
     });
 
-    const toolResult = createMockToolResult(
-      'grep_tool',
-      'src/file.ts:10:  // TODO: fix this',
-      {
-        matchCount: 1,
-        fileCount: 1,
-      }
-    );
+    const toolResult = createMockToolResult('grep_tool', 'src/file.ts:10:  // TODO: fix this', {
+      matchCount: 1,
+      fileCount: 1,
+    });
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -95,17 +81,12 @@ describe('grep_tool - Status Text for No Matches', () => {
       {
         matchCount: 5,
         fileCount: 2,
-      }
+      },
     );
     const resultMessage = createMockToolResultMessage(toolResult, 150);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -128,12 +109,7 @@ describe('grep_tool - Status Text for No Matches', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 200);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -155,12 +131,7 @@ describe('grep_tool - Status Text for No Matches', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 80);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -179,12 +150,7 @@ describe('grep_tool - Status Text for No Matches', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();

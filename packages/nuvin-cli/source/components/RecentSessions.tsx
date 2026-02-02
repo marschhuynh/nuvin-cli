@@ -17,6 +17,7 @@ const line1 = `│  ●  ●  ● ${'─'.repeat(versionLen - 2)}  │`;
 const line2 = `│  NUVIN${' '.repeat(versionLen + 2)} │`;
 const line3 = `│  >_     ${version.padEnd(versionLen, ' ')} │`;
 const lineWidth = line1.length;
+const logoWidth = lineWidth;
 const barWidth = lineWidth - 2;
 const segments = Math.floor(barWidth / 3);
 const remainder = barWidth % 3;
@@ -32,7 +33,7 @@ const WelcomeLogo = ({ recentSessions }: { recentSessions: SessionInfo[] }) => {
   const { cols } = useStdoutDimensionsContext();
   return (
     <Box flexDirection="row" width="100%" marginTop={1} marginBottom={4} flexWrap="nowrap">
-      <Box justifyContent="center" flexDirection="column" alignItems="center" marginRight={2} minWidth={20}>
+      <Box justifyContent="center" flexDirection="column" alignItems="flex-start" marginRight={2} minWidth={logoWidth}>
         <Gradient colors={['#FF5F6D', '#FFC371']}>
           <Text>{`${ICON_2}`}</Text>
         </Gradient>

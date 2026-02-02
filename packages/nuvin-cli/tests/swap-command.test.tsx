@@ -3,7 +3,8 @@ import { eventBus } from '../source/services/EventBus.js';
 import { orchestratorManager } from '../source/services/OrchestratorManager.js';
 
 describe('/swap command - event handling', () => {
-  let eventHandler: any;
+  // biome-ignore lint/suspicious/noExplicitAny: test mock handler
+let eventHandler: any;
 
   beforeEach(() => {
     eventHandler = vi.fn();
@@ -19,9 +20,9 @@ describe('/swap command - event handling', () => {
       getTools: vi.fn().mockReturnValue({
         getAgentRegistry: vi.fn().mockReturnValue({
           list: vi.fn().mockReturnValue([]),
-          get: vi.fn().mockReturnValue({ 
-            id: 'test-agent', 
-            name: 'Test Agent', 
+          get: vi.fn().mockReturnValue({
+            id: 'test-agent',
+            name: 'Test Agent',
             systemPrompt: 'Test prompt',
             tools: [],
           }),
@@ -35,13 +36,13 @@ describe('/swap command - event handling', () => {
       }),
     };
 
-    vi.spyOn(orchestratorManager, 'getOrchestrator').mockReturnValue(mockOrchestrator as any);
+    vi.spyOn(orchestratorManager, 'getOrchestrator').mockReturnValue(mockOrchestrator as unknown as ReturnType<typeof orchestratorManager.getOrchestrator>);
     vi.spyOn(orchestratorManager, 'getMemory').mockReturnValue({
       get: vi.fn().mockResolvedValue([]),
-    } as any);
+    } as unknown as ReturnType<typeof orchestratorManager.getMemory>);
     vi.spyOn(orchestratorManager, 'getConversationContext').mockReturnValue({
       getActiveConversationId: vi.fn().mockReturnValue('default'),
-    } as any);
+    } as unknown as ReturnType<typeof orchestratorManager.getConversationContext>);
 
     try {
       await orchestratorManager.swapToAgent('main');
@@ -60,24 +61,19 @@ describe('/swap command - event handling', () => {
 
   it('should emit agent:swapped event on swapToMain', async () => {
     vi.spyOn(orchestratorManager, 'getOrchestrator').mockReturnValue({
-      getTools: vi.fn().mockReturnValue({
-        getAgentRegistry: vi.fn().mockReturnValue({
-          list: vi.fn().mockReturnValue([]),
-        }),
-      }),
       getConfig: vi.fn().mockReturnValue({
         id: 'swapped-test',
         systemPrompt: 'Test',
       }),
       getTools: vi.fn().mockReturnValue({}),
-    } as any);
+    } as unknown as ReturnType<typeof orchestratorManager.getOrchestrator>);
     vi.spyOn(orchestratorManager, 'getActiveAgentId').mockReturnValue('test-agent');
     vi.spyOn(orchestratorManager, 'getMemory').mockReturnValue({
       get: vi.fn().mockResolvedValue([]),
-    } as any);
+    } as unknown as ReturnType<typeof orchestratorManager.getMemory>);
     vi.spyOn(orchestratorManager, 'getConversationContext').mockReturnValue({
       getActiveConversationId: vi.fn().mockReturnValue('default'),
-    } as any);
+    } as unknown as ReturnType<typeof orchestratorManager.getConversationContext>);
 
     try {
       await orchestratorManager.swapToMain();
@@ -175,9 +171,13 @@ describe('Memory preservation during swap', () => {
       get: vi.fn().mockResolvedValue([]),
     };
 
-    const getOrchestratorSpy = vi.spyOn(orchestratorManager, 'getOrchestrator').mockReturnValue(mockOrchestrator as any);
-    const getConversationContextSpy = vi.spyOn(orchestratorManager, 'getConversationContext').mockReturnValue(mockContext as any);
-    const getMemorySpy = vi.spyOn(orchestratorManager, 'getMemory').mockReturnValue(mockMemory as any);
+    const getOrchestratorSpy = vi
+      .spyOn(orchestratorManager, 'getOrchestrator')
+      .mockReturnValue(mockOrchestrator as unknown as ReturnType<typeof orchestratorManager.getOrchestrator>);
+    const getConversationContextSpy = vi
+      .spyOn(orchestratorManager, 'getConversationContext')
+      .mockReturnValue(mockContext as unknown as ReturnType<typeof orchestratorManager.getConversationContext>);
+    const getMemorySpy = vi.spyOn(orchestratorManager, 'getMemory').mockReturnValue(mockMemory as unknown as ReturnType<typeof orchestratorManager.getMemory>);
 
     const orchestrator = orchestratorManager.getOrchestrator();
     const context = orchestratorManager.getConversationContext();
@@ -195,7 +195,13 @@ describe('Memory preservation during swap', () => {
 
 describe('EventBus agent:swapped event', () => {
   it('should support agent:swapped event type', () => {
-    const event: { type: 'agent:swapped'; agentId: string; agentName: string; timestamp: string; previousAgentId: string } = {
+    const event: {
+      type: 'agent:swapped';
+      agentId: string;
+      agentName: string;
+      timestamp: string;
+      previousAgentId: string;
+    } = {
       type: 'agent:swapped',
       previousAgentId: 'main',
       agentId: 'security-auditor',
@@ -211,7 +217,7 @@ describe('EventBus agent:swapped event', () => {
 
   it('should be able to listen and unsubscribe from agent:swapped', () => {
     const handler = vi.fn();
-    
+
     eventBus.on('agent:swapped', handler);
     eventBus.emit('agent:swapped', {
       type: 'agent:swapped',
@@ -220,9 +226,9 @@ describe('EventBus agent:swapped event', () => {
       agentName: 'Test',
       timestamp: new Date().toISOString(),
     });
-    
+
     expect(handler).toHaveBeenCalledTimes(1);
-    
+
     eventBus.off('agent:swapped', handler);
     eventBus.emit('agent:swapped', {
       type: 'agent:swapped',
@@ -231,7 +237,7 @@ describe('EventBus agent:swapped event', () => {
       agentName: 'Main',
       timestamp: new Date().toISOString(),
     });
-    
+
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });

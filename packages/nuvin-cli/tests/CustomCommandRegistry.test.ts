@@ -46,31 +46,40 @@ describe('CustomCommandRegistry', () => {
       fs.mkdirSync(profileCmdDir, { recursive: true });
       fs.mkdirSync(localCmdDir, { recursive: true });
 
-      fs.writeFileSync(path.join(globalCmdDir, 'global-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(globalCmdDir, 'global-cmd.md'),
+        `---
 description: Global command
 ---
 
-Global prompt`);
+Global prompt`,
+      );
 
-      fs.writeFileSync(path.join(profileCmdDir, 'profile-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(profileCmdDir, 'profile-cmd.md'),
+        `---
 description: Profile command
 ---
 
-Profile prompt`);
+Profile prompt`,
+      );
 
-      fs.writeFileSync(path.join(localCmdDir, 'local-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'local-cmd.md'),
+        `---
 description: Local command
 ---
 
-Local prompt`);
+Local prompt`,
+      );
 
       await registry.initialize();
       const commands = registry.list();
 
       expect(commands.length).toBe(3);
-      expect(commands.find(c => c.id === 'global-cmd')?.source).toBe('global');
-      expect(commands.find(c => c.id === 'profile-cmd')?.source).toBe('profile');
-      expect(commands.find(c => c.id === 'local-cmd')?.source).toBe('local');
+      expect(commands.find((c) => c.id === 'global-cmd')?.source).toBe('global');
+      expect(commands.find((c) => c.id === 'profile-cmd')?.source).toBe('profile');
+      expect(commands.find((c) => c.id === 'local-cmd')?.source).toBe('local');
     });
   });
 
@@ -84,23 +93,32 @@ Local prompt`);
       fs.mkdirSync(profileCmdDir, { recursive: true });
       fs.mkdirSync(localCmdDir, { recursive: true });
 
-      fs.writeFileSync(path.join(globalCmdDir, 'review.md'), `---
+      fs.writeFileSync(
+        path.join(globalCmdDir, 'review.md'),
+        `---
 description: Global review
 ---
 
-Global review prompt`);
+Global review prompt`,
+      );
 
-      fs.writeFileSync(path.join(profileCmdDir, 'review.md'), `---
+      fs.writeFileSync(
+        path.join(profileCmdDir, 'review.md'),
+        `---
 description: Profile review
 ---
 
-Profile review prompt`);
+Profile review prompt`,
+      );
 
-      fs.writeFileSync(path.join(localCmdDir, 'review.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'review.md'),
+        `---
 description: Local review
 ---
 
-Local review prompt`);
+Local review prompt`,
+      );
 
       await registry.initialize();
 
@@ -116,17 +134,23 @@ Local review prompt`);
       fs.mkdirSync(globalCmdDir, { recursive: true });
       fs.mkdirSync(localCmdDir, { recursive: true });
 
-      fs.writeFileSync(path.join(globalCmdDir, 'cmd.md'), `---
+      fs.writeFileSync(
+        path.join(globalCmdDir, 'cmd.md'),
+        `---
 description: Global cmd
 ---
 
-Global`);
+Global`,
+      );
 
-      fs.writeFileSync(path.join(localCmdDir, 'cmd.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'cmd.md'),
+        `---
 description: Local cmd
 ---
 
-Local`);
+Local`,
+      );
 
       await registry.initialize();
 
@@ -162,11 +186,14 @@ Local`);
     it('should delete a command', async () => {
       const localCmdDir = path.join(localDir, 'commands');
       fs.mkdirSync(localCmdDir, { recursive: true });
-      fs.writeFileSync(path.join(localCmdDir, 'to-delete.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'to-delete.md'),
+        `---
 description: To delete
 ---
 
-Prompt`);
+Prompt`,
+      );
 
       await registry.initialize();
       expect(registry.exists('to-delete')).toBe(true);
@@ -182,17 +209,23 @@ Prompt`);
       fs.mkdirSync(globalCmdDir, { recursive: true });
       fs.mkdirSync(localCmdDir, { recursive: true });
 
-      fs.writeFileSync(path.join(globalCmdDir, 'cmd.md'), `---
+      fs.writeFileSync(
+        path.join(globalCmdDir, 'cmd.md'),
+        `---
 description: Global
 ---
 
-Global`);
+Global`,
+      );
 
-      fs.writeFileSync(path.join(localCmdDir, 'cmd.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'cmd.md'),
+        `---
 description: Local
 ---
 
-Local`);
+Local`,
+      );
 
       await registry.initialize();
 
@@ -209,14 +242,17 @@ Local`);
     it('should replace {{user_prompt}} with user input', async () => {
       const localCmdDir = path.join(localDir, 'commands');
       fs.mkdirSync(localCmdDir, { recursive: true });
-      fs.writeFileSync(path.join(localCmdDir, 'review.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'review.md'),
+        `---
 description: Review
 ---
 
 Review the code:
 {{user_prompt}}
 
-Focus on best practices.`);
+Focus on best practices.`,
+      );
 
       await registry.initialize();
 
@@ -230,12 +266,15 @@ Focus on best practices.`);
     it('should replace multiple occurrences', async () => {
       const localCmdDir = path.join(localDir, 'commands');
       fs.mkdirSync(localCmdDir, { recursive: true });
-      fs.writeFileSync(path.join(localCmdDir, 'multi.md'), `---
+      fs.writeFileSync(
+        path.join(localCmdDir, 'multi.md'),
+        `---
 description: Multi
 ---
 
 First: {{user_prompt}}
-Second: {{user_prompt}}`);
+Second: {{user_prompt}}`,
+      );
 
       await registry.initialize();
 

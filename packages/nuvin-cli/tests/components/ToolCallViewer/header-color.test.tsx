@@ -9,12 +9,12 @@ vi.mock('@/contexts/ThemeContext.js', () => ({
   useTheme: vi.fn().mockReturnValue({
     theme: {
       messageTypes: { tool: 'blue' },
-      status: { 
-        success: 'green', 
-        error: 'red',      // This is the color that should be used for error state
-        idle: 'yellow', 
-        warning: 'yellow', 
-        pending: 'cyan' 
+      status: {
+        success: 'green',
+        error: 'red', // This is the color that should be used for error state
+        idle: 'yellow',
+        warning: 'yellow',
+        pending: 'cyan',
       },
       colors: { warning: 'yellow', muted: 'gray', textDim: 'gray' },
       tokens: { gray: 'gray', red: 'red', green: 'green', blue: 'blue' },
@@ -29,7 +29,12 @@ vi.mock('@/contexts/ToolApprovalContext.js', () => ({
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { ToolCallViewer } from '@/components/ToolCallViewer/index.js';
-import { createMockToolCall, createMockToolResult, createMockToolResultMessage, createMockToolError } from '../../helpers/toolMocks.js';
+import {
+  createMockToolCall,
+  createMockToolResult,
+  createMockToolResultMessage,
+  createMockToolError,
+} from '../../helpers/toolMocks.js';
 
 describe('Header Color Behavior', () => {
   const toolCall = createMockToolCall('file_read', {
@@ -38,16 +43,11 @@ describe('Header Color Behavior', () => {
 
   it('should render header without error color in running state', () => {
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={undefined}
-        toolState="running"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Text content should be "Reading"
     expect(output).toContain('⚙ Reading');
     expect(output).toContain('/test/example.ts');
@@ -58,16 +58,11 @@ describe('Header Color Behavior', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Text content should be "Read"
     expect(output).toContain('⚙ Read');
     expect(output).toContain('/test/example.ts');
@@ -78,20 +73,15 @@ describe('Header Color Behavior', () => {
     const resultMessage = createMockToolResultMessage(toolError, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="error"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="error" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Text content should be "Read failed"
     expect(output).toContain('⚙ Read failed');
     expect(output).toContain('/test/example.ts');
-    
+
     // Note: Ink text snapshots don't capture ANSI color codes,
     // but the color is being applied via the color prop in defaultRenderHeader
     // The color comes from theme.status.error which is 'red' in our mock
@@ -99,12 +89,7 @@ describe('Header Color Behavior', () => {
 
   it('should transition from normal color (running) to error color (error)', () => {
     const { lastFrame, rerender } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={undefined}
-        toolState="running"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
     );
 
     // Initial: running state - no error color
@@ -115,14 +100,7 @@ describe('Header Color Behavior', () => {
     const toolError = createMockToolError('file_read', 'File not found');
     const resultMessage = createMockToolResultMessage(toolError, 100);
 
-    rerender(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="error"
-        messageId="msg-1"
-      />
-    );
+    rerender(<ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="error" messageId="msg-1" />);
 
     output = lastFrame();
     expect(output).toContain('⚙ Read failed');
@@ -133,12 +111,7 @@ describe('Header Color Behavior', () => {
     const errorMessage = createMockToolResultMessage(toolError, 100);
 
     const { lastFrame, rerender } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={errorMessage}
-        toolState="error"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={errorMessage} toolState="error" messageId="msg-1" />,
     );
 
     // Initial: error state - has error color
@@ -146,14 +119,7 @@ describe('Header Color Behavior', () => {
     expect(output).toContain('⚙ Read failed');
 
     // Change to edited state - should not have error color
-    rerender(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={errorMessage}
-        toolState="edited"
-        messageId="msg-1"
-      />
-    );
+    rerender(<ToolCallViewer toolCall={toolCall} toolResult={errorMessage} toolState="edited" messageId="msg-1" />);
 
     output = lastFrame();
     expect(output).toContain('⚙ Read');
@@ -169,12 +135,7 @@ describe('Header Color Behavior', () => {
       const resultMessage = createMockToolResultMessage(toolError, 100);
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={bashCall}
-          toolResult={resultMessage}
-          toolState="error"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={bashCall} toolResult={resultMessage} toolState="error" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -190,12 +151,7 @@ describe('Header Color Behavior', () => {
       const resultMessage = createMockToolResultMessage(toolError, 100);
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={fileNewCall}
-          toolResult={resultMessage}
-          toolState="error"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={fileNewCall} toolResult={resultMessage} toolState="error" messageId="msg-1" />,
       );
 
       const output = lastFrame();

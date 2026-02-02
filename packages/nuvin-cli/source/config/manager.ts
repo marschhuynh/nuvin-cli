@@ -196,7 +196,7 @@ export class ConfigManager {
    */
   findKeyScope(key: string): ConfigScope | null {
     const orderedScopes: ConfigScope[] = ['direct', 'env', 'explicit', 'local', 'global'];
-    
+
     for (const scope of orderedScopes) {
       const source = this.scopeData[scope];
       if (source?.data && this.getNestedValue(source.data, key) !== undefined) {

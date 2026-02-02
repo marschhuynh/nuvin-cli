@@ -1,6 +1,6 @@
 /**
  * Test utilities index
- * 
+ *
  * Centralizes exports for all test utilities to make imports cleaner.
  */
 
@@ -13,14 +13,12 @@ export {
   mockUseFocus,
   mockUseInput,
   mockUseMouse,
-  
   // Mock factories
   createThemeMock,
   createAltModeMock,
   createToolApprovalMock,
   createStdoutDimensionsMock,
   createUseFocusMock,
-  
   // Setup functions
   setupContextMocks,
   setupContextMocksWithOverrides,

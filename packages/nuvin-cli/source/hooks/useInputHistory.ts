@@ -17,7 +17,12 @@ type UseInputHistoryOptions = {
   onRecall: (message: string) => void;
 };
 
-export const useInputHistory = ({ memory, conversationId = 'default', currentInput, onRecall }: UseInputHistoryOptions) => {
+export const useInputHistory = ({
+  memory,
+  conversationId = 'default',
+  currentInput,
+  onRecall,
+}: UseInputHistoryOptions) => {
   const { setNotification } = useNotification();
   const [messages, setMessages] = useState<string[]>([]);
   const [index, setIndex] = useState(-1);
@@ -26,14 +31,14 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
   const historyNextArmedRef = useRef(false);
   const lastUpArrowTimeRef = useRef(0);
   const lastDownArrowTimeRef = useRef(0);
-  
+
   // Use refs to avoid recreating callbacks when these values change
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
-  
+
   const indexRef = useRef(index);
   indexRef.current = index;
-  
+
   const currentInputRef = useRef(currentInput);
   currentInputRef.current = currentInput;
 
@@ -41,7 +46,7 @@ export const useInputHistory = ({ memory, conversationId = 'default', currentInp
     const loadHistory = async () => {
       const configManager = ConfigManager.getInstance();
       const currentProfile = configManager.getCurrentProfile();
-      
+
       let lastSessionMessage: string | null = null;
       try {
         const sessions = await scanAvailableSessions(1, currentProfile);

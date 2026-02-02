@@ -72,7 +72,13 @@ function findCursorLine(
   let lineIndex = 0;
 
   for (let i = 0; i < value.length; i++) {
-    if (cursorOffset <= currentPos + (value.indexOf('\n', currentPos) === -1 ? value.length - currentPos : value.indexOf('\n', currentPos) - currentPos)) {
+    if (
+      cursorOffset <=
+      currentPos +
+        (value.indexOf('\n', currentPos) === -1
+          ? value.length - currentPos
+          : value.indexOf('\n', currentPos) - currentPos)
+    ) {
       break;
     }
     const nextNewline = value.indexOf('\n', currentPos);
@@ -133,8 +139,7 @@ function computeRenderedOutput(
     const cursorChar = shouldShowCursor
       ? chalk.inverse(currentLineContent[columnInLine])
       : currentLineContent[columnInLine];
-    renderedLine =
-      currentLineContent.slice(0, columnInLine) + cursorChar + currentLineContent.slice(columnInLine + 1);
+    renderedLine = currentLineContent.slice(0, columnInLine) + cursorChar + currentLineContent.slice(columnInLine + 1);
   } else {
     renderedLine = currentLineContent + (shouldShowCursor ? chalk.inverse(' ') : '');
   }
@@ -177,15 +182,7 @@ export function useCursorRenderer() {
         queueMicrotask(resetActivity);
       }
 
-      return computeRenderedOutput(
-        value,
-        cursorOffset,
-        placeholder,
-        showCursor,
-        focus,
-        cursorVisibleState,
-        lineStarts,
-      );
+      return computeRenderedOutput(value, cursorOffset, placeholder, showCursor, focus, cursorVisibleState, lineStarts);
     },
     [cursorVisibleState],
   );

@@ -116,9 +116,7 @@ export const SkillList: React.FC<SkillListProps> = ({
               {statusIcon}
             </Text>
             <Text> </Text>
-            <Text color={isSelected ? accentColor : undefined}>
-              {isSelected ? '› ' : '  '}
-            </Text>
+            <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
             <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
               {skill.name}
             </Text>

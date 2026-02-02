@@ -13,9 +13,7 @@ export type ComboBoxItem = {
   group?: string;
 };
 
-type ListItem =
-  | { type: 'header'; group: string }
-  | { type: 'item'; item: ComboBoxItem; originalIndex: number };
+type ListItem = { type: 'header'; group: string } | { type: 'item'; item: ComboBoxItem; originalIndex: number };
 
 export type ComboBoxProps = {
   items: ComboBoxItem[];
@@ -79,37 +77,40 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
 
   const hasGroups = listItems.some((item) => item.type === 'header');
 
-  const scrollToSelected = useCallback((index: number) => {
-    if (selectableIndices.length === 0 || index < 0 || index >= selectableIndices.length) return;
+  const scrollToSelected = useCallback(
+    (index: number) => {
+      if (selectableIndices.length === 0 || index < 0 || index >= selectableIndices.length) return;
 
-    const listIndex = selectableIndices[index];
-    const targetIndex = listItems[listIndex - 1]?.type === 'header' ? listIndex - 1 : listIndex;
-    const itemRef = itemRefs.current.get(targetIndex);
+      const listIndex = selectableIndices[index];
+      const targetIndex = listItems[listIndex - 1]?.type === 'header' ? listIndex - 1 : listIndex;
+      const itemRef = itemRefs.current.get(targetIndex);
 
-    if (itemRef && scrollBoxRef.current) {
-      const scrollInfo = scrollBoxRef.current.getScrollInfo();
-      if (scrollInfo.containerHeight === 0) return;
+      if (itemRef && scrollBoxRef.current) {
+        const scrollInfo = scrollBoxRef.current.getScrollInfo();
+        if (scrollInfo.containerHeight === 0) return;
 
-      const itemDim = measureElement(itemRef);
+        const itemDim = measureElement(itemRef);
 
-      let itemTop = 0;
-      for (let i = 0; i < targetIndex; i++) {
-        const ref = itemRefs.current.get(i);
-        if (ref) {
-          itemTop += measureElement(ref).height;
+        let itemTop = 0;
+        for (let i = 0; i < targetIndex; i++) {
+          const ref = itemRefs.current.get(i);
+          if (ref) {
+            itemTop += measureElement(ref).height;
+          }
+        }
+
+        const itemBottom = itemTop + itemDim.height;
+        const { scrollY, containerHeight } = scrollInfo;
+
+        if (itemTop < scrollY) {
+          scrollBoxRef.current.scrollTo(itemTop);
+        } else if (itemBottom > scrollY + containerHeight) {
+          scrollBoxRef.current.scrollTo(itemBottom - containerHeight);
         }
       }
-
-      const itemBottom = itemTop + itemDim.height;
-      const { scrollY, containerHeight } = scrollInfo;
-
-      if (itemTop < scrollY) {
-        scrollBoxRef.current.scrollTo(itemTop);
-      } else if (itemBottom > scrollY + containerHeight) {
-        scrollBoxRef.current.scrollTo(itemBottom - containerHeight);
-      }
-    }
-  }, [selectableIndices, listItems]);
+    },
+    [selectableIndices, listItems],
+  );
 
   useEffect(() => {
     scrollToSelected(selectedIndex);
@@ -247,7 +248,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       }
 
       return (
-        <Box overflow='hidden'>
+        <Box overflow="hidden">
           <Text>{isSelected ? '❯ ' : '  '}</Text>
           <Text
             color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}

@@ -36,7 +36,7 @@ describe('Tool excludeParams', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -63,7 +63,7 @@ describe('Tool excludeParams', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -92,7 +92,7 @@ describe('Tool excludeParams', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -121,7 +121,7 @@ describe('Tool excludeParams', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -152,7 +152,7 @@ describe('Tool excludeParams', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -179,7 +179,7 @@ describe('Tool excludeParams', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();

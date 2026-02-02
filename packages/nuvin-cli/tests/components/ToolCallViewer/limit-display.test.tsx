@@ -34,12 +34,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -53,12 +48,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -75,12 +65,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -93,12 +78,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -115,12 +95,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -137,12 +112,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -158,12 +128,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -180,23 +145,14 @@ describe('Limit Parameter Display', () => {
         limit: 50,
       });
 
-      const toolResult = createMockToolResult(
-        'grep_tool',
-        'src/file1.ts:10:import React\nsrc/file2.ts:5:import Vue',
-        {
-          matches: 2,
-          files: 2,
-        }
-      );
+      const toolResult = createMockToolResult('grep_tool', 'src/file1.ts:10:import React\nsrc/file2.ts:5:import Vue', {
+        matches: 2,
+        files: 2,
+      });
       const resultMessage = createMockToolResultMessage(toolResult, 100);
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={resultMessage}
-          toolState="success"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -212,12 +168,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -231,12 +182,7 @@ describe('Limit Parameter Display', () => {
       });
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={undefined}
-          toolState="running"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
       );
 
       const output = lastFrame();
@@ -257,12 +203,7 @@ describe('Limit Parameter Display', () => {
       const resultMessage = createMockToolResultMessage(toolResult, 50);
 
       const { lastFrame } = render(
-        <ToolCallViewer
-          toolCall={toolCall}
-          toolResult={resultMessage}
-          toolState="success"
-          messageId="msg-1"
-        />
+        <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
       );
 
       const output = lastFrame();

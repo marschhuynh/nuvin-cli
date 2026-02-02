@@ -32,25 +32,25 @@ describe('Tool Denied State', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="denied" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="denied" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Should show the header
     expect(output).toContain('⚙');
     expect(output).toContain('Run');
     expect(output).toContain('rm -rf /');
-    
+
     // Should show the denied status line
     expect(output).toContain('└─ Denied');
-    
+
     // Should NOT show the result content
     expect(output).not.toContain('Tool execution denied by user');
-    
+
     // Should not have the result border (│)
     const lines = output.split('\n');
-    const hasResultBorder = lines.some(line => line.includes('│') && !line.includes('⚙'));
+    const hasResultBorder = lines.some((line) => line.includes('│') && !line.includes('⚙'));
     expect(hasResultBorder).toBe(false);
   });
 
@@ -61,11 +61,11 @@ describe('Tool Denied State', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="denied" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="denied" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Should have proper tree structure with status at the end
     expect(output).toContain('⚙');
     expect(output).toContain('└─ Denied');
@@ -79,18 +79,18 @@ describe('Tool Denied State', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="edited" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="edited" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Should show the header
     expect(output).toContain('⚙');
     expect(output).toContain('Run');
-    
+
     // Should show the edited status line
     expect(output).toContain('└─ Edited');
-    
+
     // Should NOT show the result content to maintain tree structure
     expect(output).not.toContain('Some result');
   });
@@ -102,11 +102,11 @@ describe('Tool Denied State', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
-    
+
     // Should show the result content for successful execution
     expect(output).toContain('hello');
     expect(output).toContain('│');

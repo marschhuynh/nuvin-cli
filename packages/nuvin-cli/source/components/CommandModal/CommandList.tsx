@@ -63,9 +63,7 @@ export const CommandList: React.FC<CommandListProps> = ({
       return (
         <Box flexDirection="column" marginBottom={1}>
           <Box>
-            <Text color={isSelected ? accentColor : undefined}>
-              {isSelected ? '› ' : '  '}
-            </Text>
+            <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
             <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
               /{command.id}
             </Text>

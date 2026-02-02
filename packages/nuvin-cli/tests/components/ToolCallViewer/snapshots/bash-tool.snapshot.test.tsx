@@ -27,7 +27,8 @@ import { createMockToolCall, createMockToolResult, createMockToolResultMessage }
 
 describe('bash_tool - Snapshot Tests', () => {
   it('renders successful bash command execution', () => {
-    const output = 'total 64\ndrwxr-xr-x  12 user  staff   384 Jan 31 10:00 src\ndrwxr-xr-x   5 user  staff   160 Jan 31 10:00 tests';
+    const output =
+      'total 64\ndrwxr-xr-x  12 user  staff   384 Jan 31 10:00 src\ndrwxr-xr-x   5 user  staff   160 Jan 31 10:00 tests';
 
     const toolCall = createMockToolCall('bash_tool', {
       cmd: 'ls -la',
@@ -37,12 +38,7 @@ describe('bash_tool - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 156);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -56,19 +52,17 @@ describe('bash_tool - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 34);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
   });
 
   it('renders bash command with long multi-line output', () => {
-    const longOutput = Array(30).fill(0).map((_, i) => `[${i + 1}] Processing item ${i + 1}...`).join('\n');
+    const longOutput = Array(30)
+      .fill(0)
+      .map((_, i) => `[${i + 1}] Processing item ${i + 1}...`)
+      .join('\n');
 
     const toolCall = createMockToolCall('bash_tool', {
       cmd: 'npm install',
@@ -77,12 +71,7 @@ describe('bash_tool - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 8950);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -98,12 +87,7 @@ describe('bash_tool - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

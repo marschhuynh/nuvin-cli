@@ -49,9 +49,9 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       preservedState:
         source === 'agent-config'
           ? {
-            selectedAgentName: agentName,
-            selectedAgentIndex,
-          }
+              selectedAgentName: agentName,
+              selectedAgentIndex,
+            }
           : null,
     });
   }, []);
@@ -558,12 +558,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
 
   if (loading) {
     return (
-      <AppModal
-        visible={true}
-        title="Agent Configuration"
-        onClose={deactivate}
-        closeOnEscape={true}
-      >
+      <AppModal visible={true} title="Agent Configuration" onClose={deactivate} closeOnEscape={true}>
         <Text color={theme.colors.warning}>Loading agents...</Text>
       </AppModal>
     );

@@ -38,7 +38,7 @@ describe('ToolCallViewer - null renderer support', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 123);
 
     const { lastFrame } = render(
-      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();

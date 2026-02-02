@@ -39,19 +39,17 @@ describe('web_fetch - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 789);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
   });
 
   it('renders web fetch with large content', () => {
-    const largeMarkdown = Array(50).fill(0).map((_, i) => `## Section ${i + 1}\n\nContent for section ${i + 1}.`).join('\n\n');
+    const largeMarkdown = Array(50)
+      .fill(0)
+      .map((_, i) => `## Section ${i + 1}\n\nContent for section ${i + 1}.`)
+      .join('\n\n');
 
     const toolCall = createMockToolCall('web_fetch', {
       url: 'https://example.com/large-page',
@@ -63,12 +61,7 @@ describe('web_fetch - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 1234);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -85,12 +78,7 @@ describe('web_fetch - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 345);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -106,12 +94,7 @@ describe('web_fetch - Snapshot Tests', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 456);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

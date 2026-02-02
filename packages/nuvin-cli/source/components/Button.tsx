@@ -14,7 +14,15 @@ interface ButtonProps {
   tabIndex?: number | string;
 }
 
-export const Button: React.FC<ButtonProps> = ({ label, onSubmit, variant = 'default', autoFocus, disabled, focusId, tabIndex }) => {
+export const Button: React.FC<ButtonProps> = ({
+  label,
+  onSubmit,
+  variant = 'default',
+  autoFocus,
+  disabled,
+  focusId,
+  tabIndex,
+}) => {
   const { theme } = useTheme();
   const { isFocused } = useFocus({ active: !disabled, autoFocus, id: focusId, tabIndex });
 

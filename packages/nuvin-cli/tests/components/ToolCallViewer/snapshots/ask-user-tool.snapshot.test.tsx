@@ -36,24 +36,15 @@ describe('ask_user_tool - Snapshot Tests', () => {
         },
       ],
     });
-    const toolResult = createMockToolResult(
-      'ask_user_tool',
-      '',
-      {
-        answers: {
-          q0: 'We should use JWT tokens with refresh token rotation. This provides good security while maintaining a stateless architecture.',
-        },
-      }
-    );
+    const toolResult = createMockToolResult('ask_user_tool', '', {
+      answers: {
+        q0: 'We should use JWT tokens with refresh token rotation. This provides good security while maintaining a stateless architecture.',
+      },
+    });
     const resultMessage = createMockToolResultMessage(toolResult, 12345);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -69,24 +60,15 @@ describe('ask_user_tool - Snapshot Tests', () => {
         },
       ],
     });
-    const toolResult = createMockToolResult(
-      'ask_user_tool',
-      '',
-      {
-        answers: {
-          q0: 'Yes',
-        },
-      }
-    );
+    const toolResult = createMockToolResult('ask_user_tool', '', {
+      answers: {
+        q0: 'Yes',
+      },
+    });
     const resultMessage = createMockToolResultMessage(toolResult, 5678);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -102,30 +84,21 @@ describe('ask_user_tool - Snapshot Tests', () => {
         },
       ],
     });
-    const toolResult = createMockToolResult(
-      'ask_user_tool',
-      '',
-      {
-        answers: {
-          q0: `Here are the requirements:
+    const toolResult = createMockToolResult('ask_user_tool', '', {
+      answers: {
+        q0: `Here are the requirements:
 
 1. Users should be able to create projects
 2. Each project can have multiple tasks
 3. Tasks can be assigned to team members
 4. All changes should be tracked in an audit log
 5. Email notifications for important events`,
-        },
-      }
-    );
+      },
+    });
     const resultMessage = createMockToolResultMessage(toolResult, 8901);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();
@@ -141,24 +114,15 @@ describe('ask_user_tool - Snapshot Tests', () => {
         },
       ],
     });
-    const toolResult = createMockToolResult(
-      'ask_user_tool',
-      '',
-      {
-        answers: {
-          q0: 'postgresql://user:password@db.example.com:5432/production_db?sslmode=require',
-        },
-      }
-    );
+    const toolResult = createMockToolResult('ask_user_tool', '', {
+      answers: {
+        q0: 'postgresql://user:password@db.example.com:5432/production_db?sslmode=require',
+      },
+    });
     const resultMessage = createMockToolResultMessage(toolResult, 3456);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     expect(lastFrame()).toMatchSnapshot();

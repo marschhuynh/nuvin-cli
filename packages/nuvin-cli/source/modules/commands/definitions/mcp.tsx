@@ -181,12 +181,7 @@ const MCPCommandComponent = ({ context, deactivate }: CommandComponentProps) => 
 
   if (loading) {
     return (
-      <AppModal
-        visible={true}
-        title="MCP Server Configuration"
-        onClose={deactivate}
-        closeOnEscape={true}
-      >
+      <AppModal visible={true} title="MCP Server Configuration" onClose={deactivate} closeOnEscape={true}>
         <Text color={theme.colors.warning}>Loading MCP servers...</Text>
       </AppModal>
     );

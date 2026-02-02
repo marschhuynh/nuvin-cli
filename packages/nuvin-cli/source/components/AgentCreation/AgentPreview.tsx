@@ -67,7 +67,12 @@ const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onE
   );
 
   return (
-    <AppModal visible={true} title="Preview Generated Agent" footer={footerContent} height={Math.min(MODAL_HEIGHT, rows - 4)}>
+    <AppModal
+      visible={true}
+      title="Preview Generated Agent"
+      footer={footerContent}
+      height={Math.min(MODAL_HEIGHT, rows - 4)}
+    >
       <Box flexDirection="column" marginTop={1}>
         <Box marginBottom={1}>
           <Text color={theme.colors.primary} bold>

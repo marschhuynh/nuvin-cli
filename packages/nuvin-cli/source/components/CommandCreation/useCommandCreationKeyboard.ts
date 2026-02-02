@@ -7,11 +7,7 @@ interface UseCommandCreationKeyboardProps {
   onDelete?: () => void;
 }
 
-export const useCommandCreationKeyboard = ({
-  visible,
-  onCancel,
-  onSave,
-}: UseCommandCreationKeyboardProps) => {
+export const useCommandCreationKeyboard = ({ visible, onCancel, onSave }: UseCommandCreationKeyboardProps) => {
   useInput(
     (input, key) => {
       if (!visible) return;

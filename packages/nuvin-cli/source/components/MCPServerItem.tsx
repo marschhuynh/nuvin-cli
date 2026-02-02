@@ -60,8 +60,7 @@ export const MCPServerItem: React.FC<MCPServerItemProps> = ({
 
     if (item.authStatus.type === 'oauth') {
       if (item.authStatus.authenticated) {
-        const isExpiringSoon =
-          item.authStatus.expiresAt && item.authStatus.expiresAt - Date.now() < 5 * 60 * 1000;
+        const isExpiringSoon = item.authStatus.expiresAt && item.authStatus.expiresAt - Date.now() < 5 * 60 * 1000;
         return (
           <Text color={isExpiringSoon ? theme.tokens.yellow : theme.tokens.green} dimColor={!isSelected}>
             {' '}

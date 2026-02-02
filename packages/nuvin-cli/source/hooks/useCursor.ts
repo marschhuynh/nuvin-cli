@@ -26,9 +26,9 @@ export function useCursor({ value, mode, focus, showCursor }: UseCursorOptions):
     offset: 0,
     width: 0,
   });
-  
+
   const stateRef = useRef<CursorState>(state);
-  
+
   useEffect(() => {
     stateRef.current = state;
   }, [state]);

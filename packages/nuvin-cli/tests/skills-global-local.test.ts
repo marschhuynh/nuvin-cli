@@ -12,7 +12,7 @@ describe('Skills Discovery - Global and Local', () => {
   beforeEach(async () => {
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'skills-local-'));
     fakeHomeDir = await fs.mkdtemp(path.join(os.tmpdir(), 'skills-global-'));
-    
+
     SkillsService.resetInstance();
     skillsService = SkillsService.createWithHomeDir(fakeHomeDir);
   });
@@ -242,7 +242,7 @@ description: Skill from NUVIN_SKILLS_PATH
     it('should support multiple paths in NUVIN_SKILLS_PATH', async () => {
       const envDir1 = await fs.mkdtemp(path.join(os.tmpdir(), 'env-skills-1-'));
       const envDir2 = await fs.mkdtemp(path.join(os.tmpdir(), 'env-skills-2-'));
-      
+
       const skill1Dir = path.join(envDir1, 'env-skill-one');
       const skill2Dir = path.join(envDir2, 'env-skill-two');
       await fs.mkdir(skill1Dir, { recursive: true });

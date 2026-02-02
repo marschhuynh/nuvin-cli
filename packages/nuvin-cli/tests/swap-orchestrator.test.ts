@@ -40,12 +40,12 @@ describe('OrchestratorManager - Hot Agent Swap State', () => {
   it('should initialize activeAgentId to "main"', () => {
     const manager = new OrchestratorManager();
     // Access the private property via type casting
-    expect((manager as any).activeAgentId).toBe('main');
+    expect((manager as unknown as { activeAgentId: string }).activeAgentId).toBe('main');
   });
 
   it('should initialize previousOrchestrator to null', () => {
     const manager = new OrchestratorManager();
     // Access the private property via type casting
-    expect((manager as any).previousOrchestrator).toBeNull();
+    expect((manager as unknown as { previousOrchestrator: unknown }).previousOrchestrator).toBeNull();
   });
 });

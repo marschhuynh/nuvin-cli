@@ -22,7 +22,12 @@ vi.mock('@/contexts/ToolApprovalContext.js', () => ({
 
 import { render } from 'ink-testing-library';
 import { ToolCallViewer } from '@/components/ToolCallViewer/index.js';
-import { createMockToolCall, createMockToolResult, createMockToolResultMessage, createMockToolError } from '../../helpers/toolMocks.js';
+import {
+  createMockToolCall,
+  createMockToolResult,
+  createMockToolResultMessage,
+  createMockToolError,
+} from '../../helpers/toolMocks.js';
 
 describe('Dynamic DisplayName - file_read', () => {
   const toolCall = createMockToolCall('file_read', {
@@ -31,12 +36,7 @@ describe('Dynamic DisplayName - file_read', () => {
 
   it('should show "Reading" in running state', () => {
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={undefined}
-        toolState="running"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="running" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -50,12 +50,7 @@ describe('Dynamic DisplayName - file_read', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="success"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="success" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -69,12 +64,7 @@ describe('Dynamic DisplayName - file_read', () => {
     const resultMessage = createMockToolResultMessage(toolError, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="error"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="error" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -84,12 +74,7 @@ describe('Dynamic DisplayName - file_read', () => {
 
   it('should show "Read" in denied state', () => {
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={undefined}
-        toolState="denied"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="denied" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -103,12 +88,7 @@ describe('Dynamic DisplayName - file_read', () => {
     const resultMessage = createMockToolResultMessage(toolResult, 100);
 
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={resultMessage}
-        toolState="edited"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={resultMessage} toolState="edited" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -119,12 +99,7 @@ describe('Dynamic DisplayName - file_read', () => {
 
   it('should show "Read" in aborted state', () => {
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={undefined}
-        toolState="aborted"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="aborted" messageId="msg-1" />,
     );
 
     const output = lastFrame();
@@ -135,12 +110,7 @@ describe('Dynamic DisplayName - file_read', () => {
 
   it('should show "Read" in timeout state', () => {
     const { lastFrame } = render(
-      <ToolCallViewer
-        toolCall={toolCall}
-        toolResult={undefined}
-        toolState="timeout"
-        messageId="msg-1"
-      />
+      <ToolCallViewer toolCall={toolCall} toolResult={undefined} toolState="timeout" messageId="msg-1" />,
     );
 
     const output = lastFrame();

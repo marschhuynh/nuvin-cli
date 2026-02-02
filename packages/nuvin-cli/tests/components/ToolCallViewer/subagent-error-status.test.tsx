@@ -68,7 +68,7 @@ describe('SubAgentActivity - Error Status Display', () => {
         subAgentState={subAgentState}
         toolResult={resultMessage}
         messageId="msg-1"
-      />
+      />,
     );
 
     const output = lastFrame();
@@ -122,7 +122,7 @@ describe('SubAgentActivity - Error Status Display', () => {
         subAgentState={subAgentState}
         toolResult={resultMessage}
         messageId="msg-1"
-      />
+      />,
     );
 
     const output = lastFrame();
@@ -177,7 +177,7 @@ describe('SubAgentActivity - Error Status Display', () => {
         subAgentState={subAgentState}
         toolResult={resultMessage}
         messageId="msg-1"
-      />
+      />,
     );
 
     const output = lastFrame();
@@ -226,7 +226,7 @@ describe('SubAgentActivity - Error Status Display', () => {
         subAgentState={subAgentState}
         toolResult={resultMessage}
         messageId="msg-1"
-      />
+      />,
     );
 
     const output = lastFrame();
