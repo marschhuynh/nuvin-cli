@@ -9,6 +9,7 @@
     "INSTRUCTIONS",
     "ask-user-tool-display",
     "bordered-message-styles",
+    "command-completion-callbacks",
     "command-menu-description-wrap",
     "command-tab-completion",
     "enhance-agent-skill-lists",
