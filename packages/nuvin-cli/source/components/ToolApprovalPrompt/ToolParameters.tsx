@@ -10,13 +10,15 @@ type ToolParametersProps = {
 
 export const ToolParameters: React.FC<ToolParametersProps> = ({ toolCall }) => {
   const { rows } = useStdoutDimensions();
-  const maxHeight = Math.max(5, rows - 16);
+  // Reserve space for: title bar (1) + margin (1) + actions (1) + margin (1) + edit input (1) + margin (1) + footer (1) + app footer (2) + buffer (2)
+  const maxHeight = Math.max(5, rows - 12);
 
   return (
     <AutoScrollBox
       maxHeight={maxHeight}
       mousePriority={100}
       flexGrow={1}
+      flexShrink={1}
       width="100%"
       enableMouseScroll={false}
       autoFocus

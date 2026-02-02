@@ -87,7 +87,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         const hasRunningToolCall = toolCalls.some((toolCall) => !toolResultsByCallId?.has(toolCall.id));
 
         const _render = (
-          <Box flexDirection="column" flexShrink={0} rowGap={1}>
+          <Box flexDirection="column" flexShrink={0}>
             {toolCalls.length > 0 ? (
               toolCalls.map((toolCall: ToolCall, callIndex: number) => {
                 const isAwaitingApproval = pendingApprovalTools.some((tc) => tc.id === toolCall.id);
@@ -283,7 +283,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         width="100%"
         flexShrink={0}
         backgroundColor={backgroundColor}
-        marginY={1}
+        marginBottom={1}
         {...(liveMessage
           ? {
               borderStyle: 'single',

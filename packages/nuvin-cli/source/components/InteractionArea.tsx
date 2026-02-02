@@ -233,7 +233,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <UserQuestionPrompt questionData={pendingQuestion} />
           </Box>
         ) : (
-          <Box flexShrink={0} marginTop={1} zIndex={25}>
+          <Box flexShrink={0} flexGrow={1} marginTop={1} zIndex={25}>
             <UserQuestionPrompt questionData={pendingQuestion} />
           </Box>
         );
@@ -247,7 +247,7 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         ) : (
-          <Box flexShrink={0} marginTop={1} zIndex={20}>
+          <Box flexShrink={0} flexGrow={1} marginTop={1} zIndex={20}>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
         );

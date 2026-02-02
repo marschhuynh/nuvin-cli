@@ -90,16 +90,16 @@ const ModelsV2CommandComponent = ({ context, deactivate, isActive }: CommandComp
   const providersConfigRef = useRef(context.config.get<Record<string, ProviderConfig>>('providers'));
   const providersConfig = providersConfigRef.current;
 
-  const allProvidersRef = useRef(getAllProviders(providersConfig));
-  const authenticatedProvidersRef = useRef(getProvidersWithAuth(allProvidersRef.current, providersConfig));
-  const authenticatedProviders = authenticatedProvidersRef.current;
+  const authenticatedProviders = useMemo(
+    () => getProvidersWithAuth(getAllProviders(providersConfig), providersConfig),
+    [providersConfig],
+  );
 
   const [providerModels, setProviderModels] = useState<Record<string, string[]>>({});
   const [loadingProviders, setLoadingProviders] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const recentModelsRef = useRef(getRecentModels(context.config));
-  const recentModels = recentModelsRef.current;
+  const recentModels = useMemo(() => getRecentModels(context.config), [context.config]);
 
   const llmFactory = context.orchestratorManager?.getLLMFactory();
 

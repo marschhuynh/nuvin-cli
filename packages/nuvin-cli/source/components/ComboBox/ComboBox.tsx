@@ -75,42 +75,47 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     return { listItems: result, selectableIndices: selectable };
   }, [filteredItems]);
 
+  const selectableIndicesRef = useRef(selectableIndices);
+  const listItemsRef = useRef(listItems);
+  selectableIndicesRef.current = selectableIndices;
+  listItemsRef.current = listItems;
+
   const hasGroups = listItems.some((item) => item.type === 'header');
 
-  const scrollToSelected = useCallback(
-    (index: number) => {
-      if (selectableIndices.length === 0 || index < 0 || index >= selectableIndices.length) return;
+  const scrollToSelected = useCallback((index: number) => {
+    const currentSelectableIndices = selectableIndicesRef.current;
+    const currentListItems = listItemsRef.current;
 
-      const listIndex = selectableIndices[index];
-      const targetIndex = listItems[listIndex - 1]?.type === 'header' ? listIndex - 1 : listIndex;
-      const itemRef = itemRefs.current.get(targetIndex);
+    if (currentSelectableIndices.length === 0 || index < 0 || index >= currentSelectableIndices.length) return;
 
-      if (itemRef && scrollBoxRef.current) {
-        const scrollInfo = scrollBoxRef.current.getScrollInfo();
-        if (scrollInfo.containerHeight === 0) return;
+    const listIndex = currentSelectableIndices[index];
+    const targetIndex = currentListItems[listIndex - 1]?.type === 'header' ? listIndex - 1 : listIndex;
+    const itemRef = itemRefs.current.get(targetIndex);
 
-        const itemDim = measureElement(itemRef);
+    if (itemRef && scrollBoxRef.current) {
+      const scrollInfo = scrollBoxRef.current.getScrollInfo();
+      if (scrollInfo.containerHeight === 0) return;
 
-        let itemTop = 0;
-        for (let i = 0; i < targetIndex; i++) {
-          const ref = itemRefs.current.get(i);
-          if (ref) {
-            itemTop += measureElement(ref).height;
-          }
-        }
+      const itemDim = measureElement(itemRef);
 
-        const itemBottom = itemTop + itemDim.height;
-        const { scrollY, containerHeight } = scrollInfo;
-
-        if (itemTop < scrollY) {
-          scrollBoxRef.current.scrollTo(itemTop);
-        } else if (itemBottom > scrollY + containerHeight) {
-          scrollBoxRef.current.scrollTo(itemBottom - containerHeight);
+      let itemTop = 0;
+      for (let i = 0; i < targetIndex; i++) {
+        const ref = itemRefs.current.get(i);
+        if (ref) {
+          itemTop += measureElement(ref).height;
         }
       }
-    },
-    [selectableIndices, listItems],
-  );
+
+      const itemBottom = itemTop + itemDim.height;
+      const { scrollY, containerHeight } = scrollInfo;
+
+      if (itemTop < scrollY) {
+        scrollBoxRef.current.scrollTo(itemTop);
+      } else if (itemBottom > scrollY + containerHeight) {
+        scrollBoxRef.current.scrollTo(itemBottom - containerHeight);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     scrollToSelected(selectedIndex);
@@ -121,10 +126,14 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     setSelectedIndex(0);
   }, [input]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: -- Use refs to avoid infinite loops, only trigger on selectedIndex change
   useEffect(() => {
-    if (onHighlight && selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
-      const listIndex = selectableIndices[selectedIndex];
-      const listItem = listItems[listIndex];
+    const currentSelectableIndices = selectableIndicesRef.current;
+    const currentListItems = listItemsRef.current;
+
+    if (onHighlight && currentSelectableIndices.length > 0 && selectedIndex < currentSelectableIndices.length) {
+      const listIndex = currentSelectableIndices[selectedIndex];
+      const listItem = currentListItems[listIndex];
       if (listItem?.type === 'item') {
         onHighlight(listItem.item, listItem.originalIndex);
       } else {
@@ -133,7 +142,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     } else if (onHighlight) {
       onHighlight(null, selectedIndex);
     }
-  }, [selectedIndex, selectableIndices, listItems, onHighlight]);
+  }, [selectedIndex, onHighlight]);
 
   const navigate = useCallback(
     (direction: 'up' | 'down') => {

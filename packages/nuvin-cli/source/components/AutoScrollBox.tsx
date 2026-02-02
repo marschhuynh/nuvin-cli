@@ -32,6 +32,7 @@ type AutoScrollBoxProps = {
   onFocusChange?: (focused: boolean) => void;
   onScrollChange?: (scrollInfo: ScrollInfo) => void;
   flexGrow?: number;
+  flexShrink?: number;
   autoScrollToBottom?: boolean;
 } & Omit<BoxProps, 'ref' | 'overflow' | 'height'>;
 
@@ -129,6 +130,7 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
     onFocusChange,
     onScrollChange,
     flexGrow,
+    flexShrink,
     autoScrollToBottom = true,
     ...boxProps
   }: AutoScrollBoxProps,
@@ -467,9 +469,7 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
           <Text> scroll</Text>
         </Text>
       </Box>
-    ) : (
-      <Box height={1} flexShrink={0} />
-    );
+    ) : null;
 
   return (
     <Box
@@ -477,6 +477,7 @@ export const AutoScrollBox = forwardRef<AutoScrollBoxHandle, AutoScrollBoxProps>
       width="100%"
       {...(maxHeight !== undefined ? { maxHeight } : {})}
       {...(flexGrow !== undefined ? { flexGrow } : {})}
+      {...(flexShrink !== undefined ? { flexShrink } : {})}
       overflow="hidden"
     >
       <Box flexDirection="row" flexGrow={1} flexShrink={1} overflow="hidden">

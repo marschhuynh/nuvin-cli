@@ -45,7 +45,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
       },
       error: 'Read failed',
     },
-    excludeParams: ['path', 'description', 'lineStart', 'lineEnd'],
+    excludeParams: ['path', 'description', 'lineStart', 'lineEnd', 'limit'],
     collapsedByDefault: true,
     renderStatus: null,
   },
