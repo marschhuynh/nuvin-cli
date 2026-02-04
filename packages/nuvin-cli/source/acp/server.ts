@@ -29,6 +29,7 @@ import type {
 } from './types.js';
 import { PROTOCOL_VERSION, AcpMethod } from './types.js';
 import type { ACPHandler } from './handler.js';
+import { logRequest, logResponse, logNotification, logError, logServer } from './logger.js';
 
 // =============================================================================
 // Server Configuration
@@ -119,6 +120,7 @@ export class ACPServer {
     if (this.disposed) {
       throw new Error('Cannot start disposed server');
     }
+    logServer('Starting ACP server');
     this.connection.listen();
   }
 
@@ -130,6 +132,7 @@ export class ACPServer {
       return;
     }
 
+    logNotification(AcpMethod.SessionUpdate, { sessionId, updateType: update.type });
     this.connection.sendNotification(AcpMethod.SessionUpdate, {
       sessionId,
       update,
@@ -150,10 +153,13 @@ export class ACPServer {
       throw new Error('Server not initialized');
     }
 
-    return this.connection.sendRequest<RequestPermissionResponse>(
+    logRequest(AcpMethod.RequestPermission, params);
+    const response = await this.connection.sendRequest<RequestPermissionResponse>(
       AcpMethod.RequestPermission,
       params,
     );
+    logResponse(AcpMethod.RequestPermission, response);
+    return response;
   }
 
   /**
@@ -164,6 +170,7 @@ export class ACPServer {
       return;
     }
 
+    logServer('Disposing ACP server');
     this.disposed = true;
     this.connection.dispose();
   }
@@ -191,7 +198,10 @@ export class ACPServer {
     this.connection.onRequest(
       AcpMethod.Initialize,
       async (params: InitializeRequest): Promise<InitializeResponse> => {
-        return this.handleInitialize(params);
+        logRequest(AcpMethod.Initialize, params);
+        const response = await this.handleInitialize(params);
+        logResponse(AcpMethod.Initialize, response);
+        return response;
       },
     );
 
@@ -199,8 +209,11 @@ export class ACPServer {
     this.connection.onRequest(
       AcpMethod.NewSession,
       async (params: NewSessionRequest): Promise<NewSessionResponse> => {
+        logRequest(AcpMethod.NewSession, params);
         this.ensureInitialized();
-        return this.handleNewSession(params);
+        const response = await this.handleNewSession(params);
+        logResponse(AcpMethod.NewSession, response);
+        return response;
       },
     );
 
@@ -208,8 +221,14 @@ export class ACPServer {
     this.connection.onRequest(
       AcpMethod.Prompt,
       async (params: PromptRequest): Promise<PromptResponse> => {
+        const promptInfo = typeof params.prompt === 'string'
+          ? { type: 'string', length: params.prompt.length }
+          : { type: 'blocks', count: (params.prompt as unknown[]).length };
+        logRequest(AcpMethod.Prompt, { sessionId: params.sessionId, prompt: promptInfo });
         this.ensureInitialized();
-        return this.handlePrompt(params);
+        const response = await this.handlePrompt(params);
+        logResponse(AcpMethod.Prompt, response);
+        return response;
       },
     );
 
@@ -217,6 +236,7 @@ export class ACPServer {
     this.connection.onNotification(
       AcpMethod.Cancel,
       (params: CancelNotification): void => {
+        logRequest(AcpMethod.Cancel, params);
         if (this.initialized) {
           this.handleCancel(params);
         }
@@ -227,17 +247,19 @@ export class ACPServer {
     this.connection.onRequest(
       AcpMethod.Shutdown,
       async (): Promise<void> => {
+        logRequest(AcpMethod.Shutdown, {});
         this.dispose();
       },
     );
 
     // Handle connection errors
     this.connection.onError((error) => {
-      console.error('[ACP Server] Connection error:', error);
+      logError('Connection error', error);
     });
 
     // Handle connection close
     this.connection.onClose(() => {
+      logServer('Connection closed');
       this.dispose();
     });
   }

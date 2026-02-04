@@ -22,6 +22,7 @@ import type {
   McpServer,
   ClientCapabilities,
 } from './types.js';
+import { acpLogger, logSession, logError } from './logger.js';
 
 // =============================================================================
 // Types
@@ -146,6 +147,8 @@ export class ACPSession {
       throw new Error('Session already initialized');
     }
 
+    logSession('Initializing', this.id, { cwd: options.cwd, mcpServers: options.mcpServers?.length ?? 0 });
+
     this.cwd = options.cwd;
     this.mcpServers = options.mcpServers ?? [];
     this.clientCapabilities = options.clientCapabilities;
@@ -153,7 +156,9 @@ export class ACPSession {
     // Change working directory
     try {
       process.chdir(this.cwd);
+      logSession('Changed working directory', this.id, { cwd: this.cwd });
     } catch (error) {
+      logError(`Failed to change directory to ${this.cwd}`, error);
       throw new Error(`Failed to change directory to ${this.cwd}: ${error}`);
     }
 
@@ -164,11 +169,12 @@ export class ACPSession {
       updateLineMetadata: () => {},
       handleError: (message) => {
         // Log errors but don't crash
-        console.error('[ACP Session Error]', message);
+        logError('Session error', message);
       },
     };
 
     // Initialize orchestrator
+    logSession('Initializing orchestrator', this.id);
     await this.orchestrator.init(
       {
         memPersist: true,
@@ -194,6 +200,7 @@ export class ACPSession {
     // This will be handled by the orchestrator's MCP manager
 
     this.initialized = true;
+    logSession('Initialization complete', this.id);
   }
 
   // ---------------------------------------------------------------------------
@@ -214,14 +221,19 @@ export class ACPSession {
       throw new Error('Session not initialized');
     }
 
+    logSession('Handling prompt', this.id, { type: typeof prompt === 'string' ? 'string' : 'blocks' });
+
     // Convert content blocks to message payload
     let messagePayload: string | { text: string; attachments?: Array<{ type: 'image'; mimeType: string; data: string }> };
 
     if (typeof prompt === 'string') {
       messagePayload = prompt;
+      acpLogger.debug(`[SESSION:${this.id}] Prompt text: ${prompt.substring(0, 200)}${prompt.length > 200 ? '...' : ''}`);
     } else {
       const textPrompt = this.contentBlocksToText(prompt);
       const attachments = this.extractImageAttachments(prompt);
+
+      acpLogger.debug(`[SESSION:${this.id}] Prompt blocks: ${prompt.length}, text length: ${textPrompt.length}, attachments: ${attachments.length}`);
 
       if (attachments.length > 0) {
         messagePayload = {
@@ -247,6 +259,7 @@ export class ACPSession {
 
     try {
       // Send message to orchestrator
+      logSession('Sending to orchestrator', this.id);
       await this.orchestrator.send(
         messagePayload,
         {
@@ -255,14 +268,17 @@ export class ACPSession {
       );
 
       // Wait for Done event (handled by event listener)
+      logSession('Waiting for completion', this.id);
       return await completionPromise;
     } catch (error) {
       // If cancelled, return cancelled stop reason
       if (this.abortController?.signal.aborted) {
+        logSession('Prompt cancelled', this.id);
         return { stopReason: 'cancelled' };
       }
 
       // Re-throw other errors
+      logError(`Prompt error in session ${this.id}`, error);
       throw error;
     } finally {
       this.abortController = null;
@@ -302,10 +318,12 @@ export class ACPSession {
    * Unsubscribes from events and releases resources.
    */
   async close(): Promise<void> {
+    logSession('Closing session', this.id);
     this.dispose();
 
     // Clean up orchestrator resources
     await this.orchestrator.cleanup();
+    logSession('Session closed', this.id);
   }
 
   /**
@@ -344,6 +362,8 @@ export class ACPSession {
    * Also handles completion detection via the Done event.
    */
   private handleAgentEvent(event: AgentEvent): void {
+    acpLogger.debug(`[SESSION:${this.id}] Agent event: ${event.type}`);
+
     // Translate and send the event
     if (this.eventTranslator) {
       this.eventTranslator.translate(event);
@@ -351,11 +371,13 @@ export class ACPSession {
 
     // Handle tool calls that require approval
     if (event.type === 'tool_calls') {
+      logSession('Tool calls received', this.id, { count: event.toolCalls.length });
       this.handleToolCallsForApproval(event.toolCalls);
     }
 
     // Check for completion events
     if (event.type === 'done') {
+      logSession('Done event received', this.id);
       // Resolve pending prompt with success
       if (this.pendingPromptResolver) {
         this.pendingPromptResolver({
@@ -364,12 +386,14 @@ export class ACPSession {
         this.pendingPromptResolver = null;
       }
     } else if (event.type === 'error') {
+      logSession('Error event received', this.id, { error: event });
       // Resolve pending prompt with error (refusal)
       if (this.pendingPromptResolver) {
         this.pendingPromptResolver({ stopReason: 'refusal' });
         this.pendingPromptResolver = null;
       }
     } else if (event.type === 'stream_finish') {
+      logSession('Stream finish event received', this.id, { finishReason: event.finishReason });
       // Check finish reason
       if (this.pendingPromptResolver && event.finishReason) {
         const stopReason = this.mapFinishReasonToStopReason(event.finishReason);
@@ -427,18 +451,24 @@ export class ACPSession {
       return;
     }
 
+    const toolName = toolCall.function.name;
+
     try {
+      logSession('Requesting tool approval', this.id, { tool: toolName, approvalId: toolCall.approvalId });
+
       // Request approval from the ACP client
       const decision = await this.permissionBridge.requestApproval(
         toolCall.approvalId,
         toolCall,
       );
 
+      logSession('Tool approval decision', this.id, { tool: toolName, decision });
+
       // Communicate the decision back to the orchestrator
       orchestrator.handleToolApproval(toolCall.approvalId, decision);
     } catch (error) {
       // If approval request fails, deny the tool
-      console.error('[ACP Session] Tool approval request failed:', error);
+      logError(`Tool approval request failed for ${toolName}`, error);
       if (toolCall.approvalId && orchestrator) {
         orchestrator.handleToolApproval(toolCall.approvalId, 'deny');
       }

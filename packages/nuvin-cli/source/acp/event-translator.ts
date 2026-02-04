@@ -17,6 +17,7 @@ import type {
   ToolCallResult,
   ToolCallLocation,
 } from './types.js';
+import { acpLogger } from './logger.js';
 
 // =============================================================================
 // Tool Kind Mapping
@@ -333,9 +334,10 @@ export class EventTranslator {
    */
   private sendUpdate(update: SessionUpdate): void {
     try {
+      acpLogger.debug(`[TRANSLATOR:${this.sessionId}] Sending update: ${update.type}`);
       this.server.sendSessionUpdate(this.sessionId, update);
     } catch (error) {
-      console.error('[EventTranslator] Failed to send update:', error);
+      acpLogger.error(`[TRANSLATOR:${this.sessionId}] Failed to send update`, error);
     }
   }
 

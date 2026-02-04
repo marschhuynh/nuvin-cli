@@ -185,6 +185,9 @@ const cli = meow(
   if (cli.flags.acp) {
     const { createACPServer } = await import('./acp/index.js');
     const { NuvinACPHandler } = await import('./acp/handler.js');
+    const { logServer, acpLogger } = await import('./acp/logger.js');
+
+    logServer('ACP mode starting', { version: getVersionInfo().version });
 
     const server = createACPServer({
       agentName: 'Nuvin',
@@ -196,12 +199,16 @@ const cli = meow(
 
     // Handle process signals
     process.on('SIGINT', () => {
+      logServer('Received SIGINT, shutting down');
       server.dispose();
+      acpLogger.close();
       process.exit(0);
     });
 
     process.on('SIGTERM', () => {
+      logServer('Received SIGTERM, shutting down');
       server.dispose();
+      acpLogger.close();
       process.exit(0);
     });
 

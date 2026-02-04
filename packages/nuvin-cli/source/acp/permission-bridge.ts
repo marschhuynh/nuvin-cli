@@ -15,6 +15,7 @@ import type {
   RequestPermissionRequest,
   RequestPermissionResponse,
 } from './types.js';
+import { acpLogger } from './logger.js';
 
 // =============================================================================
 // Types
@@ -117,6 +118,8 @@ export class PermissionBridge {
     // Create ACP-style tool call ID
     const acpToolCallId: ToolCallId = `tc_${toolCallId}`;
 
+    acpLogger.debug(`[PERMISSION:${this.sessionId}] Requesting approval for tool: ${toolCall.function.name}, id: ${toolCallId}`);
+
     // Parse tool arguments for display
     let toolArgs: unknown;
     try {
@@ -146,13 +149,21 @@ export class PermissionBridge {
     try {
       // Race between the permission request and cancellation
       const permissionPromise = this.server.requestPermission(request).then(
-        (response) => this.mapOutcomeToDecision(response),
-        () => 'deny' as ToolApprovalDecision,
+        (response) => {
+          const decision = this.mapOutcomeToDecision(response);
+          acpLogger.debug(`[PERMISSION:${this.sessionId}] Got response for tool ${toolCall.function.name}: ${response.selectedOption} -> ${decision}`);
+          return decision;
+        },
+        (error) => {
+          acpLogger.error(`[PERMISSION:${this.sessionId}] Permission request failed`, error);
+          return 'deny' as ToolApprovalDecision;
+        },
       );
 
       return await Promise.race([permissionPromise, cancellationPromise]);
-    } catch {
+    } catch (error) {
       // If request failed (e.g., cancelled, connection error), deny
+      acpLogger.error(`[PERMISSION:${this.sessionId}] Unexpected error in requestApproval`, error);
       return 'deny';
     } finally {
       // Clean up pending approval tracking
@@ -167,6 +178,7 @@ export class PermissionBridge {
    * Call this when the session is being closed or the prompt is cancelled.
    */
   cancel(): void {
+    acpLogger.debug(`[PERMISSION:${this.sessionId}] Cancelling ${this.pendingApprovals.size} pending approvals`);
     for (const [toolCallId, pending] of this.pendingApprovals) {
       pending.resolve('deny');
       this.pendingApprovals.delete(toolCallId);

@@ -21,6 +21,7 @@ import type {
 } from './types.js';
 import { PROTOCOL_VERSION } from './types.js';
 import { getVersionInfo } from '../utils/version.js';
+import { acpLogger, logSession } from './logger.js';
 
 // =============================================================================
 // ACPHandler Interface
@@ -220,6 +221,7 @@ export class NuvinACPHandler implements ACPHandler {
   async handleNewSession(params: NewSessionRequest): Promise<NewSessionResponse> {
     // Generate unique session ID
     const sessionId = this.generateSessionId();
+    logSession('Creating new session', sessionId, { cwd: params.cwd });
 
     // Create new session - ACPSession will be implemented in Task 4
     // Import is at top of file, expects ./session.js to exist
@@ -235,6 +237,7 @@ export class NuvinACPHandler implements ACPHandler {
 
     // Store session for future requests
     this.sessions.set(sessionId, session);
+    logSession('Session created and initialized', sessionId);
 
     return {
       sessionId,
@@ -252,14 +255,19 @@ export class NuvinACPHandler implements ACPHandler {
     const session = this.sessions.get(params.sessionId);
 
     if (!session) {
+      acpLogger.error(`Session not found: ${params.sessionId}`);
       throw new ACPError(
         ACPErrorCode.SessionNotFound,
         `Session not found: ${params.sessionId}`,
       );
     }
 
+    logSession('Processing prompt', params.sessionId, { promptType: typeof params.prompt });
+
     // Delegate to session for actual prompt processing
     const result = await session.handlePrompt(params.prompt);
+
+    logSession('Prompt completed', params.sessionId, { stopReason: result.stopReason });
 
     return {
       stopReason: result.stopReason,
@@ -276,6 +284,7 @@ export class NuvinACPHandler implements ACPHandler {
     const session = this.sessions.get(params.sessionId);
 
     if (session) {
+      logSession('Cancelling session', params.sessionId, { operationId: params.operationId });
       session.cancel(params.operationId);
     }
     // Silently ignore if session not found - it may have been closed
@@ -348,6 +357,7 @@ export class NuvinACPHandler implements ACPHandler {
     const session = this.sessions.get(sessionId);
 
     if (session) {
+      logSession('Closing session', sessionId);
       await session.close();
       this.sessions.delete(sessionId);
     }
