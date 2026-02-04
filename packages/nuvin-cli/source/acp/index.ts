@@ -24,5 +24,9 @@ export { ACPServer, createACPServer, type ACPServerConfig } from './server.js';
 // Handler Exports
 // =============================================================================
 
-// Note: handler.ts will be created in Task 3
-export type { ACPHandler } from './handler.js';
+export {
+  NuvinACPHandler,
+  ACPError,
+  ACPErrorCode,
+  type ACPHandler,
+} from './handler.js';
