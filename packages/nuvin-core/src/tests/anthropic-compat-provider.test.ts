@@ -23,6 +23,283 @@ describe('Anthropic-compat Provider Type', () => {
       expect(llm).toBeInstanceOf(GenericAnthropicLLM);
     });
 
+describe('usage transformation', () => {
+  let originalFetch: typeof global.fetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('should calculate prompt_tokens as input_tokens + cache_creation_input_tokens + cache_read_input_tokens', async () => {
+    const mockResponse = {
+      id: 'msg_123',
+      type: 'message',
+      role: 'assistant',
+      content: [{ type: 'text', text: 'Hello' }],
+      model: 'test-model',
+      stop_reason: 'end_turn',
+      usage: {
+        input_tokens: 100,
+        output_tokens: 50,
+        cache_creation_input_tokens: 80,
+        cache_read_input_tokens: 70,
+      },
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockResponse),
+      text: vi.fn().mockResolvedValue(''),
+    } as any);
+
+    const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+    const result = await llm.generateCompletion({
+      messages: [{ role: 'user', content: 'Hello' }],
+      model: 'test-model',
+      temperature: 0.7,
+      topP: 1,
+    });
+
+    // prompt_tokens = input_tokens (100) + cache_creation_input_tokens (80) + cache_read_input_tokens (70) = 250
+    expect(result.usage?.prompt_tokens).toBe(250);
+    expect(result.usage?.completion_tokens).toBe(50);
+    expect(result.usage?.total_tokens).toBe(300);
+    expect(result.usage?.prompt_tokens_details?.cached_tokens).toBe(150);
+    expect(result.usage?.cache_creation_input_tokens).toBe(80);
+    expect(result.usage?.cache_read_input_tokens).toBe(70);
+  });
+
+  it('should handle usage without cache tokens', async () => {
+    const mockResponse = {
+      id: 'msg_123',
+      type: 'message',
+      role: 'assistant',
+      content: [{ type: 'text', text: 'Hello' }],
+      model: 'test-model',
+      stop_reason: 'end_turn',
+      usage: {
+        input_tokens: 100,
+        output_tokens: 50,
+      },
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockResponse),
+      text: vi.fn().mockResolvedValue(''),
+    } as any);
+
+    const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+    const result = await llm.generateCompletion({
+      messages: [{ role: 'user', content: 'Hello' }],
+      model: 'test-model',
+      temperature: 0.7,
+      topP: 1,
+    });
+
+    expect(result.usage?.prompt_tokens).toBe(100);
+    expect(result.usage?.completion_tokens).toBe(50);
+    expect(result.usage?.total_tokens).toBe(150);
+    expect(result.usage?.prompt_tokens_details?.cached_tokens).toBe(0);
+  });
+
+  it('should handle usage with only cache_read_input_tokens', async () => {
+    const mockResponse = {
+      id: 'msg_123',
+      type: 'message',
+      role: 'assistant',
+      content: [{ type: 'text', text: 'Hello' }],
+      model: 'test-model',
+      stop_reason: 'end_turn',
+      usage: {
+        input_tokens: 50,
+        output_tokens: 30,
+        cache_read_input_tokens: 100,
+      },
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue(mockResponse),
+      text: vi.fn().mockResolvedValue(''),
+    } as any);
+
+    const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+    const result = await llm.generateCompletion({
+      messages: [{ role: 'user', content: 'Hello' }],
+      model: 'test-model',
+      temperature: 0.7,
+      topP: 1,
+    });
+
+    // prompt_tokens = input_tokens (50) + cache_read_input_tokens (100) = 150
+    expect(result.usage?.prompt_tokens).toBe(150);
+    expect(result.usage?.completion_tokens).toBe(30);
+    expect(result.usage?.total_tokens).toBe(180);
+    expect(result.usage?.prompt_tokens_details?.cached_tokens).toBe(100);
+    expect(result.usage?.cache_read_input_tokens).toBe(100);
+  });
+
+  it('should calculate usage correctly in streaming response', async () => {
+    const streamEvents = [
+      'data: {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant","content":[],"model":"test-model","usage":{"input_tokens":100,"output_tokens":0,"cache_creation_input_tokens":50,"cache_read_input_tokens":30}}}',
+      '',
+      'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}',
+      '',
+      'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}',
+      '',
+      'data: {"type":"content_block_stop","index":0}',
+      '',
+      'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":10}}',
+      '',
+      'data: {"type":"message_stop"}',
+      '',
+    ].join('\n');
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(streamEvents));
+        controller.close();
+      },
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: stream,
+      text: vi.fn().mockResolvedValue(''),
+    } as any);
+
+    const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+    const result = await llm.streamCompletion(
+      {
+        messages: [{ role: 'user', content: 'Hello' }],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+      },
+      {},
+    );
+
+    // prompt_tokens = input_tokens (100) + cache_creation_input_tokens (50) + cache_read_input_tokens (30) = 180
+    expect(result.usage?.prompt_tokens).toBe(180);
+    expect(result.usage?.completion_tokens).toBe(10);
+    expect(result.usage?.total_tokens).toBe(190);
+    expect(result.usage?.prompt_tokens_details?.cached_tokens).toBe(80);
+  });
+
+  it('should calculate usage from message_delta with cumulative values (real-world scenario)', async () => {
+    // This matches real Anthropic API behavior where message_delta contains cumulative usage
+    const streamEvents = [
+      'data: {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant","content":[],"model":"test-model","usage":{"input_tokens":0,"output_tokens":0}}}',
+      '',
+      'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}',
+      '',
+      'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}',
+      '',
+      'data: {"type":"content_block_stop","index":0}',
+      '',
+      // Real message_delta event with cumulative usage values
+      'data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":13319,"output_tokens":108,"cache_read_input_tokens":0}}',
+      '',
+      'data: {"type":"message_stop"}',
+      '',
+    ].join('\n');
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(streamEvents));
+        controller.close();
+      },
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: stream,
+      text: vi.fn().mockResolvedValue(''),
+    } as any);
+
+    const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+    const result = await llm.streamCompletion(
+      {
+        messages: [{ role: 'user', content: 'Hello' }],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+      },
+      {},
+    );
+
+    // message_delta contains cumulative values, so these should be used
+    // prompt_tokens = input_tokens (13319) + cache_read_input_tokens (0) = 13319
+    expect(result.usage?.prompt_tokens).toBe(13319);
+    expect(result.usage?.completion_tokens).toBe(108);
+    expect(result.usage?.total_tokens).toBe(13427);
+  });
+
+  it('should calculate usage from message_delta with cache tokens', async () => {
+    const streamEvents = [
+      'data: {"type":"message_start","message":{"id":"msg_123","usage":{"input_tokens":0,"output_tokens":0}}}',
+      '',
+      'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}',
+      '',
+      'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}',
+      '',
+      'data: {"type":"content_block_stop","index":0}',
+      '',
+      // message_delta with cache_read_input_tokens
+      'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"input_tokens":1000,"output_tokens":50,"cache_read_input_tokens":5000,"cache_creation_input_tokens":200}}',
+      '',
+      'data: {"type":"message_stop"}',
+      '',
+    ].join('\n');
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(streamEvents));
+        controller.close();
+      },
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: stream,
+      text: vi.fn().mockResolvedValue(''),
+    } as any);
+
+    const llm = new GenericAnthropicLLM('https://api.test.com/v1', { apiKey: 'test-key' });
+    const result = await llm.streamCompletion(
+      {
+        messages: [{ role: 'user', content: 'Hello' }],
+        model: 'test-model',
+        temperature: 0.7,
+        topP: 1,
+      },
+      {},
+    );
+
+    // prompt_tokens = input_tokens (1000) + cache_creation (200) + cache_read (5000) = 6200
+    expect(result.usage?.prompt_tokens).toBe(6200);
+    expect(result.usage?.completion_tokens).toBe(50);
+    expect(result.usage?.total_tokens).toBe(6250);
+    expect(result.usage?.prompt_tokens_details?.cached_tokens).toBe(5200); // 200 + 5000
+    expect(result.usage?.cache_creation_input_tokens).toBe(200);
+    expect(result.usage?.cache_read_input_tokens).toBe(5000);
+  });
+});
+
     it('should create LLM with correct base URL', () => {
       const llm = createLLM('test-anthropic', { apiKey: 'test-key' }, customProviders);
       expect((llm as GenericAnthropicLLM)['apiUrl']).toBe('https://api.test-anthropic.com/v1');

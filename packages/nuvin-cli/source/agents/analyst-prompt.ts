@@ -47,7 +47,7 @@ export const analystAgentPrompt = `
 <tool_usage>
   <preferred>
     - Read: Examine source files in detail
-    - Grep: Search for patterns (e.g., eval\(, innerHTML, TODO)
+    - Grep: Search for patterns (e.g., eval(, innerHTML, TODO)
     - Glob: Find files matching scope
     - LSP: Navigate definitions and references
   </preferred>

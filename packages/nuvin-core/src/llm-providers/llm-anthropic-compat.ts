@@ -312,11 +312,17 @@ export class GenericAnthropicLLM implements LLMPort {
     const cacheRead = rawUsage.cache_read_input_tokens ?? 0;
     const cachedTokens = cacheCreation + cacheRead;
 
+    // Per Anthropic docs: Total input tokens = input_tokens + cache_creation_input_tokens + cache_read_input_tokens
+    const promptTokens = inputTokens + cachedTokens;
+    const totalTokens = promptTokens + outputTokens;
+
     return {
-      prompt_tokens: inputTokens,
+      prompt_tokens: promptTokens,
       completion_tokens: outputTokens,
-      total_tokens: inputTokens + outputTokens,
-      ...(cachedTokens > 0 && { prompt_tokens_details: { cached_tokens: cachedTokens } }),
+      total_tokens: totalTokens,
+      prompt_tokens_details: {
+        cached_tokens: cachedTokens,
+      },
       ...(cacheCreation > 0 && { cache_creation_input_tokens: cacheCreation }),
       ...(cacheRead > 0 && { cache_read_input_tokens: cacheRead }),
     };
@@ -534,7 +540,31 @@ export class GenericAnthropicLLM implements LLMPort {
             }
             if (evt.usage) {
               const partialUsage = evt.usage as Partial<AnthropicUsage>;
-              if (usage) {
+              
+              // If message_delta contains input_tokens, it has cumulative usage - recalculate everything
+              if (partialUsage.input_tokens !== undefined) {
+                const inputTokens = partialUsage.input_tokens;
+                const outputTokens = partialUsage.output_tokens ?? 0;
+                const cacheCreation = partialUsage.cache_creation_input_tokens ?? 0;
+                const cacheRead = partialUsage.cache_read_input_tokens ?? 0;
+                const cachedTokens = cacheCreation + cacheRead;
+                
+                // Calculate prompt_tokens as input_tokens + cached tokens (per Anthropic docs)
+                const promptTokens = inputTokens + cachedTokens;
+                const totalTokens = promptTokens + outputTokens;
+                
+                usage = {
+                  prompt_tokens: promptTokens,
+                  completion_tokens: outputTokens,
+                  total_tokens: totalTokens,
+                  prompt_tokens_details: {
+                    cached_tokens: cachedTokens,
+                  },
+                  ...(cacheCreation > 0 && { cache_creation_input_tokens: cacheCreation }),
+                  ...(cacheRead > 0 && { cache_read_input_tokens: cacheRead }),
+                };
+              } else if (usage) {
+                // Only output_tokens updated - preserve prompt_tokens from message_start
                 usage.completion_tokens = partialUsage.output_tokens ?? usage.completion_tokens;
                 usage.total_tokens = (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0);
               }
