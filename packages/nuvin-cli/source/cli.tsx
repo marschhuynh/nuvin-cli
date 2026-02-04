@@ -48,7 +48,8 @@ declare global {
   var __fullClear: () => void;
 }
 
-console.log('\x1b[?2004h');
+// Note: Bracketed paste mode (\x1b[?2004h) is enabled later, after ACP check
+// to avoid polluting stdout in ACP mode where JSON-RPC requires clean output
 
 process.on('uncaughtException', (error) => {
   console.error('\n\n❌ Uncaught Exception:', error);
@@ -208,6 +209,9 @@ const cli = meow(
     server.start();
     return; // Don't render React UI
   }
+
+  // Enable bracketed paste mode for terminal UI (not in ACP mode)
+  console.log('\x1b[?2004h');
 
   const ensureString = (value: string | undefined): string | undefined => {
     if (typeof value !== 'string') return undefined;
