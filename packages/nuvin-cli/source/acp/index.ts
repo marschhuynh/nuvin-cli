@@ -30,3 +30,9 @@ export {
   ACPErrorCode,
   type ACPHandler,
 } from './handler.js';
+
+// =============================================================================
+// Permission Bridge Exports
+// =============================================================================
+
+export { PermissionBridge } from './permission-bridge.js';
