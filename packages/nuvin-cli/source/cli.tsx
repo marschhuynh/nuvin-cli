@@ -124,6 +124,7 @@ const cli = meow(
     --profile NAME      Use specific profile (overrides active profile)
     --resume, -r        Resume the most recent session
     --alt               Use virtualized rendering (experimental)
+    --acp               Run as ACP server (for editor integration)
 
   Authentication Setup
     Environment variables are automatically detected and loaded at startup:
@@ -166,6 +167,7 @@ const cli = meow(
       profile: { type: 'string' },
       resume: { type: 'boolean', alias: 'r' },
       alt: { type: 'boolean' },
+      acp: { type: 'boolean' },
     },
   },
 );
@@ -176,6 +178,35 @@ const cli = meow(
     const { version, commit } = getVersionInfo();
     console.log(`@nuvin/cli v${version} (${commit})`);
     process.exit(0);
+  }
+
+  // Handle ACP mode - run as server without UI
+  if (cli.flags.acp) {
+    const { createACPServer } = await import('./acp/index.js');
+    const { NuvinACPHandler } = await import('./acp/handler.js');
+
+    const server = createACPServer({
+      agentName: 'Nuvin',
+      agentVersion: getVersionInfo().version,
+    });
+
+    const handler = new NuvinACPHandler();
+    server.setHandler(handler);
+
+    // Handle process signals
+    process.on('SIGINT', () => {
+      server.dispose();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', () => {
+      server.dispose();
+      process.exit(0);
+    });
+
+    // Start the server (this will block until process exits)
+    server.start();
+    return; // Don't render React UI
   }
 
   const ensureString = (value: string | undefined): string | undefined => {
