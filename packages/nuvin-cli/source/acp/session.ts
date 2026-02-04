@@ -7,11 +7,12 @@
  * @module acp/session
  */
 
-import type { AgentEvent } from '@nuvin/nuvin-core';
+import type { AgentEvent, ToolCall } from '@nuvin/nuvin-core';
 import { OrchestratorManager, type UIHandlers } from '../services/OrchestratorManager.js';
 import { eventBus } from '../services/EventBus.js';
 import type { ACPServer } from './server.js';
 import { EventTranslator } from './event-translator.js';
+import { PermissionBridge } from './permission-bridge.js';
 import type {
   SessionId,
   ContentBlock,
@@ -97,6 +98,9 @@ export class ACPSession {
   /** Event translator for converting AgentEvents to ACP updates */
   private eventTranslator: EventTranslator | null = null;
 
+  /** Permission bridge for handling tool approvals via ACP */
+  private permissionBridge: PermissionBridge | null = null;
+
   /** Event handler reference for cleanup */
   private eventHandler: ((event: AgentEvent) => void) | null = null;
 
@@ -176,6 +180,9 @@ export class ACPSession {
 
     // Create event translator for converting AgentEvents to ACP updates
     this.eventTranslator = new EventTranslator(this.id, this.server);
+
+    // Create permission bridge for handling tool approvals via ACP
+    this.permissionBridge = new PermissionBridge(this.id, this.server);
 
     // Subscribe to agent events
     this.eventHandler = (event: AgentEvent) => {
@@ -310,6 +317,12 @@ export class ACPSession {
     // Cancel any pending operations
     this.cancel();
 
+    // Cancel any pending permission requests
+    if (this.permissionBridge) {
+      this.permissionBridge.cancel();
+      this.permissionBridge = null;
+    }
+
     // Unsubscribe from events
     if (this.eventHandler) {
       eventBus.off('agent:event', this.eventHandler);
@@ -336,6 +349,11 @@ export class ACPSession {
       this.eventTranslator.translate(event);
     }
 
+    // Handle tool calls that require approval
+    if (event.type === 'tool_calls') {
+      this.handleToolCallsForApproval(event.toolCalls);
+    }
+
     // Check for completion events
     if (event.type === 'done') {
       // Resolve pending prompt with success
@@ -360,6 +378,69 @@ export class ACPSession {
           this.pendingPromptResolver({ stopReason });
           this.pendingPromptResolver = null;
         }
+      }
+    }
+  }
+
+  /**
+   * Handle tool calls that require approval.
+   *
+   * For each tool call with `requiresApproval: true`, requests approval from
+   * the ACP client via the PermissionBridge and communicates the decision
+   * back to the orchestrator.
+   */
+  private handleToolCallsForApproval(toolCalls: ToolCall[]): void {
+    // Filter tool calls that require approval
+    const toolsNeedingApproval = toolCalls.filter(
+      (tc) => tc.requiresApproval && tc.approvalId,
+    );
+
+    if (toolsNeedingApproval.length === 0 || !this.permissionBridge) {
+      return;
+    }
+
+    // Get the underlying orchestrator to communicate approval decisions
+    const orchestrator = this.orchestrator.getOrchestrator();
+    if (!orchestrator) {
+      console.error('[ACP Session] Orchestrator not available for tool approval');
+      return;
+    }
+
+    // Request approval for each tool in parallel
+    // Each approval is independent and the orchestrator handles per-tool decisions
+    for (const toolCall of toolsNeedingApproval) {
+      this.requestToolApproval(toolCall, orchestrator);
+    }
+  }
+
+  /**
+   * Request approval for a single tool call and communicate the decision.
+   *
+   * This is async but we don't await it - each tool approval runs independently
+   * and communicates back to the orchestrator when complete.
+   */
+  private async requestToolApproval(
+    toolCall: ToolCall,
+    orchestrator: ReturnType<OrchestratorManager['getOrchestrator']>,
+  ): Promise<void> {
+    if (!this.permissionBridge || !toolCall.approvalId || !orchestrator) {
+      return;
+    }
+
+    try {
+      // Request approval from the ACP client
+      const decision = await this.permissionBridge.requestApproval(
+        toolCall.approvalId,
+        toolCall,
+      );
+
+      // Communicate the decision back to the orchestrator
+      orchestrator.handleToolApproval(toolCall.approvalId, decision);
+    } catch (error) {
+      // If approval request fails, deny the tool
+      console.error('[ACP Session] Tool approval request failed:', error);
+      if (toolCall.approvalId && orchestrator) {
+        orchestrator.handleToolApproval(toolCall.approvalId, 'deny');
       }
     }
   }
