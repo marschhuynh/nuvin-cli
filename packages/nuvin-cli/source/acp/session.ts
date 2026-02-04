@@ -11,6 +11,7 @@ import type { AgentEvent } from '@nuvin/nuvin-core';
 import { OrchestratorManager, type UIHandlers } from '../services/OrchestratorManager.js';
 import { eventBus } from '../services/EventBus.js';
 import type { ACPServer } from './server.js';
+import { EventTranslator } from './event-translator.js';
 import type {
   SessionId,
   ContentBlock,
@@ -19,7 +20,6 @@ import type {
   StopReason,
   McpServer,
   ClientCapabilities,
-  SessionUpdate,
 } from './types.js';
 
 // =============================================================================
@@ -52,100 +52,6 @@ export interface PromptResult {
 interface ImageAttachment {
   mediaType: string;
   data: string;
-}
-
-// =============================================================================
-// EventTranslator Stub
-// =============================================================================
-
-/**
- * Stub for EventTranslator - will be implemented in Task 5
- *
- * Translates AgentEvents from the orchestrator into ACP SessionUpdate
- * notifications that are sent to the client.
- */
-class EventTranslatorStub {
-  private sendUpdate: (update: SessionUpdate) => void;
-
-  constructor(
-    _sessionId: SessionId,
-    sendUpdate: (update: SessionUpdate) => void,
-  ) {
-    // sessionId reserved for future use in Task 5
-    this.sendUpdate = sendUpdate;
-  }
-
-  /**
-   * Translate an AgentEvent to one or more SessionUpdates
-   * TODO: Implement in Task 5
-   */
-  translate(event: AgentEvent): void {
-    // Stub implementation - basic translation for core events
-    switch (event.type) {
-      case 'assistant_chunk':
-        this.sendUpdate({
-          type: 'agent_message_chunk',
-          chunk: { text: event.delta },
-        });
-        break;
-
-      case 'reasoning_chunk':
-        this.sendUpdate({
-          type: 'agent_thought_chunk',
-          chunk: { text: event.delta },
-        });
-        break;
-
-      case 'tool_calls':
-        // Send tool call updates for each tool
-        for (const toolCall of event.toolCalls) {
-          this.sendUpdate({
-            type: 'tool_call',
-            toolCallId: toolCall.id,
-            kind: this.mapToolKind(toolCall.function.name),
-            name: toolCall.function.name,
-            content: {
-              input: toolCall.function.arguments ? JSON.parse(toolCall.function.arguments) : undefined,
-            },
-          });
-        }
-        break;
-
-      case 'tool_result':
-        this.sendUpdate({
-          type: 'tool_call_update',
-          toolCallId: event.result.id,
-          status: event.result.status === 'success' ? 'completed' : 'failed',
-          result: {
-            success: event.result.status === 'success',
-            output: typeof event.result.result === 'string'
-              ? event.result.result
-              : JSON.stringify(event.result.result),
-            error: event.result.status === 'error' ? (event.result as { result: string }).result : undefined,
-          },
-        });
-        break;
-
-      // Other events will be handled in Task 5
-      default:
-        // Ignore unhandled events for now
-        break;
-    }
-  }
-
-  /**
-   * Map tool names to ACP ToolKind
-   */
-  private mapToolKind(toolName: string): 'file_read' | 'file_write' | 'file_edit' | 'command' | 'search' | 'web' | 'mcp' | 'other' {
-    if (toolName === 'file_read') return 'file_read';
-    if (toolName === 'file_new') return 'file_write';
-    if (toolName === 'file_edit') return 'file_edit';
-    if (toolName === 'bash_tool') return 'command';
-    if (toolName.includes('grep') || toolName.includes('glob') || toolName.includes('ls')) return 'search';
-    if (toolName.includes('web')) return 'web';
-    if (toolName.startsWith('mcp_')) return 'mcp';
-    return 'other';
-  }
 }
 
 // =============================================================================
@@ -189,7 +95,7 @@ export class ACPSession {
   private clientCapabilities?: ClientCapabilities;
 
   /** Event translator for converting AgentEvents to ACP updates */
-  private eventTranslator: EventTranslatorStub | null = null;
+  private eventTranslator: EventTranslator | null = null;
 
   /** Event handler reference for cleanup */
   private eventHandler: ((event: AgentEvent) => void) | null = null;
@@ -269,10 +175,7 @@ export class ACPSession {
     );
 
     // Create event translator for converting AgentEvents to ACP updates
-    this.eventTranslator = new EventTranslatorStub(
-      this.id,
-      (update) => this.sendSessionUpdate(update),
-    );
+    this.eventTranslator = new EventTranslator(this.id, this.server);
 
     // Subscribe to agent events
     this.eventHandler = (event: AgentEvent) => {
@@ -458,17 +361,6 @@ export class ACPSession {
           this.pendingPromptResolver = null;
         }
       }
-    }
-  }
-
-  /**
-   * Send a session update notification to the client.
-   */
-  private sendSessionUpdate(update: SessionUpdate): void {
-    try {
-      this.server.sendSessionUpdate(this.id, update);
-    } catch (error) {
-      console.error('[ACP Session] Failed to send update:', error);
     }
   }
 
