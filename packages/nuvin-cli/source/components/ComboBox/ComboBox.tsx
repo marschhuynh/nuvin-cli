@@ -126,7 +126,6 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     setSelectedIndex(0);
   }, [input]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: -- Use refs to avoid infinite loops, only trigger on selectedIndex change
   useEffect(() => {
     const currentSelectableIndices = selectableIndicesRef.current;
     const currentListItems = listItemsRef.current;
