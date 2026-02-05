@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.7
+
+### Patch Changes
+
+- [#164](https://github.com/marschhuynh/nuvin-cli/pull/164) [`32b0f04`](https://github.com/marschhuynh/nuvin-space/commit/32b0f04e8ffb9e449c4fa1aaf6c572ed24ee7af2) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix token usage calculation to include cached tokens in prompt_tokens
+
 ## 1.19.0-rc.6
 
 ### Patch Changes
