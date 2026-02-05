@@ -48,8 +48,7 @@ declare global {
   var __fullClear: () => void;
 }
 
-// Note: Bracketed paste mode (\x1b[?2004h) is enabled later, after ACP check
-// to avoid polluting stdout in ACP mode where JSON-RPC requires clean output
+console.log('\x1b[?2004h');
 
 process.on('uncaughtException', (error) => {
   console.error('\n\n❌ Uncaught Exception:', error);
@@ -125,7 +124,6 @@ const cli = meow(
     --profile NAME      Use specific profile (overrides active profile)
     --resume, -r        Resume the most recent session
     --alt               Use virtualized rendering (experimental)
-    --acp               Run as ACP server (for editor integration)
 
   Authentication Setup
     Environment variables are automatically detected and loaded at startup:
@@ -168,7 +166,6 @@ const cli = meow(
       profile: { type: 'string' },
       resume: { type: 'boolean', alias: 'r' },
       alt: { type: 'boolean' },
-      acp: { type: 'boolean' },
     },
   },
 );
@@ -180,45 +177,6 @@ const cli = meow(
     console.log(`@nuvin/cli v${version} (${commit})`);
     process.exit(0);
   }
-
-  // Handle ACP mode - run as server without UI
-  if (cli.flags.acp) {
-    const { createACPServer } = await import('./acp/index.js');
-    const { NuvinACPHandler } = await import('./acp/handler.js');
-    const { logServer, acpLogger } = await import('./acp/logger.js');
-
-    logServer('ACP mode starting', { version: getVersionInfo().version });
-
-    const server = createACPServer({
-      agentName: 'Nuvin',
-      agentVersion: getVersionInfo().version,
-    });
-
-    const handler = new NuvinACPHandler();
-    server.setHandler(handler);
-
-    // Handle process signals
-    process.on('SIGINT', () => {
-      logServer('Received SIGINT, shutting down');
-      server.dispose();
-      acpLogger.close();
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', () => {
-      logServer('Received SIGTERM, shutting down');
-      server.dispose();
-      acpLogger.close();
-      process.exit(0);
-    });
-
-    // Start the server (this will block until process exits)
-    server.start();
-    return; // Don't render React UI
-  }
-
-  // Enable bracketed paste mode for terminal UI (not in ACP mode)
-  console.log('\x1b[?2004h');
 
   const ensureString = (value: string | undefined): string | undefined => {
     if (typeof value !== 'string') return undefined;
