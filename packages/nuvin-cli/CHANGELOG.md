@@ -1,5 +1,20 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.13
+
+### Minor Changes
+
+- [`86aea13`](https://github.com/marschhuynh/nuvin-space/commit/86aea13044d8069ef878946dc4d3d658e433d5bd) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(prompt): restructure system prompt to XML format with modular agent definitions
+
+### Patch Changes
+
+- [`b7201de`](https://github.com/marschhuynh/nuvin-space/commit/b7201de75e386a6787a49126695a4ef6255cc3fc) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add comprehensive file-based logging to ACP server for debugging editor integrations.
+
+- [`9ce689f`](https://github.com/marschhuynh/nuvin-space/commit/9ce689f212a5cd046f44fa171dcb0b0125a98c3b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add available tools and improve tool-selection heuristics in prompt.
+
+- Updated dependencies [[`32b0f04`](https://github.com/marschhuynh/nuvin-space/commit/32b0f04e8ffb9e449c4fa1aaf6c572ed24ee7af2)]:
+  - @nuvin/nuvin-core@1.19.0-rc.7
+
 ## 1.36.0-rc.12
 
 ### Patch Changes
