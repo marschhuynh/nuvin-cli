@@ -1508,9 +1508,14 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const mainConfig: AgentConfig = {
       id: 'nuvin-agent',
       systemPrompt: renderTemplate(mainPrompt, { injectedSystem }),
+<<<<<<< HEAD
       temperature: mainAgentTemplate?.temperature ?? 1,
       topP: mainAgentTemplate?.top_p ?? 1,
       maxTokens: mainAgentTemplate?.max_tokens,
+=======
+      temperature: 1,
+      topP: 1,
+>>>>>>> 5a246ff (feat: add agent location badges and make main agent editable)
       model: currentConfig.model,
       enabledTools: getEnabledTools(),
       maxToolConcurrency: 10,
