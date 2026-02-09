@@ -348,8 +348,17 @@ export type ToolExecutionResult =
       id: string;
       name: string;
       status: 'success';
-      type: 'text' | 'json';
-      result: string | Record<string, unknown> | unknown[];
+      type: 'mixed';
+      result: Array<TextContentPart | ImageContentPart>;
+      metadata?: Record<string, unknown>;
+      durationMs?: number;
+    }
+  | {
+      id: string;
+      name: string;
+      status: 'success';
+      type: 'text' | 'json' | 'mixed';
+      result: string | Record<string, unknown> | unknown[] | Array<TextContentPart | ImageContentPart>;
       metadata?: Record<string, unknown>;
       durationMs?: number;
     }

@@ -1,4 +1,4 @@
-import type { ChatMessage, CompletionParams, CompletionResult, ToolCall, UsageData } from '../ports.js';
+import type { ChatMessage, CompletionParams, CompletionResult, ToolCall, UsageData, ProviderContentPart } from '../ports.js';
 
 export type ResponsesContentPart =
   | { type: 'input_text'; text: string }
@@ -126,10 +126,24 @@ export function transformToResponsesInput(messages: ChatMessage[]): {
 
   for (const msg of nonSystemMessages) {
     if (msg.role === 'tool') {
+      let output: string;
+      if (typeof msg.content === 'string') {
+        output = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        output = (msg.content as ProviderContentPart[])
+          .map((part) => {
+            if (part.type === 'text') return part.text;
+            if (part.type === 'image_url') return '[Image content returned by tool]';
+            return JSON.stringify(part);
+          })
+          .join('\n');
+      } else {
+        output = JSON.stringify(msg.content);
+      }
       input.push({
         type: 'function_call_output',
         call_id: msg.tool_call_id || '',
-        output: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+        output,
       });
       continue;
     }

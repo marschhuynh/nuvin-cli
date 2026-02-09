@@ -25,6 +25,9 @@ import {
   type ToolApprovalDecision,
   type EventPort,
   type UsageData,
+  type TextContentPart,
+  type ImageContentPart,
+  type ProviderContentPart,
   AgentEventTypes,
   MessageRoles,
   ErrorReason,
@@ -39,6 +42,7 @@ import { NoopReminders } from './reminders.js';
 import { SimpleContextBuilder } from './context.js';
 import { NoopEventPort } from './events.js';
 import { convertToolCallsWithErrorHandling } from './tools/tool-call-converter.js';
+import { extractBase64Images, toMessageContentParts } from './utils/base64-image-detector.js';
 
 type AssistantChunkEvent = Extract<AgentEvent, { type: typeof AgentEventTypes.AssistantChunk }>;
 type AssistantMessageEvent = Extract<AgentEvent, { type: typeof AgentEventTypes.AssistantMessage }>;
@@ -50,6 +54,25 @@ const removeAttachmentTokens = (value: string, attachments: UserAttachment[]): s
     return acc.split(attachment.token).join('');
   }, value);
 };
+
+/**
+ * Converts message-layer content parts (TextContentPart | ImageContentPart) into
+ * provider-facing ProviderContentPart[] suitable for ChatMessage.content.
+ * - Text parts are passed through (empty strings are filtered out).
+ * - Image parts are converted to data URI `image_url` entries.
+ */
+function partsToProviderContent(parts: Array<TextContentPart | ImageContentPart>): ProviderContentPart[] {
+  const result: ProviderContentPart[] = [];
+  for (const part of parts) {
+    if (part.type === 'text') {
+      if (part.text.length > 0) result.push({ type: 'text', text: part.text });
+    } else {
+      const url = `data:${part.mimeType};base64,${part.data}`;
+      result.push({ type: 'image_url', image_url: { url } });
+    }
+  }
+  return result;
+}
 
 const makeImagePart = (attachment: UserAttachment): MessageContentPart => {
   const altText = attachment.altText ?? (attachment.name ? `Image attachment: ${attachment.name}` : undefined);
@@ -886,19 +909,29 @@ export class AgentOrchestrator {
       // Build tool result messages
       const toolResultMsgs: Message[] = [];
       for (const tr of toolResults) {
-        let contentStr: string;
+        let messageContent: MessageContent;
+
         if (tr.status === 'error') {
-          contentStr = tr.result as string;
+          messageContent = tr.result as string;
+        } else if (tr.type === 'mixed') {
+          messageContent = { type: 'parts', parts: tr.result as Array<TextContentPart | ImageContentPart> };
         } else if (tr.type === 'text') {
-          contentStr = tr.result as string;
+          const text = tr.result as string;
+          const extracted = extractBase64Images(text);
+          const hasImages = extracted.some((e) => e.type === 'image');
+          if (hasImages) {
+            messageContent = { type: 'parts', parts: toMessageContentParts(extracted) };
+          } else {
+            messageContent = text;
+          }
         } else {
-          contentStr = JSON.stringify(tr.result, null, 2);
+          messageContent = JSON.stringify(tr.result, null, 2);
         }
 
         toolResultMsgs.push({
           id: tr.id,
           role: 'tool',
-          content: contentStr,
+          content: messageContent,
           timestamp: this.clock.iso(),
           tool_call_id: tr.id,
           name: tr.name,
@@ -921,15 +954,26 @@ export class AgentOrchestrator {
         tool_calls: enrichedToolCalls,
       });
       for (const tr of toolResults) {
-        let contentStr: string;
+        let chatContent: string | ProviderContentPart[];
+
         if (tr.status === 'error') {
-          contentStr = tr.result as string;
+          chatContent = tr.result as string;
+        } else if (tr.type === 'mixed') {
+          chatContent = partsToProviderContent(tr.result as Array<TextContentPart | ImageContentPart>);
         } else if (tr.type === 'text') {
-          contentStr = tr.result as string;
+          const text = tr.result as string;
+          const extracted = extractBase64Images(text);
+          const hasImages = extracted.some((e) => e.type === 'image');
+          if (hasImages) {
+            chatContent = partsToProviderContent(toMessageContentParts(extracted));
+          } else {
+            chatContent = text;
+          }
         } else {
-          contentStr = JSON.stringify(tr.result, null, 2);
+          chatContent = JSON.stringify(tr.result, null, 2);
         }
-        accumulatedMessages.push({ role: 'tool', content: contentStr, tool_call_id: tr.id, name: tr.name });
+
+        accumulatedMessages.push({ role: 'tool', content: chatContent, tool_call_id: tr.id, name: tr.name });
       }
 
       if (opts.signal?.aborted) throw new Error('Aborted');

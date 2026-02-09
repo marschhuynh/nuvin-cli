@@ -1,4 +1,4 @@
-import type { CompletionParams, CompletionResult, LLMPort, UsageData, ToolCall, ChatMessage } from '../ports.js';
+import type { CompletionParams, CompletionResult, LLMPort, UsageData, ToolCall, ChatMessage, ProviderContentPart } from '../ports.js';
 import type { HttpTransport, RetryConfig } from '../transports/index.js';
 import {
   FetchTransport,
@@ -25,11 +25,16 @@ export interface GenericAnthropicLLMOptions {
   modelConfig?: ModelConfig;
 }
 
+type AnthropicToolResultContent = Array<
+  | { type: 'text'; text: string }
+  | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
+>;
+
 type AnthropicContentPart =
   | { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }
   | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'tool_result'; tool_use_id: string; content: string }
+  | { type: 'tool_result'; tool_use_id: string; content: string | AnthropicToolResultContent }
   | { type: 'thinking'; thinking: string; signature?: string }
   | { type: 'redacted_thinking'; data: string };
 
@@ -98,6 +103,39 @@ type AnthropicStreamEvent =
   | { type: 'message_delta'; delta: { stop_reason: string }; usage?: Partial<AnthropicUsage> }
   | { type: 'message_stop' }
   | { type: 'error'; error: { type: string; message: string } };
+
+/**
+ * Converts ChatMessage content to Anthropic's tool_result content format.
+ *
+ * When content is a ProviderContentPart[] containing image_url parts,
+ * converts data URLs to Anthropic's native base64 image blocks.
+ * Falls back to string or JSON.stringify for other content types.
+ */
+function buildAnthropicToolResultContent(
+  content: string | null | ProviderContentPart[],
+): string | AnthropicToolResultContent {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return JSON.stringify(content);
+
+  const parts = content as ProviderContentPart[];
+  const anthropicParts: AnthropicToolResultContent = [];
+
+  for (const part of parts) {
+    if (part.type === 'text') {
+      anthropicParts.push({ type: 'text', text: part.text });
+    } else if (part.type === 'image_url') {
+      const match = part.image_url.url.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        anthropicParts.push({
+          type: 'image',
+          source: { type: 'base64', media_type: match[1]!, data: match[2]! },
+        });
+      }
+    }
+  }
+
+  return anthropicParts.length > 0 ? anthropicParts : JSON.stringify(content);
+}
 
 export class GenericAnthropicLLM implements LLMPort {
   private readonly opts: GenericAnthropicLLMOptions;
@@ -168,12 +206,14 @@ export class GenericAnthropicLLM implements LLMPort {
 
     for (const msg of nonSystemMessages) {
       if (msg.role === 'tool') {
+        const toolResultContent = buildAnthropicToolResultContent(msg.content);
+
         const lastMsg = anthropicMessages[anthropicMessages.length - 1];
         if (lastMsg && lastMsg.role === 'user' && Array.isArray(lastMsg.content)) {
           lastMsg.content.push({
             type: 'tool_result',
             tool_use_id: msg.tool_call_id || '',
-            content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+            content: toolResultContent,
           });
         } else {
           anthropicMessages.push({
@@ -182,7 +222,7 @@ export class GenericAnthropicLLM implements LLMPort {
               {
                 type: 'tool_result',
                 tool_use_id: msg.tool_call_id || '',
-                content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+                content: toolResultContent,
               },
             ],
           });
