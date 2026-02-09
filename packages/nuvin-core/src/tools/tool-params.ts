@@ -13,6 +13,7 @@ export type BashToolArgs = {
   cwd?: string;
   timeoutMs?: number;
   description?: string;
+  ignoreOutput?: boolean;
 };
 
 export type FileReadArgs = {

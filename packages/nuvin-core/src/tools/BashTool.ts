@@ -12,6 +12,7 @@ export type BashParams = {
   cmd: string;
   cwd?: string;
   timeoutMs?: number;
+  ignoreOutput?: boolean;
 };
 
 export type BashSuccessResult = {
@@ -48,6 +49,11 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       cmd: { type: 'string', description: 'Shell command to run.' },
       cwd: { type: 'string', description: 'Working directory.' },
       timeoutMs: { type: 'integer', minimum: 1, description: 'Timeout in ms. Default: 30000.' },
+      ignoreOutput: {
+        type: 'boolean',
+        description:
+          'If true, discard stdout/stderr and return only the exit code. Useful when you only care whether the command succeeded or failed.',
+      },
     },
     required: ['cmd'],
   } as const;
@@ -94,7 +100,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
     if (signal?.aborted) {
       return err('Command execution aborted by user', undefined, ErrorReason.Aborted);
     }
-    const { cmd, cwd = process.cwd(), timeoutMs = DEFAULTS.timeoutMs } = p;
+    const { cmd, cwd = process.cwd(), timeoutMs = DEFAULTS.timeoutMs, ignoreOutput = false } = p;
 
     const maxOutputBytes = DEFAULTS.maxOutputBytes;
     const stripAnsi = DEFAULTS.stripAnsi;
@@ -108,7 +114,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       child = spawn(executable, execArgs, {
         cwd,
         env: process.env,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ignoreOutput ? ['ignore', 'ignore', 'ignore'] : ['ignore', 'pipe', 'pipe'],
         shell: false,
         windowsHide: true,
         detached: !isWindows,
@@ -238,14 +244,27 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
     try {
       const { code, signal: exitSignal } = await Promise.race([exit, deadline, abort]);
 
-      const outText = Buffer.concat(stdout).toString('utf8');
-      const errText = Buffer.concat(stderr).toString('utf8');
-      const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;
-
       if (signal?.aborted) {
+        if (ignoreOutput) {
+          return err('Command execution aborted by user', { cwd }, ErrorReason.Aborted);
+        }
+        const outText = Buffer.concat(stdout).toString('utf8');
+        const errText = Buffer.concat(stderr).toString('utf8');
+        const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;
         const partialOutput = output ? `\nOutput before abort:\n${output}` : '';
         return err(`Command execution aborted by user${partialOutput}`, { cwd }, ErrorReason.Aborted);
       }
+
+      if (ignoreOutput) {
+        if (code !== 0) {
+          return err(`exit code ${code}`, { code, signal: exitSignal, cwd });
+        }
+        return okText(`exit code 0`, { code, signal: exitSignal, cwd });
+      }
+
+      const outText = Buffer.concat(stdout).toString('utf8');
+      const errText = Buffer.concat(stderr).toString('utf8');
+      const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;
 
       if (code !== 0) {
         const metadata: Record<string, unknown> = { code, signal: exitSignal, cwd };
@@ -263,6 +282,9 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       const message = e instanceof Error ? e.message : String(e);
 
       if (message === 'ABORTED' || signal?.aborted) {
+        if (ignoreOutput) {
+          return err('Command execution aborted by user', { cwd }, ErrorReason.Aborted);
+        }
         const outText = Buffer.concat(stdout).toString('utf8');
         const errText = Buffer.concat(stderr).toString('utf8');
         const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;

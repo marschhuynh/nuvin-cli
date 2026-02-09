@@ -18,6 +18,7 @@ export const bashToolSchema = z.object({
   cwd: z.string().optional(),
   timeoutMs: z.number().int().positive({ message: 'must be positive' }).optional(),
   description: z.string().optional(),
+  ignoreOutput: z.boolean().optional(),
 });
 
 export const fileReadSchema = z.preprocess(
