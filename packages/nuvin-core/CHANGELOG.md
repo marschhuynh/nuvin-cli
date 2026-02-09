@@ -1,5 +1,15 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.8
+
+### Minor Changes
+
+- [#165](https://github.com/marschhuynh/nuvin-cli/pull/165) [`ae426ba`](https://github.com/marschhuynh/nuvin-space/commit/ae426bab43077a14759e692d6d6db703f883935e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MCP image content extraction and base64 image detection for tool results
+
+### Patch Changes
+
+- [`354a1c7`](https://github.com/marschhuynh/nuvin-space/commit/354a1c75b088b2df5ad274a29558c566049a7ff1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add max_tokens field to agent configuration
+
 ## 1.19.0-rc.7
 
 ### Patch Changes

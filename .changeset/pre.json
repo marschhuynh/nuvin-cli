@@ -8,6 +8,7 @@
   "changesets": [
     "INSTRUCTIONS",
     "ask-user-tool-display",
+    "base64-image-tool-content",
     "bordered-message-styles",
     "command-completion-callbacks",
     "command-menu-description-wrap",
@@ -21,6 +22,7 @@
     "hook-system-implementation",
     "kimi-anthropic-compat",
     "lsp-history-refresh",
+    "max-tokens-support",
     "minimax-fix-changes",
     "prompt-refactor-xml",
     "prompt-tools",
