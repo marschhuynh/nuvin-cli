@@ -34,7 +34,7 @@
 		"build": "node scripts/build.js",
 		"clean": "rm -rf dist",
 		"dev": "tsup --watch",
-		"run:dev": "npx tsx source/cli.tsx",
+		"run:dev": "npx tsx --import ./scripts/register-md-loader.js source/cli.tsx",
 		"run:scroll": "npx tsx source/position-demo.tsx",
 		"run:prod": "node dist/cli.js",
 		"test": "vitest run",

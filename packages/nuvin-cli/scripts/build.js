@@ -49,23 +49,6 @@ try {
   process.exit(1);
 }
 
-// Copy builtin-agents markdown files
-try {
-  const { mkdirSync } = await import('fs');
-  const builtinAgentsDir = join(rootDir, 'source', 'builtin-agents');
-  const builtinAgentsDestDir = join(distDir, 'builtin-agents');
-  
-  mkdirSync(builtinAgentsDestDir, { recursive: true });
-  
-  const mdFiles = readdirSync(builtinAgentsDir).filter(f => f.endsWith('.md'));
-  for (const file of mdFiles) {
-    copyFileSync(join(builtinAgentsDir, file), join(builtinAgentsDestDir, file));
-  }
-  console.log(`✓ Copied ${mdFiles.length} builtin-agents markdown files to dist`);
-} catch (error) {
-  console.error('✗ Builtin-agents copy failed:', error.message);
-  process.exit(1);
-}
 
 if (!existsSync(distDir)) {
   console.error('✗ Dist directory not found');
