@@ -332,7 +332,7 @@ export class OrchestratorManager {
       await agentRegistry.waitForLoad();
 
       for (const agent of builtinAgents) {
-        if (!agentRegistry.exists(agent.name!)) {
+        if (agent.name && !agentRegistry.exists(agent.name)) {
           agentRegistry.register({ ...agent, location: 'built-in' });
         }
       }

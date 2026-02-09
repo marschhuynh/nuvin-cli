@@ -1,4 +1,11 @@
-import type { ToolDefinition, ToolExecutionResult, ToolInvocation, ToolPort } from '../ports.js';
+import type {
+  TextContentPart,
+  ImageContentPart,
+  ToolDefinition,
+  ToolExecutionResult,
+  ToolInvocation,
+  ToolPort,
+} from '../ports.js';
 import { ErrorReason } from '../ports.js';
 import type { CoreMCPClient, MCPToolSchema } from './mcp-client.js';
 import { jsonSchemaToZod } from 'json-zodify';
@@ -7,7 +14,7 @@ import { z } from 'zod';
 type NameMap = Map<string, string>;
 
 interface MCPToolCallResponse {
-  content: Array<{ type: string; text?: string }>;
+  content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
 }
 
 function sanitizeName(name: string): string {
@@ -25,12 +32,32 @@ function toExposedName(original: string, prefix = 'mcp_'): string {
 interface MCPContent {
   type: string;
   text?: string;
+  data?: string;
+  mimeType?: string;
 }
 
-function flattenMcpContent(
-  content: MCPContent[] | undefined,
-): { type: 'text'; value: string } | { type: 'json'; value: Record<string, unknown> | unknown[] } {
+type FlatResult =
+  | { type: 'text'; value: string }
+  | { type: 'json'; value: Record<string, unknown> | unknown[] }
+  | { type: 'mixed'; parts: Array<TextContentPart | ImageContentPart> };
+
+export function flattenMcpContent(content: MCPContent[] | undefined): FlatResult {
   if (!content || content.length === 0) return { type: 'text', value: '' };
+
+  const hasImages = content.some((c) => c.type === 'image' && c.data && c.mimeType);
+
+  if (hasImages) {
+    const parts: Array<TextContentPart | ImageContentPart> = [];
+    for (const c of content) {
+      if (c.type === 'text' && typeof c.text === 'string') {
+        parts.push({ type: 'text', text: c.text });
+      } else if (c.type === 'image' && c.data && c.mimeType) {
+        parts.push({ type: 'image', mimeType: c.mimeType, data: c.data });
+      }
+    }
+    return { type: 'mixed', parts };
+  }
+
   const allText = content.every((c) => c && c.type === 'text' && typeof c.text === 'string');
   if (allText) return { type: 'text', value: content.map((c) => c.text).join('\n') };
   return { type: 'json', value: content };
@@ -174,6 +201,8 @@ DO NOT mention this explicitly to the user.
             const flat = flattenMcpContent((res as MCPToolCallResponse).content);
             if (flat.type === 'text') {
               return { id: c.id, name: c.name, status: 'success' as const, type: 'text' as const, result: flat.value };
+            } else if (flat.type === 'mixed') {
+              return { id: c.id, name: c.name, status: 'success' as const, type: 'mixed' as const, result: flat.parts };
             } else {
               return { id: c.id, name: c.name, status: 'success' as const, type: 'json' as const, result: flat.value };
             }

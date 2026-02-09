@@ -1,5 +1,5 @@
 export { GithubLLM } from './llm-github.js';
-export { AnthropicAISDKLLM } from './llm-anthropic-aisdk.js';
+export { AnthropicAISDKLLM, buildAISDKToolResultOutput } from './llm-anthropic-aisdk.js';
 export { GenericAnthropicLLM } from './llm-anthropic-compat.js';
 export {
   createLLM,

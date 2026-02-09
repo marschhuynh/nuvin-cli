@@ -1,4 +1,4 @@
-import type { CompletionParams, CompletionResult, ToolCall, UsageData } from '../ports.js';
+import type { CompletionParams, CompletionResult, ToolCall, UsageData, ProviderContentPart } from '../ports.js';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import {
   streamText,
@@ -38,6 +38,51 @@ type AnthropicAISDKOptions = {
   retry?: Partial<RetryConfig>;
   onTokenUpdate?: (newCredentials: { access: string; refresh: string; expires: number }) => void;
 };
+
+/**
+ * Converts ChatMessage content to AI SDK tool result output format.
+ *
+ * When content contains ProviderContentPart[] with image_url parts,
+ * uses the AI SDK 'content' output type with 'media' parts for images.
+ * Falls back to a simple 'text' output for string content.
+ *
+ * @see LanguageModelV2ToolResultOutput from @ai-sdk/provider
+ */
+export function buildAISDKToolResultOutput(
+  content: string | null | ProviderContentPart[],
+): { type: 'text'; value: string } | { type: 'content'; value: Array<{ type: 'text'; text: string } | { type: 'media'; data: string; mediaType: string }> } {
+  if (typeof content === 'string') {
+    return { type: 'text' as const, value: content };
+  }
+
+  if (Array.isArray(content)) {
+    const parts = content as ProviderContentPart[];
+    const hasImages = parts.some((p) => p.type === 'image_url');
+
+    if (hasImages) {
+      const contentParts: Array<{ type: 'text'; text: string } | { type: 'media'; data: string; mediaType: string }> = [];
+
+      for (const part of parts) {
+        if (part.type === 'text') {
+          contentParts.push({ type: 'text', text: part.text });
+        } else if (part.type === 'image_url') {
+          const match = part.image_url.url.match(/^data:([^;]+);base64,(.+)$/);
+          if (match) {
+            contentParts.push({ type: 'media', data: match[2]!, mediaType: match[1]! });
+          }
+        }
+      }
+
+      if (contentParts.length > 0) {
+        return { type: 'content' as const, value: contentParts };
+      }
+    }
+
+    return { type: 'text' as const, value: JSON.stringify(content) };
+  }
+
+  return { type: 'text' as const, value: JSON.stringify(content) };
+}
 
 export class AnthropicAISDKLLM {
   private readonly opts: AnthropicAISDKOptions;
@@ -168,6 +213,8 @@ export class AnthropicAISDKLLM {
       .filter((msg) => msg.role !== 'system')
       .map((msg): ModelMessage => {
         if (msg.role === 'tool') {
+          const output = buildAISDKToolResultOutput(msg.content);
+
           return {
             role: 'tool' as const,
             content: [
@@ -175,10 +222,7 @@ export class AnthropicAISDKLLM {
                 type: 'tool-result' as const,
                 toolCallId: msg.tool_call_id || '',
                 toolName: msg.name || '',
-                output: {
-                  type: 'text' as const,
-                  value: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
-                },
+                output,
               },
             ],
           };

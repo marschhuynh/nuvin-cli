@@ -251,7 +251,7 @@ export type {
 export { DelegationServiceFactory, LLMResolver } from './delegation/index.js';
 
 // LLM providers
-export { GithubLLM, AnthropicAISDKLLM } from './llm-providers/index.js';
+export { GithubLLM, AnthropicAISDKLLM, buildAISDKToolResultOutput } from './llm-providers/index.js';
 export {
   createLLM,
   getAvailableProviders,

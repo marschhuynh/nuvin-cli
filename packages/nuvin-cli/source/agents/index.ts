@@ -21,14 +21,14 @@ function readAgentFile(filename: string): string {
 function loadBuiltinAgent(filename: string): AgentTemplate {
   const content = readFileSync(join(__dirname, filename), 'utf-8');
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  
+
   if (!frontmatterMatch) {
     throw new Error(`Invalid agent file format: ${filename}`);
   }
-  
+
   const frontmatter = parse(frontmatterMatch[1]) as Record<string, unknown>;
   const instructions = frontmatterMatch[2].trim();
-  
+
   return {
     instructions,
     name: typeof frontmatter.name === 'string' ? frontmatter.name : undefined,
