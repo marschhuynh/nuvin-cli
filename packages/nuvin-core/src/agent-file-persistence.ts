@@ -84,6 +84,11 @@ export class AgentFilePersistence {
           ? fm.allowed_tools.filter((t): t is string => typeof t === 'string')
           : undefined,
         model: typeof fm.model === 'string' ? fm.model : undefined,
+        temperature: typeof fm.temperature === 'number' ? fm.temperature : undefined,
+        top_p: typeof fm.top_p === 'number' ? fm.top_p : undefined,
+        max_tokens: typeof fm.max_tokens === 'number' ? fm.max_tokens : undefined,
+        timeout_ms: typeof fm.timeout_ms === 'number' ? fm.timeout_ms : undefined,
+        provider: typeof fm.provider === 'string' ? fm.provider : undefined,
         disable_model_invocation:
           typeof fm.disable_model_invocation === 'boolean' ? fm.disable_model_invocation : undefined,
         user_invocable: typeof fm.user_invocable === 'boolean' ? fm.user_invocable : undefined,
@@ -91,6 +96,7 @@ export class AgentFilePersistence {
         agent: typeof fm.agent === 'string' ? fm.agent : undefined,
         hooks: typeof fm.hooks === 'object' && fm.hooks !== null ? (fm.hooks as Record<string, unknown>) : undefined,
         argument_hint: typeof fm.argument_hint === 'string' ? fm.argument_hint : undefined,
+        // location is NOT read from file — directory placement is the source of truth
       };
 
       return template;
@@ -116,12 +122,18 @@ export class AgentFilePersistence {
       description: agent.description,
       allowed_tools: agent.allowed_tools,
       model: agent.model,
+      temperature: agent.temperature,
+      top_p: agent.top_p,
+      max_tokens: agent.max_tokens,
+      timeout_ms: agent.timeout_ms,
+      provider: agent.provider,
       disable_model_invocation: agent.disable_model_invocation,
       user_invocable: agent.user_invocable,
       context: agent.context,
       agent: agent.agent,
       hooks: agent.hooks,
       argument_hint: agent.argument_hint,
+      // location is NOT written to file — directory placement is the source of truth
     };
 
     Object.keys(frontmatter).forEach((key) => {

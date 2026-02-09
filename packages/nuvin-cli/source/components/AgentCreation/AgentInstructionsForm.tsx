@@ -48,12 +48,16 @@ const AgentInstructionsFormContent: React.FC<AgentInstructionsFormProps> = ({
 
   const maxLines = Math.min(24, rows - 10);
 
+  // Determine if the message is informational (vs a true error)
+  const isInfoMessage = error?.includes('Created global override') || error?.includes('Editing global version');
+  const messageColor = isInfoMessage ? theme.colors.warning : theme.colors.error;
+
   return (
     <AppModal visible={true} title={title} footer={footerContent}>
       <Box flexDirection="column" flexGrow={1}>
         {error ? (
           <Box marginBottom={1}>
-            <Text color={theme.colors.error}>{error}</Text>
+            <Text color={messageColor}>{error}</Text>
           </Box>
         ) : null}
 

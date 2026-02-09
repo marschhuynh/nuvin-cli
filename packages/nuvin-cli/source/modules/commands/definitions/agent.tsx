@@ -188,7 +188,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
   }, []);
 
   const handleAgentEdit = useCallback(
-    (agentName: string) => {
+    async (agentName: string) => {
       const tools = context.orchestratorManager?.getOrchestrator()?.getTools?.();
       const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
       const agentRegistry = agentAwareTools?.getAgentRegistry?.();
@@ -202,6 +202,40 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       if (!agent) {
         void loadAgents();
         return;
+      }
+
+      // Auto-copy built-in main agent to global on edit
+      if (agentName === 'nuvin' && agent.location === 'built-in') {
+        try {
+          // Create global version
+          const globalAgent = { ...agent, location: 'global' as const };
+          await agentRegistry.saveToFile(globalAgent);
+
+          // Reload to pick up the new global version
+          await loadAgents();
+
+          // Now edit the global version
+          const updatedAgent = agentRegistry.get('nuvin');
+          if (!updatedAgent) {
+            setError('Failed to create global override');
+            return;
+          }
+
+          // Set info message
+          setCreationError('Created global override at ~/.nuvin/agents/nuvin.md. Editing global version.');
+
+          // Continue with the global version
+          const selectedAgentIndex = agents.findIndex((a) => a.name === agentName);
+          transitionToEdit(agentName, 'agent-config', selectedAgentIndex);
+          setEditingAgentName(agentName);
+          setCreationMode(true);
+          setCreationPreview(updatedAgent);
+          setCreationLoading(false);
+          return;
+        } catch (error) {
+          setError(`Failed to create global override: ${error instanceof Error ? error.message : String(error)}`);
+          return;
+        }
       }
 
       const selectedAgentIndex = agents.findIndex((a) => a.name === agentName);
@@ -234,8 +268,12 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           return;
         }
 
+        // Delete file FIRST while location is still known from registry, then unregister
+        const agent = agentRegistry.get(agentName);
+        if (agent?.location && agent.location !== 'built-in') {
+          await agentRegistry.deleteFromFile(agentName, agent.location);
+        }
         agentRegistry.unregister(agentName);
-        await agentRegistry.deleteFromFile(agentName);
 
         await context.config.delete(`agentsEnabled.${agentName}`, 'global');
 
@@ -247,7 +285,13 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           orchestratorAwareTools.setEnabledAgents(updatedConfig);
         }
 
-        await loadAgents();
+        // Update state synchronously from registry (matching commands pattern — no race conditions)
+        const allAgents = agentRegistry.list();
+        const agentInfos: AgentInfo[] = allAgents.map((a) => ({
+          ...a,
+          isDefault: agentRegistry.isDefault(a.name),
+        }));
+        setAgents(agentInfos);
 
         transitionToConfig();
         setCreationMode(false);
@@ -258,7 +302,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         setError(`Failed to delete agent: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
-    [context.config, loadAgents, context.orchestratorManager?.getOrchestrator, transitionToConfig],
+    [context.config, context.orchestratorManager?.getOrchestrator, transitionToConfig],
   );
 
   const handleCreationSubmit = async (description: string) => {
@@ -367,20 +411,23 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           let removedOriginalFile = false;
 
           try {
+            // Delete old file FIRST while location is still known (matching commands pattern)
+            if (renamed && originalAgent.location && originalAgent.location !== 'built-in') {
+              await agentRegistry.deleteFromFile(editingAgentName, originalAgent.location);
+              removedOriginalFile = true;
+            }
+
+            // Save new file before updating registry
+            await agentRegistry.saveToFile(updatedAgent);
+            savedUpdatedFile = true;
+
+            // Now update registry state
             if (renamed) {
               agentRegistry.unregister(editingAgentName);
             }
 
             agentRegistry.register(updatedAgent);
             newRegistered = true;
-
-            await agentRegistry.saveToFile(updatedAgent);
-            savedUpdatedFile = true;
-
-            if (renamed) {
-              await agentRegistry.deleteFromFile(editingAgentName);
-              removedOriginalFile = true;
-            }
 
             if (renamed) {
               delete updatedConfig[editingAgentName];
@@ -394,34 +441,29 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               orchestratorAwareTools.setEnabledAgents(updatedConfig);
             }
 
-            await loadAgents();
+            // Get updated agent list synchronously from registry (already updated above)
+            const allAgents = agentRegistry.list();
+            const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
+              ...agent,
+              isDefault: agentRegistry.isDefault(agent.name),
+            }));
+            setAgents(agentInfos);
 
+            // Find the new agent index from the updated list
+            const editedAgentIndex = agentInfos.findIndex((a) => a.name === newName);
+            const selectedIndex =
+              editedAgentIndex >= 0 ? editedAgentIndex : (navigationState.preservedState?.selectedAgentIndex ?? 0);
+
+            // Update all state synchronously - no intermediate renders with inconsistent state
             if (navigationState.navigationSource === 'agent-config') {
-              const tools = context.orchestratorManager?.getOrchestrator()?.getTools?.();
-              const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
-              const agentRegistry = agentAwareTools?.getAgentRegistry?.();
-              if (agentRegistry) {
-                const allAgents = agentRegistry.list();
-                const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
-                  ...agent,
-                  isDefault: agentRegistry.isDefault(agent.name),
-                }));
-
-                const editedAgentIndex = agentInfos.findIndex((a) => a.name === newName);
-                const selectedIndex =
-                  editedAgentIndex >= 0 ? editedAgentIndex : (navigationState.preservedState?.selectedAgentIndex ?? 0);
-
-                setNavigationState({
-                  activeView: 'config',
-                  navigationSource: null,
-                  preservedState: {
-                    selectedAgentName: newName ?? null,
-                    selectedAgentIndex: selectedIndex,
-                  },
-                });
-              } else {
-                transitionToConfig();
-              }
+              setNavigationState({
+                activeView: 'config',
+                navigationSource: null,
+                preservedState: {
+                  selectedAgentName: newName ?? null,
+                  selectedAgentIndex: selectedIndex,
+                },
+              });
 
               setCreationMode(false);
               setCreationError(undefined);
@@ -435,6 +477,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               deactivate();
             }
           } catch (error) {
+            // Rollback: restore registry state
             if (newRegistered) {
               agentRegistry.unregister(updatedAgent.name);
             }
@@ -443,9 +486,10 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               agentRegistry.register(originalAgent);
             }
 
-            if (savedUpdatedFile && renamed) {
+            // Rollback: clean up new file if it was saved
+            if (savedUpdatedFile && renamed && originalAgent.location && originalAgent.location !== 'built-in') {
               try {
-                await agentRegistry.deleteFromFile(updatedAgent.name);
+                await agentRegistry.deleteFromFile(updatedAgent.name, originalAgent.location);
               } catch (cleanupError) {
                 console.error(
                   'Failed to remove updated agent file after edit error:',
@@ -454,7 +498,8 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               }
             }
 
-            if (renamed && removedOriginalFile) {
+            // Rollback: restore original file if it was deleted
+            if (removedOriginalFile) {
               try {
                 await agentRegistry.saveToFile(originalAgent);
               } catch (restoreError) {

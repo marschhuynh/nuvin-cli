@@ -40,6 +40,7 @@ import {
 } from '@nuvin/nuvin-core';
 import { UIEventAdapter, type MessageLine, type LineMetadata } from '@/adapters/index.js';
 import { prompt } from '@/prompt.js';
+import { builtinAgents } from '@/agents/index.js';
 import type { ProviderKey } from '@/config/providers.js';
 import { MCPServerManager, type MCPServerInfo } from './MCPServerManager.js';
 import { eventBus } from './EventBus.js';
@@ -293,10 +294,48 @@ export class OrchestratorManager {
 
       // Initialize agent persistence and registry
       const { agentsDir } = this.getProfilePaths();
-      fs.mkdirSync(agentsDir, { recursive: true });
-      const agentFilePersistence = new AgentFilePersistence({ agentsDir });
-      const agentRegistry = new AgentRegistry({ filePersistence: agentFilePersistence });
+      const currentProfile =
+        typeof this.configManager.getCurrentProfile === 'function' ? this.configManager.getCurrentProfile() : undefined;
+      const isDefaultProfile = !currentProfile || currentProfile === 'default';
+
+      // Create directory for project-local agents
+      const localAgentsDir = path.join(process.cwd(), '.nuvin', 'agents');
+      fs.mkdirSync(localAgentsDir, { recursive: true });
+
+      // Local agents (project-specific in .nuvin/agents)
+      const localAgentFilePersistence = new AgentFilePersistence({
+        agentsDir: localAgentsDir
+      });
+
+      // Profile agents (profile-specific, only if not default profile)
+      // For default profile, agentsDir === globalAgentsDir, so we skip to avoid duplication
+      let profileAgentFilePersistence: AgentFilePersistence | undefined;
+      if (!isDefaultProfile) {
+        fs.mkdirSync(agentsDir, { recursive: true });
+        profileAgentFilePersistence = new AgentFilePersistence({
+          agentsDir
+        });
+      }
+
+      // Global agents (home directory)
+      const globalAgentsDir = path.join(os.homedir(), '.nuvin', 'agents');
+      fs.mkdirSync(globalAgentsDir, { recursive: true });
+      const globalAgentFilePersistence = new AgentFilePersistence({
+        agentsDir: globalAgentsDir
+      });
+
+      const agentRegistry = new AgentRegistry({
+        localFilePersistence: localAgentFilePersistence,
+        profileFilePersistence: profileAgentFilePersistence,
+        globalFilePersistence: globalAgentFilePersistence
+      });
       await agentRegistry.waitForLoad();
+
+      for (const agent of builtinAgents) {
+        if (!agentRegistry.exists(agent.name!)) {
+          agentRegistry.register({ ...agent, location: 'built-in' });
+        }
+      }
 
       const skillsConfig = currentConfig.config.skills;
       const enableSkills = skillsConfig?.enabled !== false;
@@ -390,11 +429,17 @@ export class OrchestratorManager {
         { withSubAgent: true },
       );
 
+      // Get main agent prompt from registry (allows user override)
+      // Falls back to built-in prompt.ts if registry fails to load
+      const mainAgentTemplate = agentRegistry.get('nuvin');
+      const mainPrompt = mainAgentTemplate?.instructions || prompt;
+
       const agentConfig = {
         id: 'nuvin-agent',
-        systemPrompt: renderTemplate(prompt, { injectedSystem }),
-        temperature: 1,
-        topP: 1,
+        systemPrompt: renderTemplate(mainPrompt, { injectedSystem }),
+        temperature: mainAgentTemplate?.temperature ?? 1,
+        topP: mainAgentTemplate?.top_p ?? 1,
+        maxTokens: mainAgentTemplate?.max_tokens,
         model: currentConfig.model,
         enabledTools: getEnabledTools(),
         maxToolConcurrency: 10,
@@ -1166,7 +1211,7 @@ Respond with only the topic, no explanation.`;
     const llm = this.createLLM(httpLogFile);
 
     const topicMemory = new InMemoryMemory<Message>();
-    const topicTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ filePersistence: undefined }) });
+    const topicTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ localFilePersistence: undefined }) });
 
     const topicConfig = {
       id: 'topic-analyzer',
@@ -1279,7 +1324,7 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const llm = this.createLLM(httpLogFile);
 
     const summaryMemory = new InMemoryMemory<Message>();
-    const summaryTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ filePersistence: undefined }) });
+    const summaryTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ localFilePersistence: undefined }) });
 
     const summaryConfig = {
       id: 'summary-agent',
@@ -1451,11 +1496,20 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
       { withSubAgent: true },
     );
 
+    // Get main agent prompt from registry (allows user override)
+    // Falls back to built-in prompt.ts if registry fails to load
+    const tools = this.orchestrator.getTools();
+    const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
+    const agentRegistry = agentAwareTools?.getAgentRegistry?.();
+    const mainAgentTemplate = agentRegistry?.get('nuvin');
+    const mainPrompt = mainAgentTemplate?.instructions || prompt;
+
     const mainConfig: AgentConfig = {
       id: 'nuvin-agent',
-      systemPrompt: renderTemplate(prompt, { injectedSystem }),
-      temperature: 1,
-      topP: 1,
+      systemPrompt: renderTemplate(mainPrompt, { injectedSystem }),
+      temperature: mainAgentTemplate?.temperature ?? 1,
+      topP: mainAgentTemplate?.top_p ?? 1,
+      maxTokens: mainAgentTemplate?.max_tokens,
       model: currentConfig.model,
       enabledTools: getEnabledTools(),
       maxToolConcurrency: 10,
@@ -1494,9 +1548,6 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
 
     // Create new metrics port
     const newMetrics = new SessionBoundMetricsPort('main', sessionMetricsService);
-
-    // Get tools from current orchestrator
-    const tools = this.orchestrator.getTools();
 
     // Create new orchestrator with main config
     const newOrchestrator = new AgentOrchestrator(mainConfig, {

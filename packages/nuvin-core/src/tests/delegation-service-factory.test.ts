@@ -11,7 +11,7 @@ describe('DelegationServiceFactory', () => {
 
   beforeEach(() => {
     factory = new DelegationServiceFactory();
-    mockAgentRegistry = new AgentRegistry({ filePersistence: null });
+    mockAgentRegistry = new AgentRegistry({ localFilePersistence: undefined });
     mockCommandRunner = {
       run: vi.fn().mockResolvedValue({
         status: 'success',
@@ -133,7 +133,7 @@ describe('DelegationServiceFactory', () => {
       };
 
       const config2: DelegationServiceConfig = {
-        agentRegistry: new AgentRegistry({ filePersistence: null }),
+        agentRegistry: new AgentRegistry({ localFilePersistence: undefined }),
         commandRunner: mockCommandRunner,
       };
 

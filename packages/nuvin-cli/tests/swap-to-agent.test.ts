@@ -29,18 +29,38 @@ vi.mock('../source/config/manager.js', () => ({
   },
 }));
 
-vi.mock('node:fs', () => ({
-  default: {
+vi.mock('node:fs', () => {
+  const mockAgentContent = `---
+name: test-agent
+description: Test agent
+---
+Test agent instructions`;
+
+  return {
+    default: {
+      existsSync: vi.fn(() => false),
+      mkdirSync: vi.fn(),
+      readFileSync: vi.fn((path: string) => {
+        // Return valid agent format for .md files, JSON for others
+        if (typeof path === 'string' && path.endsWith('.md')) {
+          return mockAgentContent;
+        }
+        return '{}';
+      }),
+      writeFileSync: vi.fn(),
+    },
     existsSync: vi.fn(() => false),
     mkdirSync: vi.fn(),
-    readFileSync: vi.fn(() => '{}'),
+    readFileSync: vi.fn((path: string) => {
+      // Return valid agent format for .md files, JSON for others
+      if (typeof path === 'string' && path.endsWith('.md')) {
+        return mockAgentContent;
+      }
+      return '{}';
+    }),
     writeFileSync: vi.fn(),
-  },
-  existsSync: vi.fn(() => false),
-  mkdirSync: vi.fn(),
-  readFileSync: vi.fn(() => '{}'),
-  writeFileSync: vi.fn(),
-}));
+  };
+});
 
 vi.mock('node:os', () => ({
   default: {

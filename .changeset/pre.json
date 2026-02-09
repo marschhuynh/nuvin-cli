@@ -7,7 +7,6 @@
   },
   "changesets": [
     "INSTRUCTIONS",
-    "acp-server-logging",
     "ask-user-tool-display",
     "bordered-message-styles",
     "command-completion-callbacks",

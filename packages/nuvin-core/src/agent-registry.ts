@@ -25,17 +25,27 @@ export class AgentRegistry {
   private agents = new Map<string, CompleteAgent>();
   private defaultAgentIds = new Set<string>();
   private persistence?: MemoryPort<AgentTemplate>;
-  private filePersistence?: AgentFilePersistence;
+  private localFilePersistence?: AgentFilePersistence;
+  private profileFilePersistence?: AgentFilePersistence;
+  private globalFilePersistence?: AgentFilePersistence;
 
   private loadingPromise?: Promise<void>;
 
-  constructor(options?: { persistence?: MemoryPort<AgentTemplate>; filePersistence?: AgentFilePersistence }) {
+  constructor(options?: { 
+    persistence?: MemoryPort<AgentTemplate>; 
+    localFilePersistence?: AgentFilePersistence;
+    profileFilePersistence?: AgentFilePersistence;
+    globalFilePersistence?: AgentFilePersistence;
+  }) {
     this.persistence = options?.persistence;
-    this.filePersistence = options?.filePersistence;
+    this.localFilePersistence = options?.localFilePersistence;
+    this.profileFilePersistence = options?.profileFilePersistence;
+    this.globalFilePersistence = options?.globalFilePersistence;
 
     for (const agent of defaultAgents) {
       const complete = this.applyDefaults(agent);
       if (complete.name) {
+        complete.location = 'built-in';
         this.agents.set(complete.name, complete);
         this.defaultAgentIds.add(complete.name);
       }
@@ -46,19 +56,28 @@ export class AgentRegistry {
 
   /**
    * Load agents from both persistence and files
+   * Load order matters: global → profile → local (later loads can override)
    */
   private async loadAgents(): Promise<void> {
-    const promises: Promise<void>[] = [];
-
+    // Load from memory persistence first
     if (this.persistence) {
-      promises.push(this.loadFromPersistence());
+      await this.loadFromPersistence();
     }
 
-    if (this.filePersistence) {
-      promises.push(this.loadFromFiles());
+    // Load global agents first (lowest priority)
+    if (this.globalFilePersistence) {
+      await this.loadFromFiles(this.globalFilePersistence, 'global');
     }
 
-    await Promise.all(promises);
+    // Load profile agents next (can override global)
+    if (this.profileFilePersistence) {
+      await this.loadFromFiles(this.profileFilePersistence, 'profile');
+    }
+
+    // Load local project agents last (highest priority, can override both)
+    if (this.localFilePersistence) {
+      await this.loadFromFiles(this.localFilePersistence, 'local');
+    }
   }
 
   /**
@@ -93,6 +112,7 @@ export class AgentRegistry {
       timeout_ms: partial.timeout_ms,
       share_context: partial.share_context,
       metadata: partial.metadata,
+      location: partial.location,
     };
   }
 
@@ -125,35 +145,21 @@ export class AgentRegistry {
   /**
    * Load agents from file system
    */
-  private async loadFromFiles(): Promise<void> {
-    if (!this.filePersistence) return;
-
+  private async loadFromFiles(persistence: AgentFilePersistence, location: 'global' | 'profile' | 'local'): Promise<void> {
     try {
-      const loadedAgents = await this.filePersistence.loadAll();
+      const loadedAgents = await persistence.loadAll();
       for (const agent of loadedAgents) {
         if (this.validateTemplate(agent)) {
           const complete = this.applyDefaults(agent);
           if (complete.name && !this.defaultAgentIds.has(complete.name)) {
+            // Later loads override earlier ones (local > profile > global)
+            complete.location = location;
             this.agents.set(complete.name, complete);
           }
         }
       }
     } catch (error) {
       console.warn('Failed to load agents from files:', error);
-    }
-  }
-
-  /**
-   * Save current agents to persistence
-   */
-  private async saveToPersistence(): Promise<void> {
-    if (!this.persistence) return;
-
-    try {
-      const templates = Array.from(this.agents.values());
-      await this.persistence.set('agents', templates);
-    } catch (error) {
-      console.warn('Failed to save agents to persistence:', error);
     }
   }
 
@@ -177,38 +183,69 @@ export class AgentRegistry {
     if (!complete.name) {
       throw new Error('Failed to generate agent name');
     }
+    
+    // Preserve existing location if agent is already registered
+    const existing = this.agents.get(complete.name);
+    if (existing?.location) {
+      complete.location = existing.location;
+    } else if (!complete.location && !this.defaultAgentIds.has(complete.name)) {
+      // If not already set and not a default agent, mark as local
+      complete.location = 'local';
+    }
+    
     this.agents.set(complete.name, complete);
-    void this.saveToPersistence();
+  }
+
+  /**
+   * Get the appropriate persistence layer for a given location
+   */
+  private getPersistenceForLocation(location: 'built-in' | 'global' | 'profile' | 'local' | undefined): AgentFilePersistence | undefined {
+    switch (location) {
+      case 'local':
+        return this.localFilePersistence;
+      case 'profile':
+        return this.profileFilePersistence;
+      case 'global':
+        return this.globalFilePersistence;
+      case 'built-in':
+        throw new Error('Cannot perform file operations on built-in agents');
+      default:
+        // Fallback to local if location not set or unknown
+        return this.localFilePersistence;
+    }
   }
 
   /**
    * Save agent to file
    */
   async saveToFile(agent: CompleteAgent): Promise<void> {
-    if (!this.filePersistence) {
-      throw new Error('File persistence not configured');
-    }
-
     if (this.defaultAgentIds.has(agent.name)) {
       throw new Error(`Cannot save default agent "${agent.name}" to file`);
     }
 
-    await this.filePersistence.save(agent);
+    const persistence = this.getPersistenceForLocation(agent.location);
+    if (!persistence) {
+      throw new Error(`File persistence not configured for location: ${agent.location || 'local'}`);
+    }
+
+    await persistence.save(agent);
   }
 
   /**
-   * Delete agent from file
+   * Delete agent from file.
+   * Location is required — callers must know where the agent lives.
+   * Directory placement is the single source of truth for location.
    */
-  async deleteFromFile(agentName: string): Promise<void> {
-    if (!this.filePersistence) {
-      throw new Error('File persistence not configured');
-    }
-
+  async deleteFromFile(agentName: string, location: 'local' | 'profile' | 'global'): Promise<void> {
     if (this.defaultAgentIds.has(agentName)) {
       throw new Error(`Cannot delete default agent "${agentName}"`);
     }
 
-    await this.filePersistence.delete(agentName);
+    const persistence = this.getPersistenceForLocation(location);
+    if (!persistence) {
+      throw new Error(`File persistence not configured for location: ${location}`);
+    }
+    await persistence.delete(agentName);
   }
 
   /**
@@ -227,7 +264,6 @@ export class AgentRegistry {
     }
 
     this.agents.delete(agentName);
-    void this.saveToPersistence();
   }
 
   /**
@@ -249,5 +285,21 @@ export class AgentRegistry {
    */
   exists(agentName: string): boolean {
     return this.agents.has(agentName);
+  }
+
+  /**
+   * Reload all agents from disk.
+   * Clears non-default agents and re-reads from all file persistence layers.
+   * Similar to commands' registry.reload() pattern.
+   */
+  async reload(): Promise<void> {
+    // Clear non-default agents
+    for (const [name] of this.agents) {
+      if (!this.defaultAgentIds.has(name)) {
+        this.agents.delete(name);
+      }
+    }
+    // Re-load from files
+    await this.loadAgents();
   }
 }

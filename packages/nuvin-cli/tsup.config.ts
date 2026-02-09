@@ -15,6 +15,11 @@ export default defineConfig({
     options.alias = {
       '@': './source',
     };
+    // Enable ?raw imports for markdown files
+    options.loader = {
+      ...options.loader,
+      '.md': 'text',
+    };
   },
   shims: true,
 });

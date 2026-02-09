@@ -79,13 +79,17 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
 
   const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
 
+  // Determine if the message is informational (vs a true error)
+  const isInfoMessage = error?.includes('Created global override') || error?.includes('Editing global version');
+  const messageColor = isInfoMessage ? theme.colors.warning : theme.colors.error;
+
   return (
     <AppModal visible={true} title={editingTitle} footer={footerContent} height={modalHeight}>
       <Box flexDirection="column" flexShrink={1} height={'100%'}>
         <Box flexGrow={1} flexDirection="column" flexShrink={1}>
           {error ? (
             <Box marginBottom={1}>
-              <Text color={theme.colors.error}>{error}</Text>
+              <Text color={messageColor}>{error}</Text>
             </Box>
           ) : null}
 
@@ -111,6 +115,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
                 label="Model:"
                 value={editedModel}
                 onChange={(value) => onFieldChange('model', value)}
+                placeHolder="(inherited)"
                 tabIndex="0"
               />
             </Box>

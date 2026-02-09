@@ -14,6 +14,7 @@ const MODAL_HEIGHT = 30;
 
 export interface AgentInfo extends CompleteAgent {
   isDefault: boolean;
+  location?: 'built-in' | 'global' | 'profile' | 'local';
 }
 
 interface AgentModalProps {

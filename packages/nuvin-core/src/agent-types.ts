@@ -6,6 +6,11 @@ export type AgentFrontmatter = {
   description?: string;
   allowed_tools?: string[];
   model?: string;
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+  timeout_ms?: number;
+  provider?: string;
   disable_model_invocation?: boolean;
   user_invocable?: boolean;
   context?: 'fork';
@@ -39,12 +44,15 @@ export type AgentTemplate = {
   share_context?: boolean;
   stream?: boolean;
   metadata?: Record<string, unknown>;
+  location?: 'built-in' | 'global' | 'profile' | 'local';
 };
 
 export type CompleteAgent = Required<
   Pick<AgentTemplate, 'instructions' | 'name' | 'description' | 'allowed_tools' | 'temperature'>
 > &
-  Pick<AgentTemplate, 'model' | 'disable_model_invocation' | 'user_invocable' | 'context' | 'agent' | 'provider' | 'top_p' | 'max_tokens' | 'timeout_ms' | 'share_context' | 'metadata'>;
+  Pick<AgentTemplate, 'model' | 'disable_model_invocation' | 'user_invocable' | 'context' | 'agent' | 'provider' | 'top_p' | 'max_tokens' | 'timeout_ms' | 'share_context' | 'metadata'> & {
+    location?: 'built-in' | 'global' | 'profile' | 'local';
+  };
 
 /**
  * Specialist Agent Configuration (Internal - used by AgentManager)

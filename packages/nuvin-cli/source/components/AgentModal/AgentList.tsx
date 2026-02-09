@@ -52,6 +52,16 @@ export const AgentList: React.FC<AgentListProps> = ({
       const statusColor = showStatus ? (enabled ? theme.tokens.green : theme.tokens.red) : theme.tokens.green;
       const statusIcon = showStatus ? (enabled ? '✓' : '✗') : '✓';
       const accentColor = theme.colors.accent;
+      const isBuiltin = agent.isDefault;
+      const location = agent.location || (isBuiltin ? 'built-in' : 'local');
+      const isMainAgent = agent.name === 'nuvin';
+      
+      // Determine location badge color
+      const locationColor = location === 'built-in' 
+        ? theme.tokens.blue 
+        : location === 'global' 
+          ? theme.tokens.yellow 
+          : theme.tokens.cyan;
 
       const params: React.ReactNode[] = [];
 
@@ -91,6 +101,16 @@ export const AgentList: React.FC<AgentListProps> = ({
             <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
               {agent.name}
             </Text>
+            <Text dimColor> </Text>
+            {isMainAgent ? (
+              <Text color={theme.tokens.magenta} bold>
+                [main]
+              </Text>
+            ) : (
+              <Text color={locationColor} dimColor>
+                [{location}]
+              </Text>
+            )}
           </Box>
           {isSelected && (
             <Box flexDirection="column">

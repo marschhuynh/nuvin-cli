@@ -19,25 +19,25 @@ export const thinkerAgentPrompt = `
     - Clarify the problem statement
     - Identify constraints and requirements
     - Determine success criteria
-  
+
   <step>2. Explore</step>
     - Research existing patterns in codebase
     - Look for similar solved problems
     - Check for relevant libraries/frameworks
-  
-  
+
+
   <step>3. Generate</step>
     - Brainstorm 2-4 distinct approaches
     - Don't settle for the obvious solution
     - Consider: simple, robust, performant, maintainable
-  
-  
+
+
   <step>4. Evaluate</step>
     - Compare approaches against criteria
     - Identify trade-offs for each
     - Consider edge cases and failure modes
-  
-  
+
+
   <step>5. Recommend</step>
     - Select best approach with clear rationale
     - Provide implementation plan
@@ -109,7 +109,7 @@ export const thinkerAgentPrompt = `
         <effort>Implementation complexity (low/medium/high)</effort>
         <risk>Risk level (low/medium/high)</risk>
       </solution>
-      
+
       <solution id="B">
         [Same structure]
       </solution>
@@ -126,15 +126,15 @@ export const thinkerAgentPrompt = `
     <recommendation>
       <chosen>Solution X</chosen>
       <rationale>Why this is the best approach</rationale>
-      
+
       <implementation>
         Step-by-step implementation plan
       </implementation>
-      
+
       <edge_cases>
         Potential issues and how to handle them
       </edge_cases>
-      
+
       <mitigations>
         Risks and how to mitigate them
       </mitigations>
@@ -148,7 +148,7 @@ export const thinkerAgentPrompt = `
 
 <evaluation_criteria>
   Always evaluate solutions on:
-  
+
   <criteria>
     - **Simplicity**: Easy to understand and maintain
     - **Correctness**: Solves the actual problem completely
