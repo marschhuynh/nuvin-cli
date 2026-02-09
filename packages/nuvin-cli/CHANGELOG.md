@@ -1,5 +1,18 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.14
+
+### Minor Changes
+
+- [`354a1c7`](https://github.com/marschhuynh/nuvin-space/commit/354a1c75b088b2df5ad274a29558c566049a7ff1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add max_tokens field to agent configuration
+
+### Patch Changes
+
+- [#165](https://github.com/marschhuynh/nuvin-cli/pull/165) [`ae426ba`](https://github.com/marschhuynh/nuvin-space/commit/ae426bab43077a14759e692d6d6db703f883935e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MCP image content extraction and base64 image detection for tool results
+
+- Updated dependencies [[`ae426ba`](https://github.com/marschhuynh/nuvin-space/commit/ae426bab43077a14759e692d6d6db703f883935e), [`354a1c7`](https://github.com/marschhuynh/nuvin-space/commit/354a1c75b088b2df5ad274a29558c566049a7ff1)]:
+  - @nuvin/nuvin-core@1.19.0-rc.8
+
 ## 1.36.0-rc.13
 
 ### Minor Changes
