@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.15
+
+### Patch Changes
+
+- [`94ba248`](https://github.com/marschhuynh/nuvin-space/commit/94ba248b7a7ac414babfbe04c2bb0ce6ff3811e8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor agent imports to use build-time imports instead of runtime file reading
+
 ## 1.36.0-rc.14
 
 ### Minor Changes
