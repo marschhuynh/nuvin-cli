@@ -20,6 +20,7 @@ interface AgentBasicFormProps {
   editedDescription: string;
   editedAllowedTools: string[];
   editedTemperature: string;
+  editedMaxTokens: string;
   editedModel: string;
   error?: string;
   isDefault?: boolean;
@@ -47,6 +48,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
   editedDescription,
   editedAllowedTools,
   editedTemperature,
+  editedMaxTokens,
   editedModel,
   error,
   isDefault,
@@ -125,6 +127,16 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
                 label="Temp (0-2):"
                 value={editedTemperature}
                 onChange={(value) => onFieldChange('temperature', value)}
+                tabIndex="0"
+              />
+            </Box>
+
+            <Box flexGrow={1} width={cols / 4}>
+              <FormTextInput
+                label="Max Tokens:"
+                value={editedMaxTokens}
+                onChange={(value) => onFieldChange('max_tokens', value)}
+                placeHolder="(default)"
                 tabIndex="0"
               />
             </Box>

@@ -402,6 +402,7 @@ export class OrchestratorManager {
       const availableAgents = agentRegistry
         .list()
         .filter((agent) => {
+          if (agent.name === 'nuvin') return false;
           return enabledAgentsConfig[agent.name] !== false;
         })
         .map((agent) => ({

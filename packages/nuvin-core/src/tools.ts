@@ -152,11 +152,13 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       agentRegistry: this.agentRegistry,
       commandRunner,
       agentListProvider: () =>
-        this.agentRegistry.list().map((agent) => ({
-          id: agent.name,
-          name: agent.name,
-          description: agent.description,
-        })),
+        this.agentRegistry.list()
+          .filter((agent) => agent.name !== 'nuvin')
+          .map((agent) => ({
+            id: agent.name,
+            name: agent.name,
+            description: agent.description,
+          })),
       createMemoryForAgent, // Pass memory factory for resume functionality
     });
 

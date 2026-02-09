@@ -109,6 +109,7 @@ export class AgentRegistry {
       agent: partial.agent,
       provider: partial.provider,
       top_p: partial.top_p,
+      max_tokens: partial.max_tokens,
       timeout_ms: partial.timeout_ms,
       share_context: partial.share_context,
       metadata: partial.metadata,

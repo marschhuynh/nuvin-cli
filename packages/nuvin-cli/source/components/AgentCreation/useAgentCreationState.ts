@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { AgentTemplate } from '@nuvin/nuvin-core';
 
-type EditingField = 'name' | 'description' | 'instructions' | 'allowed_tools' | 'model' | 'temperature';
+type EditingField = 'name' | 'description' | 'instructions' | 'allowed_tools' | 'model' | 'temperature' | 'max_tokens';
 type ViewMode = 'input' | 'preview' | 'editing' | 'loading' | 'error';
 type EditFormView = 'basic' | 'instructions';
 
-const editingSequence: EditingField[] = ['name', 'model', 'temperature', 'allowed_tools', 'description'];
+const editingSequence: EditingField[] = ['name', 'model', 'temperature', 'max_tokens', 'allowed_tools', 'description'];
 
 export interface AgentCreationState {
   mode: 'create' | 'edit';
@@ -19,6 +19,7 @@ export interface AgentCreationState {
   editedDescription: string;
   editedAllowedTools: string[];
   editedTemperature: string;
+  editedMaxTokens: string;
   editedInstructions: string;
   editedModel: string;
 }
@@ -32,6 +33,7 @@ export interface AgentCreationActions {
   setEditedDescription: (description: string) => void;
   setEditedAllowedTools: (tools: string[]) => void;
   setEditedTemperature: (temperature: string) => void;
+  setEditedMaxTokens: (maxTokens: string) => void;
   setEditedInstructions: (instructions: string) => void;
   setEditedModel: (model: string) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -64,6 +66,7 @@ export const useAgentCreationState = (
   const [editedDescription, setEditedDescription] = useState('');
   const [editedAllowedTools, setEditedAllowedTools] = useState<string[]>([]);
   const [editedTemperature, setEditedTemperature] = useState('');
+  const [editedMaxTokens, setEditedMaxTokens] = useState('');
   const [editedInstructions, setEditedInstructions] = useState('');
   const [editedModel, setEditedModel] = useState('');
 
@@ -83,6 +86,9 @@ export const useAgentCreationState = (
     setEditedAllowedTools(Array.isArray(preview.allowed_tools) ? [...preview.allowed_tools] : []);
     setEditedTemperature(
       preview.temperature !== undefined && preview.temperature !== null ? String(preview.temperature) : '',
+    );
+    setEditedMaxTokens(
+      preview.max_tokens !== undefined && preview.max_tokens !== null ? String(preview.max_tokens) : '',
     );
     setEditedInstructions(preview.instructions ?? '');
     setEditedModel(preview.model ?? '');
@@ -160,6 +166,7 @@ export const useAgentCreationState = (
     const normalizedName = editedName.trim();
     const normalizedDescription = editedDescription.trim();
     const normalizedTemperature = editedTemperature.trim();
+    const normalizedMaxTokens = editedMaxTokens.trim();
     const normalizedInstructions = editedInstructions.trim();
     const normalizedModel = editedModel.trim();
 
@@ -169,6 +176,12 @@ export const useAgentCreationState = (
         ? undefined
         : Math.min(2, Math.max(0, parsedTemperature));
 
+    const parsedMaxTokens = Number(normalizedMaxTokens);
+    const max_tokens =
+      normalizedMaxTokens.length === 0 || Number.isNaN(parsedMaxTokens)
+        ? undefined
+        : Math.max(1, Math.round(parsedMaxTokens));
+
     const nextInstructions = normalizedInstructions.length > 0 ? normalizedInstructions : (preview.instructions ?? '');
 
     const updatedPreview: Partial<AgentTemplate> & { instructions: string } = {
@@ -177,6 +190,7 @@ export const useAgentCreationState = (
       description: normalizedDescription.length > 0 ? normalizedDescription : undefined,
       allowed_tools: [...editedAllowedTools],
       temperature,
+      max_tokens,
       instructions: nextInstructions,
       model: normalizedModel.length > 0 ? normalizedModel : undefined,
     };
@@ -195,6 +209,7 @@ export const useAgentCreationState = (
     editedName,
     editedInstructions,
     editedTemperature,
+    editedMaxTokens,
     editedAllowedTools,
     mode,
     onConfirm,
@@ -217,6 +232,7 @@ export const useAgentCreationState = (
     const normalizedName = editedName.trim();
     const normalizedDescription = editedDescription.trim();
     const normalizedTemperature = editedTemperature.trim();
+    const normalizedMaxTokens = editedMaxTokens.trim();
     const normalizedInstructions = editedInstructions.trim();
     const normalizedModel = editedModel.trim();
 
@@ -226,6 +242,12 @@ export const useAgentCreationState = (
         ? undefined
         : Math.min(2, Math.max(0, parsedTemperature));
 
+    const parsedMaxTokens = Number(normalizedMaxTokens);
+    const max_tokens =
+      normalizedMaxTokens.length === 0 || Number.isNaN(parsedMaxTokens)
+        ? undefined
+        : Math.max(1, Math.round(parsedMaxTokens));
+
     const nextInstructions = normalizedInstructions.length > 0 ? normalizedInstructions : (preview.instructions ?? '');
 
     return {
@@ -234,6 +256,7 @@ export const useAgentCreationState = (
       description: normalizedDescription.length > 0 ? normalizedDescription : undefined,
       allowed_tools: [...editedAllowedTools],
       temperature,
+      max_tokens,
       instructions: nextInstructions,
       model: normalizedModel.length > 0 ? normalizedModel : undefined,
     };
@@ -243,6 +266,7 @@ export const useAgentCreationState = (
     editedName, 
     editedInstructions, 
     editedTemperature, 
+    editedMaxTokens,
     editedAllowedTools, 
     preview
   ]);
@@ -275,6 +299,7 @@ export const useAgentCreationState = (
     editedDescription,
     editedAllowedTools,
     editedTemperature,
+    editedMaxTokens,
     editedInstructions,
     editedModel,
     setDescription,
@@ -285,6 +310,7 @@ export const useAgentCreationState = (
     setEditedDescription,
     setEditedAllowedTools,
     setEditedTemperature,
+    setEditedMaxTokens,
     setEditedInstructions,
     setEditedModel,
     setViewMode,

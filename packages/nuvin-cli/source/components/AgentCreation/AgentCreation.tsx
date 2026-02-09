@@ -85,6 +85,7 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         editedDescription={state.editedDescription}
         editedAllowedTools={state.editedAllowedTools}
         editedTemperature={state.editedTemperature}
+        editedMaxTokens={state.editedMaxTokens}
         editedModel={state.editedModel}
         error={error}
         isDefault={isDefault}
@@ -98,6 +99,9 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
               break;
             case 'temperature':
               state.setEditedTemperature(value);
+              break;
+            case 'max_tokens':
+              state.setEditedMaxTokens(value);
               break;
             case 'description':
               state.setEditedDescription(value);
@@ -137,6 +141,7 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
         editedDescription={state.editedDescription}
         editedAllowedTools={state.editedAllowedTools}
         editedTemperature={state.editedTemperature}
+        editedMaxTokens={state.editedMaxTokens}
         editedModel={state.editedModel}
         error={error}
         isDefault={isDefault}
@@ -150,6 +155,9 @@ export const AgentCreation: React.FC<AgentCreationProps> = ({
               break;
             case 'temperature':
               state.setEditedTemperature(value);
+              break;
+            case 'max_tokens':
+              state.setEditedMaxTokens(value);
               break;
             case 'description':
               state.setEditedDescription(value);

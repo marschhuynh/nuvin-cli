@@ -8,6 +8,7 @@ import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { AgentCreator } from '@/services/AgentCreator.js';
 import AgentCreation from '@/components/AgentCreation/AgentCreation.js';
+import { useNotification } from '@/hooks/useNotification.js';
 
 type NavigationSource = 'agent-config' | 'direct' | null;
 type ActiveView = 'config' | 'edit' | 'none';
@@ -23,6 +24,7 @@ interface NavigationState {
 
 const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) => {
   const { theme } = useTheme();
+  const { setNotification } = useNotification();
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [enabledAgents, setEnabledAgents] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -456,6 +458,10 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
 
             // Update all state synchronously - no intermediate renders with inconsistent state
             if (navigationState.navigationSource === 'agent-config') {
+              if (editingAgentName === 'nuvin') {
+                setNotification('Main agent saved. Restart the CLI for changes to take effect.', 5000);
+              }
+
               setNavigationState({
                 activeView: 'config',
                 navigationSource: null,
@@ -470,6 +476,10 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
               setCreationPreview(undefined);
               setEditingAgentName(null);
             } else {
+              if (editingAgentName === 'nuvin') {
+                setNotification('Main agent saved. Restart the CLI for changes to take effect.', 5000);
+              }
+
               setCreationMode(false);
               setCreationError(undefined);
               setCreationPreview(undefined);
@@ -574,6 +584,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
       deactivate,
       navigationState.preservedState?.selectedAgentIndex,
       context.orchestratorManager?.getOrchestrator,
+      setNotification,
     ],
   );
 
