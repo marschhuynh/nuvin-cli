@@ -2,7 +2,7 @@ import type React from 'react';
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useStdin, useStdout } from 'ink';
 import { InputContext } from './InputContext.js';
-import { parseKeypress, setKittyProtocolEnabled, parseMouseEvent } from './parseKeypress.js';
+import { parseKeypress, setKittyProtocolEnabled, parseMouseEvent, splitInputChunks } from './parseKeypress.js';
 import { FocusProvider } from './FocusContext.js';
 import type {
   Subscriber,
@@ -285,22 +285,25 @@ export const InputProvider: React.FC<Props> = ({
         return;
       }
 
-      const { input, key } = parseKeypress(data);
+      const chunks = splitInputChunks(data);
+      for (const chunk of chunks) {
+        const { input, key } = parseKeypress(chunk);
 
-      const middleware = middlewareRef.current;
-      let index = 0;
+        const middleware = middlewareRef.current;
+        let index = 0;
 
-      const next = () => {
-        if (index < middleware.length) {
-          const currentMiddleware = middleware[index];
-          index++;
-          currentMiddleware?.(input, key, next);
-        } else {
-          distributeInput(input, key);
-        }
-      };
+        const next = () => {
+          if (index < middleware.length) {
+            const currentMiddleware = middleware[index];
+            index++;
+            currentMiddleware?.(input, key, next);
+          } else {
+            distributeInput(input, key);
+          }
+        };
 
-      next();
+        next();
+      }
     };
 
     internal_eventEmitter.on('input', handleInput);

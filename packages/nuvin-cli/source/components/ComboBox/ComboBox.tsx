@@ -1,5 +1,4 @@
-import type React from 'react';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Box, Text, measureElement, type BoxRef } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import chalk from 'chalk';
@@ -47,19 +46,44 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
 }) => {
   const { theme } = useTheme();
   const [input, setInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const pasteStateRef = useRef<PasteState>(createPasteState());
   const scrollBoxRef = useRef<AutoScrollBoxHandle>(null);
   const itemRefs = useRef<Map<number, BoxRef>>(new Map());
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce the search query so the expensive filter doesn't run on every keystroke.
+  // Flush immediately when input is cleared so the full list appears without delay.
+  useEffect(() => {
+    if (!input.trim()) {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = null;
+      }
+      setSearchQuery(input);
+      return;
+    }
+    searchTimerRef.current = setTimeout(() => {
+      setSearchQuery(input);
+    }, 200);
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [input]);
 
   const filteredItems = useMemo(() => {
-    if (!input.trim()) return items;
-    return items.filter((item) => item.label.toLowerCase().includes(input.toLowerCase()));
-  }, [input, items]);
+    if (!searchQuery.trim()) return items;
+    const query = searchQuery.toLowerCase();
+    return items.filter((item) => item.label.toLowerCase().includes(query));
+  }, [searchQuery, items]);
 
-  const { listItems, selectableIndices } = useMemo(() => {
+  const { listItems, selectableIndices, listIndexToSelectablePosition } = useMemo(() => {
     const result: ListItem[] = [];
     const selectable: number[] = [];
+    const positionMap = new Map<number, number>();
     let lastGroup: string | undefined;
 
     for (let i = 0; i < filteredItems.length; i++) {
@@ -68,11 +92,12 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         result.push({ type: 'header', group: item.group });
         lastGroup = item.group;
       }
+      positionMap.set(result.length, selectable.length);
       selectable.push(result.length);
       result.push({ type: 'item', item, originalIndex: i });
     }
 
-    return { listItems: result, selectableIndices: selectable };
+    return { listItems: result, selectableIndices: selectable, listIndexToSelectablePosition: positionMap };
   }, [filteredItems]);
 
   const selectableIndicesRef = useRef(selectableIndices);
@@ -121,10 +146,10 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     scrollToSelected(selectedIndex);
   }, [selectedIndex, scrollToSelected]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: -- We only want to reset when input changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: -- We only want to reset when filtered results change
   useEffect(() => {
     setSelectedIndex(0);
-  }, [input]);
+  }, [searchQuery]);
 
   useEffect(() => {
     const currentSelectableIndices = selectableIndicesRef.current;
@@ -223,7 +248,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         return;
       }
 
-      if (inputChar && !key.ctrl && !key.meta) {
+      if (inputChar && !key.ctrl && !key.meta && inputChar.length === 1 && inputChar >= ' ') {
         setInput((prev) => prev + inputChar);
       }
     },
@@ -237,38 +262,6 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
       itemRefs.current.delete(index);
     }
   }, []);
-
-  const renderListItem = useCallback(
-    (listItem: ListItem, listIndex: number) => {
-      if (listItem.type === 'header') {
-        return (
-          <Text color={theme.colors.muted} bold>
-            {listItem.group}
-          </Text>
-        );
-      }
-
-      const selectablePosition = selectableIndices.indexOf(listIndex);
-      const isSelected = selectablePosition === selectedIndex;
-
-      if (renderItem) {
-        return renderItem(listItem.item, isSelected);
-      }
-
-      return (
-        <Box overflow="hidden">
-          <Text>{isSelected ? '❯ ' : '  '}</Text>
-          <Text
-            color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
-            bold={isSelected}
-          >
-            {listItem.item.label}
-          </Text>
-        </Box>
-      );
-    },
-    [selectedIndex, selectableIndices, theme, renderItem],
-  );
 
   const renderedInput = input ? (
     <>
@@ -313,16 +306,20 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
             showScrollbar={true}
           >
             {listItems.map((listItem, index) => (
-              <Box
+              <ComboBoxListItem
                 key={listItem.type === 'header' ? `header-${listItem.group}` : `item-${listItem.item.value}-${index}`}
-                flexShrink={0}
-                ref={(ref) => setItemRef(index, ref)}
-                position={hasGroups && listItem.type === 'header' ? 'sticky' : undefined}
-                top={hasGroups && listItem.type === 'header' ? 0 : undefined}
-                backgroundColor={hasGroups && listItem.type === 'header' ? theme.tokens.dim : undefined}
-              >
-                {renderListItem(listItem, index)}
-              </Box>
+                listItem={listItem}
+                index={index}
+                isSelected={
+                  listItem.type === 'item' &&
+                  (listIndexToSelectablePosition.get(index) ?? -1) === selectedIndex
+                }
+                isHeader={listItem.type === 'header'}
+                hasGroups={hasGroups}
+                theme={theme}
+                renderItem={renderItem}
+                setItemRef={setItemRef}
+              />
             ))}
           </AutoScrollBox>
         </Box>
@@ -330,3 +327,58 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     </Box>
   );
 };
+
+type ComboBoxListItemProps = {
+  listItem: ListItem;
+  index: number;
+  isSelected: boolean;
+  isHeader: boolean;
+  hasGroups: boolean;
+  theme: ReturnType<typeof useTheme>['theme'];
+  renderItem?: (item: ComboBoxItem, isSelected: boolean) => React.ReactNode;
+  setItemRef: (index: number, ref: BoxRef | null) => void;
+};
+
+const ComboBoxListItem = memo<ComboBoxListItemProps>(
+  ({ listItem, index, isSelected, isHeader, hasGroups, theme, renderItem, setItemRef }) => {
+    const refCallback = useCallback(
+      (ref: BoxRef | null) => setItemRef(index, ref),
+      [setItemRef, index],
+    );
+
+    let content: React.ReactNode;
+    if (listItem.type === 'header') {
+      content = (
+        <Text color={theme.colors.muted} bold>
+          {listItem.group}
+        </Text>
+      );
+    } else if (renderItem) {
+      content = renderItem(listItem.item, isSelected);
+    } else {
+      content = (
+        <Box overflow="hidden">
+          <Text>{isSelected ? '❯ ' : '  '}</Text>
+          <Text
+            color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
+            bold={isSelected}
+          >
+            {listItem.item.label}
+          </Text>
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        flexShrink={0}
+        ref={refCallback}
+        position={hasGroups && isHeader ? 'sticky' : undefined}
+        top={hasGroups && isHeader ? 0 : undefined}
+        backgroundColor={hasGroups && isHeader ? theme.tokens.dim : undefined}
+      >
+        {content}
+      </Box>
+    );
+  },
+);

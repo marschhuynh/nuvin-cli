@@ -126,7 +126,7 @@ const metaKeyCodeRe = /^(?:\x1b)([a-zA-Z0-9])$/;
 const fnKeyRe = /^(?:\x1b+)(O|N|\[|\[\[)(?:(\d+)(?:;(\d+))?([~^$])|(?:1;)?(\d+)?([a-zA-Z]))/;
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: Kitty keyboard protocol
-const KITTY_CSI_U_RE = /^\x1b\[(\d+)(?:;(\d+))?u$/;
+const KITTY_CSI_U_RE = /^\x1b\[(\d+)(?:;(\d+))?u/;
 
 const KITTY_KEYCODE_MAP: Record<number, keyof Key> = {
   9: 'tab',
@@ -268,6 +268,51 @@ export const parseKeypress = (data: string): ParseResult => {
 
   return { input: data, key: createEmptyKey() };
 };
+
+/**
+ * Split a raw stdin chunk into individual keypress strings.
+ * When keys are held down rapidly, the terminal may deliver multiple
+ * escape sequences in a single read. This function splits them so
+ * each can be parsed independently by parseKeypress.
+ */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence splitting
+const ESC_SEQ_RE = /\x1b(?:\[[^\x1b]*|\]8;[^\x1b]*|O[A-Za-z]|[a-zA-Z0-9])/g;
+
+export function splitInputChunks(data: string): string[] {
+  // Short-circuit: single character or simple single-escape-sequence chunks
+  if (data.length <= 1) return [data];
+
+  // If it doesn't contain ESC, it's a simple string (possibly a paste without brackets)
+  if (!data.includes('\x1b')) return [data];
+
+  // Bracketed paste — never split
+  if (data.includes('[200~') || data.includes('[201~')) return [data];
+
+  const results: string[] = [];
+  let lastIndex = 0;
+
+  for (const match of data.matchAll(ESC_SEQ_RE)) {
+    // Any plain text before this escape sequence
+    if (match.index > lastIndex) {
+      const plain = data.slice(lastIndex, match.index);
+      for (const ch of plain) {
+        results.push(ch);
+      }
+    }
+    results.push(match[0]);
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Any remaining text after the last escape sequence
+  if (lastIndex < data.length) {
+    const remaining = data.slice(lastIndex);
+    for (const ch of remaining) {
+      results.push(ch);
+    }
+  }
+
+  return results.length > 0 ? results : [data];
+}
 
 export function parseMouseEvent(data: string): MouseParseResult {
   const hasSgrMouse = data.includes('\x1b[<');
