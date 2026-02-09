@@ -185,9 +185,9 @@ export class AgentRegistry {
       throw new Error('Failed to generate agent name');
     }
     
-    // Preserve existing location if agent is already registered
+    // Preserve existing location only if the new agent doesn't explicitly set one
     const existing = this.agents.get(complete.name);
-    if (existing?.location) {
+    if (!complete.location && existing?.location) {
       complete.location = existing.location;
     } else if (!complete.location && !this.defaultAgentIds.has(complete.name)) {
       // If not already set and not a default agent, mark as local

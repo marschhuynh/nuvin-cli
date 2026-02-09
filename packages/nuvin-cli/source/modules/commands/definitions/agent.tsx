@@ -206,25 +206,28 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         return;
       }
 
-      // Auto-copy built-in main agent to global on edit
-      if (agentName === 'nuvin' && agent.location === 'built-in') {
+      // Auto-copy built-in agents to global on edit
+      if (agent.location === 'built-in') {
         try {
           // Create global version
           const globalAgent = { ...agent, location: 'global' as const };
           await agentRegistry.saveToFile(globalAgent);
 
-          // Reload to pick up the new global version
+          // Update in-memory registry so get() returns the global version
+          agentRegistry.register(globalAgent);
+
+          // Reload UI state
           await loadAgents();
 
           // Now edit the global version
-          const updatedAgent = agentRegistry.get('nuvin');
+          const updatedAgent = agentRegistry.get(agentName);
           if (!updatedAgent) {
             setError('Failed to create global override');
             return;
           }
 
           // Set info message
-          setCreationError('Created global override at ~/.nuvin/agents/nuvin.md. Editing global version.');
+          setCreationError(`Created global override at ~/.nuvin/agents/${agentName}.md. Editing global version.`);
 
           // Continue with the global version
           const selectedAgentIndex = agents.findIndex((a) => a.name === agentName);
@@ -398,6 +401,11 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
           const updatedAgent = agentRegistry.applyDefaults(previewToUse);
           const newName = updatedAgent.name;
           const renamed = newName !== editingAgentName;
+
+          // Built-in agents can't be saved in-place — save to global instead
+          if (updatedAgent.location === 'built-in' || originalAgent.location === 'built-in') {
+            updatedAgent.location = 'global';
+          }
 
           if (renamed && agentRegistry.exists(newName)) {
             setCreationError(`Agent with name "${newName}" already exists`);
