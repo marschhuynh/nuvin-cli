@@ -224,6 +224,11 @@ export const parseKeypress = (data: string): ParseResult => {
     return { input: data, key };
   }
 
+  // Pass through paste end markers so the paste handler can detect them
+  if (s.startsWith('\x1b[201~') || s.startsWith('[201~')) {
+    return { input: data, key };
+  }
+
   parts = fnKeyRe.exec(s);
   if (parts) {
     const segs = [...s];

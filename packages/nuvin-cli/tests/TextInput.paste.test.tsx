@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { canonicalizeTerminalPaste } from '@nuvin/nuvin-core';
 import { processPasteChunk, createPasteState, type PasteResult } from '../source/utils/pasteHandler.js';
+import { parseKeypress } from '../source/contexts/InputContext/parseKeypress.js';
 
 const PASTE_START = '\x1b[200~';
 const PASTE_START_STRICT = '[200~';
@@ -281,5 +282,97 @@ export type Props = {
       expect(result.processedInput).toBe(null);
       expect(result.isPasteStart).toBe(false);
     });
+  });
+
+  describe('end marker as separate chunk', () => {
+    it('completes paste when end marker arrives as its own chunk', () => {
+      const longUrl = 'https://y3o6d0zjyc.execute-api.us-east-1.amazonaws.com/prod/demodb/authorize?response_type=code&client_id=DcYECKPT707qFl1CRlo4Egs5kgoAEkif&redirect_uri=https://inferno.healthit.gov/suites/custom/smart/redirect&scope=launch/patient+openid+fhirUser+offline_access+patient/Medication.rs';
+      let state = createPasteState();
+
+      // First chunk: start marker + content
+      let result = processPasteChunk(PASTE_START + longUrl, state);
+      expect(result.shouldWaitForMore).toBe(true);
+      expect(result.isPasteStart).toBe(true);
+      state = result.newState;
+
+      // Second chunk: end marker arrives alone (as parseKeypress would pass it through)
+      result = processPasteChunk(PASTE_END, state);
+      expect(result.shouldWaitForMore).toBe(false);
+      expect(result.processedInput).toBe(longUrl);
+    });
+
+    it('completes paste when strict end marker arrives as its own chunk', () => {
+      const content = 'some pasted text';
+      let state = createPasteState();
+
+      let result = processPasteChunk(PASTE_START_STRICT + content, state);
+      expect(result.shouldWaitForMore).toBe(true);
+      state = result.newState;
+
+      result = processPasteChunk(PASTE_END_STRICT, state);
+      expect(result.shouldWaitForMore).toBe(false);
+      expect(result.processedInput).toBe(content);
+    });
+
+    it('completes paste when end marker is embedded in a continuation chunk', () => {
+      const part1 = 'first part of paste';
+      const part2 = ' second part';
+      let state = createPasteState();
+
+      let result = processPasteChunk(PASTE_START + part1, state);
+      expect(result.shouldWaitForMore).toBe(true);
+      state = result.newState;
+
+      // End marker in the middle of data (unlikely but should be handled)
+      result = processPasteChunk(part2 + PASTE_END, state);
+      expect(result.shouldWaitForMore).toBe(false);
+      expect(result.processedInput).toBe(part1 + part2);
+    });
+
+    it('handles empty continuation chunk before end marker', () => {
+      const content = 'hello world';
+      let state = createPasteState();
+
+      let result = processPasteChunk(PASTE_START + content, state);
+      expect(result.shouldWaitForMore).toBe(true);
+      state = result.newState;
+
+      // Empty string continuation (e.g., parseKeypress stripped something)
+      result = processPasteChunk('', state);
+      expect(result.shouldWaitForMore).toBe(true);
+      state = result.newState;
+
+      // End marker finally arrives
+      result = processPasteChunk(PASTE_END, state);
+      expect(result.shouldWaitForMore).toBe(false);
+      expect(result.processedInput).toBe(content);
+    });
+  });
+});
+
+describe('parseKeypress paste marker handling', () => {
+  it('passes through paste start marker as-is', () => {
+    const data = '\x1b[200~some content';
+    const result = parseKeypress(data);
+    expect(result.input).toBe(data);
+  });
+
+  it('passes through paste end marker as-is', () => {
+    const data = '\x1b[201~';
+    const result = parseKeypress(data);
+    // Should NOT be consumed by fnKeyRe — must pass through for paste handler
+    expect(result.input).toBe(data);
+  });
+
+  it('passes through strict paste end marker as-is', () => {
+    const data = '[201~';
+    const result = parseKeypress(data);
+    expect(result.input).toBe(data);
+  });
+
+  it('passes through paste end marker with trailing data', () => {
+    const data = '\x1b[201~extra';
+    const result = parseKeypress(data);
+    expect(result.input).toBe(data);
   });
 });

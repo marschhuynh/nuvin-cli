@@ -81,7 +81,7 @@ function handlePasteStart(input: string): PasteResult {
 function handlePasteContinuation(input: string, currentBuffer: string): PasteResult {
   const newBuffer = currentBuffer + input;
 
-  // Check if we received the end marker at the END of the accumulated buffer
+  // Check for end marker at the end of the accumulated buffer
   const endsWithPasteEnd = newBuffer.endsWith(PASTE_END) || newBuffer.endsWith(PASTE_END_STRICT);
 
   if (endsWithPasteEnd) {
@@ -93,7 +93,25 @@ function handlePasteContinuation(input: string, currentBuffer: string): PasteRes
       newState: { buffer: null },
       processedInput: processedPaste,
       shouldWaitForMore: false,
-      isPasteStart: false, // This is continuation, not start
+      isPasteStart: false,
+    };
+  }
+
+  // Check for end marker anywhere in the buffer (can happen when parseKeypress
+  // passes through chunks containing both paste data and the end marker)
+  const endIdx = newBuffer.indexOf(PASTE_END);
+  const endStrictIdx = newBuffer.indexOf(PASTE_END_STRICT);
+  const foundIdx = endIdx !== -1 ? endIdx : endStrictIdx;
+
+  if (foundIdx !== -1) {
+    const fullPaste = newBuffer.slice(0, foundIdx);
+    const processedPaste = canonicalizeTerminalPaste(fullPaste);
+
+    return {
+      newState: { buffer: null },
+      processedInput: processedPaste,
+      shouldWaitForMore: false,
+      isPasteStart: false,
     };
   }
 
@@ -102,7 +120,7 @@ function handlePasteContinuation(input: string, currentBuffer: string): PasteRes
     newState: { buffer: newBuffer },
     processedInput: null,
     shouldWaitForMore: true,
-    isPasteStart: false, // This is continuation, not start
+    isPasteStart: false,
   };
 }
 
