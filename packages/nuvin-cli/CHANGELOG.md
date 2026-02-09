@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.16
+
+### Patch Changes
+
+- [`d52de6c`](https://github.com/marschhuynh/nuvin-space/commit/d52de6cb325b69ce43702b8411e944d1e5d7c877) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(bash): add ignoreOutput option to discard stdout/stderr and return only exit code; update prompt formatting
+
+- [`9106fbc`](https://github.com/marschhuynh/nuvin-space/commit/9106fbcd77b8fde9c9c1a1d0ed17a3d93cd94da0) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix paste freeze when bracketed paste end marker arrives as separate chunk
+
+- Updated dependencies [[`d52de6c`](https://github.com/marschhuynh/nuvin-space/commit/d52de6cb325b69ce43702b8411e944d1e5d7c877)]:
+  - @nuvin/nuvin-core@1.19.0-rc.9
+
 ## 1.36.0-rc.15
 
 ### Patch Changes

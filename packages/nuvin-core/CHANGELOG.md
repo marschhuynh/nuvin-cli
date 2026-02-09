@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.9
+
+### Minor Changes
+
+- [`d52de6c`](https://github.com/marschhuynh/nuvin-space/commit/d52de6cb325b69ce43702b8411e944d1e5d7c877) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(bash): add ignoreOutput option to discard stdout/stderr and return only exit code; update prompt formatting
+
 ## 1.19.0-rc.8
 
 ### Minor Changes
