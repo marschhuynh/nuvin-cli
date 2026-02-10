@@ -30,6 +30,7 @@
     "max-tokens-support",
     "minimax-fix-changes",
     "paste-freeze-fix",
+    "permission-request-hook",
     "prompt-refactor-xml",
     "prompt-tools",
     "quiet-ears-jam",
