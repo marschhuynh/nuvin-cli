@@ -84,3 +84,6 @@ How components connect. Key imports and relationships between modules.
 
 ### Observations
 Important findings, potential issues, or things the main agent should know.
+
+## Runtime Context
+{{ injectedSystem }}

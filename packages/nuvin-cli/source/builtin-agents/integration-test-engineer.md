@@ -60,3 +60,6 @@ Environment setup, fixtures, mocks needed.
 
 ### Running the Tests
 Commands to execute the test suite.
+
+## Runtime Context
+{{ injectedSystem }}

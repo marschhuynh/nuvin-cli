@@ -37,9 +37,12 @@ import {
   type ConversationMetadata,
   type AgentAwareToolPort,
   mergeAgentConfig,
+  DelegationServiceFactory,
+  DefaultSpecialistAgentFactory,
+  DefaultDelegationService,
+  type DelegationServiceConfig,
 } from '@nuvin/nuvin-core';
 import { UIEventAdapter, type MessageLine, type LineMetadata } from '@/adapters/index.js';
-import { prompt } from '@/prompt.js';
 import { builtinAgents } from '@/agents/index.js';
 import type { ProviderKey } from '@/config/providers.js';
 import { MCPServerManager, type MCPServerInfo } from './MCPServerManager.js';
@@ -54,6 +57,7 @@ import { sessionMetricsService } from './SessionMetricsService.js';
 import { theme } from '@/theme.js';
 import { LSP } from './lsp/index.js';
 import { skillsService } from './SkillsService.js';
+import { getGitContextInfo } from '@/utils/git-context.js';
 
 // Directory paths will be resolved dynamically based on active profile
 const defaultModels: Record<ProviderKey, string> = {
@@ -339,7 +343,38 @@ export class OrchestratorManager {
 
       const skillsConfig = currentConfig.config.skills;
       const enableSkills = skillsConfig?.enabled !== false;
-      const toolRegistry = new ToolRegistry({ agentRegistry, enableSkills });
+
+      // Get git and shell context information (before creating ToolRegistry)
+      const gitContextInfo = await getGitContextInfo();
+
+      // Create custom delegation service factory that provides git context to sub-agents
+      const customDelegationServiceFactory = new (class extends DelegationServiceFactory {
+        create(config: DelegationServiceConfig) {
+          const specialistFactory = new DefaultSpecialistAgentFactory({
+            agentListProvider: config.agentListProvider,
+            createMemoryForAgent: config.createMemoryForAgent,
+            systemContextProvider: () => ({
+              timeISO: new Date().toLocaleString(),
+              platform: process.platform,
+              arch: process.arch,
+              tempDir: os.tmpdir?.() ?? '',
+              workspaceDir: process.cwd(),
+              shell: gitContextInfo.shell,
+              gitBranch: gitContextInfo.gitBranch,
+              gitRepo: gitContextInfo.gitRepo,
+              recentCommits: gitContextInfo.recentCommits,
+            }),
+          });
+
+          return new DefaultDelegationService(config.agentRegistry, specialistFactory, config.commandRunner);
+        }
+      })();
+
+      const toolRegistry = new ToolRegistry({ 
+        agentRegistry, 
+        enableSkills,
+        delegationServiceFactory: customDelegationServiceFactory,
+      });
 
       await LSP.init();
       toolRegistry.setLspService(LSP);
@@ -426,6 +461,10 @@ export class OrchestratorManager {
           workspaceDir: process.cwd(),
           availableAgents,
           folderTree,
+          shell: gitContextInfo.shell,
+          gitBranch: gitContextInfo.gitBranch,
+          gitRepo: gitContextInfo.gitRepo,
+          recentCommits: gitContextInfo.recentCommits,
         },
         { withSubAgent: true },
       );
@@ -433,7 +472,7 @@ export class OrchestratorManager {
       // Get main agent prompt from registry (allows user override)
       // Falls back to built-in prompt.ts if registry fails to load
       const mainAgentTemplate = agentRegistry.get('nuvin');
-      const mainPrompt = mainAgentTemplate?.instructions || prompt;
+      const mainPrompt = mainAgentTemplate?.instructions as string;
 
       const agentConfig = {
         id: 'nuvin-agent',
@@ -1393,9 +1432,39 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const conversationId = this.conversationContext.getActiveConversationId();
     const history = this.memory ? await this.memory.get(conversationId) : [];
 
+    // Get git and shell context information for the swapped agent
+    const { shell, gitBranch, gitRepo, recentCommits } = await getGitContextInfo();
+
+    // Build injected system context with git info
+    const injectedSystem = buildInjectedSystem(
+      {
+        today: new Date().toLocaleString(),
+        platform: process.platform,
+        arch: process.arch,
+        tempDir: os.tmpdir?.() ?? '',
+        workspaceDir: process.cwd(),
+        availableAgents: [],
+        folderTree: undefined, // Skip folder tree for swap to keep it fast
+        shell,
+        gitBranch,
+        gitRepo,
+        recentCommits,
+      },
+      { withSubAgent: true },
+    );
+
+    // Render the agent's instructions template with injected system
+    const renderedInstructions = renderTemplate(agent.instructions, { injectedSystem });
+
+    // Create agent with rendered instructions
+    const agentWithRenderedInstructions = {
+      ...agent,
+      instructions: renderedInstructions,
+    };
+
     // Merge the main config with the agent's config
     const mainConfig = this.orchestrator.getConfig();
-    const mergedConfig = mergeAgentConfig(mainConfig, agent);
+    const mergedConfig = mergeAgentConfig(mainConfig, agentWithRenderedInstructions);
 
     // Create new memory for the swapped agent
     let newMemory: MemoryPort<Message>;
@@ -1484,6 +1553,9 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const history = this.memory ? await this.memory.get(conversationId) : [];
 
     // Get the original main agent config by creating a fresh config
+    // Get git and shell context information
+    const { shell, gitBranch, gitRepo, recentCommits } = await getGitContextInfo();
+
     const injectedSystem = buildInjectedSystem(
       {
         today: new Date().toLocaleString(),
@@ -1493,6 +1565,10 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
         workspaceDir: process.cwd(),
         availableAgents: [],
         folderTree: undefined,
+        shell,
+        gitBranch,
+        gitRepo,
+        recentCommits,
       },
       { withSubAgent: true },
     );
@@ -1503,7 +1579,7 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
     const agentRegistry = agentAwareTools?.getAgentRegistry?.();
     const mainAgentTemplate = agentRegistry?.get('nuvin');
-    const mainPrompt = mainAgentTemplate?.instructions || prompt;
+    const mainPrompt = mainAgentTemplate?.instructions as string;
 
     const mainConfig: AgentConfig = {
       id: 'nuvin-agent',

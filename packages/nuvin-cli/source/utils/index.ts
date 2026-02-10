@@ -11,3 +11,4 @@ export const getRandomColor = () => {
 export * from './formatters.js';
 export { get } from './get.js';
 export { calculateStaticCount } from './staticCount.js';
+export { getGitContextInfo, type GitContextInfo } from './git-context.js';

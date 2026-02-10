@@ -18,6 +18,10 @@ export type InjectedSystemParams = {
   workspaceDir: string;
   availableAgents?: Array<{ id: string; name: string; description: string }>;
   folderTree?: string;
+  shell?: string;
+  gitBranch?: string;
+  gitRepo?: string;
+  recentCommits?: string;
 };
 
 export function buildInjectedSystem(
@@ -31,6 +35,27 @@ export function buildInjectedSystem(
     `- Temp: ${p.tempDir}`,
     `- Working directory: ${p.workspaceDir}`,
   ];
+
+  if (p.shell) {
+    parts.push(`- Shell: ${p.shell}`);
+  }
+
+  if (p.gitBranch || p.gitRepo) {
+    parts.push('');
+    parts.push('Git info:');
+    if (p.gitRepo) {
+      parts.push(`- Repository: ${p.gitRepo}`);
+    }
+    if (p.gitBranch) {
+      parts.push(`- Branch: ${p.gitBranch}`);
+    }
+  }
+
+  if (p.recentCommits) {
+    parts.push('');
+    parts.push('Recent commits:');
+    parts.push(p.recentCommits);
+  }
 
   if (p.folderTree) {
     parts.push('');

@@ -53,3 +53,6 @@ List of modules/files without corresponding tests.
 
 ### Recommendations
 Areas needing test coverage or improvement.
+
+## Runtime Context
+{{ injectedSystem }}

@@ -12,6 +12,7 @@ export type GrepParams = {
   path?: string;
   include?: string;
   limit?: number;
+  context?: number;
 };
 
 export type GrepSuccessResult = {
@@ -50,15 +51,20 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
       },
       path: {
         type: 'string',
-        description: 'Directory to search in. Defaults to current working directory.',
+        description: 'File or directory to search in. Defaults to current working directory.',
       },
       include: {
         type: 'string',
-        description: 'File pattern filter (e.g., "*.js", "*.{ts,tsx}")',
+        description: 'File pattern filter (e.g., "*.js", "*.{ts,tsx}"). Only applies when path is a directory.',
       },
       limit: {
         type: 'integer',
         description: 'Maximum number of matches to return. Defaults to 100.',
+        minimum: 1,
+      },
+      context: {
+        type: 'integer',
+        description: 'Number of lines to show before and after each match.',
         minimum: 1,
       },
     },
@@ -77,6 +83,8 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
         '- pattern: "function.*export" - Find exported functions',
         '- pattern: "TODO|FIXME", include: "*.ts" - Find todos in TypeScript files',
         '- pattern: "import.*react", path: "src" - Find React imports in src/',
+        '- pattern: "^import", path: "src/file.ts" - Search a single file',
+        '- pattern: "handleClick", path: "src/component.tsx", context: 5 - Show 5 lines before/after matches',
       ].join('\n'),
       parameters: this.parameters,
     };
@@ -91,16 +99,21 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
       const searchPath = this.resolveSafePath(params.path ?? '.', context);
 
       const pathStat = await stat(searchPath).catch(() => null);
-      if (!pathStat?.isDirectory()) {
-        return err(`Directory not found: ${params.path ?? '.'}`, undefined, ErrorReason.NotFound);
+      const isFile = pathStat?.isFile() ?? false;
+      const isDir = pathStat?.isDirectory() ?? false;
+
+      if (!isFile && !isDir) {
+        return err(`Path not found: ${params.path ?? '.'}`, undefined, ErrorReason.NotFound);
       }
 
       const limit = params.limit ?? 100;
       const matches = await Ripgrep.search({
-        cwd: searchPath,
+        cwd: isDir ? searchPath : path.dirname(searchPath),
         pattern: params.pattern,
-        glob: params.include,
+        glob: isDir ? params.include : undefined,
         limit,
+        file: isFile ? searchPath : undefined,
+        context: params.context,
       });
 
       const filesWithMtime: Map<string, { mtime: number; matches: typeof matches }> = new Map();
@@ -121,15 +134,17 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
 
       const truncated = matches.length >= limit;
       const relativePath = path.relative(this.rootDir, searchPath) || '.';
+      const baseDir = isFile ? path.dirname(searchPath) : searchPath;
+      const matchCount = matches.filter((m) => !m.isContext).length;
 
       let output = '';
       if (matches.length === 0) {
         output = `No matches found for pattern: ${params.pattern}`;
       } else {
-        output = `Found ${matches.length} match${matches.length === 1 ? '' : 'es'}\n`;
+        output = `Found ${matchCount} match${matchCount === 1 ? '' : 'es'}\n`;
 
         for (const [filePath, fileData] of sortedFiles) {
-          const relFilePath = path.relative(searchPath, filePath);
+          const relFilePath = isFile ? path.basename(filePath) : path.relative(baseDir, filePath);
           output += `\n${relFilePath}:\n`;
 
           for (const match of fileData.matches) {
@@ -137,7 +152,8 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
               match.lineText.length > MAX_LINE_LENGTH
                 ? match.lineText.substring(0, MAX_LINE_LENGTH) + '...'
                 : match.lineText;
-            output += `  Line ${match.lineNum}: ${lineText}\n`;
+            const prefix = match.isContext ? '  ' : '> ';
+            output += `${prefix}Line ${match.lineNum}: ${lineText}\n`;
           }
         }
 
@@ -149,8 +165,8 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
       const result: GrepSuccessResult = okText(output.trim(), {
         searchPath: relativePath,
         pattern: params.pattern,
-        include: params.include,
-        matchCount: matches.length,
+        include: isDir ? params.include : undefined,
+        matchCount,
         fileCount: filesWithMtime.size,
         truncated,
       });

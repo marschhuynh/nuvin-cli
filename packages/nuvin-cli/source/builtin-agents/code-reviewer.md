@@ -7,7 +7,9 @@ allowed_tools:
   - grep_tool
   - glob_tool
   - lsp
-  - findReferences
+  - bash_tool
+  - ls_tool
+  - skill
 temperature: 0.3
 model: claude-sonnet-4.5
 ---
@@ -59,3 +61,6 @@ Optional improvements and best practice recommendations.
 
 ### Positive Notes
 Well-implemented patterns, good practices to acknowledge.
+
+## Runtime Context
+{{ injectedSystem }}

@@ -66,3 +66,6 @@ How the implementation was tested.
 
 ### Next Steps
 Any follow-up work or considerations.
+
+## Runtime Context
+{{ injectedSystem }}

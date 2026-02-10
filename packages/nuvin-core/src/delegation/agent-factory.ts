@@ -10,6 +10,11 @@ type SystemContext = {
   arch: string;
   tempDir: string;
   workspaceDir: string;
+  shell?: string;
+  gitBranch?: string;
+  gitRepo?: string;
+  recentCommits?: string;
+  folderTree?: string;
 };
 
 type AgentInfo = {
@@ -63,6 +68,11 @@ export class DefaultSpecialistAgentFactory implements SpecialistAgentFactory {
         tempDir: systemContext.tempDir,
         workspaceDir: systemContext.workspaceDir,
         availableAgents,
+        shell: systemContext.shell,
+        gitBranch: systemContext.gitBranch,
+        gitRepo: systemContext.gitRepo,
+        recentCommits: systemContext.recentCommits,
+        folderTree: systemContext.folderTree,
       },
       { withSubAgent: false },
     );

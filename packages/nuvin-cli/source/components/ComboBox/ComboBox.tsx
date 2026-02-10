@@ -357,7 +357,7 @@ const ComboBoxListItem = memo<ComboBoxListItemProps>(
       content = renderItem(listItem.item, isSelected);
     } else {
       content = (
-        <Box overflow="hidden">
+        <Box overflow="hidden" flexShrink={0}>
           <Text>{isSelected ? '❯ ' : '  '}</Text>
           <Text
             color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}

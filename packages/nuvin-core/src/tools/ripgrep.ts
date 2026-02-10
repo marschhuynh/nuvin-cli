@@ -320,22 +320,40 @@ export async function search(opts: {
   pattern: string;
   glob?: string;
   limit?: number;
-}): Promise<{ filePath: string; lineNum: number; lineText: string }[]> {
+  file?: string;
+  context?: number;
+}): Promise<{ filePath: string; lineNum: number; lineText: string; isContext?: boolean }[]> {
   const rgPath = await filepath();
 
   const { stat } = await import('node:fs/promises');
-  const cwdStat = await stat(opts.cwd).catch(() => null);
-  if (!cwdStat?.isDirectory()) {
-    throw Object.assign(new Error(`No such file or directory: '${opts.cwd}'`), { code: 'ENOENT' });
+
+  // If searching a specific file
+  if (opts.file) {
+    const fileStat = await stat(opts.file).catch(() => null);
+    if (!fileStat?.isFile()) {
+      throw Object.assign(new Error(`No such file: '${opts.file}'`), { code: 'ENOENT' });
+    }
+  } else {
+    const cwdStat = await stat(opts.cwd).catch(() => null);
+    if (!cwdStat?.isDirectory()) {
+      throw Object.assign(new Error(`No such file or directory: '${opts.cwd}'`), { code: 'ENOENT' });
+    }
   }
 
-  const args = ['-nH', '--field-match-separator=|', '--regexp', opts.pattern];
+  const args = ['-nH', '--field-match-separator=|', '--field-context-separator=|', '--regexp', opts.pattern];
 
-  if (opts.glob) {
+  // Add context lines if specified
+  if (opts.context && opts.context > 0) {
+    args.push('-C', String(opts.context), '--column');
+  }
+
+  // glob only applies to directory search
+  if (opts.glob && !opts.file) {
     args.push('--glob', opts.glob);
   }
 
-  args.push(opts.cwd);
+  // Search specific file or directory
+  args.push(opts.file ?? opts.cwd);
 
   return new Promise((resolve, reject) => {
     const proc = spawn(rgPath, args, {
@@ -359,20 +377,41 @@ export async function search(opts: {
         return;
       }
 
-      const results: { filePath: string; lineNum: number; lineText: string }[] = [];
+      const results: { filePath: string; lineNum: number; lineText: string; isContext?: boolean }[] = [];
       const limit = opts.limit ?? 100;
 
       const lines = stdout.split(/\r?\n/);
       for (const line of lines) {
-        if (!line) continue;
+        if (!line || line === '--') continue;
         if (results.length >= limit) break;
 
-        const [filePath, lineNumStr, ...lineTextParts] = line.split('|');
-        const lineNum = parseInt(lineNumStr, 10);
-        const lineText = lineTextParts.join('|');
+        let filePath: string;
+        let lineNum: number;
+        let lineText: string;
+        let isContext = false;
+
+        // With --column, match lines have 4 fields: filepath|linenum|colnum|text
+        // Context lines have 3 fields: filepath|linenum|text
+        // Without context, all lines are matches with 3 fields: filepath|linenum|text
+        const parts = line.split('|');
+        
+        if (opts.context && parts.length >= 4 && !isNaN(parseInt(parts[2], 10))) {
+          // Match line with column: filepath|linenum|colnum|text
+          filePath = parts[0];
+          lineNum = parseInt(parts[1], 10);
+          lineText = parts.slice(3).join('|');
+        } else if (parts.length >= 3) {
+          // Context line or non-context match: filepath|linenum|text
+          filePath = parts[0];
+          lineNum = parseInt(parts[1], 10);
+          lineText = parts.slice(2).join('|');
+          isContext = !!opts.context; // Only mark as context if context mode is enabled
+        } else {
+          continue;
+        }
 
         if (filePath && !isNaN(lineNum)) {
-          results.push({ filePath, lineNum, lineText });
+          results.push({ filePath, lineNum, lineText, ...(isContext ? { isContext } : {}) });
         }
       }
 
