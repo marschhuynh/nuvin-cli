@@ -87,6 +87,22 @@ export class CoreMCPClient {
     if (this.connected) return;
     if (this.client || this.transport) throw new Error('MCP already initialized');
 
+    let timeoutHandle: NodeJS.Timeout | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(
+        () => reject(new Error(`MCP connection timed out after ${this.timeoutMs}ms`)),
+        this.timeoutMs,
+      );
+    });
+
+    try {
+      await Promise.race([this.performConnect(), timeoutPromise]);
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }
+  }
+
+  private async performConnect(): Promise<void> {
     if (this.opts.type === 'http') {
       const url = new URL(this.opts.url);
       const authHeaders = await this.getAuthHeaders();
@@ -94,6 +110,12 @@ export class CoreMCPClient {
 
       this.transport = new StreamableHTTPClientTransport(url, {
         requestInit: { headers },
+        reconnectionOptions: {
+          maxReconnectionDelay: 5000,
+          initialReconnectionDelay: 500,
+          reconnectionDelayGrowFactor: 2,
+          maxRetries: 1,
+        },
       });
     } else {
       const isCustomStream =
@@ -144,17 +166,24 @@ export class CoreMCPClient {
   }
 
   async disconnect(): Promise<void> {
+    const disconnectTimeout = Math.min(this.timeoutMs, 10000);
+    let timeoutHandle: NodeJS.Timeout | undefined;
+
     try {
       const disconnectPromise = Promise.all([this.client?.close(), this.transport?.close?.()]);
 
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('MCP disconnect timed out after 5000ms')), 5000);
+        timeoutHandle = setTimeout(
+          () => reject(new Error(`MCP disconnect timed out after ${disconnectTimeout}ms`)),
+          disconnectTimeout,
+        );
       });
 
       await Promise.race([disconnectPromise, timeoutPromise]);
     } catch (err) {
       console.warn('MCP disconnect error:', err);
     } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
       this.connected = false;
       this.client = null;
       this.transport = null;
@@ -167,20 +196,28 @@ export class CoreMCPClient {
     const req: ListToolsRequest = { method: 'tools/list', params: {} };
 
     const requestPromise = this.client.request(req, ListToolsResultSchema);
+    let timeoutHandle: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`MCP tools list request timed out after ${this.timeoutMs}ms`)), this.timeoutMs);
+      timeoutHandle = setTimeout(
+        () => reject(new Error(`MCP tools list request timed out after ${this.timeoutMs}ms`)),
+        this.timeoutMs,
+      );
     });
 
-    const res = await Promise.race([requestPromise, timeoutPromise]);
-    const tools = (res.tools ?? []).map(
-      (t: { name: string; description?: string; inputSchema?: Record<string, unknown> }) => ({
-        name: String(t.name),
-        description: t.description,
-        inputSchema: t.inputSchema ?? { type: 'object', properties: {}, required: [] },
-      }),
-    );
-    this.tools = tools;
-    return tools;
+    try {
+      const res = await Promise.race([requestPromise, timeoutPromise]);
+      const tools = (res.tools ?? []).map(
+        (t: { name: string; description?: string; inputSchema?: Record<string, unknown> }) => ({
+          name: String(t.name),
+          description: t.description,
+          inputSchema: t.inputSchema ?? { type: 'object', properties: {}, required: [] },
+        }),
+      );
+      this.tools = tools;
+      return tools;
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }
   }
 
   getTools(): MCPToolSchema[] {
@@ -195,10 +232,18 @@ export class CoreMCPClient {
     };
 
     const requestPromise = this.client.request(req, CallToolResultSchema);
+    let timeoutHandle: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`MCP tool call timed out after ${this.timeoutMs}ms`)), this.timeoutMs);
+      timeoutHandle = setTimeout(
+        () => reject(new Error(`MCP tool call timed out after ${this.timeoutMs}ms`)),
+        this.timeoutMs,
+      );
     });
 
-    return await Promise.race([requestPromise, timeoutPromise]);
+    try {
+      return await Promise.race([requestPromise, timeoutPromise]);
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }
   }
 }

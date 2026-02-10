@@ -27,7 +27,7 @@ hooks:
 | `pre_user_prompt` | Before processing user message | Input validation, content filtering |
 | `pre_tool_use` | Before tool execution | Validate commands, check permissions |
 | `post_tool_use` | After tool execution | Audit logging, result validation |
-| `permission_request` | When tool needs approval | Custom approval logic |
+| `permission_request` | When tool needs approval | **Desktop notifications**, custom approval logic |
 | `pre_sub_agent` | Before spawning sub-agent | Rate limiting, resource checks |
 | `post_sub_agent` | After sub-agent completes | Result aggregation |
 | `pre_stop` | Before agent stops | Final cleanup |
@@ -247,6 +247,79 @@ echo '{"continue": true}'
 # hooks/session-end.sh
 echo "[$(date)] Session ended: $NUVIN_SESSION_ID" >> ~/.nuvin/sessions.log
 echo '{"continue": true}'
+```
+
+### Tool Approval Notification (Desktop Alert)
+
+Show a desktop notification when a tool requires user approval. This is useful when you're working in another window and want to be notified when the agent needs your attention.
+
+**Configuration in `~/.nuvin/config.yaml`:**
+
+```yaml
+hooks:
+  permission_request:
+    - command:
+        command: "~/.nuvin/hooks/tool-approval-notification.sh"
+        timeout: 5
+```
+
+**Cross-platform notification script:**
+
+```bash
+#!/bin/bash
+# ~/.nuvin/hooks/tool-approval-notification.sh
+# Shows desktop notification when a tool requires approval
+
+TOOL_NAME="$NUVIN_TOOL_NAME"
+MESSAGE="🔔 Tool approval required"
+
+if [ -n "$TOOL_NAME" ]; then
+    MESSAGE="🔔 Tool approval required: $TOOL_NAME"
+fi
+
+# Detect platform and show appropriate notification
+case "$(uname -s)" in
+    Darwin)
+        # macOS - use osascript for native notification
+        osascript -e "display notification \"$MESSAGE\" with title \"Nuvin\" sound name \"Glass\"" 2>/dev/null || true
+        ;;
+    Linux)
+        # Linux - use notify-send if available
+        if command -v notify-send &> /dev/null; then
+            notify-send "Nuvin" "$MESSAGE" -i dialog-information 2>/dev/null || true
+        fi
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        # Windows (Git Bash / WSL) - use PowerShell toast notification
+        powershell.exe -Command "
+            [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            \$template = '<toast><visual><binding template=\"ToastGeneric\"><text>Nuvin</text><text>$MESSAGE</text></binding></visual></toast>'
+            \$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+            \$xml.LoadXml(\$template)
+            [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Nuvin').Show(\$xml)
+        " 2>/dev/null || true
+        ;;
+esac
+
+# Always continue - this hook is informational only
+echo '{"continue": true}'
+exit 0
+```
+
+**Make the script executable:**
+
+```bash
+chmod +x ~/.nuvin/hooks/tool-approval-notification.sh
+```
+
+**macOS-only simpler version:**
+
+```yaml
+hooks:
+  permission_request:
+    - command:
+        command: osascript -e 'display notification "Tool approval required: '$NUVIN_TOOL_NAME'" with title "Nuvin" sound name "Glass"' && echo '{"continue": true}'
+        timeout: 5
 ```
 
 ## Multiple Hook Sources
