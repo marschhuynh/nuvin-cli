@@ -102,6 +102,16 @@ nuvin --provider openrouter --model openai/gpt-4o --config ./config.yaml
 nuvin --provider zai --model glm-4.7
 ```
 
+### ACP Server Mode
+
+Run Nuvin as an ACP server over stdio:
+
+```bash
+nuvin --acp
+```
+
+Notes: Uses the same config resolution as the CLI. File system and terminal actions use local Nuvin tools (no ACP fs/terminal proxy in the initial implementation).
+
 ## Environment Variables
 
 Set up authentication via environment variables:
