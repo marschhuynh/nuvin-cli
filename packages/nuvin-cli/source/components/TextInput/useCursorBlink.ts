@@ -1,7 +1,10 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
+const CURSOR_INACTIVITY_THRESHOLD_MS = 300;
+const CURSOR_BLINK_INTERVAL_MS = 530;
+
 let cursorVisible = true;
-let lastActivityTime = Date.now();
+let lastActivityTime = performance.now();
 const subscribers = new Set<() => void>();
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -9,12 +12,12 @@ function subscribe(callback: () => void) {
   subscribers.add(callback);
   if (intervalId === null && subscribers.size > 0) {
     intervalId = setInterval(() => {
-      const timeSinceActivity = Date.now() - lastActivityTime;
-      if (timeSinceActivity > 300) {
+      const timeSinceActivity = performance.now() - lastActivityTime;
+      if (timeSinceActivity > CURSOR_INACTIVITY_THRESHOLD_MS) {
         cursorVisible = !cursorVisible;
         for (const cb of subscribers) cb();
       }
-    }, 530);
+    }, CURSOR_BLINK_INTERVAL_MS);
   }
   return () => {
     subscribers.delete(callback);
@@ -30,7 +33,7 @@ function getSnapshot() {
 }
 
 function resetActivity() {
-  lastActivityTime = Date.now();
+  lastActivityTime = performance.now();
   if (!cursorVisible) {
     cursorVisible = true;
     for (const cb of subscribers) cb();
@@ -46,7 +49,7 @@ export function useCursorBlink(value: string, cursorOffset: number) {
     if (value !== lastValueRef.current || cursorOffset !== lastOffsetRef.current) {
       lastValueRef.current = value;
       lastOffsetRef.current = cursorOffset;
-      queueMicrotask(resetActivity);
+      resetActivity();
     }
   }, [value, cursorOffset]);
 

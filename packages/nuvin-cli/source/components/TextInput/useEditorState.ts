@@ -74,17 +74,23 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
 
   const setValue = (value: string, offset: number, width = 0) => {
     const clampedOffset = clampOffset(value.length, offset, vimMode);
+    if (value === state.value && clampedOffset === state.cursorOffset && width === state.cursorWidth) {
+      return;
+    }
+    if (value !== state.value) {
+      onChange(value);
+    }
     dispatch({
       type: 'SET_VALUE',
       payload: { value, offset: clampedOffset, width },
     });
-    if (value !== state.value) {
-      onChange(value);
-    }
   };
 
   const moveCursor = (offset: number) => {
     const clampedOffset = clampOffset(state.value.length, offset, vimMode);
+    if (clampedOffset === state.cursorOffset) {
+      return;
+    }
     dispatch({ type: 'MOVE_CURSOR', payload: { offset: clampedOffset } });
   };
 

@@ -20,6 +20,16 @@ export function useLineIndex(value: string): LineIndex {
     return starts;
   }, [value]);
 
+  const lines = useMemo(() => {
+    const result: string[] = [];
+    for (let i = 0; i < lineStarts.length; i++) {
+      const start = lineStarts[i]!;
+      const end = i < lineStarts.length - 1 ? lineStarts[i + 1]! - 1 : value.length;
+      result.push(value.slice(start, end));
+    }
+    return result;
+  }, [value, lineStarts]);
+
   const getLineInfo = useCallback(
     (offset: number): LineInfo => {
       const clampedOffset = Math.max(0, Math.min(offset, value.length));
@@ -29,7 +39,7 @@ export function useLineIndex(value: string): LineIndex {
 
       while (low < high) {
         const mid = Math.ceil((low + high + 1) / 2);
-        if (lineStarts[mid] <= clampedOffset) {
+        if (lineStarts[mid]! <= clampedOffset) {
           low = mid;
         } else {
           high = mid - 1;
@@ -37,15 +47,8 @@ export function useLineIndex(value: string): LineIndex {
       }
 
       const lineIndex = low;
-      const lineStart = lineStarts[lineIndex];
-      const lineEnd = lineIndex < lineStarts.length - 1 ? lineStarts[lineIndex + 1] - 1 : value.length;
-
-      const lines: string[] = [];
-      for (let i = 0; i < lineStarts.length; i++) {
-        const start = lineStarts[i];
-        const end = i < lineStarts.length - 1 ? lineStarts[i + 1] - 1 : value.length;
-        lines.push(value.slice(start, end));
-      }
+      const lineStart = lineStarts[lineIndex]!;
+      const lineEnd = lineIndex < lineStarts.length - 1 ? lineStarts[lineIndex + 1]! - 1 : value.length;
 
       return {
         lines,
@@ -55,7 +58,7 @@ export function useLineIndex(value: string): LineIndex {
         lineEnd,
       };
     },
-    [value, lineStarts],
+    [value, lineStarts, lines],
   );
 
   const getLine = useCallback(

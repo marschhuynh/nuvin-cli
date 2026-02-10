@@ -8,7 +8,7 @@ import type { Theme } from '@/theme.js';
 import { useAltMode } from '@/contexts/AltModeContext.js';
 import { useInputHistory } from '@/hooks/useInputHistory.js';
 import TextInput from './TextInput/index.js';
-import { findCommandCompletion, completeCommand } from './TextInput/useCommandCompletion.js';
+import { findCommandCompletion, completeCommand } from '@/utils/commandCompletion.js';
 import { CommandMenu, type CommandMenuHandle, type CommandMenuItem } from './CommandMenu/index.js';
 import { orchestratorManager } from '@/services/OrchestratorManager.js';
 import { eventBus } from '@/services/EventBus.js';

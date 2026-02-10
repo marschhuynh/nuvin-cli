@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
 
 const PASTE_TIMEOUT_MS = 2000;
@@ -15,7 +15,16 @@ export function usePaste(): UsePasteReturn {
   const pasteStateRef = useRef<PasteState>(createPasteState());
   const pasteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const processPaste = (input: string) => {
+  useEffect(() => {
+    return () => {
+      if (pasteTimerRef.current) {
+        clearTimeout(pasteTimerRef.current);
+        pasteTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const processPaste = useCallback((input: string) => {
     const result = processPasteChunk(input, pasteStateRef.current);
     pasteStateRef.current = result.newState;
 
@@ -41,7 +50,7 @@ export function usePaste(): UsePasteReturn {
       shouldWaitForMore: result.shouldWaitForMore,
       isPasteStart: result.isPasteStart,
     };
-  };
+  }, []);
 
   return { processPaste };
 }

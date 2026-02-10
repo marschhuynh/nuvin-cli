@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { commandRegistry } from '../source/modules/commands/registry.js';
 import type { CommandDefinition } from '../source/modules/commands/types.js';
-import { findCommandCompletion, completeCommand } from '../source/components/TextInput/useCommandCompletion.js';
+import { findCommandCompletion, completeCommand } from '../source/utils/commandCompletion.js';
 
 const createMockCommand = (id: string): CommandDefinition => ({
   id,

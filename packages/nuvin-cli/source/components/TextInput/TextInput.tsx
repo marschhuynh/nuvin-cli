@@ -13,6 +13,8 @@ import { useLineIndex } from './useLineIndex.js';
 import { TextInputScrollbar } from './TextInputScrollbar.js';
 import { useCursorBlink } from './useCursorBlink.js';
 
+type InputKey = Parameters<Parameters<typeof useInput>[0]>[1];
+
 export type Props = {
   readonly placeholder?: string;
   readonly focus?: boolean;
@@ -163,8 +165,8 @@ function TextInput({
     // When not scrolling, use logical positions (Text wraps naturally)
     if (!effectiveWidth || effectiveWidth <= 0 || maxLines === undefined) {
       return {
-        row: logicalRow,
-        col: logicalCol,
+        logicalRow,
+        logicalCol,
         visualRow: logicalRow,
         visualCol: logicalCol,
       };
@@ -182,8 +184,8 @@ function TextInput({
     const visualCol = currentLineLen > 0 ? logicalCol % effectiveWidth : logicalCol;
 
     return {
-      row: logicalRow,
-      col: logicalCol,
+      logicalRow,
+      logicalCol,
       visualRow,
       visualCol,
     };
@@ -274,7 +276,7 @@ function TextInput({
   }, [focus, setInitialCursor]);
 
   const handleInput = useCallback(
-    (input: string, key: Parameters<Parameters<typeof useInput>[0]>[1]) => {
+    (input: string, key: InputKey) => {
       const pasteResult = processPaste(input);
 
       if (pasteResult.shouldWaitForMore) {
@@ -504,7 +506,7 @@ function TextInput({
 
       // For full lines (non-scrolling), use logical col directly
       // For split rows (scrolling), use visual col within the row
-      const cursorColInRow = row.isFullLine ? cursorInfo.col : cursorInfo.visualCol;
+      const cursorColInRow = row.isFullLine ? cursorInfo.logicalCol : cursorInfo.visualCol;
       const before = row.text.slice(0, cursorColInRow);
       const cursorChar = row.text[cursorColInRow] ?? ' ';
       const after = row.text.slice(cursorColInRow + 1);
@@ -517,7 +519,7 @@ function TextInput({
         </Text>
       );
     },
-    [cursorInfo.visualRow, cursorInfo.visualCol, cursorInfo.col, showCursor, focus, cursorVisible],
+    [cursorInfo.visualRow, cursorInfo.visualCol, cursorInfo.logicalCol, showCursor, focus, cursorVisible],
   );
 
   if (editorState.value.length === 0 && placeholder) {

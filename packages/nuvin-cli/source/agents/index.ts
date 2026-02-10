@@ -6,7 +6,7 @@ import codeReviewerMd from '../builtin-agents/code-reviewer.md';
 import integrationTestEngineerMd from '../builtin-agents/integration-test-engineer.md';
 import softwareEngineerMd from '../builtin-agents/software-engineer.md';
 import testCaseCounterMd from '../builtin-agents/test-case-counter.md';
-import explorerMd from '../builtin-agents/explorer.md';
+import explorerMd from '../builtin-agents/explore.md';
 
 function parseFrontmatter(content: string): { frontmatter: Record<string, unknown>; body: string } {
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
