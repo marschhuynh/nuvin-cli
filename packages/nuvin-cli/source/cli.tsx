@@ -32,6 +32,8 @@ const KITTY_KEYBOARD_DISABLE = '\x1b[<u';
 const MOUSE_MODE_DISABLE = '\x1b[?1006l\x1b[?1002l\x1b[?1000l';
 const BRACKETED_PASTE_DISABLE = '\x1b[?2004l';
 
+const isAcpMode = process.argv.includes('--acp');
+
 // Cleanup function to reset all terminal modes
 const cleanupTerminal = (isAlt: boolean | undefined) => {
   console.log(KITTY_KEYBOARD_DISABLE);
@@ -48,7 +50,9 @@ declare global {
   var __fullClear: () => void;
 }
 
-console.log('\x1b[?2004h');
+if (!isAcpMode) {
+  console.log('\x1b[?2004h');
+}
 
 process.on('uncaughtException', (error) => {
   console.error('\n\n❌ Uncaught Exception:', error);
@@ -123,6 +127,7 @@ const cli = meow(
     --history PATH      Load conversation history from file on startup
     --profile NAME      Use specific profile (overrides active profile)
     --resume, -r        Resume the most recent session
+    --acp               Run as ACP server over stdio
     --alt               Use virtualized rendering (experimental)
 
   Authentication Setup
@@ -165,6 +170,7 @@ const cli = meow(
       history: { type: 'string' },
       profile: { type: 'string' },
       resume: { type: 'boolean', alias: 'r' },
+      acp: { type: 'boolean' },
       alt: { type: 'boolean' },
     },
   },
@@ -256,7 +262,7 @@ const cli = meow(
     process.exit(0);
   }
 
-  if (cli.flags.alt) {
+  if (cli.flags.alt && !cli.flags.acp) {
     process.stdout.write(ENTER_ALT_SCREEN);
   }
 
@@ -420,6 +426,12 @@ const cli = meow(
 
   // Register commands (including custom commands)
   await registerCommands(orchestratorManager);
+
+  if (cli.flags.acp) {
+    const { startAcpServer } = await import('./acp/start.js');
+    await startAcpServer({ stdin: process.stdin, stdout: process.stdout, stderr: process.stderr });
+    return;
+  }
 
   console.log(ansiEscapes.clearTerminal);
 

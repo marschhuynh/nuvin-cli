@@ -1,3 +1,8 @@
+import { AcpServer } from './server.js';
+import { decodeJsonRpcLines, encodeJsonRpcMessage } from './jsonrpc.js';
+import { routeAcpRequest } from './router.js';
+import { OrchestratorManager } from '../services/OrchestratorManager.js';
+
 export async function startAcpServer({
   stdin,
   stdout,
@@ -7,7 +12,37 @@ export async function startAcpServer({
   stdout: NodeJS.WritableStream;
   stderr: NodeJS.WritableStream;
 }) {
+  const transport = {
+    send: (msg: unknown) => {
+      stdout.write(encodeJsonRpcMessage(msg as never));
+    },
+  };
+
+  const orchestratorManager = new OrchestratorManager();
+  const server = new AcpServer({ transport, orchestratorManager });
+
   stderr.write('ACP server starting\n');
-  stdin.on('data', () => {});
-  stdout.write('');
+
+  let buffer = '';
+  stdin.on('data', async (chunk) => {
+    buffer += chunk.toString();
+
+    let parsed;
+    try {
+      parsed = decodeJsonRpcLines(buffer);
+    } catch (error) {
+      stderr.write(`ACP parse error: ${error instanceof Error ? error.message : String(error)}\n`);
+      buffer = '';
+      return;
+    }
+
+    buffer = parsed.remainder;
+
+    for (const message of parsed.messages) {
+      const response = await routeAcpRequest(server, message);
+      if (response) {
+        transport.send(response);
+      }
+    }
+  });
 }
