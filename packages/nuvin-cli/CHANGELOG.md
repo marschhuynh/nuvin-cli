@@ -1,5 +1,18 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.17
+
+### Minor Changes
+
+- [`ffb522d`](https://github.com/marschhuynh/nuvin-space/commit/ffb522d5c91c80d1fc54d5318d9f70c0c89e10f8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): allow editing all built-in agents via auto-copy to global location
+
+### Patch Changes
+
+- [`9b79cba`](https://github.com/marschhuynh/nuvin-space/commit/9b79cba94cc16efba897dfa87949dca21c5a73db) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix ComboBox lag when holding delete/backspace: debounce search query, memoize list items, add O(1) position map, fix multi-keypress chunk handling
+
+- Updated dependencies [[`ffb522d`](https://github.com/marschhuynh/nuvin-space/commit/ffb522d5c91c80d1fc54d5318d9f70c0c89e10f8)]:
+  - @nuvin/nuvin-core@1.19.0-rc.10
+
 ## 1.36.0-rc.16
 
 ### Patch Changes
