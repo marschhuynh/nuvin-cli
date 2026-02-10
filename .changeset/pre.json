@@ -22,6 +22,7 @@
     "fast-buckets-jam",
     "fix-anthropic-usage-calc",
     "fix-tabindex-focus-order",
+    "git-context-grep-enhance",
     "github-responses-api",
     "hook-system-implementation",
     "kimi-anthropic-compat",
