@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.12
+
+### Minor Changes
+
+- [`0373a85`](https://github.com/marschhuynh/nuvin-space/commit/0373a85cf4b6868746f47d557e87e0f6ab7ff2e8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(core): add PermissionRequest hook for tool approval notifications; fix(core): add timeout handling and reconnection options to MCP client; docs(cli): update hooks usage and agent documentation
+
 ## 1.19.0-rc.11
 
 ### Minor Changes
