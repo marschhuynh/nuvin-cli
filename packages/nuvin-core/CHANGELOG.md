@@ -1,5 +1,49 @@
 # @nuvin/nuvin-core
 
+## 1.19.0
+
+### Minor Changes
+
+- [`458f15a`](https://github.com/marschhuynh/nuvin-space/commit/458f15a831ca7f5d4c54fabfbdf5a2a9e67fcdd4) Thanks [@marschhuynh](https://github.com/marschhuynh)! - ```
+
+  3. Message should be a compact, single sentence (imperative), e.g. `Refresh LSP diagnostics after file edits.`
+  4. Commit with conventional commits (e.g. `fix: ...`, `feat: ...`, `chore: ...`).
+
+- [#165](https://github.com/marschhuynh/nuvin-cli/pull/165) [`ae426ba`](https://github.com/marschhuynh/nuvin-space/commit/ae426bab43077a14759e692d6d6db703f883935e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MCP image content extraction and base64 image detection for tool results
+
+- [`d52de6c`](https://github.com/marschhuynh/nuvin-space/commit/d52de6cb325b69ce43702b8411e944d1e5d7c877) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(bash): add ignoreOutput option to discard stdout/stderr and return only exit code; update prompt formatting
+
+- [`7bce888`](https://github.com/marschhuynh/nuvin-space/commit/7bce888d9113b532706ebca78969266a3f21deaa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(grep): add single file search and context lines; feat(cli): inject git context (branch, repo, commits) into agent system prompts; fix(cli): ComboBox text truncation with flexShrink
+
+- [`2c80900`](https://github.com/marschhuynh/nuvin-space/commit/2c80900bbd377c1b8d8e81e0bdf819da2495ac99) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add GitHub responses API support and tool validation tweaks.
+
+- [`65ca384`](https://github.com/marschhuynh/nuvin-space/commit/65ca384d91f80ceef7618e866cd56bf8dd11472c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add hook system for intercepting agent lifecycle events (pre/post-tool, session start/end). Supports bash command hooks with pattern matching, JSON control flow, and integration with Orchestrator.
+
+- [`93da975`](https://github.com/marschhuynh/nuvin-space/commit/93da9755fc17231a4d1608bdfe49c85699bb84f5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add version option to GenericAnthropicLLM for User-Agent header; migrate Kimi provider from openai-compat to anthropic-compat
+
+- [`0373a85`](https://github.com/marschhuynh/nuvin-space/commit/0373a85cf4b6868746f47d557e87e0f6ab7ff2e8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(core): add PermissionRequest hook for tool approval notifications; fix(core): add timeout handling and reconnection options to MCP client; docs(cli): update hooks usage and agent documentation
+
+- [`a916738`](https://github.com/marschhuynh/nuvin-space/commit/a9167387ba32d8958aca22bea4cdc7185a986106) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Redesign agent creation TUI: rename systemPrompt to instructions, simplify state machine, improve keyboard navigation
+
+### Patch Changes
+
+- [`ffb522d`](https://github.com/marschhuynh/nuvin-space/commit/ffb522d5c91c80d1fc54d5318d9f70c0c89e10f8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): allow editing all built-in agents via auto-copy to global location
+
+- [`9e42bc5`](https://github.com/marschhuynh/nuvin-space/commit/9e42bc5f0fce408de46718f2dfaaf5f391780a5f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: add mergeAgentConfig function for hot agent swapping
+
+- [#164](https://github.com/marschhuynh/nuvin-cli/pull/164) [`32b0f04`](https://github.com/marschhuynh/nuvin-space/commit/32b0f04e8ffb9e449c4fa1aaf6c572ed24ee7af2) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix token usage calculation to include cached tokens in prompt_tokens
+
+- [`354a1c7`](https://github.com/marschhuynh/nuvin-space/commit/354a1c75b088b2df5ad274a29558c566049a7ff1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add max_tokens field to agent configuration
+
+- [`f0c801c`](https://github.com/marschhuynh/nuvin-space/commit/f0c801cd5230fcdacbe337188d4d457fb62c51aa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor tool call rendering with comprehensive improvements:
+
+  - Show last lines in result truncation instead of first for better visibility
+  - Fix denied/edited states to avoid duplicate content display
+  - Add per-tool excludeParams config for cleaner parameter display
+  - Use dynamic tool names in SubAgentActivity (Reading/Read/Read failed)
+  - Fix abort errorReason to return 'aborted' instead of 'unknown'
+  - Show actual error messages in sub-agent status lines
+
 ## 1.19.0-rc.12
 
 ### Minor Changes

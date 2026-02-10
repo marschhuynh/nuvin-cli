@@ -1,5 +1,88 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0
+
+### Minor Changes
+
+- [`baee016`](https://github.com/marschhuynh/nuvin-space/commit/baee0168c0fe5cca77c1b6683dbc9c729e1a64f6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add display support for ask_user_tool with question count and answer rendering.
+
+- [`ffb522d`](https://github.com/marschhuynh/nuvin-space/commit/ffb522d5c91c80d1fc54d5318d9f70c0c89e10f8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): allow editing all built-in agents via auto-copy to global location
+
+- [`65ca384`](https://github.com/marschhuynh/nuvin-space/commit/65ca384d91f80ceef7618e866cd56bf8dd11472c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add hook system for intercepting agent lifecycle events (pre/post-tool, session start/end). Supports bash command hooks with pattern matching, JSON control flow, and integration with Orchestrator.
+
+- [`354a1c7`](https://github.com/marschhuynh/nuvin-space/commit/354a1c75b088b2df5ad274a29558c566049a7ff1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add max_tokens field to agent configuration
+
+- [`86aea13`](https://github.com/marschhuynh/nuvin-space/commit/86aea13044d8069ef878946dc4d3d658e433d5bd) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor(prompt): restructure system prompt to XML format with modular agent definitions
+
+- [`a916738`](https://github.com/marschhuynh/nuvin-space/commit/a9167387ba32d8958aca22bea4cdc7185a986106) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Redesign agent creation TUI: rename systemPrompt to instructions, simplify state machine, improve keyboard navigation
+
+- [`f0c801c`](https://github.com/marschhuynh/nuvin-space/commit/f0c801cd5230fcdacbe337188d4d457fb62c51aa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor tool call rendering with comprehensive improvements:
+
+  - Show last lines in result truncation instead of first for better visibility
+  - Fix denied/edited states to avoid duplicate content display
+  - Add per-tool excludeParams config for cleaner parameter display
+  - Use dynamic tool names in SubAgentActivity (Reading/Read/Read failed)
+  - Fix abort errorReason to return 'aborted' instead of 'unknown'
+  - Show actual error messages in sub-agent status lines
+
+### Patch Changes
+
+- [`458f15a`](https://github.com/marschhuynh/nuvin-space/commit/458f15a831ca7f5d4c54fabfbdf5a2a9e67fcdd4) Thanks [@marschhuynh](https://github.com/marschhuynh)! - ```
+
+  3. Message should be a compact, single sentence (imperative), e.g. `Refresh LSP diagnostics after file edits.`
+  4. Commit with conventional commits (e.g. `fix: ...`, `feat: ...`, `chore: ...`).
+
+- [`94ba248`](https://github.com/marschhuynh/nuvin-space/commit/94ba248b7a7ac414babfbe04c2bb0ce6ff3811e8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor agent imports to use build-time imports instead of runtime file reading
+
+- [#165](https://github.com/marschhuynh/nuvin-cli/pull/165) [`ae426ba`](https://github.com/marschhuynh/nuvin-space/commit/ae426bab43077a14759e692d6d6db703f883935e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MCP image content extraction and base64 image detection for tool results
+
+- [`d52de6c`](https://github.com/marschhuynh/nuvin-space/commit/d52de6cb325b69ce43702b8411e944d1e5d7c877) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(bash): add ignoreOutput option to discard stdout/stderr and return only exit code; update prompt formatting
+
+- [`3d12819`](https://github.com/marschhuynh/nuvin-space/commit/3d128190f8c6369ca105238c941e9e175f31d7d9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Polish message styles for error, warning, info, and system types with bordered boxes
+
+- [`9b79cba`](https://github.com/marschhuynh/nuvin-space/commit/9b79cba94cc16efba897dfa87949dca21c5a73db) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix ComboBox lag when holding delete/backspace: debounce search query, memoize list items, add O(1) position map, fix multi-keypress chunk handling
+
+- [#160](https://github.com/marschhuynh/nuvin-cli/pull/160) [`fad37c2`](https://github.com/marschhuynh/nuvin-space/commit/fad37c2880d5733ef561a84cbcacbcbd0f526060) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(events): add completion callbacks to custom-command:execute event
+
+- [`dbe79ab`](https://github.com/marschhuynh/nuvin-space/commit/dbe79ab78d5e93821f929823821723a553a8f081) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix command menu description rendering and wrapping.
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`1dd100d`](https://github.com/marschhuynh/nuvin-space/commit/1dd100d42d93c494562d735df91aecce2b7ef60d) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add tab completion for slash commands in TextInput
+
+- [`572184a`](https://github.com/marschhuynh/nuvin-space/commit/572184ad088edfba950cf846e0d9844a34e2f97d) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Enhance agent and skill list UI with bordered metadata display
+
+- [`47be715`](https://github.com/marschhuynh/nuvin-space/commit/47be7158a5e878e941dc91caa2dcf1ba9034bc67) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Enhance AutoScrollBox with vim-style keyboard nav, simplify TextWrapper usage, improve focus
+
+- [`d6d23c6`](https://github.com/marschhuynh/nuvin-space/commit/d6d23c6b9682e778e55d3f395d6fdfbf638ed589) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix focus order in modals by removing duplicate event emissions and adding stable tabIndex sorting
+
+- [`7bce888`](https://github.com/marschhuynh/nuvin-space/commit/7bce888d9113b532706ebca78969266a3f21deaa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(grep): add single file search and context lines; feat(cli): inject git context (branch, repo, commits) into agent system prompts; fix(cli): ComboBox text truncation with flexShrink
+
+- [`2c80900`](https://github.com/marschhuynh/nuvin-space/commit/2c80900bbd377c1b8d8e81e0bdf819da2495ac99) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add GitHub responses API support and tool validation tweaks.
+
+- [`55d7324`](https://github.com/marschhuynh/nuvin-space/commit/55d73245fc2e6e7748adb30bce5740d41868a5fa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refresh LSP diagnostics on file changes and load /export history.
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`7ae6cb6`](https://github.com/marschhuynh/nuvin-space/commit/7ae6cb668fe7d68e264f8bfe3b365f1977b90aa8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor Button to use useFocus directly, update AutoScrollBox, clean up demo files
+
+- [`9106fbc`](https://github.com/marschhuynh/nuvin-space/commit/9106fbcd77b8fde9c9c1a1d0ed17a3d93cd94da0) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix paste freeze when bracketed paste end marker arrives as separate chunk
+
+- [`0373a85`](https://github.com/marschhuynh/nuvin-space/commit/0373a85cf4b6868746f47d557e87e0f6ab7ff2e8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(core): add PermissionRequest hook for tool approval notifications; fix(core): add timeout handling and reconnection options to MCP client; docs(cli): update hooks usage and agent documentation
+
+- [`9ce689f`](https://github.com/marschhuynh/nuvin-space/commit/9ce689f212a5cd046f44fa171dcb0b0125a98c3b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add available tools and improve tool-selection heuristics in prompt.
+
+- [`c2b5de6`](https://github.com/marschhuynh/nuvin-space/commit/c2b5de61fcd6daca677d4560166989fa2f124e60) Thanks [@marschhuynh](https://github.com/marschhuynh)! - refactor: improve swap command UI and input area components
+
+- [`9830b82`](https://github.com/marschhuynh/nuvin-space/commit/9830b82b82cf640a6846ea9fd295a7b268a153a1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix RecentSessions width calculation to prevent overflow.
+
+- [`42b4cc7`](https://github.com/marschhuynh/nuvin-space/commit/42b4cc7099826b964d821bdc79c74e72a2bb8ee6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(ToolResultView): remove unused duration formatting and adjust layout for better display
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`3f2fb9f`](https://github.com/marschhuynh/nuvin-space/commit/3f2fb9f7bb493328226aa6e4d3a708ee20bc3e5a) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Show main args beside tool name in ToolCallViewer
+
+- [#149](https://github.com/marschhuynh/nuvin-cli/pull/149) [`baef0fb`](https://github.com/marschhuynh/nuvin-space/commit/baef0fbce650664a62cef340004360bb28b95864) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Shorten tool display names and add command creation docs
+
+- [`d5a7511`](https://github.com/marschhuynh/nuvin-space/commit/d5a7511f697917d5c43b8af8c01cb1b830608fec) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix UI layout issues with flex properties, scroll behavior, and React hook dependencies
+
+- Updated dependencies [[`458f15a`](https://github.com/marschhuynh/nuvin-space/commit/458f15a831ca7f5d4c54fabfbdf5a2a9e67fcdd4), [`ae426ba`](https://github.com/marschhuynh/nuvin-space/commit/ae426bab43077a14759e692d6d6db703f883935e), [`d52de6c`](https://github.com/marschhuynh/nuvin-space/commit/d52de6cb325b69ce43702b8411e944d1e5d7c877), [`ffb522d`](https://github.com/marschhuynh/nuvin-space/commit/ffb522d5c91c80d1fc54d5318d9f70c0c89e10f8), [`9e42bc5`](https://github.com/marschhuynh/nuvin-space/commit/9e42bc5f0fce408de46718f2dfaaf5f391780a5f), [`32b0f04`](https://github.com/marschhuynh/nuvin-space/commit/32b0f04e8ffb9e449c4fa1aaf6c572ed24ee7af2), [`7bce888`](https://github.com/marschhuynh/nuvin-space/commit/7bce888d9113b532706ebca78969266a3f21deaa), [`2c80900`](https://github.com/marschhuynh/nuvin-space/commit/2c80900bbd377c1b8d8e81e0bdf819da2495ac99), [`65ca384`](https://github.com/marschhuynh/nuvin-space/commit/65ca384d91f80ceef7618e866cd56bf8dd11472c), [`93da975`](https://github.com/marschhuynh/nuvin-space/commit/93da9755fc17231a4d1608bdfe49c85699bb84f5), [`354a1c7`](https://github.com/marschhuynh/nuvin-space/commit/354a1c75b088b2df5ad274a29558c566049a7ff1), [`0373a85`](https://github.com/marschhuynh/nuvin-space/commit/0373a85cf4b6868746f47d557e87e0f6ab7ff2e8), [`a916738`](https://github.com/marschhuynh/nuvin-space/commit/a9167387ba32d8958aca22bea4cdc7185a986106), [`f0c801c`](https://github.com/marschhuynh/nuvin-space/commit/f0c801cd5230fcdacbe337188d4d457fb62c51aa)]:
+  - @nuvin/nuvin-core@1.19.0
+
 ## 1.36.0-rc.19
 
 ### Patch Changes
