@@ -1,5 +1,14 @@
 # @nuvin/nuvin-cli
 
+## 1.36.0-rc.18
+
+### Patch Changes
+
+- [`7bce888`](https://github.com/marschhuynh/nuvin-space/commit/7bce888d9113b532706ebca78969266a3f21deaa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(grep): add single file search and context lines; feat(cli): inject git context (branch, repo, commits) into agent system prompts; fix(cli): ComboBox text truncation with flexShrink
+
+- Updated dependencies [[`7bce888`](https://github.com/marschhuynh/nuvin-space/commit/7bce888d9113b532706ebca78969266a3f21deaa)]:
+  - @nuvin/nuvin-core@1.19.0-rc.11
+
 ## 1.36.0-rc.17
 
 ### Minor Changes
