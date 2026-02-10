@@ -12,6 +12,8 @@
     "base64-image-tool-content",
     "bash-ignore-output",
     "bordered-message-styles",
+    "built-in-agent-edit-fix",
+    "combobox-input-lag-fix",
     "command-completion-callbacks",
     "command-menu-description-wrap",
     "command-tab-completion",

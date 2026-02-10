@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 1.19.0-rc.10
+
+### Patch Changes
+
+- [`ffb522d`](https://github.com/marschhuynh/nuvin-space/commit/ffb522d5c91c80d1fc54d5318d9f70c0c89e10f8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): allow editing all built-in agents via auto-copy to global location
+
 ## 1.19.0-rc.9
 
 ### Minor Changes
