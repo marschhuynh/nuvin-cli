@@ -48,9 +48,9 @@ export type AgentTemplate = {
 };
 
 export type CompleteAgent = Required<
-  Pick<AgentTemplate, 'instructions' | 'name' | 'description' | 'allowed_tools' | 'temperature'>
+  Pick<AgentTemplate, 'instructions' | 'name' | 'description' | 'allowed_tools'>
 > &
-  Pick<AgentTemplate, 'model' | 'disable_model_invocation' | 'user_invocable' | 'context' | 'agent' | 'provider' | 'top_p' | 'max_tokens' | 'timeout_ms' | 'share_context' | 'metadata'> & {
+  Pick<AgentTemplate, 'model' | 'disable_model_invocation' | 'user_invocable' | 'context' | 'agent' | 'provider' | 'temperature' | 'top_p' | 'max_tokens' | 'timeout_ms' | 'share_context' | 'metadata'> & {
     location?: 'built-in' | 'global' | 'profile' | 'local';
   };
 

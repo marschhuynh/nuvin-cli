@@ -36,6 +36,10 @@ export function createInMemoryAcpHarness() {
       };
     },
     getOrchestrator: () => ({ handleToolApproval: () => {} }),
+    getAvailableProviders: () => ['echo'],
+    getAvailableModels: async () => ['echo'],
+    getAvailableAgents: () => [{ agentId: 'main', name: 'Default' }],
+    getActiveAgentId: () => 'main',
   } as const;
 
   const server = new AcpServer({ transport, orchestratorManager: orchestratorManager as never, eventBus });
@@ -61,7 +65,7 @@ export function createInMemoryAcpHarness() {
       jsonrpc: '2.0',
       id: 3,
       method: 'session/prompt',
-      params: { sessionId, prompt: { content: [{ type: 'text', text: promptText }] } },
+      params: { sessionId, prompt: [{ type: 'text', text: promptText }] },
     });
 
     return {

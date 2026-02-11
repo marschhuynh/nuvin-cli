@@ -94,8 +94,8 @@ export type ChatMessage = {
 export type CompletionParams = {
   messages: ChatMessage[];
   model: string;
-  temperature: number;
-  topP: number;
+  temperature?: number;
+  topP?: number;
   maxTokens?: number;
   tools?: Array<{
     type: 'function';
@@ -479,9 +479,9 @@ export interface MetricsPort {
 export type AgentConfig = {
   id: string;
   systemPrompt: string;
-  topP: number;
+  topP?: number;
   model: string;
-  temperature: number;
+  temperature?: number;
   maxTokens?: number;
   enabledTools?: string[]; // names
   maxToolConcurrency?: number;

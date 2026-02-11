@@ -105,7 +105,7 @@ const AgentPreviewContent: React.FC<AgentPreviewProps> = ({ preview, onSave, onE
           <Text color={theme.modal.help} dimColor>
             Temperature:
           </Text>
-          <Text>{preview.temperature ?? 0.7}</Text>
+          <Text>{preview.temperature ?? 'Provider default'}</Text>
         </Box>
 
         <Box flexDirection="row" gap={2} marginY={1}>

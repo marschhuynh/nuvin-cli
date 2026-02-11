@@ -165,8 +165,12 @@ export class AgentManager {
     const specialistConfig: AgentConfig = {
       id: agentId,
       systemPrompt: config.instructions,
-      temperature: config.temperature ?? this.delegatingConfig.temperature,
-      topP: config.top_p ?? this.delegatingConfig.topP,
+      ...(config.temperature !== undefined || this.delegatingConfig.temperature !== undefined
+        ? { temperature: config.temperature ?? this.delegatingConfig.temperature }
+        : {}),
+      ...(config.top_p !== undefined || this.delegatingConfig.topP !== undefined
+        ? { topP: config.top_p ?? this.delegatingConfig.topP }
+        : {}),
       model: config.model ?? freshConfig.model ?? this.delegatingConfig.model,
       maxTokens: config.max_tokens ?? this.delegatingConfig.maxTokens,
       enabledTools: config.allowed_tools,

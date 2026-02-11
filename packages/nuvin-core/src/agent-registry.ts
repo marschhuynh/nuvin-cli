@@ -101,7 +101,7 @@ export class AgentRegistry {
       description,
       instructions: partial.instructions,
       allowed_tools,
-      temperature: partial.temperature ?? 0.7,
+      temperature: partial.temperature,
       model: partial.model,
       disable_model_invocation: partial.disable_model_invocation,
       user_invocable: partial.user_invocable,

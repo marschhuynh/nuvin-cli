@@ -703,9 +703,9 @@ export class AgentOrchestrator {
     const params: CompletionParams = {
       messages: providerMsgs,
       model: this.cfg.model,
-      temperature: this.cfg.temperature,
+      ...(this.cfg.temperature !== undefined && { temperature: this.cfg.temperature }),
       maxTokens: this.cfg.maxTokens,
-      topP: this.cfg.topP,
+      ...(this.cfg.topP !== undefined && { topP: this.cfg.topP }),
       tools: toolDefs.length ? toolDefs : undefined,
       tool_choice: toolDefs.length ? 'auto' : 'none',
       reasoning: reasoningParam,

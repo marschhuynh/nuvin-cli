@@ -1,128 +1,133 @@
 # AGENTS.md
 
-This file provides guidance to Nuvin CLI when working with code in this repository.
+This file provides guidance to Nuvin cli when working with code in this repository.
 
-## Common Commands
+## Commands
+
+All commands run from the monorepo root unless noted.
 
 ```bash
-# Development
-pnpm run:dev              # Run CLI in development mode (tsx)
-pnpm dev                  # Watch mode (tsup)
-pnpm run:prod             # Run production build
+# Build (must build core before cli — core is a workspace dependency)
+pnpm build                # Build core then cli (sequential)
+pnpm build:core           # Build only nuvin-core
+pnpm build:cli            # Build only nuvin-cli
 
-# Build
-pnpm build                # Build with scripts/build.js
-pnpm clean                # Remove dist/
+# Development
+pnpm run:dev              # Run CLI in dev mode (tsx, no build needed)
+pnpm dev                  # Watch mode (tsup rebuild on change)
+pnpm run:prod             # Run production build (dist/cli.js)
 
 # Testing
-pnpm test                 # Run all tests (vitest)
-pnpm test path/to/file    # Run specific test file
+pnpm test                 # Run all tests (core then cli, both vitest)
+pnpm --filter @nuvin/nuvin-cli test                    # CLI tests only
+pnpm --filter @nuvin/nuvin-core test                   # Core tests only
+cd packages/nuvin-cli && pnpm exec vitest run tests/manager.test.ts  # Single test file
+cd packages/nuvin-core && pnpm exec vitest run src/tests/base-llm.test.ts  # Single core test
 
-# Linting
-pnpm lint                 # Biome lint
-pnpm format               # Biome format (changed files)
+# Linting & formatting (Biome, not ESLint/Prettier)
+pnpm lint                 # Biome lint (CLI package)
+pnpm format               # Biome format changed files
+
+# Faster builds (skip tsc --noEmit)
+SKIP_TYPE_CHECK=1 pnpm build
+
+# Release (changesets)
+pnpm changeset            # Create changeset
+pnpm version-packages     # Bump versions
+pnpm release              # Publish to npm
 ```
 
-## Architecture Overview
+**Biome rules:** 2-space indent, single quotes, 120-char line width, `noExplicitAny: error`. Config at root `biome.json`.
 
-### Core Technologies
-- **React/Ink** - Terminal UI framework for interactive CLI
-- **TypeScript** - Strict mode, ES2020 target, JSX react-jsx
-- **@nuvin/nuvin-core** - Core orchestrator engine (LLM providers, tools, agents)
-- **tsup** - Bundler for production builds
-- **Vitest** - Test runner with React plugin
-- **Biome** - Linting and formatting (2-space indent, single quotes, 120 line width)
-
-### Application Flow
+## Monorepo Structure
 
 ```
-cli.tsx (entry)
-    ↓
-ConfigManager.load() → merges global/local/explicit/env/CLI configs
-    ↓
-render(<App />) wrapped in providers:
-    ThemeProvider → StdoutDimensionsProvider → ConfigProvider →
-    NotificationProvider → ToolApprovalProvider → CommandProvider →
-    ExplainModeProvider → ConfigBridge
-    ↓
-App.tsx initializes useOrchestrator() hook
-    ↓
-OrchestratorManager.init() → creates AgentOrchestrator + MCPServerManager
+packages/
+├── nuvin-core/    # Headless orchestration engine (LLM, tools, agents, MCP)
+├── nuvin-cli/     # Terminal UI application (React/Ink TUI)
+└── ink/           # Forked Ink (custom Yoga layout, position: absolute/sticky, z-index)
 ```
 
-### Key Singletons
+- **pnpm workspaces** with `workspace:^` / `workspace:*` references
+- The root `package.json` overrides `ink` → `npm:@nuvin/ink@6.6.4` globally so all packages use the fork
+- Build order matters: `nuvin-core` → `nuvin-cli` (cli imports core)
 
-- **`orchestratorManager`** (`source/services/OrchestratorManager.ts`) - Central agent coordination, LLM creation, session management, MCP server management
-- **`eventBus`** (`source/services/EventBus.ts`) - Typed event emitter for UI updates, tool approvals, keyboard events, command lifecycle
-- **`commandRegistry`** (`source/modules/commands/registry.ts`) - Slash command registration and execution
-- **`ConfigManager.getInstance()`** (`source/config/manager.ts`) - Layered config with scopes: global < local < explicit < env < direct
+## Architecture
 
-### Event-Driven Communication
+### nuvin-core (Hexagonal / Ports & Adapters)
 
-Components communicate via `eventBus` events:
-- `ui:line` / `ui:lines:set` / `ui:lines:clear` - Message display
-- `ui:toolApprovalRequired` - Tool approval workflow
-- `ui:command:activated` / `ui:command:deactivated` - Command UI state
-- `conversation:created` - Session lifecycle
+The core is a headless library with no terminal or React dependencies. All external concerns are abstracted behind **port interfaces** in `src/ports.ts`:
 
-### Command System
+| Port | Purpose |
+|------|---------|
+| `LLMPort` | LLM completion (generate + stream) |
+| `LLMFactory` | Create LLM instances from config |
+| `ToolPort` | Tool definitions + execution |
+| `MemoryPort<T>` | Key-value conversation storage |
+| `MetadataPort<T>` | Key-value metadata storage |
+| `EventPort` | Emit `AgentEvent` (the single event stream) |
+| `MetricsPort` | Token/cost/timing metrics |
+| `ContextBuilder` | Convert history → provider messages |
+| `HookPort` | Lifecycle hooks (before/after tool calls) |
 
-Commands in `source/modules/commands/definitions/` can be:
-- **Function commands** - Execute handler and return
-- **Component commands** - Render React component until dismissed
+**`AgentOrchestrator`** (`src/orchestrator.ts`, ~1200 lines) is the central class. It receives all ports via constructor injection and runs the message loop: user message → LLM call → tool execution → loop until done. It emits `AgentEvent` for every lifecycle transition.
 
-Register commands via `commandRegistry.register()`. Component commands use `createState()` for local state.
+**`AgentEvent`** types (`AgentEventTypes` enum in `src/ports.ts`): `MessageStarted`, `ToolCalls`, `ToolApprovalRequired`, `ToolResult`, `AssistantChunk`, `AssistantMessage`, `StreamFinish`, `Done`, `Error`, `SubAgent*`, `UserQuestion*`.
 
-### UI Event Adapter
+**Tool system:** Each tool implements `FunctionTool` interface (`src/tools/types.ts`) with `definition()` and `execute()`. `ToolRegistry` (`src/tools.ts`) wraps tools into a `ToolPort`. `CompositeToolPort` merges multiple tool ports (base + MCP tools).
 
-`UIEventAdapter` (`source/adapters/ui-event-adapter.tsx`) bridges `@nuvin/nuvin-core` events to React UI:
-- Extends `PersistingConsoleEventPort`
-- Processes `AgentEvent` into `MessageLine` via `eventProcessor.ts`
-- Handles streaming text, tool calls, thinking blocks
+**LLM providers:** `BaseLLM` (`src/llm-providers/base-llm.ts`) provides OpenAI-compatible implementation. Specialized subclasses for Anthropic (AI SDK and compat), GitHub. New OpenAI-compatible providers can be added via `llm-provider-config.json` without code changes.
 
-### Configuration Priority
+**Delegation system** (`src/delegation/`): `DelegationService` spawns sub-agent orchestrators with their own memory, tools, and LLM. `AgentRegistry` manages agent templates. The `AssignTool` coordinates delegation lifecycle.
 
-1. Global: `~/.nuvin-cli/config.yaml`
-2. Local: `./.nuvin-cli/config.yaml`
-3. Explicit: `--config path`
-4. Environment: `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.
-5. CLI flags: `--provider`, `--model`, `--api-key` (highest priority)
+### nuvin-cli (React/Ink TUI)
 
-### Memory & Sessions
+**Entry:** `source/cli.tsx` → parses CLI args (meow), loads config, renders `<App />` inside nested React context providers.
 
-- **PersistedMemory** - JSON file persistence at `~/.nuvin-cli/sessions/<id>/history.json`
-- **InMemoryMemory** - Non-persisted fallback
-- Sessions tracked via `sessionMetricsService` for token usage and costs
-
-### MCP Integration
-
-`MCPServerManager` handles Model Context Protocol servers:
-- Config in `mcp.servers` section
-- Tools merged into orchestrator via `CompositeToolPort`
-- Per-tool allow/deny configuration
-
-## Code Conventions
-
-- Path alias: `@/*` → `source/*`
-- Hooks in `source/hooks/`, export via `index.ts`
-- Components in `source/components/`, each in own directory with `index.ts` if complex
-- Services are singletons exported from module
-- Tests mirror source structure in `tests/`
-
-## Provider Auth Structure
-
-```typescript
-providers: {
-  [provider]: {
-    auth: [{ type: 'api-key', 'api-key': 'xxx' }],
-    'current-auth': 'api-key',
-    defaultModel?: string
-  }
-}
+**Provider hierarchy:**
+```
+ThemeProvider → StdoutDimensionsProvider → ConfigProvider →
+NotificationProvider → ToolApprovalProvider → CommandProvider →
+UserQuestionProvider → AltModeProvider → ConfigBridge → App
 ```
 
-## Testing Notes
+**Key singletons** (module-level exports, not React state):
+- `OrchestratorManager` (`source/services/OrchestratorManager.ts`) — creates/manages `AgentOrchestrator`, bridges CLI config to core ports
+- `EventBus` (`source/services/EventBus.ts`) — typed pub/sub for UI events (separate from core's `AgentEvent`)
+- `commandRegistry` (`source/modules/commands/registry.ts`) — slash command registration
 
-- Some tests excluded in vitest.config.ts (use ava): `inputArea.test.ts`, `utils.test.ts`
-- React component tests use `@vitejs/plugin-react` with babel-plugin-react-compiler
-- Test files: `tests/**/*.test.{ts,tsx}`
+**Event bridging:** `UIEventAdapter` (`source/adapters/`) implements core's `EventPort`, receives `AgentEvent` from the orchestrator, transforms them into `MessageLine` objects via `eventProcessor.ts`, and emits UI events on `EventBus` for React components.
+
+**Command system:** Commands in `source/modules/commands/definitions/` are either function commands (handler returns) or component commands (render React component as overlay). Two types registered via `commandRegistry.register()`.
+
+**ACP server mode:** `source/acp/` implements Agent Communication Protocol over stdio JSON-RPC. Entry via `nuvin --acp`. Reuses same config resolution and tool system as the TUI.
+
+### Configuration System
+
+Layered config with priority (highest wins): CLI flags → env vars → explicit file (`--config`) → workspace (`./.nuvin/config.yaml`) → global (`~/.nuvin/config.yaml`).
+
+`ConfigManager` (`source/config/manager.ts`) is a singleton with profile support. Profiles store isolated configs at `~/.nuvin/profiles/<name>/`.
+
+## Key Conventions
+
+- **Path alias:** `@/*` → `source/*` (in tsup, vitest, and tsconfig)
+- **ESM-only:** Both packages use `"type": "module"`. Imports need `.js` extensions in core.
+- **TypeScript strict mode** enabled in both packages. Target ES2020.
+- **React Compiler:** CLI uses `babel-plugin-react-compiler` (configured in vitest.config.ts and tsup)
+- **Markdown as modules:** `.md` files imported as text strings via custom loader
+
+## Testing
+
+- **nuvin-core:** Vitest, pure Node environment. Tests at `src/tests/**/*.test.ts`.
+- **nuvin-cli:** Vitest + `@vitejs/plugin-react`. Tests at `tests/**/*.test.{ts,tsx}`. Node environment (not jsdom — terminal UI).
+- Two legacy tests use AVA and are excluded from vitest: `tests/inputArea.test.ts`, `tests/utils.test.ts`.
+- React component tests use `ink-testing-library` for render output verification.
+- Core tests with `--typecheck` flag enabled (validates types during test run).
+
+## Build Pipeline
+
+Both packages use `tsup` → `scripts/build.js`:
+1. Optional `tsc --noEmit` type check (skip with `SKIP_TYPE_CHECK=1`)
+2. `tsup` compiles to `dist/` (ESM, Node 18 target, minified)
+3. JavaScript obfuscator applied to output `.js` files
+4. Version info generated

@@ -3,9 +3,7 @@ import type { AgentTemplate } from '@nuvin/nuvin-core';
 
 import nuvinAgentMd from './nuvin-agent.md';
 import codeReviewerMd from '../builtin-agents/code-reviewer.md';
-import integrationTestEngineerMd from '../builtin-agents/integration-test-engineer.md';
 import softwareEngineerMd from '../builtin-agents/software-engineer.md';
-import testCaseCounterMd from '../builtin-agents/test-case-counter.md';
 import explorerMd from '../builtin-agents/explore.md';
 
 function parseFrontmatter(content: string): { frontmatter: Record<string, unknown>; body: string } {
@@ -46,8 +44,6 @@ function parseAgent(content: string): AgentTemplate {
 export const builtinAgents: AgentTemplate[] = [
   parseAgent(nuvinAgentMd),
   parseAgent(codeReviewerMd),
-  parseAgent(integrationTestEngineerMd),
   parseAgent(softwareEngineerMd),
-  parseAgent(testCaseCounterMd),
   parseAgent(explorerMd),
 ];

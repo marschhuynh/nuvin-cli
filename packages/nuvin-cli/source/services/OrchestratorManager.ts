@@ -64,7 +64,7 @@ const defaultModels: Record<ProviderKey, string> = {
   openrouter: 'openai/gpt-4.1',
   deepinfra: 'meta-llama/Meta-Llama-3.1-70B-Instruct',
   github: 'gpt-4.1',
-  zai: 'glm-4.5',
+  zai: 'glm-5',
   anthropic: 'claude-sonnet-4-5',
   moonshot: 'moonshot-v1-8k',
 };
@@ -477,8 +477,8 @@ export class OrchestratorManager {
       const agentConfig = {
         id: 'nuvin-agent',
         systemPrompt: renderTemplate(mainPrompt, { injectedSystem }),
-        temperature: mainAgentTemplate?.temperature ?? 1,
-        topP: mainAgentTemplate?.top_p ?? 1,
+        ...(mainAgentTemplate?.temperature !== undefined && { temperature: mainAgentTemplate.temperature }),
+        ...(mainAgentTemplate?.top_p !== undefined && { topP: mainAgentTemplate.top_p }),
         maxTokens: mainAgentTemplate?.max_tokens,
         model: currentConfig.model,
         enabledTools: getEnabledTools(),
@@ -596,6 +596,43 @@ export class OrchestratorManager {
 
   getConfig() {
     return this.orchestrator?.getConfig();
+  }
+
+  getAvailableProviders(): string[] {
+    return this.llmFactory.getAvailableProviders();
+  }
+
+  async getAvailableModels(provider?: ProviderKey): Promise<string[]> {
+    const targetProvider = provider ?? this.getCurrentConfig().provider;
+    try {
+      return await this.llmFactory.getModels(targetProvider);
+    } catch {
+      return [];
+    }
+  }
+
+  getAvailableAgents(): Array<{ agentId: string; name: string; description?: string }> {
+    const tools = this.orchestrator?.getTools();
+    const agentAwareTools = tools as (ToolPort & AgentAwareToolPort) | undefined;
+    const agentRegistry = agentAwareTools?.getAgentRegistry?.();
+    const enabledConfig = (this.configManager.getConfig().agentsEnabled as Record<string, boolean>) || {};
+
+    const listedAgents = (agentRegistry?.list?.() ?? [])
+      .filter((agent) => !!agent.name && agent.name !== 'nuvin' && enabledConfig[agent.name as string] !== false)
+      .map((agent) => ({
+        agentId: agent.name as string,
+        name: (agent.name as string) || 'Agent',
+        description: (agent.description as string) || undefined,
+      }));
+
+    return [
+      {
+        agentId: 'main',
+        name: 'Default',
+        description: 'Nuvin default agent behavior',
+      },
+      ...listedAgents,
+    ];
   }
 
   getActiveAgentId(): string {
@@ -1584,8 +1621,8 @@ Keep the summary clear and concise, typically 3-5 paragraphs.`;
     const mainConfig: AgentConfig = {
       id: 'nuvin-agent',
       systemPrompt: renderTemplate(mainPrompt, { injectedSystem }),
-      temperature: mainAgentTemplate?.temperature ?? 1,
-      topP: mainAgentTemplate?.top_p ?? 1,
+      ...(mainAgentTemplate?.temperature !== undefined && { temperature: mainAgentTemplate.temperature }),
+      ...(mainAgentTemplate?.top_p !== undefined && { topP: mainAgentTemplate?.top_p }),
       maxTokens: mainAgentTemplate?.max_tokens,
       model: currentConfig.model,
       enabledTools: getEnabledTools(),

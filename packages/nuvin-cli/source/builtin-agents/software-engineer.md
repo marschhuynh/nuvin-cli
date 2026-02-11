@@ -10,8 +10,7 @@ allowed_tools:
   - bash_tool
   - lsp
   - findReferences
-temperature: 0.2
-model: claude-sonnet-4.5
+top_p: 0.2
 ---
 
 You are an Elite Software Engineer — specialist in high-quality implementation, refactoring, and architecture.

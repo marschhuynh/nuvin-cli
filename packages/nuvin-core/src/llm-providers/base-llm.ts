@@ -24,9 +24,10 @@ export class LLMError extends Error {
   }
 }
 
-type CompletionBody = Omit<CompletionParams, 'maxTokens' | 'topP'> & {
+type CompletionBody = Omit<CompletionParams, 'maxTokens' | 'topP' | 'temperature'> & {
   max_tokens?: number;
   top_p?: number;
+  temperature?: number;
   stream: boolean;
 };
 
@@ -254,10 +255,10 @@ export abstract class BaseLLM implements LLMPort {
     const body: CompletionBody = {
       model: enhancedParams.model,
       messages: enhancedParams.messages,
-      temperature: enhancedParams.temperature,
-      top_p: enhancedParams.topP,
       stream: false,
       max_tokens: enhancedParams.maxTokens ?? 64000,
+      ...(enhancedParams.temperature !== undefined && { temperature: enhancedParams.temperature }),
+      ...(enhancedParams.topP !== undefined && { top_p: enhancedParams.topP }),
       ...(enhancedParams.reasoning && { reasoning: enhancedParams.reasoning }),
       ...(enhancedParams.usage && { usage: enhancedParams.usage }),
     };
@@ -295,10 +296,10 @@ export abstract class BaseLLM implements LLMPort {
     const body: CompletionBody = {
       model: enhancedParams.model,
       messages: enhancedParams.messages,
-      temperature: enhancedParams.temperature,
-      top_p: enhancedParams.topP,
       stream: true,
       max_tokens: enhancedParams.maxTokens ?? 64000,
+      ...(enhancedParams.temperature !== undefined && { temperature: enhancedParams.temperature }),
+      ...(enhancedParams.topP !== undefined && { top_p: enhancedParams.topP }),
       ...(enhancedParams.reasoning && { reasoning: enhancedParams.reasoning }),
       ...(enhancedParams.usage && { usage: enhancedParams.usage }),
     };

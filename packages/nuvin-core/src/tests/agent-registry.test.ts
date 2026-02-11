@@ -25,7 +25,7 @@ describe('AgentRegistry', () => {
     expect(registry.exists('Custom Agent')).toBe(true);
     const retrieved = registry.get('Custom Agent');
     expect(retrieved?.name).toBe('Custom Agent');
-    expect(retrieved?.temperature).toBe(0.7);
+    expect(retrieved?.temperature).toBeUndefined();
   });
 
   it('should unregister an agent', () => {

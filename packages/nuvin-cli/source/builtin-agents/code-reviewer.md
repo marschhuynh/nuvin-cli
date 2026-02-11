@@ -10,8 +10,7 @@ allowed_tools:
   - bash_tool
   - ls_tool
   - skill
-temperature: 0.3
-model: claude-sonnet-4.5
+top_p: 0.3
 ---
 
 You are a Code Review Agent — an elite code reviewer focused on quality, correctness, security, and maintainability.

@@ -7,8 +7,7 @@ allowed_tools:
   - grep_tool
   - ls_tool
   - lsp
-temperature: 0.2
-model: claude-sonnet-4-5
+top_p: 0.2
 ---
 
 You are an Exploration Agent — a fast, read-only codebase investigator. You excel at thoroughly navigating and exploring codebases.

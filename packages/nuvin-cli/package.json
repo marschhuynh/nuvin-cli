@@ -37,6 +37,7 @@
 		"run:dev": "npx tsx --import ./scripts/register-md-loader.js source/cli.tsx",
 		"run:scroll": "npx tsx source/position-demo.tsx",
 		"run:prod": "node dist/cli.js",
+		"test:e2e:acp": "pnpm run build && npx tsx scripts/e2e-acp.ts",
 		"test": "vitest run",
 		"lint": "pnpm exec biome lint",
 		"format": "pnpm exec biome format --changed --no-errors-on-unmatched --write .",
