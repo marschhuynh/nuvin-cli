@@ -5,7 +5,7 @@ export type AcpContentBlock =
 
 export function toUserMessagePayload(blocks: AcpContentBlock[]) {
   const textParts: string[] = [];
-  const attachments: Array<{ mimeType: string; data: string; altText?: string }> = [];
+  const attachments: Array<{ type: 'image'; mimeType: string; data: string; altText?: string }> = [];
 
   for (const block of blocks) {
     if (block.type === 'text') {
@@ -16,7 +16,7 @@ export function toUserMessagePayload(blocks: AcpContentBlock[]) {
       textParts.push(`${label}\n${block.resource.text ?? ''}`.trim());
     }
     if (block.type === 'image') {
-      attachments.push({ mimeType: block.mimeType, data: block.data, altText: block.altText });
+      attachments.push({ type: 'image', mimeType: block.mimeType, data: block.data, altText: block.altText });
     }
   }
 

@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import type { AgentEvent, ToolExecutionResult } from '@nuvin/nuvin-core';
 import { AgentEventTypes } from '@nuvin/nuvin-core';
 import { ConfigManager } from '../config/manager.js';
+import { THINKING_LEVELS, type ThinkingLevel } from '../config/types.js';
 import { getSessionDir } from '../hooks/useSessionManagement.js';
 import type { TypedEventBus } from '../services/EventBus.js';
 import { eventBus } from '../services/EventBus.js';
@@ -74,7 +75,6 @@ export class AcpServer {
   private eventBus: TypedEventBus;
   private configManager: ConfigManager;
   private sessionId: string | null = null;
-  private sessionDir: string | null = null;
   private streamingMessageIds = new Set<string>();
   private cancelController: AbortController | null = null;
   private streamingEnabled = true;
@@ -115,7 +115,6 @@ export class AcpServer {
     const result = await this.deps.orchestratorManager.createNewConversation({ memPersist: true });
 
     this.sessionId = result.sessionId ?? String(Date.now());
-    this.sessionDir = result.sessionDir ?? getSessionDir(this.sessionId, this.getCurrentProfile());
 
     return {
       sessionId: this.sessionId,
@@ -138,7 +137,6 @@ export class AcpServer {
 
     await this.deps.orchestratorManager.switchToSession({ sessionId, sessionDir });
     this.sessionId = sessionId;
-    this.sessionDir = sessionDir;
 
     const historyFile = path.join(sessionDir, 'history.cli.json');
     if (fs.existsSync(historyFile)) {
@@ -265,12 +263,16 @@ export class AcpServer {
         return;
       case 'thinking': {
         const normalized = String(value).toUpperCase();
-        this.configManager.loadConfig({ thinking: normalized }, 'direct');
+        if (Object.values(THINKING_LEVELS).includes(normalized as ThinkingLevel)) {
+          this.configManager.loadConfig({ thinking: normalized as ThinkingLevel }, 'direct');
+        }
         return;
       }
       case 'reasoningEffort': {
         const normalized = String(value).toUpperCase();
-        this.configManager.loadConfig({ thinking: normalized }, 'direct');
+        if (Object.values(THINKING_LEVELS).includes(normalized as ThinkingLevel)) {
+          this.configManager.loadConfig({ thinking: normalized as ThinkingLevel }, 'direct');
+        }
         return;
       }
       case 'requireToolApproval':
