@@ -5,6 +5,7 @@ function createMockHandler(): AcpRequestHandler {
   return {
     handleInitialize: vi.fn().mockResolvedValue({ protocolVersion: 1 }),
     handleSessionNew: vi.fn().mockResolvedValue({ sessionId: 's1' }),
+    handleSessionList: vi.fn().mockResolvedValue({ sessions: [], nextCursor: null }),
     handleSessionLoad: vi.fn().mockResolvedValue({}),
     handleSessionPrompt: vi.fn().mockResolvedValue({ stopReason: 'end_turn' }),
     handleSessionCancel: vi.fn().mockResolvedValue({}),
@@ -101,6 +102,7 @@ describe('ACP router', () => {
     const methods = [
       'initialize',
       'session/new',
+      'session/list',
       'session/load',
       'session/prompt',
       'session/cancel',

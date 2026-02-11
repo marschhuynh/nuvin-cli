@@ -15,6 +15,7 @@ export type JsonRpcResponse = {
 export type AcpRequestHandler = {
   handleInitialize(params: Record<string, unknown>): Promise<unknown>;
   handleSessionNew(params: Record<string, unknown>): Promise<unknown>;
+  handleSessionList(params: Record<string, unknown>): Promise<unknown>;
   handleSessionLoad(params: Record<string, unknown>): Promise<unknown>;
   handleSessionPrompt(params: Record<string, unknown>): Promise<unknown>;
   handleSessionCancel(params: Record<string, unknown>): Promise<unknown>;
@@ -46,6 +47,12 @@ export async function routeAcpRequest(
       }
       case "session/new": {
         result = await server.handleSessionNew(
+          (message.params ?? {}) as Record<string, unknown>
+        );
+        break;
+      }
+      case "session/list": {
+        result = await server.handleSessionList(
           (message.params ?? {}) as Record<string, unknown>
         );
         break;

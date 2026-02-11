@@ -10,6 +10,7 @@ import type { CommandDefinition } from "../modules/commands/types.js";
 import type { TypedEventBus } from "../services/EventBus.js";
 import { eventBus } from "../services/EventBus.js";
 import type { OrchestratorManager } from "../services/OrchestratorManager.js";
+import { getVersion } from "../utils/version.js";
 import {
   toUserMessagePayload,
   toTextContentBlock,
@@ -44,16 +45,25 @@ export type AcpInitializeResult = {
   protocolVersion: number;
   agentCapabilities: {
     loadSession: boolean;
-    mcpCapabilities: {
-      http: boolean;
-      sse: boolean;
-    };
     promptCapabilities: {
       image: boolean;
-      embeddedContext: boolean;
       audio: boolean;
     };
-    sessionCapabilities: Record<string, never>;
+    sessionCapabilities: {
+      loadSession: boolean;
+      list?: Record<string, never>;
+      configureSession: {
+        userConfigurable: {
+          model: boolean;
+          modes: boolean;
+          modelReasoningEffort: boolean;
+          configOptions: boolean;
+        };
+      };
+      auth: {
+        supportsAuthChange: boolean;
+      };
+    };
   };
   agentInfo: { name: string; title: string; version: string };
   authMethods: unknown[];
@@ -78,6 +88,11 @@ type SessionUpdate = {
 type AcpSessionNewParams = {
   cwd?: string;
   mcpServers?: unknown[];
+};
+
+type AcpSessionListParams = {
+  cwd?: string;
+  cursor?: string;
 };
 
 type AcpSessionPromptParams = {
@@ -200,15 +215,27 @@ export class AcpServer {
       protocolVersion: ACP_PROTOCOL_VERSION,
       agentCapabilities: {
         loadSession: memPersist,
-        mcpCapabilities: { http: false, sse: false },
         promptCapabilities: {
           image: true,
-          embeddedContext: true,
           audio: false,
         },
-        sessionCapabilities: {},
+        sessionCapabilities: {
+          loadSession: memPersist,
+          ...(memPersist ? { list: {} } : {}),
+          configureSession: {
+            userConfigurable: {
+              model: true,
+              modes: true,
+              modelReasoningEffort: false,
+              configOptions: true,
+            },
+          },
+          auth: {
+            supportsAuthChange: false,
+          },
+        },
       },
-      agentInfo: { name: "nuvin", title: "Nuvin", version: "0.0.0" },
+      agentInfo: { name: "nuvin", title: "Nuvin", version: getVersion() },
       authMethods: [],
     };
   }
@@ -268,11 +295,15 @@ export class AcpServer {
     this.sessionId = sessionId;
     this.scheduleAvailableCommandsUpdate();
 
-    const historyFile = path.join(sessionDir, "history.cli.json");
-    if (fs.existsSync(historyFile)) {
+    const historyFiles = [
+      path.join(sessionDir, "history.cli.json"),
+      path.join(sessionDir, "history.json"),
+    ];
+    const historyFile = historyFiles.find((file) => fs.existsSync(file));
+    if (historyFile) {
       const updates = await loadSessionHistoryUpdates(historyFile);
       for (const update of updates) {
-        this.emitUpdate(update.update as SessionUpdate);
+        this.deferUpdate(update.update as SessionUpdate);
       }
     }
 
@@ -285,6 +316,32 @@ export class AcpServer {
       configOptions: await this.buildSessionConfigOptions(precomputedModels),
       models: await this.modelResolver.buildModelsState(precomputedModels),
       modes: this.buildModesState(),
+    };
+  }
+
+  async handleSessionList(params: AcpSessionListParams) {
+    if (!this.isMemPersistEnabled()) {
+      return {
+        sessions: [],
+        nextCursor: null,
+      };
+    }
+
+    await this.ensureOrchestrator();
+
+    const resolvedCwd = this.resolveCwd(params.cwd);
+    const sessions = this.listPersistedSessions(resolvedCwd);
+    const pageSize = 50;
+    const startOffset = this.decodeSessionListCursor(params.cursor);
+    const page = sessions.slice(startOffset, startOffset + pageSize);
+    const nextOffset = startOffset + page.length;
+
+    return {
+      sessions: page,
+      nextCursor:
+        nextOffset < sessions.length
+          ? this.encodeSessionListCursor(nextOffset)
+          : null,
     };
   }
 
@@ -1085,6 +1142,149 @@ export class AcpServer {
     this.deps.orchestratorManager.updateConfig({
       enabledTools: filteredTools,
     });
+  }
+
+  private listPersistedSessions(defaultCwd: string): Array<{
+    sessionId: string;
+    cwd: string;
+    title: string;
+    updatedAt: string;
+  }> {
+    const sessionsRoot = path.dirname(
+      getSessionDir("__acp_probe__", this.getCurrentProfile())
+    );
+    if (!fs.existsSync(sessionsRoot)) {
+      return [];
+    }
+
+    const entries = fs
+      .readdirSync(sessionsRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    entries.sort((a, b) => {
+      const aNum = Number(a);
+      const bNum = Number(b);
+      if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+        return bNum - aNum;
+      }
+      return b.localeCompare(a);
+    });
+
+    return entries.map((sessionId) => {
+      const sessionDir = path.join(sessionsRoot, sessionId);
+      const parsedHistory = this.readSessionHistory(sessionDir);
+      const history = parsedHistory?.messages ?? [];
+      const title =
+        parsedHistory?.topic ||
+        this.extractLastUserText(history) ||
+        `Session ${sessionId}`;
+      const updatedAt =
+        parsedHistory?.updatedAt || this.getSessionUpdatedAt(sessionDir);
+
+      return {
+        sessionId,
+        cwd: defaultCwd,
+        title,
+        updatedAt,
+      };
+    });
+  }
+
+  private readSessionHistory(sessionDir: string): {
+    messages: Array<{ role?: string; content?: unknown }>;
+    topic?: string;
+    updatedAt?: string;
+  } | null {
+    const historyFile = [
+      path.join(sessionDir, "history.cli.json"),
+      path.join(sessionDir, "history.json"),
+    ].find((file) => fs.existsSync(file));
+    if (!historyFile) {
+      return null;
+    }
+
+    try {
+      const raw = fs.readFileSync(historyFile, "utf-8");
+      const parsed = JSON.parse(raw) as {
+        default?: Array<{ role?: string; content?: unknown }>;
+        cli?: Array<{ role?: string; content?: unknown }>;
+        __metadata__default?: Array<{ topic?: string; updatedAt?: string }>;
+        __metadata__cli?: Array<{ topic?: string; updatedAt?: string }>;
+      };
+
+      const messages = parsed.default ?? parsed.cli ?? [];
+      const metadata =
+        parsed.__metadata__default?.[0] ?? parsed.__metadata__cli?.[0];
+
+      return {
+        messages,
+        topic:
+          typeof metadata?.topic === "string" ? metadata.topic : undefined,
+        updatedAt:
+          typeof metadata?.updatedAt === "string"
+            ? metadata.updatedAt
+            : undefined,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private extractLastUserText(
+    messages: Array<{ role?: string; content?: unknown }>
+  ): string | undefined {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message?.role !== "user") {
+        continue;
+      }
+
+      const text = typeof message.content === "string" ? message.content : "";
+      if (!text.trim()) {
+        continue;
+      }
+
+      const singleLine = text.replace(/\s+/g, " ").trim();
+      return singleLine.length > 80
+        ? `${singleLine.slice(0, 77)}...`
+        : singleLine;
+    }
+
+    return undefined;
+  }
+
+  private getSessionUpdatedAt(sessionDir: string): string {
+    try {
+      return fs.statSync(sessionDir).mtime.toISOString();
+    } catch {
+      return new Date().toISOString();
+    }
+  }
+
+  private encodeSessionListCursor(offset: number): string {
+    return Buffer.from(JSON.stringify({ offset }), "utf-8").toString(
+      "base64url"
+    );
+  }
+
+  private decodeSessionListCursor(cursor?: string): number {
+    if (!cursor) {
+      return 0;
+    }
+
+    try {
+      const decoded = Buffer.from(cursor, "base64url").toString("utf-8");
+      const parsed = JSON.parse(decoded) as { offset?: unknown };
+      const offset = Number(parsed.offset);
+      if (Number.isFinite(offset) && offset >= 0) {
+        return Math.floor(offset);
+      }
+    } catch {
+      // ignore malformed cursors and default to first page
+    }
+
+    return 0;
   }
 
   private getCurrentProfile(): string | undefined {

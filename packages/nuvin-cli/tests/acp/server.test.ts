@@ -37,6 +37,25 @@ describe('AcpServer', () => {
     const result = await server.handleInitialize({ protocolVersion: 1, clientCapabilities: {} });
     expect(result.protocolVersion).toBe(1);
     expect(result.agentCapabilities).toBeDefined();
+    expect(result.agentCapabilities.promptCapabilities).toEqual({
+      image: true,
+      audio: false,
+    });
+    expect(result.agentCapabilities.sessionCapabilities).toEqual({
+      loadSession: true,
+      list: {},
+      configureSession: {
+        userConfigurable: {
+          model: true,
+          modes: true,
+          modelReasoningEffort: false,
+          configOptions: true,
+        },
+      },
+      auth: {
+        supportsAuthChange: false,
+      },
+    });
   });
 
   it('emits descriptive tool call titles', async () => {
@@ -87,6 +106,34 @@ describe('AcpServer', () => {
         { id: 'code-reviewer', name: 'code-reviewer', description: 'Review code quality and correctness.' },
       ],
     });
+  });
+
+  it('returns paginated sessions for session/list', async () => {
+    const server = new AcpServer({ transport: mockTransport, orchestratorManager: mockOrchestrator as never });
+    const fakeSessions = Array.from({ length: 55 }, (_, i) => ({
+      sessionId: `s${i}`,
+      cwd: '/tmp/work',
+      title: `Session ${i}`,
+      updatedAt: new Date(2026, 0, 1, 0, i).toISOString(),
+    }));
+    vi.spyOn(server as any, 'listPersistedSessions').mockReturnValue(fakeSessions);
+
+    const first = (await server.handleSessionList({ cwd: '/tmp/work' })) as {
+      sessions: Array<{ sessionId: string }>;
+      nextCursor: string | null;
+    };
+    expect(first.sessions).toHaveLength(50);
+    expect(first.nextCursor).toBeTruthy();
+
+    const second = (await server.handleSessionList({
+      cwd: '/tmp/work',
+      cursor: first.nextCursor ?? undefined,
+    })) as {
+      sessions: Array<{ sessionId: string }>;
+      nextCursor: string | null;
+    };
+    expect(second.sessions).toHaveLength(5);
+    expect(second.nextCursor).toBeNull();
   });
 
   it('emits available_commands_update after session/new', async () => {
