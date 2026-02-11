@@ -34,10 +34,9 @@ export type ToolCall = {
   };
   editInstruction?: string;
   // Per-tool approval tracking
-  approvalId?: string;        // Unique ID for this tool's approval (if needs approval)
+  approvalId?: string; // Unique ID for this tool's approval (if needs approval)
   requiresApproval?: boolean; // true if this tool needs user approval before execution
 };
-
 
 export type TextContentPart = {
   type: 'text';
@@ -111,16 +110,22 @@ export type CompletionParams = {
     effort: string;
   };
   // Claude-style thinking config (Anthropic API extended thinking)
-  thinking?: {
-    type: 'enabled';
-    budget_tokens: number;
-  } | {
-    type: 'disabled';
-  };
+  thinking?:
+    | {
+        type: 'enabled';
+        budget_tokens: number;
+      }
+    | {
+        type: 'disabled';
+      };
   usage?: {
     include?: boolean;
   };
   [key: string]: unknown;
+};
+
+export type ResponseParams = CompletionParams & {
+  store?: boolean;
 };
 
 export type UsageData = {

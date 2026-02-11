@@ -10,13 +10,14 @@ import {
 import providerConfig from './llm-provider-config.json';
 import { normalizeModelInfo, deduplicateModels, type ModelInfo } from './model-limits.js';
 import { GenericAnthropicLLM } from './llm-anthropic-compat.js';
+import { GenericOpenAIResponsesLLM } from './llm-openai-response-compat.js';
 
 type ModelConfig = false | true | string | string[] | Array<{ id: string; name?: string; [key: string]: unknown }>;
 
 interface ProviderConfig {
   key: string;
   label?: string;
-  type?: 'openai-compat' | 'anthropic-compat';
+  type?: 'openai-compat' | 'anthropic-compat' | 'openai-response-compat';
   baseUrl: string;
   models?: ModelConfig;
   customHeaders?: Record<string, string>;
@@ -150,7 +151,7 @@ export class GenericLLM extends BaseLLM implements LLMPort {
 }
 
 export interface CustomProviderDefinition {
-  type?: 'openai-compat' | 'anthropic-compat';
+  type?: 'openai-compat' | 'anthropic-compat' | 'openai-response-compat';
   baseUrl?: string;
   models?: ModelConfig;
   customHeaders?: Record<string, string>;
@@ -217,6 +218,19 @@ export function createLLM(
       providerName: config.key,
       enablePromptCaching: options.enablePromptCaching ?? config.features.promptCaching,
       customHeaders: config.customHeaders,
+      modelConfig,
+    });
+  }
+
+  if (config.type === 'openai-response-compat') {
+    return new GenericOpenAIResponsesLLM(config.baseUrl, modelConfig, {
+      apiKey: options.apiKey,
+      apiUrl: options.apiUrl,
+      httpLogFile: options.httpLogFile,
+      providerName: config.key,
+      version: options.version,
+      customHeaders: config.customHeaders,
+      retry: options.retry,
       modelConfig,
     });
   }

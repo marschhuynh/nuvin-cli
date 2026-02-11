@@ -9,7 +9,7 @@ import {
   transformResponsesUsage,
   buildResponsesRequestBody,
 } from '../llm-providers/responses-api-transform';
-import type { ChatMessage, CompletionParams } from '../ports.js';
+import type { ChatMessage, CompletionParams, ResponseParams } from '../ports.js';
 
 class TestGithubLLM extends GithubLLM {
   public mockTransport: HttpTransport;
@@ -425,8 +425,21 @@ describe('Responses API Transform', () => {
         temperature: 0.7,
         top_p: 0.9,
         tools: [{ type: 'function', name: 'test', description: 'Test function', parameters: {} }],
+        store: true,
         stream: true,
       });
+    });
+
+    it('should allow overriding store when explicitly provided', () => {
+      const params: ResponseParams = {
+        model: 'gpt-5.1-codex',
+        messages: [{ role: 'user', content: 'Hello' }],
+        store: false,
+      };
+
+      const result = buildResponsesRequestBody(params, false);
+
+      expect(result.store).toBe(false);
     });
   });
 });
@@ -509,12 +522,7 @@ describe('GithubLLM Responses API Integration', () => {
       topP: 0.9,
     });
 
-    expect(llm.mockTransport.post).toHaveBeenCalledWith(
-      '/chat/completions',
-      expect.any(Object),
-      undefined,
-      undefined,
-    );
+    expect(llm.mockTransport.post).toHaveBeenCalledWith('/chat/completions', expect.any(Object), undefined, undefined);
 
     expect(result.content).toBe('Hello from chat completions!');
   });
@@ -993,7 +1001,8 @@ describe('GithubLLM Responses API Integration', () => {
       .mockResolvedValueOnce({
         ok: false,
         status: 400,
-        json: () => Promise.resolve({ error: { code: 'unsupported_api_for_model', message: "The model is not supported" } }),
+        json: () =>
+          Promise.resolve({ error: { code: 'unsupported_api_for_model', message: 'The model is not supported' } }),
         text: () => Promise.resolve('unsupported_api_for_model: The model is not supported'),
       } as Response)
       .mockResolvedValueOnce({
@@ -1012,7 +1021,13 @@ describe('GithubLLM Responses API Integration', () => {
 
     expect(result.content).toBe('Hello from fallback!');
     expect(llm.mockTransport.post).toHaveBeenCalledTimes(2);
-    expect(llm.mockTransport.post).toHaveBeenNthCalledWith(1, '/chat/completions', expect.any(Object), undefined, undefined);
+    expect(llm.mockTransport.post).toHaveBeenNthCalledWith(
+      1,
+      '/chat/completions',
+      expect.any(Object),
+      undefined,
+      undefined,
+    );
     expect(llm.mockTransport.post).toHaveBeenNthCalledWith(2, '/responses', expect.any(Object), undefined, undefined);
   });
 
@@ -1116,6 +1131,7 @@ describe('Responses API Transform Edge Cases', () => {
     expect(result).toEqual({
       model: 'gpt-5.1-codex',
       input: [{ type: 'message', role: 'user', content: [{ type: 'input_text', text: 'Hello' }] }],
+      store: true,
     });
     expect(result.temperature).toBeUndefined();
     expect(result.top_p).toBeUndefined();

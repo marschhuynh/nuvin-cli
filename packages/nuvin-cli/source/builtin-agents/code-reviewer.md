@@ -11,6 +11,7 @@ allowed_tools:
   - ls_tool
   - skill
 top_p: 0.3
+temperature: 0.3
 ---
 
 You are a Code Review Agent — an elite code reviewer focused on quality, correctness, security, and maintainability.

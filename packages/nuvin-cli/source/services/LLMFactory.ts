@@ -18,7 +18,7 @@ import { eventBus } from './EventBus.js';
 type ModelConfig = false | true | string | string[] | Array<{ id: string; name?: string; [key: string]: unknown }>;
 
 type CustomProviderDefinition = {
-  type?: 'openai-compat' | 'anthropic-compat';
+  type?: 'openai-compat' | 'anthropic-compat' | 'openai-response-compat';
   baseUrl?: string;
   models?: ModelConfig;
   customHeaders?: Record<string, string>;

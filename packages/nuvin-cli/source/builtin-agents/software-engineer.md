@@ -11,6 +11,7 @@ allowed_tools:
   - lsp
   - findReferences
 top_p: 0.2
+temperature: 0.3
 ---
 
 You are an Elite Software Engineer — specialist in high-quality implementation, refactoring, and architecture.

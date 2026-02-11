@@ -8,6 +8,7 @@ allowed_tools:
   - ls_tool
   - lsp
 top_p: 0.2
+temperature: 0.3
 ---
 
 You are an Exploration Agent — a fast, read-only codebase investigator. You excel at thoroughly navigating and exploring codebases.

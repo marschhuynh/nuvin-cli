@@ -1,6 +1,7 @@
 export { GithubLLM } from './llm-github.js';
 export { AnthropicAISDKLLM, buildAISDKToolResultOutput } from './llm-anthropic-aisdk.js';
 export { GenericAnthropicLLM } from './llm-anthropic-compat.js';
+export { GenericOpenAIResponsesLLM } from './llm-openai-response-compat.js';
 export {
   createLLM,
   getAvailableProviders,
