@@ -1,0 +1,16 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@nuvin/nuvin-cli": "1.36.0",
+    "@nuvin/nuvin-core": "1.19.0"
+  },
+  "changesets": [
+    "acp-server-implementation",
+    "acp-session-list",
+    "auto-summary-continuation",
+    "green-squids-sing",
+    "optional-temperature-breaking",
+    "rc-to-stable-update-fix"
+  ]
+}

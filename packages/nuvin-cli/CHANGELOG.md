@@ -1,5 +1,43 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.0
+
+### Minor Changes
+
+- [`8e9e8a9`](https://github.com/marschhuynh/nuvin-space/commit/8e9e8a92edb03f0e914905c0c34d566027e30f0b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(acp): implement ACP server mode with full session flow
+
+  - Add ACP JSON-RPC server over stdio with initialize, session/new, session/load, session/prompt, session/cancel
+  - Implement model resolver with provider-aware model enumeration and humanized display names
+  - Add tool formatter for descriptive tool call titles and kind inference
+  - Wire slash command support in ACP mode via command registry
+  - Add E2E test script for ACP validation
+  - Add available commands update notification
+  - Filter ask_user_tool from enabled tools in ACP mode
+
+- [`104722e`](https://github.com/marschhuynh/nuvin-space/commit/104722ec277a914ac1e7ecad8c9fd85ddf233979) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(acp): add session/list endpoint and improve history handling
+
+  - Add session/list with pagination support (50 sessions per page)
+  - Support both default and cli history message keys
+  - Extract text from structured message parts
+  - Update agent capabilities to match ACP spec
+  - Use getVersion() for dynamic version reporting
+
+- [`9696dd4`](https://github.com/marschhuynh/nuvin-space/commit/9696dd474994e75aec104e12786d6ef26bd1ca50) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add auto-summary continuation and improve summary prompt
+
+  - Auto-submit continuation turn after context window auto-summary
+  - Add skipAutoSummaryCheck option to prevent recursive checks
+  - Improve summary prompt for better session continuity
+  - Lower auto-summary threshold to 30% for earlier intervention
+
+### Patch Changes
+
+- [`d124700`](https://github.com/marschhuynh/nuvin-space/commit/d124700cf1b4296b784bab734501e56f91f5a300) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve Responses API compatibility mapping and provider wiring.
+
+- [`3df777d`](https://github.com/marschhuynh/nuvin-space/commit/3df777d839ebca303be6c6eb1d5845042f9297ec) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): detect update when RC version transitions to stable (e.g., 1.0.0-rc.1 → 1.0.0)
+
+- Updated dependencies [[`9696dd4`](https://github.com/marschhuynh/nuvin-space/commit/9696dd474994e75aec104e12786d6ef26bd1ca50), [`d124700`](https://github.com/marschhuynh/nuvin-space/commit/d124700cf1b4296b784bab734501e56f91f5a300), [`8e9e8a9`](https://github.com/marschhuynh/nuvin-space/commit/8e9e8a92edb03f0e914905c0c34d566027e30f0b)]:
+  - @nuvin/nuvin-core@2.0.0-rc.0
+
 ## 1.36.0
 
 ### Minor Changes
