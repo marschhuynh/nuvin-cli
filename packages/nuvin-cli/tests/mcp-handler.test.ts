@@ -156,7 +156,7 @@ vi.mock('node:os', () => ({
 describe('MCPCliHandler', () => {
   beforeEach(async () => {
     ConfigManager.resetInstance();
-    const fs = (await import('node:fs')) as typeof import('node:fs') & { __mockFs: Record<string, string> };
+    const fs = (await import('node:fs')) as unknown as typeof import('node:fs') & { __mockFs: Record<string, string> };
     const mockFs = fs.__mockFs;
     for (const key in mockFs) {
       delete mockFs[key];

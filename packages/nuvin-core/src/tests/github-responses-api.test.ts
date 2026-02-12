@@ -421,11 +421,9 @@ describe('Responses API Transform', () => {
         model: 'gpt-5.1-codex',
         input: [{ type: 'message', role: 'user', content: [{ type: 'input_text', text: 'Hello' }] }],
         instructions: 'Be helpful',
-        max_output_tokens: 1000,
-        temperature: 0.7,
         top_p: 0.9,
         tools: [{ type: 'function', name: 'test', description: 'Test function', parameters: {} }],
-        store: true,
+        store: false,
         stream: true,
       });
     });
@@ -1131,7 +1129,7 @@ describe('Responses API Transform Edge Cases', () => {
     expect(result).toEqual({
       model: 'gpt-5.1-codex',
       input: [{ type: 'message', role: 'user', content: [{ type: 'input_text', text: 'Hello' }] }],
-      store: true,
+      store: false,
     });
     expect(result.temperature).toBeUndefined();
     expect(result.top_p).toBeUndefined();

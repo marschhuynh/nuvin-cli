@@ -159,7 +159,7 @@ export class OrchestratorManager {
   private previousOrchestrator: AgentOrchestrator | null = null;
 
   private static readonly WARNING_THRESHOLD = 0.85;
-  private static readonly AUTO_SUMMARY_THRESHOLD = 0.30;
+  private static readonly AUTO_SUMMARY_THRESHOLD = 0.95;
 
   constructor() {
     this.configManager = ConfigManager.getInstance();

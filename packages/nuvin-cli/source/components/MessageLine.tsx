@@ -1,6 +1,5 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
-import { Markdown } from './Markdown';
 import type { ToolCall, ToolExecutionResult } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters';
 import { useTheme } from '@/contexts/ThemeContext.js';
@@ -11,6 +10,7 @@ import { ToolCallViewer } from './ToolCallViewer';
 import { AutoScrollBox } from './AutoScrollBox.js';
 import { SubAgentActivity } from './ToolCallViewer/ToolResultView';
 import { computeToolState } from './ToolCallViewer/computeToolState.js';
+import { Markdown } from './Markdown';
 
 type MessageLineProps = {
   key: string;
@@ -21,6 +21,21 @@ type MessageLineProps = {
   backgroundColor?: string;
   liveMessage?: boolean;
 };
+
+const BlockMessage = ({ content, backgroundColor, textColor }: { content: string; backgroundColor: string; textColor: string }) => {
+  return (
+    <Box
+      flexDirection="row"
+      marginTop={1}
+      flexShrink={0}
+      backgroundColor={backgroundColor}
+      width={'100%'}
+    >
+      <Box width={1} marginRight={2}><Text color={textColor}>▍</Text></Box>
+      <Text color={textColor}>{content}</Text>
+    </Box>
+  )
+}
 
 const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false }) => {
   const { altMode } = useAltMode();
@@ -162,58 +177,37 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
 
       case 'error':
         return (
-          <Box
-            flexDirection="row"
-            marginTop={1}
-            flexShrink={0}
+          <BlockMessage
+            content={message.content}
             backgroundColor={theme.tokens.dim}
-            width={'100%'}
-          >
-            <Box backgroundColor={theme.messageTypes.error} width={1} marginRight={2}></Box>
-            <Text>{message.content}</Text>
-          </Box>
+            textColor={theme.messageTypes.error}
+          />
         );
 
       case 'warning':
         return (
-          <Box
-            flexDirection="row"
-            marginTop={1}
-            flexShrink={0}
+          <BlockMessage
+            content={message.content}
             backgroundColor={theme.tokens.dim}
-            width={'100%'}
-          >
-            <Box backgroundColor={theme.messageTypes.warning} width={1} marginRight={2}></Box>
-            <Text>{message.content}</Text>
-          </Box>
+            textColor={theme.messageTypes.warning}
+          />
         );
-
       case 'info':
         return (
-          <Box
-            flexDirection="row"
-            marginTop={1}
-            flexShrink={0}
+          <BlockMessage
+            content={message.content}
             backgroundColor={theme.tokens.dim}
-            width={'100%'}
-          >
-            <Box backgroundColor={theme.messageTypes.info} width={1} marginRight={2}></Box>
-            <Text>{message.content}</Text>
-          </Box>
+            textColor={theme.messageTypes.info}
+          />
         );
 
       case 'system':
         return (
-          <Box
-            flexDirection="row"
-            marginTop={1}
-            flexShrink={0}
+          <BlockMessage
+            content={message.content}
             backgroundColor={theme.tokens.dim}
-            width={'100%'}
-          >
-            <Box backgroundColor={theme.messageTypes.system} width={1} marginRight={2}></Box>
-            <Text>{message.content}</Text>
-          </Box>
+            textColor={theme.messageTypes.system}
+          />
         );
 
       case 'thinking': {
@@ -266,12 +260,12 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         marginBottom={1}
         {...(liveMessage
           ? {
-              borderStyle: 'single',
-              borderColor: theme.colors.accent,
-              borderBottom: false,
-              borderTop: false,
-              borderLeft: false,
-            }
+            borderStyle: 'single',
+            borderColor: theme.colors.accent,
+            borderBottom: false,
+            borderTop: false,
+            borderLeft: false,
+          }
           : {})}
       >
         {content}

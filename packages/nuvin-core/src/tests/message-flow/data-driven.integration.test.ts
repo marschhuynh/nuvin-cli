@@ -384,7 +384,7 @@ function runMessageFlowTest(fixture: TestFixture) {
     }
     const testDir = path.dirname(testEventsFile);
     if (fs.existsSync(testDir)) {
-      fs.rmdirSync(testDir, { recursive: true });
+      fs.rmSync(testDir, { recursive: true });
     }
   });
 
