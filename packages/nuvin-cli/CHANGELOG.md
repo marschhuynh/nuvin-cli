@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.1
+
+### Patch Changes
+
+- [`03303e3`](https://github.com/marschhuynh/nuvin-space/commit/03303e35524abd956e30a4cf5369b37e831b99f0) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): prevent update when RC version is newer than latest stable (e.g., 1.37.0-rc.0 → 1.36.0)
+
 ## 1.37.0-rc.0
 
 ### Minor Changes

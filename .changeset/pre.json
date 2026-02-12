@@ -11,6 +11,7 @@
     "auto-summary-continuation",
     "green-squids-sing",
     "optional-temperature-breaking",
-    "rc-to-stable-update-fix"
+    "rc-to-stable-update-fix",
+    "update-checker-rc-fix"
   ]
 }
