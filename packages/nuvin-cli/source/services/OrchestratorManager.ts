@@ -363,6 +363,9 @@ export class OrchestratorManager {
               gitBranch: gitContextInfo.gitBranch,
               gitRepo: gitContextInfo.gitRepo,
               recentCommits: gitContextInfo.recentCommits,
+              availableSkills: enableSkills
+                ? skillsService.list().map((s) => ({ name: s.name, description: s.description }))
+                : [],
             }),
           });
 
@@ -452,6 +455,10 @@ export class OrchestratorManager {
         includeHidden: false,
       });
 
+      const availableSkills = enableSkills
+        ? skillsService.list().map((s) => ({ name: s.name, description: s.description }))
+        : [];
+
       const injectedSystem = buildInjectedSystem(
         {
           today: new Date().toLocaleString(),
@@ -465,6 +472,7 @@ export class OrchestratorManager {
           gitBranch: gitContextInfo.gitBranch,
           gitRepo: gitContextInfo.gitRepo,
           recentCommits: gitContextInfo.recentCommits,
+          availableSkills,
         },
         { withSubAgent: true },
       );
@@ -1546,6 +1554,10 @@ Rules:
     const { shell, gitBranch, gitRepo, recentCommits } = await getGitContextInfo();
 
     // Build injected system context with git info
+    const availableSkillsForSwap = skillsService
+      .list()
+      .map((s) => ({ name: s.name, description: s.description }));
+
     const injectedSystem = buildInjectedSystem(
       {
         today: new Date().toLocaleString(),
@@ -1559,6 +1571,7 @@ Rules:
         gitBranch,
         gitRepo,
         recentCommits,
+        availableSkills: availableSkillsForSwap,
       },
       { withSubAgent: true },
     );
@@ -1679,6 +1692,7 @@ Rules:
         gitBranch,
         gitRepo,
         recentCommits,
+        availableSkills: skillsService.list().map((s) => ({ name: s.name, description: s.description })),
       },
       { withSubAgent: true },
     );

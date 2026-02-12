@@ -28,17 +28,12 @@ class MockSkillProvider implements SkillProvider {
 
     const lines = [
       'Load a skill to get detailed instructions for a specific task.',
-      '<available_skills>',
     ];
 
     for (const skill of skillList) {
-      lines.push(`  <skill>`);
-      lines.push(`    <name>${skill.name}</name>`);
-      lines.push(`    <description>${skill.description}</description>`);
-      lines.push(`  </skill>`);
+      lines.push(`- ${skill.name}: ${skill.description}`);
     }
 
-    lines.push('</available_skills>');
     return lines.join('\n');
   }
 
@@ -75,8 +70,7 @@ describe('SkillTool', () => {
       skillTool.setProvider(mockProvider);
 
       const def = skillTool.definition();
-      expect(def.description).toContain('<available_skills>');
-      expect(def.description).toContain('<name>test-skill</name>');
+      expect(def.description).toContain('- test-skill: A test skill');
     });
   });
 
@@ -161,7 +155,7 @@ describe('SkillTool', () => {
       skillTool.updateDescription();
 
       const def2 = skillTool.definition();
-      expect(def2.description).toContain('<name>new-skill</name>');
+      expect(def2.description).toContain('- new-skill:');
     });
   });
 });

@@ -17,6 +17,7 @@ export type InjectedSystemParams = {
   tempDir: string;
   workspaceDir: string;
   availableAgents?: Array<{ id: string; name: string; description: string }>;
+  availableSkills?: Array<{ name: string; description: string }>;
   folderTree?: string;
   shell?: string;
   gitBranch?: string;
@@ -68,6 +69,14 @@ export function buildInjectedSystem(
     parts.push('Available specialist agents (use assign_task tool to delegate):');
     for (const agent of p.availableAgents) {
       parts.push(`- ${agent.id}: ${agent.description}`);
+    }
+  }
+
+  if (p.availableSkills && p.availableSkills.length > 0) {
+    parts.push('');
+    parts.push('Available skills (use skill tool to load):');
+    for (const skill of p.availableSkills) {
+      parts.push(`- ${skill.name}: ${skill.description}`);
     }
   }
 

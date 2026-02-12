@@ -15,6 +15,7 @@ type SystemContext = {
   gitRepo?: string;
   recentCommits?: string;
   folderTree?: string;
+  availableSkills?: Array<{ name: string; description: string }>;
 };
 
 type AgentInfo = {
@@ -73,6 +74,7 @@ export class DefaultSpecialistAgentFactory implements SpecialistAgentFactory {
         gitRepo: systemContext.gitRepo,
         recentCommits: systemContext.recentCommits,
         folderTree: systemContext.folderTree,
+        availableSkills: systemContext.availableSkills,
       },
       { withSubAgent: false },
     );

@@ -281,17 +281,11 @@ export class SkillsService {
       'Load a skill to get detailed instructions for a specific task.',
       'Skills provide specialized knowledge and step-by-step guidance.',
       'Use this when a task matches an available skill description.',
-      '<available_skills>',
     ];
 
     for (const skill of skillList) {
-      lines.push('  <skill>');
-      lines.push(`    <name>${skill.name}</name>`);
-      lines.push(`    <description>${skill.description}</description>`);
-      lines.push('  </skill>');
+      lines.push(`- ${skill.name}: ${skill.description}`);
     }
-
-    lines.push('</available_skills>');
     return lines.join('\n');
   }
 

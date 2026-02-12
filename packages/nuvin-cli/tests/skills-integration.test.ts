@@ -47,8 +47,7 @@ description: A test skill for integration testing
       const definitions = toolRegistry.getToolDefinitions(['skill']);
       expect(definitions).toHaveLength(1);
       expect(definitions[0].function.name).toBe('skill');
-      expect(definitions[0].function.description).toContain('<available_skills>');
-      expect(definitions[0].function.description).toContain('<name>test-skill</name>');
+      expect(definitions[0].function.description).toContain('- test-skill:');
     });
 
     it('should execute skill tool and return skill content', async () => {
@@ -166,7 +165,7 @@ Content
       toolRegistry.updateSkillToolDescription();
 
       definitions = toolRegistry.getToolDefinitions(['skill']);
-      expect(definitions[0].function.description).toContain('<name>new-skill</name>');
+      expect(definitions[0].function.description).toContain('- new-skill:');
     });
   });
 

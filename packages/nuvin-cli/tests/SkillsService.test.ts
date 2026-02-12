@@ -288,10 +288,7 @@ description: Skill for XML test
       await skillsService.discover(tempDir);
       const description = skillsService.buildToolDescription();
 
-      expect(description).toContain('<available_skills>');
-      expect(description).toContain('<name>xml-skill</name>');
-      expect(description).toContain('<description>Skill for XML test</description>');
-      expect(description).toContain('</available_skills>');
+      expect(description).toContain('- xml-skill: Skill for XML test');
     });
   });
 });
