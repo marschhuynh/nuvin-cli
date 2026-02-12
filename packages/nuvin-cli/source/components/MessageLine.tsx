@@ -40,7 +40,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
               </Text>
             </Box>
             <Box marginX={2}>
-              <Markdown reflowText>{streamingContent}</Markdown>
+              <Text>{streamingContent}</Text>
             </Box>
           </Box>
         );
@@ -166,15 +166,10 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
             flexDirection="row"
             marginTop={1}
             flexShrink={0}
-            borderStyle="doubleSingle"
-            borderBottom={false}
-            borderTop={false}
-            borderRight={false}
-            borderColor={theme.messageTypes.error}
             backgroundColor={theme.tokens.dim}
             width={'100%'}
-            paddingLeft={2}
           >
+            <Box backgroundColor={theme.messageTypes.error} width={1} marginRight={2}></Box>
             <Text>{message.content}</Text>
           </Box>
         );
@@ -185,15 +180,10 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
             flexDirection="row"
             marginTop={1}
             flexShrink={0}
-            borderStyle="doubleSingle"
-            borderBottom={false}
-            borderTop={false}
-            borderRight={false}
-            borderColor={theme.messageTypes.warning}
             backgroundColor={theme.tokens.dim}
             width={'100%'}
-            paddingLeft={2}
           >
+            <Box backgroundColor={theme.messageTypes.warning} width={1} marginRight={2}></Box>
             <Text>{message.content}</Text>
           </Box>
         );
@@ -204,16 +194,11 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
             flexDirection="row"
             marginTop={1}
             flexShrink={0}
-            borderStyle="doubleSingle"
-            borderBottom={false}
-            borderTop={false}
-            borderRight={false}
-            borderColor={theme.messageTypes.info}
             backgroundColor={theme.tokens.dim}
             width={'100%'}
-            paddingLeft={2}
           >
-            <Text color={message.color}>{message.content}</Text>
+            <Box backgroundColor={theme.messageTypes.info} width={1} marginRight={2}></Box>
+            <Text>{message.content}</Text>
           </Box>
         );
 
@@ -223,15 +208,10 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
             flexDirection="row"
             marginTop={1}
             flexShrink={0}
-            borderStyle="doubleSingle"
-            borderBottom={false}
-            borderTop={false}
-            borderRight={false}
-            borderColor={theme.messageTypes.system}
             backgroundColor={theme.tokens.dim}
             width={'100%'}
-            paddingLeft={2}
           >
+            <Box backgroundColor={theme.messageTypes.system} width={1} marginRight={2}></Box>
             <Text>{message.content}</Text>
           </Box>
         );

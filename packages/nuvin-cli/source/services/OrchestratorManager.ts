@@ -159,7 +159,7 @@ export class OrchestratorManager {
   private previousOrchestrator: AgentOrchestrator | null = null;
 
   private static readonly WARNING_THRESHOLD = 0.85;
-  private static readonly AUTO_SUMMARY_THRESHOLD = 0.95;
+  private static readonly AUTO_SUMMARY_THRESHOLD = 0.30;
 
   constructor() {
     this.configManager = ConfigManager.getInstance();
@@ -370,8 +370,8 @@ export class OrchestratorManager {
         }
       })();
 
-      const toolRegistry = new ToolRegistry({ 
-        agentRegistry, 
+      const toolRegistry = new ToolRegistry({
+        agentRegistry,
         enableSkills,
         delegationServiceFactory: customDelegationServiceFactory,
       });
@@ -858,7 +858,11 @@ export class OrchestratorManager {
     return this.llmFactory;
   }
 
-  private async checkContextWindowUsage(provider: string, model: string): Promise<void> {
+  private async checkContextWindowUsage(
+    provider: string,
+    model: string,
+    opts: { conversationId: string; signal?: AbortSignal },
+  ): Promise<void> {
     if (!this.sessionId) return;
 
     const metrics = sessionMetricsService.getSnapshot(this.sessionId);
@@ -891,6 +895,33 @@ export class OrchestratorManager {
           metadata: { timestamp: new Date().toISOString() },
           color: theme.tokens.green,
         });
+
+        try {
+          const continuationText =
+            'Continue the task from where it left off. Do not ask me to repeat context unless required.';
+          await this.send(
+            {
+              text: continuationText,
+              displayText: continuationText,
+            },
+            {
+              conversationId: opts.conversationId,
+              stream: true,
+              signal: opts.signal,
+              skipAutoSummaryCheck: true,
+            },
+          );
+        } catch (error) {
+          eventBus.emit('ui:line', {
+            id: crypto.randomUUID(),
+            type: 'system',
+            content: `⚠️ Auto-summary completed, but automatic continuation failed: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
+            metadata: { timestamp: new Date().toISOString() },
+            color: theme.tokens.yellow,
+          });
+        }
       } catch (error) {
         eventBus.emit('ui:line', {
           id: crypto.randomUUID(),
@@ -920,6 +951,7 @@ export class OrchestratorManager {
    */
   async summarizeAndCreateNewSession(options: { skipEvents?: boolean } = {}): Promise<{
     summary: string;
+    summaryPrompt: string;
     previousSessionId: string;
     newSessionId: string;
     newSessionDir: string;
@@ -953,10 +985,11 @@ export class OrchestratorManager {
       });
     }
 
+    const summaryPrompt = `Previous conversation summary:\n\n${summary}`;
     const summaryMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: `Previous conversation summary:\n\n${summary}`,
+      content: summaryPrompt,
       timestamp: new Date().toISOString(),
     };
     await this.memory?.append(conversationId, [summaryMessage]);
@@ -980,6 +1013,7 @@ export class OrchestratorManager {
 
     return {
       summary,
+      summaryPrompt,
       previousSessionId,
       newSessionId,
       newSessionDir,
@@ -1123,7 +1157,12 @@ export class OrchestratorManager {
         cost: result.metadata?.estimatedCost ?? undefined,
       });
 
-      await this.checkContextWindowUsage(currentConfig.provider, currentConfig.model);
+      if (!opts.skipAutoSummaryCheck) {
+        await this.checkContextWindowUsage(currentConfig.provider, currentConfig.model, {
+          conversationId,
+          signal: opts.signal,
+        });
+      }
     }
 
     return result;
@@ -1388,13 +1427,47 @@ Respond with only the topic, no explanation.`;
       })
       .join('\n\n');
 
-    const summarySystemPrompt = `You are a conversation summarizer. Your task is to create a concise summary of the conversation history provided by the user. Focus on:
-- Key topics discussed
-- Important decisions or actions taken
-- Main questions asked and answers provided
-- Overall context and flow of the conversation
+    const summarySystemPrompt = `You are a session-continuity summarizer for a CLI coding assistant. The conversation you are summarizing is an in-progress coding session that was interrupted because the context window is full. Your summary will be injected into a fresh session so the assistant can resume work without losing progress.
 
-Keep the summary clear and concise, typically 3-5 paragraphs.`;
+Produce a structured summary using the following sections. Omit any section that has no relevant content.
+
+### Session Goal
+State the user's original request or objective in 1-2 sentences.
+
+### Work Completed
+List what has already been done, with specifics:
+- Files created, modified, or deleted (include paths)
+- Key implementation decisions made and their rationale
+- Commands run and their outcomes (pass/fail)
+- Tests written or executed and their results
+
+### Current State
+Describe where things stand right now:
+- What was the assistant doing when the session ended?
+- Any in-progress file edits or partially completed steps
+- Error messages, failing tests, or blockers encountered
+- The current branch, working directory, or environment state if mentioned
+
+### Remaining Work
+List what still needs to be done to complete the original goal:
+- Specific next steps, in order if sequence matters
+- Known issues or edge cases still unaddressed
+- Any pending user decisions or questions that were unanswered
+
+### Key Context
+Preserve critical details that would be expensive to re-derive:
+- Architecture or design patterns being followed
+- Important variable names, function signatures, or API shapes
+- File paths and line numbers referenced repeatedly
+- Constraints or requirements the user specified
+- Todo list items and their status (pending/in_progress/completed)
+
+Rules:
+- Be precise and specific. Use exact file paths, function names, and error messages — not vague references.
+- Do NOT include conversational pleasantries, repeated back-and-forth, or exploratory dead ends that were abandoned.
+- Do NOT summarize tool calls verbatim. Capture their outcomes and decisions, not the mechanics.
+- Keep the total summary under 1500 tokens. Prioritize actionable state over narrative.
+- Write for a coding agent that will read this summary and immediately resume work, not for a human reader.`;
 
     const currentConfig = this.getCurrentConfig();
     const httpLogFile = this.memPersist && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;

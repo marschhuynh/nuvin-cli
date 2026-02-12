@@ -193,6 +193,7 @@ export type SendMessageOptions = {
   conversationId?: string;
   stream?: boolean;
   signal?: AbortSignal;
+  skipAutoSummaryCheck?: boolean;
 };
 
 export type UserAttachment = ImageContentPart & {

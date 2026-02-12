@@ -26,8 +26,13 @@ interface TestableOrchestratorManager {
   conversationStore: MockConversationStore | null;
   handlers: unknown;
   memPersist: boolean;
+  send: ReturnType<typeof vi.fn>;
   summarize: ReturnType<typeof vi.fn>;
-  checkContextWindowUsage: (provider: string, model: string) => Promise<void>;
+  checkContextWindowUsage: (
+    provider: string,
+    model: string,
+    options: { conversationId: string; signal?: AbortSignal },
+  ) => Promise<void>;
   createNewConversation: ReturnType<typeof vi.fn>;
 }
 
@@ -96,7 +101,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const snapshot = sessionMetricsService.getSnapshot(TEST_SESSION_ID);
     expect(snapshot.contextWindowLimit).toBe(128000);
@@ -130,7 +135,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const warningEvent = eventEmitted.find(
       (e: EmittedEvent) =>
@@ -180,6 +185,12 @@ describe('Context Window Auto-Summary', () => {
       sessionDir: '/tmp/new-session',
       memory: new InMemoryMemory(),
     });
+    testableManager.send = vi.fn().mockResolvedValue({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'continued',
+      timestamp: new Date().toISOString(),
+    });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 96000,
@@ -190,7 +201,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const autoSummaryEvent = eventEmitted.find(
       (e: EmittedEvent) => e.event === 'ui:line' && e.payload?.content?.includes('Running auto-summary'),
@@ -245,6 +256,12 @@ describe('Context Window Auto-Summary', () => {
       sessionDir: '/tmp/new-session',
       memory: new InMemoryMemory(),
     });
+    testableManager.send = vi.fn().mockResolvedValue({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'continued',
+      timestamp: new Date().toISOString(),
+    });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 96000,
@@ -255,7 +272,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     expect(testableManager.createNewConversation).toHaveBeenCalledWith({
       memPersist: true,
@@ -300,6 +317,12 @@ describe('Context Window Auto-Summary', () => {
       sessionDir: '/tmp/new-session',
       memory: new InMemoryMemory(),
     });
+    testableManager.send = vi.fn().mockResolvedValue({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'continued',
+      timestamp: new Date().toISOString(),
+    });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 96000,
@@ -310,7 +333,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     expect(mockUpdateMetadata).toHaveBeenCalledWith('default', {
       summarizedFrom: TEST_SESSION_ID,
@@ -355,6 +378,12 @@ describe('Context Window Auto-Summary', () => {
       sessionDir: '/tmp/new-session',
       memory: new InMemoryMemory(),
     });
+    testableManager.send = vi.fn().mockResolvedValue({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'continued',
+      timestamp: new Date().toISOString(),
+    });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 96000,
@@ -365,7 +394,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const conversationCreatedEvent = eventEmitted.find((e: EmittedEvent) => e.event === 'conversation:created');
 
@@ -420,7 +449,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const clearEvent = eventEmitted.find((e: EmittedEvent) => e.event === 'ui:lines:clear');
     const refreshEvent = eventEmitted.find((e: EmittedEvent) => e.event === 'ui:header:refresh');
@@ -459,7 +488,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const warningEvent = eventEmitted.find(
       (e: EmittedEvent) => e.event === 'ui:line' && e.payload?.content?.includes('⚠️'),
@@ -534,6 +563,12 @@ describe('Context Window Auto-Summary', () => {
       sessionDir: '/tmp/new-session',
       memory: new InMemoryMemory(),
     });
+    testableManager.send = vi.fn().mockResolvedValue({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'continued',
+      timestamp: new Date().toISOString(),
+    });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 96000,
@@ -544,7 +579,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const summaryDisplayEvent = eventEmitted.find(
       (e: EmittedEvent) =>
@@ -555,5 +590,199 @@ describe('Context Window Auto-Summary', () => {
 
     expect(summaryDisplayEvent).toBeDefined();
     expect(summaryDisplayEvent?.payload?.content).toContain('This is a test summary');
+  });
+
+  it('should submit post-summary continuation turn after auto-summary', async () => {
+    const memory = new InMemoryMemory<Message>();
+    const testMessage: Message = {
+      id: 'msg-1',
+      role: 'user',
+      content: 'Continue coding task',
+      timestamp: new Date().toISOString(),
+    };
+    await memory.set('default', [testMessage]);
+    testableManager.memory = memory;
+    testableManager.handlers = {};
+    testableManager.memPersist = true;
+
+    testableManager.orchestrator = {
+      getLLM: vi.fn().mockReturnValue({
+        getModels: vi.fn().mockResolvedValue([
+          {
+            id: 'openai/gpt-4o',
+            limits: { contextWindow: 100000 },
+          },
+        ]),
+      }),
+      setMemory: vi.fn(),
+      setEvents: vi.fn(),
+      setMetrics: vi.fn(),
+    } as MockOrchestrator;
+
+    testableManager.conversationStore = {
+      updateMetadata: vi.fn().mockResolvedValue(undefined),
+    };
+
+    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.createNewConversation = vi.fn().mockResolvedValue({
+      sessionId: 'new-session-id',
+      sessionDir: '/tmp/new-session',
+      memory: new InMemoryMemory(),
+    });
+
+    const sendSpy = vi.fn().mockResolvedValue({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'continued',
+      timestamp: new Date().toISOString(),
+    });
+    testableManager.send = sendSpy;
+
+    sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
+      prompt_tokens: 96000,
+      completion_tokens: 1000,
+      total_tokens: 97000,
+    });
+
+    await testableManager.checkContextWindowUsage('openrouter', 'openai/gpt-4o', { conversationId: 'default' });
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect(sendSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining('Continue the task from where it left off'),
+      }),
+      expect.objectContaining({
+        conversationId: 'default',
+        stream: true,
+      }),
+    );
+  });
+
+  it('should emit warning and keep summarized session if continuation send fails', async () => {
+    const memory = new InMemoryMemory<Message>();
+    const testMessage: Message = {
+      id: 'msg-1',
+      role: 'user',
+      content: 'Continue coding task',
+      timestamp: new Date().toISOString(),
+    };
+    await memory.set('default', [testMessage]);
+    testableManager.memory = memory;
+    testableManager.handlers = {};
+    testableManager.memPersist = true;
+
+    testableManager.orchestrator = {
+      getLLM: vi.fn().mockReturnValue({
+        getModels: vi.fn().mockResolvedValue([
+          {
+            id: 'openai/gpt-4o',
+            limits: { contextWindow: 100000 },
+          },
+        ]),
+      }),
+      setMemory: vi.fn(),
+      setEvents: vi.fn(),
+      setMetrics: vi.fn(),
+    } as MockOrchestrator;
+
+    testableManager.conversationStore = {
+      updateMetadata: vi.fn().mockResolvedValue(undefined),
+    };
+
+    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.createNewConversation = vi.fn().mockResolvedValue({
+      sessionId: 'new-session-id',
+      sessionDir: '/tmp/new-session',
+      memory: new InMemoryMemory(),
+    });
+    testableManager.send = vi.fn().mockRejectedValue(new Error('continuation failed'));
+
+    sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
+      prompt_tokens: 96000,
+      completion_tokens: 1000,
+      total_tokens: 97000,
+    });
+
+    await expect(
+      testableManager.checkContextWindowUsage('openrouter', 'openai/gpt-4o', { conversationId: 'default' }),
+    ).resolves.not.toThrow();
+
+    const continuationErrorEvent = eventEmitted.find(
+      (e: EmittedEvent) =>
+        e.event === 'ui:line' &&
+        e.payload?.content?.includes('Auto-summary completed') &&
+        e.payload?.content?.includes('continuation failed'),
+    );
+
+    expect(continuationErrorEvent).toBeDefined();
+    expect(testableManager.createNewConversation).toHaveBeenCalledWith({ memPersist: true });
+  });
+
+  it('should skip auto-summary check for continuation send when internal flag is set', async () => {
+    const checkSpy = vi.spyOn(
+      manager as unknown as { checkContextWindowUsage: (...args: unknown[]) => Promise<void> },
+      'checkContextWindowUsage',
+    );
+
+    const orchestratorSend = vi.fn().mockResolvedValue({
+      id: 'result-1',
+      role: 'assistant',
+      content: 'ok',
+      timestamp: new Date().toISOString(),
+      metadata: {
+        promptTokens: 100,
+        completionTokens: 50,
+        totalTokens: 150,
+      },
+    });
+
+    const setLLM = vi.fn();
+    const updateConfig = vi.fn();
+
+    const liveManager = manager as unknown as {
+      orchestrator: {
+        setLLM: (...args: unknown[]) => void;
+        updateConfig: (...args: unknown[]) => void;
+        send: (...args: unknown[]) => Promise<unknown>;
+        getLLM?: () => unknown;
+      };
+      conversationStore: {
+        updateMetadata: (...args: unknown[]) => Promise<void>;
+        recordRequestMetrics: (...args: unknown[]) => Promise<void>;
+      };
+      memory: MemoryPort<Message>;
+      sessionId: string;
+      sessionInitialized: boolean;
+      memPersist: boolean;
+    };
+
+    liveManager.sessionId = TEST_SESSION_ID;
+    liveManager.memPersist = true;
+    liveManager.sessionInitialized = true;
+    liveManager.memory = new InMemoryMemory<Message>();
+    liveManager.orchestrator = {
+      setLLM,
+      updateConfig,
+      send: orchestratorSend,
+      getLLM: vi.fn().mockReturnValue(undefined),
+    };
+    liveManager.conversationStore = {
+      updateMetadata: vi.fn().mockResolvedValue(undefined),
+      recordRequestMetrics: vi.fn().mockResolvedValue(undefined),
+    } as unknown as {
+      updateMetadata: (...args: unknown[]) => Promise<void>;
+      recordRequestMetrics: (...args: unknown[]) => Promise<void>;
+    };
+
+    (manager as unknown as { createLLM: (...args: unknown[]) => unknown }).createLLM = vi.fn().mockReturnValue({
+      getModels: vi.fn().mockResolvedValue([]),
+    });
+
+    await manager.send('continue', { conversationId: 'default', skipAutoSummaryCheck: true } as never);
+
+    expect(setLLM).toHaveBeenCalled();
+    expect(updateConfig).toHaveBeenCalled();
+    expect(orchestratorSend).toHaveBeenCalled();
+    expect(checkSpy).not.toHaveBeenCalled();
   });
 });
