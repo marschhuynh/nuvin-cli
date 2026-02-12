@@ -1,5 +1,28 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.0
+
+### Major Changes
+
+- [`8e9e8a9`](https://github.com/marschhuynh/nuvin-space/commit/8e9e8a92edb03f0e914905c0c34d566027e30f0b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - BREAKING: Make temperature and topP optional in CompletionParams and AgentConfig
+
+  - temperature and topP are now optional in CompletionParams (LLMPort)
+  - temperature and topP are now optional in AgentConfig
+  - BaseLLM only sends temperature/topP to API when explicitly provided
+  - AgentManager and AgentRegistry respect undefined temperature values
+  - Orchestrator passes temperature/topP only when defined
+
+### Patch Changes
+
+- [`9696dd4`](https://github.com/marschhuynh/nuvin-space/commit/9696dd474994e75aec104e12786d6ef26bd1ca50) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add auto-summary continuation and improve summary prompt
+
+  - Auto-submit continuation turn after context window auto-summary
+  - Add skipAutoSummaryCheck option to prevent recursive checks
+  - Improve summary prompt for better session continuity
+  - Lower auto-summary threshold to 30% for earlier intervention
+
+- [`d124700`](https://github.com/marschhuynh/nuvin-space/commit/d124700cf1b4296b784bab734501e56f91f5a300) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve Responses API compatibility mapping and provider wiring.
+
 ## 1.19.0
 
 ### Minor Changes
