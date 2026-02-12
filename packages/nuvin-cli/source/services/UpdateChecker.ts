@@ -33,10 +33,12 @@ export namespace UpdateChecker {
         };
       }
 
-      // RC → stable is always an update (e.g., 1.0.0-rc.1 → 1.0.0)
-      const hasUpdate =
-        (currentVersion.includes('-') && !latestVersion.includes('-')) ||
-        compareVersions(currentVersion, latestVersion) < 0;
+      // RC → stable of same base version is an update (e.g., 1.0.0-rc.1 → 1.0.0)
+      // But RC newer than stable is not (e.g., 1.37.0-rc.0 → 1.36.0)
+      const currentIsRC = currentVersion.includes('-');
+      const versionCompare = compareVersions(currentVersion, latestVersion);
+
+      const hasUpdate = currentIsRC ? versionCompare <= 0 : versionCompare < 0;
       const versionInfo: VersionInfo = {
         current: currentVersion,
         latest: latestVersion,

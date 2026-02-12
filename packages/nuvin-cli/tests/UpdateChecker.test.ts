@@ -170,5 +170,34 @@ describe('UpdateChecker', () => {
       expect(result.current).toBe('1.0.0');
       expect(result.latest).toBe('1.0.1');
     });
+
+    it('should NOT show update when RC is newer than latest stable', async () => {
+      mockGetVersion.mockReturnValue('1.37.0-rc.0');
+
+      mockRequest.mockImplementation((_options, callback) => {
+        const res = {
+          statusCode: 200,
+          on: vi.fn((event, handler) => {
+            if (event === 'data') {
+              handler(Buffer.from('{"version":"1.36.0"}'));
+            }
+            if (event === 'end') {
+              handler();
+            }
+          }),
+        } as unknown as IncomingMessage;
+        callback(res as IncomingMessage);
+        return {
+          on: vi.fn(),
+          end: vi.fn(),
+        } as any;
+      });
+
+      const result = await UpdateChecker.checkForUpdate();
+
+      expect(result.hasUpdate).toBe(false);
+      expect(result.current).toBe('1.37.0-rc.0');
+      expect(result.latest).toBe('1.36.0');
+    });
   });
 });
