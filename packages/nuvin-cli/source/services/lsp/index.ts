@@ -1,5 +1,5 @@
 import { createClient } from './client.js';
-import { getServerForFile, BUILTIN_SERVERS } from './server.js';
+import { getServersForFile, BUILTIN_SERVERS } from './server.js';
 import { eventBus } from '../EventBus.js';
 import type {
   LSPClientInfo,
@@ -73,10 +73,10 @@ export namespace LSP {
 
   export async function hasClients(file: string): Promise<boolean> {
     if (!state.config.enabled) return false;
-    const server = getServerForFile(file);
-    if (!server) return false;
-    if (state.broken.has(server.id)) return false;
-    return true;
+    const servers = getServersForFile(file);
+    if (servers.length === 0) return false;
+    // Check if at least one server is not broken
+    return servers.some((server) => !state.broken.has(server.id));
   }
 
   export async function touchFile(filePath: string, waitDiagnostics = false): Promise<void> {
@@ -197,34 +197,40 @@ export namespace LSP {
   async function getOrCreateClient(filePath: string): Promise<LSPClientInfo | undefined> {
     if (!state.config.enabled) return undefined;
 
-    const server = getServerForFile(filePath);
-    if (!server) return undefined;
+    const servers = getServersForFile(filePath);
+    if (servers.length === 0) return undefined;
 
-    if (state.broken.has(server.id)) return undefined;
+    // Try each server in order until one works
+    for (const server of servers) {
+      if (state.broken.has(server.id)) continue;
 
-    const serverConfig = state.config.servers[server.id];
-    if (serverConfig?.disabled) return undefined;
+      const serverConfig = state.config.servers[server.id];
+      if (serverConfig?.disabled) continue;
 
-    const root = await server.root(filePath);
-    if (!root) return undefined;
+      const root = await server.root(filePath);
+      if (!root) continue; // Try next server
 
-    const cacheKey = `${server.id}:${root}`;
+      const cacheKey = `${server.id}:${root}`;
 
-    const existing = state.clients.find((c) => c.serverID === server.id && c.root === root);
-    if (existing) return existing;
+      const existing = state.clients.find((c) => c.serverID === server.id && c.root === root);
+      if (existing) return existing;
 
-    const spawning = state.spawning.get(cacheKey);
-    if (spawning) return spawning;
+      const spawning = state.spawning.get(cacheKey);
+      if (spawning) return spawning;
 
-    const spawnPromise = spawnClient(server, root, cacheKey);
-    state.spawning.set(cacheKey, spawnPromise);
+      const spawnPromise = spawnClient(server, root, cacheKey);
+      state.spawning.set(cacheKey, spawnPromise);
 
-    try {
-      const client = await spawnPromise;
-      return client;
-    } finally {
-      state.spawning.delete(cacheKey);
+      try {
+        const client = await spawnPromise;
+        if (client) return client;
+        // If spawn failed, try next server
+      } finally {
+        state.spawning.delete(cacheKey);
+      }
     }
+
+    return undefined;
   }
 
   async function spawnClient(

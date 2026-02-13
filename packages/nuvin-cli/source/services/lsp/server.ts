@@ -157,11 +157,167 @@ export const TypeScriptServer: LSPServerInfo = {
   },
 };
 
-export const BUILTIN_SERVERS: LSPServerInfo[] = [TypeScriptServer];
+export const PythonServer: LSPServerInfo = {
+  id: 'python',
+  name: 'Pyright',
+  extensions: ['.py', '.pyi', '.pyw'],
+
+  async root(file: string): Promise<string | undefined> {
+    const dir = path.dirname(file);
+    const pyprojectRoot = await findFileUp(dir, 'pyproject.toml');
+    if (pyprojectRoot) return pyprojectRoot;
+    const setupRoot = await findFileUp(dir, 'setup.py');
+    if (setupRoot) return setupRoot;
+    const reqRoot = await findFileUp(dir, 'requirements.txt');
+    if (reqRoot) return reqRoot;
+    return findFileUp(dir, '.git');
+  },
+
+  async spawn(root: string): Promise<LSPServerHandle | undefined> {
+    let binary = await findExecutable('pyright', root);
+
+    if (!binary) {
+      binary = await installPackage('pyright');
+    }
+
+    if (!binary) {
+      console.error('[LSP] pyright not found and could not be installed');
+      return undefined;
+    }
+
+    if (process.env.NUVIN_LSP_DEBUG) {
+      console.error(`[LSP] Spawning Pyright server: ${binary} --stdio`);
+    }
+
+    try {
+      const proc = spawn(binary, ['--stdio'], {
+        cwd: root,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, NODE_OPTIONS: '' },
+      });
+
+      let spawnError: Error | null = null;
+
+      proc.on('error', (err) => {
+        spawnError = err;
+        console.error(`[LSP] Pyright server error:`, err.message);
+      });
+
+      proc.on('exit', (code, signal) => {
+        if (code !== null && code !== 0) {
+          console.error(`[LSP] Pyright server exited with code ${code}`);
+        } else if (signal) {
+          console.error(`[LSP] Pyright server killed by signal ${signal}`);
+        }
+      });
+
+      proc.stderr?.on('data', (data) => {
+        if (process.env.NUVIN_LSP_DEBUG) {
+          console.error(`[LSP-PY] ${data.toString()}`);
+        }
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (spawnError || proc.killed || proc.exitCode !== null) {
+        console.error(`[LSP] Pyright server failed to start`);
+        return undefined;
+      }
+
+      return {
+        process: proc,
+      };
+    } catch (err) {
+      console.error(`[LSP] Failed to spawn Pyright server:`, err);
+      return undefined;
+    }
+  },
+};
+
+export const BiomeServer: LSPServerInfo = {
+  id: 'biome',
+  name: 'Biome',
+  extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts', '.json', '.jsonc'],
+
+  async root(file: string): Promise<string | undefined> {
+    const dir = path.dirname(file);
+    // Only use Biome if biome.json exists
+    const biomeRoot = await findFileUp(dir, 'biome.json');
+    if (biomeRoot) return biomeRoot;
+    // Check for biome.jsonc as well
+    const biomeCRoot = await findFileUp(dir, 'biome.jsonc');
+    if (biomeCRoot) return biomeCRoot;
+    return undefined;
+  },
+
+  async spawn(root: string): Promise<LSPServerHandle | undefined> {
+    let binary = await findExecutable('biome', root);
+
+    if (!binary) {
+      binary = await installPackage('@biomejs/biome');
+    }
+
+    if (!binary) {
+      console.error('[LSP] biome not found and could not be installed');
+      return undefined;
+    }
+
+    if (process.env.NUVIN_LSP_DEBUG) {
+      console.error(`[LSP] Spawning Biome server: ${binary} lsp-proxy`);
+    }
+
+    try {
+      const proc = spawn(binary, ['lsp-proxy'], {
+        cwd: root,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, NODE_OPTIONS: '' },
+      });
+
+      let spawnError: Error | null = null;
+
+      proc.on('error', (err) => {
+        spawnError = err;
+        console.error(`[LSP] Biome server error:`, err.message);
+      });
+
+      proc.on('exit', (code, signal) => {
+        if (code !== null && code !== 0) {
+          console.error(`[LSP] Biome server exited with code ${code}`);
+        } else if (signal) {
+          console.error(`[LSP] Biome server killed by signal ${signal}`);
+        }
+      });
+
+      proc.stderr?.on('data', (data) => {
+        if (process.env.NUVIN_LSP_DEBUG) {
+          console.error(`[LSP-BIOME] ${data.toString()}`);
+        }
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (spawnError || proc.killed || proc.exitCode !== null) {
+        console.error(`[LSP] Biome server failed to start`);
+        return undefined;
+      }
+
+      return {
+        process: proc,
+      };
+    } catch (err) {
+      console.error(`[LSP] Failed to spawn Biome server:`, err);
+      return undefined;
+    }
+  },
+};
+
+export const BUILTIN_SERVERS: LSPServerInfo[] = [TypeScriptServer, PythonServer, BiomeServer];
+
+export function getServersForFile(file: string): LSPServerInfo[] {
+  const ext = path.extname(file).toLowerCase();
+  return BUILTIN_SERVERS.filter((server) => server.extensions.includes(ext));
+}
 
 export function getServerForFile(file: string): LSPServerInfo | undefined {
-  const ext = path.extname(file).toLowerCase();
-  return BUILTIN_SERVERS.find((server) => server.extensions.includes(ext));
+  return getServersForFile(file)[0];
 }
 
 export function getServerById(id: string): LSPServerInfo | undefined {

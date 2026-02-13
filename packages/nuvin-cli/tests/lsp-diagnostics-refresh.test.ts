@@ -18,6 +18,7 @@ vi.mock('../source/services/EventBus.js', () => ({ eventBus: mockEventBus }));
 vi.mock('../source/services/lsp/server.js', () => ({
   BUILTIN_SERVERS: [mockedServer],
   getServerForFile: vi.fn(() => mockedServer),
+  getServersForFile: vi.fn(() => [mockedServer]),
 }));
 
 vi.mock('../source/services/lsp/client.js', () => ({

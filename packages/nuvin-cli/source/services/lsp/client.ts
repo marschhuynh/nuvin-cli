@@ -52,6 +52,38 @@ export async function createClient(input: {
 
   const connection = createMessageConnection(new StreamMessageReader(proc.stdout), new StreamMessageWriter(proc.stdin));
 
+  // Track if connection is still usable
+  let connectionDisposed = false;
+
+  // Handle process exit - dispose connection to prevent writes to destroyed streams
+  const onExit = () => {
+    connectionDisposed = true;
+    try {
+      connection.dispose();
+    } catch {
+      // Ignore disposal errors
+    }
+  };
+  proc.on('exit', onExit);
+
+  // Handle stream errors gracefully
+  proc.stdin?.on('error', () => {
+    connectionDisposed = true;
+  });
+  proc.stdout?.on('error', () => {
+    connectionDisposed = true;
+  });
+
+  // Handle connection errors (prevents unhandled rejections)
+  connection.onError(([error]) => {
+    connectionDisposed = true;
+    console.error(`[LSP] Connection error for ${serverID}:`, error.message);
+  });
+
+  connection.onClose(() => {
+    connectionDisposed = true;
+  });
+
   const diagnostics = new Map<string, Diagnostic[]>();
   const pendingDiagnostics = new Map<string, { resolve: () => void; timer: NodeJS.Timeout }>();
 
@@ -298,12 +330,18 @@ export async function createClient(input: {
     },
 
     async shutdown() {
+      if (connectionDisposed) return;
+      connectionDisposed = true;
       try {
         await connection.sendRequest('shutdown');
         await connection.sendNotification('exit');
       } catch {
       } finally {
-        connection.dispose();
+        try {
+          connection.dispose();
+        } catch {
+          // Ignore disposal errors
+        }
         proc.kill();
       }
     },
