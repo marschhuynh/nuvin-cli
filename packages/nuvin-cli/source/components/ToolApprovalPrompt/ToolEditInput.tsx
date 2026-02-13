@@ -1,32 +1,24 @@
-import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { Box, Text } from 'ink';
 import { useInput, useFocus } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import TextInput from '../TextInput';
+import { UncontrolledTextInput } from '../TextInput';
 
 export interface ToolEditInputHandle {
   focus: () => void;
 }
 
 type ToolEditInputProps = {
-  value: string;
-  onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   onCancel: () => void;
-  onFocusChange?: (focused: boolean) => void;
 };
 
 export const ToolEditInput = forwardRef<ToolEditInputHandle, ToolEditInputProps>(
-  ({ value: externalValue, onSubmit, onCancel }, ref) => {
+  ({ onSubmit, onCancel }, ref) => {
     const { theme } = useTheme();
     const { isFocused, focus } = useFocus();
-    const [localValue, setLocalValue] = useState(externalValue);
 
     useImperativeHandle(ref, () => ({ focus }), [focus]);
-
-    useEffect(() => {
-      setLocalValue(externalValue);
-    }, [externalValue]);
 
     useInput(
       (_input, key) => {
@@ -45,10 +37,8 @@ export const ToolEditInput = forwardRef<ToolEditInputHandle, ToolEditInputProps>
           {isFocused ? '❯ ' : '│ '}
         </Text>
         <Box flexGrow={1}>
-          <TextInput
+          <UncontrolledTextInput
             focus={isFocused}
-            value={localValue}
-            onChange={setLocalValue}
             placeholder="Input your changes here"
             onSubmit={onSubmit}
           />

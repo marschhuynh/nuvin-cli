@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getLineInfo, moveCursorVertically, findNextWordEnd, type VimMode } from '@/utils/textNavigation.js';
+import { applyBackspace, applyDelete } from './editing.js';
 
 type InkKey = {
   upArrow: boolean;
@@ -117,14 +118,20 @@ export function useVimMode({ enabled, onModeChange }: UseVimModeOptions): UseVim
         return { type: 'none' };
       }
 
-      if (key.backspace || key.delete) {
-        if (cursorOffset === 0 || value.length === 0) {
+      if (key.backspace) {
+        const nextState = applyBackspace(value, cursorOffset);
+        if (!nextState) {
           return { type: 'none' };
         }
-        const removalIndex = cursorOffset - 1;
-        const newValue = value.slice(0, removalIndex) + value.slice(cursorOffset);
-        const nextOffset = Math.max(0, removalIndex);
-        return { type: 'set-value', value: newValue, offset: nextOffset };
+        return { type: 'set-value', value: nextState.value, offset: nextState.cursorOffset };
+      }
+
+      if (key.delete) {
+        const nextState = applyDelete(value, cursorOffset);
+        if (!nextState) {
+          return { type: 'none' };
+        }
+        return { type: 'set-value', value: nextState.value, offset: nextState.cursorOffset };
       }
 
       if (input.length > 1) {

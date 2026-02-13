@@ -22,7 +22,6 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
   const { addSessionApprovedTool, handleSingleToolApproval, pendingApprovalBatchTotal } = useToolApproval();
   const editInputRef = useRef<ToolEditInputHandle>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editValue, setEditValue] = useState('');
 
   const currentTool = toolCalls[0];
   const currentIndex = pendingApprovalBatchTotal - toolCalls.length;
@@ -86,12 +85,10 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     if (value.trim().length === 0 || !currentTool?.approvalId) return;
     handleSingleToolApproval(currentTool.approvalId, 'edit', value.trim());
     setIsEditMode(false);
-    setEditValue('');
   };
 
   const handleEditCancel = () => {
     setIsEditMode(false);
-    setEditValue('');
   };
 
   const handleActionExecute = (action: number) => {
@@ -161,8 +158,6 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
         <Box marginY={1}>
           <ToolEditInput
             ref={editInputRef}
-            value={editValue}
-            onChange={setEditValue}
             onSubmit={handleEditSubmit}
             onCancel={handleEditCancel}
           />

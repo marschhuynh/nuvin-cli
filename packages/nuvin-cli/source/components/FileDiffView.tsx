@@ -1,6 +1,10 @@
+import React, { useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
 import { theme } from '@/theme';
+import { VirtualizedList } from './VirtualizedList.js';
+
+const VIRTUALIZATION_THRESHOLD = 50;
 
 export type DiffSegment = {
   text: string;
@@ -248,7 +252,7 @@ type DiffLineViewProps = {
   lineNumWidth?: number;
 };
 
-export function DiffLineView({ line, lineNumWidth = 3 }: DiffLineViewProps) {
+function DiffLineViewInner({ line, lineNumWidth = 3 }: DiffLineViewProps) {
   const { cols } = useStdoutDimensions();
   const lineNum = line.oldLineNum || line.newLineNum || 0;
   const lineNumStr = `${String(lineNum).padStart(lineNumWidth, ' ')}│ `;
@@ -319,6 +323,8 @@ export function DiffLineView({ line, lineNumWidth = 3 }: DiffLineViewProps) {
   );
 }
 
+export const DiffLineView = React.memo(DiffLineViewInner);
+
 type FileDiffViewProps = {
   blocks: DiffBlock[];
   filePath?: string;
@@ -327,6 +333,94 @@ type FileDiffViewProps = {
 };
 
 export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }: FileDiffViewProps) {
+  // Memoize all diff calculations
+  const blockData = useMemo(() => {
+    return blocks.map((b, idx) => {
+      const diff = createSimpleDiff(b.search, b.replace, lineNumbers);
+      const hasChanges = diff.some((d) => d.type !== 'context');
+      const maxLineNum = Math.max(...diff.map((line) => Math.max(line.oldLineNum || 0, line.newLineNum || 0)));
+      const lineNumWidth = String(maxLineNum).length;
+
+      return {
+        diff,
+        hasChanges,
+        lineNumWidth,
+        blockIndex: idx,
+        totalBlocks: blocks.length,
+      };
+    });
+  }, [blocks, lineNumbers]);
+
+  // Flatten all lines with their metadata for virtualization
+  const allLines = useMemo(() => {
+    const lines: Array<DiffLine & { blockIndex: number; lineNumWidth: number; showBlockHeader: boolean }> = [];
+
+    for (const block of blockData) {
+      if (block.totalBlocks > 1) {
+        // Add a marker line for block header (we'll render this specially)
+        lines.push({
+          type: 'context',
+          content: `__BLOCK_HEADER__${block.blockIndex + 1}/${block.totalBlocks}`,
+          oldLineNum: 0,
+          newLineNum: 0,
+          blockIndex: block.blockIndex,
+          lineNumWidth: block.lineNumWidth,
+          showBlockHeader: true,
+        });
+      }
+
+      for (const line of block.diff) {
+        lines.push({
+          ...line,
+          blockIndex: block.blockIndex,
+          lineNumWidth: block.lineNumWidth,
+          showBlockHeader: false,
+        });
+      }
+    }
+
+    return lines;
+  }, [blockData]);
+
+  const shouldVirtualize = allLines.length > VIRTUALIZATION_THRESHOLD;
+
+  // Calculate max lineNumWidth across all blocks for consistency
+  const globalLineNumWidth = useMemo(() => {
+    if (blockData.length === 0) return 3;
+    return Math.max(...blockData.map((b) => b.lineNumWidth));
+  }, [blockData]);
+
+  if (shouldVirtualize) {
+    return (
+      <Box flexDirection="column">
+        {showPath && filePath && (
+          <Box marginLeft={2}>
+            <Text color={theme.diff.pathLabel}>path: </Text>
+            <Text>{filePath}</Text>
+          </Box>
+        )}
+        <VirtualizedList
+          items={allLines}
+          renderItem={(line) => {
+            if (line.showBlockHeader && line.content.startsWith('__BLOCK_HEADER__')) {
+              const [, nums] = line.content.split('__BLOCK_HEADER__');
+              return (
+                <Text color={theme.diff.blockSeparator} dimColor>
+                  ─── Block {nums} ───
+                </Text>
+              );
+            }
+            return <DiffLineView line={line} lineNumWidth={line.lineNumWidth} />;
+          }}
+          keyExtractor={(line, i) => `line-${i}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`}
+          overscan={10}
+          flexGrow={1}
+        />
+      </Box>
+    );
+  }
+
+  // Non-virtualized rendering for small diffs
   return (
     <Box flexDirection="column">
       {showPath && filePath && (
@@ -335,36 +429,28 @@ export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }
           <Text>{filePath}</Text>
         </Box>
       )}
-      {blocks.map((b, idx) => {
-        const diff = createSimpleDiff(b.search, b.replace, lineNumbers);
-        const hasChanges = diff.some((d) => d.type !== 'context');
-
-        const maxLineNum = Math.max(...diff.map((line) => Math.max(line.oldLineNum || 0, line.newLineNum || 0)));
-        const lineNumWidth = String(maxLineNum).length;
-
-        return (
-          <Box key={`block-${b.replace}`} flexDirection="column">
-            {blocks.length > 1 && (
-              <Text color={theme.diff.blockSeparator} dimColor>
-                ─── Block {idx + 1}/{blocks.length} ───
-              </Text>
-            )}
-            {hasChanges ? (
-              <Box flexDirection="column">
-                {diff.map((line, ldx) => {
-                  const lineKey = `line-${idx}-${ldx}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`;
-                  return <DiffLineView key={lineKey} line={line} lineNumWidth={lineNumWidth} />;
-                })}
-              </Box>
-            ) : (
-              <Text color={theme.diff.noChanges} dimColor>
-                {' '}
-                (no changes)
-              </Text>
-            )}
-          </Box>
-        );
-      })}
+      {blockData.map((block) => (
+        <Box key={`block-${block.blockIndex}`} flexDirection="column">
+          {block.totalBlocks > 1 && (
+            <Text color={theme.diff.blockSeparator} dimColor>
+              ─── Block {block.blockIndex + 1}/{block.totalBlocks} ───
+            </Text>
+          )}
+          {block.hasChanges ? (
+            <Box flexDirection="column">
+              {block.diff.map((line, ldx) => {
+                const lineKey = `line-${block.blockIndex}-${ldx}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`;
+                return <DiffLineView key={lineKey} line={line} lineNumWidth={globalLineNumWidth} />;
+              })}
+            </Box>
+          ) : (
+            <Text color={theme.diff.noChanges} dimColor>
+              {' '}
+              (no changes)
+            </Text>
+          )}
+        </Box>
+      ))}
       {blocks.length === 0 && (
         <Box marginLeft={2}>
           <Text color={theme.diff.noBlocks}>No changes to display</Text>

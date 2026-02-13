@@ -2,8 +2,9 @@ import type React from 'react';
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useStdin, useStdout } from 'ink';
 import { InputContext } from './InputContext.js';
-import { parseKeypress, setKittyProtocolEnabled, parseMouseEvent, splitInputChunks } from './parseKeypress.js';
+import { parseKeypress, setKittyProtocolEnabled, parseMouseEvent } from './parseKeypress.js';
 import { FocusProvider } from './FocusContext.js';
+import { InputStreamDecoder } from './InputStreamDecoder.js';
 import type {
   Subscriber,
   MouseSubscriber,
@@ -22,6 +23,7 @@ const KITTY_KEYBOARD_DISABLE = '\x1b[<u';
 
 const MOUSE_MODE_ENABLE = '\x1b[?1000h\x1b[?1002h\x1b[?1006h';
 const MOUSE_MODE_DISABLE = '\x1b[?1006l\x1b[?1002l\x1b[?1000l';
+const ESC_FLUSH_DELAY_MS = 35;
 
 function supportsKittyProtocol(): boolean {
   const term = process.env.TERM || '';
@@ -88,6 +90,8 @@ export const InputProvider: React.FC<Props> = ({
   const rawModeEnabledRef = useRef(false);
   const kittyProtocolEnabledRef = useRef(false);
   const mouseEnableCountRef = useRef(0);
+  const decoderRef = useRef(new InputStreamDecoder());
+  const escapeFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isMouseModeEnabled, setIsMouseModeEnabled] = useState(false);
 
   const sortedSubscribersCacheRef = useRef<Subscriber[]>([]);
@@ -275,43 +279,70 @@ export const InputProvider: React.FC<Props> = ({
     }
   }, []);
 
+  const dispatchParsedChunk = useCallback((chunk: string) => {
+    const { input, key } = parseKeypress(chunk);
+
+    const middleware = middlewareRef.current;
+    let index = 0;
+
+    const next = () => {
+      if (index < middleware.length) {
+        const currentMiddleware = middleware[index];
+        index++;
+        currentMiddleware?.(input, key, next);
+      } else {
+        distributeInput(input, key);
+      }
+    };
+
+    next();
+  }, [distributeInput]);
+
+  const clearEscapeFlushTimer = useCallback(() => {
+    if (escapeFlushTimerRef.current) {
+      clearTimeout(escapeFlushTimerRef.current);
+      escapeFlushTimerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!internal_eventEmitter) return;
 
     const handleInput = (data: string) => {
-      const { mouse, consumed } = parseMouseEvent(data);
+      clearEscapeFlushTimer();
+
+      const combinedData = decoderRef.current.getCombinedData(data);
+
+      const { mouse, consumed } = parseMouseEvent(combinedData);
       if (consumed && mouse) {
+        decoderRef.current.clear();
         distributeMouse(mouse);
         return;
       }
 
-      const chunks = splitInputChunks(data);
+      const { chunks, hasPendingEscape } = decoderRef.current.feedCombinedData(combinedData);
       for (const chunk of chunks) {
-        const { input, key } = parseKeypress(chunk);
+        dispatchParsedChunk(chunk);
+      }
 
-        const middleware = middlewareRef.current;
-        let index = 0;
-
-        const next = () => {
-          if (index < middleware.length) {
-            const currentMiddleware = middleware[index];
-            index++;
-            currentMiddleware?.(input, key, next);
-          } else {
-            distributeInput(input, key);
+      if (hasPendingEscape) {
+        escapeFlushTimerRef.current = setTimeout(() => {
+          escapeFlushTimerRef.current = null;
+          for (const chunk of decoderRef.current.flushPendingEscape()) {
+            dispatchParsedChunk(chunk);
           }
-        };
-
-        next();
+        }, ESC_FLUSH_DELAY_MS);
       }
     };
 
     internal_eventEmitter.on('input', handleInput);
 
     return () => {
+      clearEscapeFlushTimer();
+      decoderRef.current.clear();
       internal_eventEmitter.off('input', handleInput);
     };
-  }, [internal_eventEmitter, distributeInput, distributeMouse]);
+  }, [internal_eventEmitter, distributeMouse, dispatchParsedChunk, clearEscapeFlushTimer]);
 
   const contextValue: InputContextValue = useMemo(
     () => ({

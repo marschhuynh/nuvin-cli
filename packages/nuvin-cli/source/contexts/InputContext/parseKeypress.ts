@@ -125,10 +125,8 @@ const metaKeyCodeRe = /^(?:\x1b)([a-zA-Z0-9])$/;
 // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence parsing
 const fnKeyRe = /^(?:\x1b+)(O|N|\[|\[\[)(?:(\d+)(?:;(\d+))?([~^$])|(?:1;)?(\d+)?([a-zA-Z]))/;
 
-// biome-ignore lint/suspicious/noControlCharactersInRegex: Kitty keyboard protocol
-const KITTY_CSI_U_RE = /^\x1b\[(\d+)(?:;(\d+))?u/;
-
 const KITTY_KEYCODE_MAP: Record<number, keyof Key> = {
+  8: 'backspace',
   9: 'tab',
   13: 'return',
   27: 'escape',
@@ -136,11 +134,23 @@ const KITTY_KEYCODE_MAP: Record<number, keyof Key> = {
 };
 
 function parseKittyProtocol(data: string): ParseResult | null {
-  const match = KITTY_CSI_U_RE.exec(data);
-  if (!match || !match[1]) return null;
+  if (!data.startsWith('\x1b[') || !data.endsWith('u')) {
+    return null;
+  }
 
-  const keycode = parseInt(match[1], 10);
-  const modifierValue = match[2] ? parseInt(match[2], 10) - 1 : 0;
+  // Kitty CSI-u: ESC [ <keycode> [; <modifiers> [:<event-type>]] [; ...] u
+  // We only need keycode + modifiers; extra fields are ignored.
+  const payload = data.slice(2, -1);
+  const segments = payload.split(';');
+  const keycodeSegment = segments[0];
+  if (!keycodeSegment) return null;
+
+  const keycode = Number.parseInt(keycodeSegment.split(':')[0] ?? '', 10);
+  if (Number.isNaN(keycode)) return null;
+
+  const modifierSegment = segments[1];
+  const modifierToken = modifierSegment?.split(':')[0];
+  const modifierValue = modifierToken ? Number.parseInt(modifierToken, 10) - 1 : 0;
 
   const key = createEmptyKey();
 
@@ -190,7 +200,7 @@ export const parseKeypress = (data: string): ParseResult => {
     key.meta = s.charAt(0) === '\x1b';
     return { input: '', key };
   } else if (s === '\x7f' || s === '\x1b\x7f') {
-    key.delete = true;
+    key.backspace = true;
     key.meta = s.charAt(0) === '\x1b';
     return { input: '', key };
   } else if (s === '\x1b' || s === '\x1b\x1b') {
@@ -282,11 +292,32 @@ export function splitInputChunks(data: string): string[] {
   // Short-circuit: single character or simple single-escape-sequence chunks
   if (data.length <= 1) return [data];
 
-  // If it doesn't contain ESC, it's a simple string (possibly a paste without brackets)
-  if (!data.includes('\x1b')) return [data];
-
   // Bracketed paste — never split
   if (data.includes('[200~') || data.includes('[201~')) return [data];
+
+  // If it doesn't contain ESC, check for control characters that need splitting.
+  // When keys like backspace (\x7f) are held, the terminal sends multiple bytes in
+  // one chunk (e.g., "\x7f\x7f\x7f"). These must be split so each is parsed as a
+  // separate keypress, otherwise they get misinterpreted as text input.
+  if (!data.includes('\x1b')) {
+    // Fast path: if all chars are printable (>= space, not DEL), no splitting needed
+    let hasControl = false;
+    for (let i = 0; i < data.length; i++) {
+      const code = data.charCodeAt(i);
+      if (code < 0x20 || code === 0x7f) {
+        hasControl = true;
+        break;
+      }
+    }
+    if (!hasControl) return [data];
+
+    // Split: each character becomes its own chunk
+    const results: string[] = [];
+    for (const ch of data) {
+      results.push(ch);
+    }
+    return results;
+  }
 
   const results: string[] = [];
   let lastIndex = 0;
@@ -312,6 +343,55 @@ export function splitInputChunks(data: string): string[] {
   }
 
   return results.length > 0 ? results : [data];
+}
+
+function isIncompleteEscapeChunk(chunk: string): boolean {
+  if (!chunk.startsWith('\x1b')) {
+    return false;
+  }
+
+  if (chunk === '\x1b') {
+    return true;
+  }
+
+  if (chunk.startsWith('\x1b[')) {
+    // Complete CSI forms we support
+    if (/^\x1b\[[0-9:;]+u$/.test(chunk)) return false; // Kitty CSI-u
+    if (/^\x1b\[\d+(?:;\d+)?[~^$]$/.test(chunk)) return false; // fn/edit keys
+    if (/^\x1b\[(?:1;)?\d?[a-zA-Z]$/.test(chunk)) return false; // arrows/home/end variants
+    if (/^\x1b\[<\d+;\d+;\d+[Mm]$/.test(chunk)) return false; // SGR mouse
+    if (chunk.startsWith('\x1b[200~') || chunk.startsWith('\x1b[201~')) return false; // paste markers
+    return true;
+  }
+
+  if (chunk.startsWith('\x1bO')) {
+    return !/^\x1bO[a-zA-Z]$/.test(chunk);
+  }
+
+  if (chunk.startsWith('\x1b]')) {
+    // OSC sequences terminate with BEL or ST (ESC \)
+    return !(chunk.includes('\x07') || chunk.endsWith('\x1b\\'));
+  }
+
+  // Meta-key sequences are usually exactly two bytes: ESC + char
+  return chunk.length === 1;
+}
+
+export function splitInputChunksWithRemainder(data: string): { chunks: string[]; remainder: string } {
+  const chunks = splitInputChunks(data);
+  if (chunks.length === 0) {
+    return { chunks, remainder: '' };
+  }
+
+  const lastChunk = chunks[chunks.length - 1] ?? '';
+  if (!isIncompleteEscapeChunk(lastChunk)) {
+    return { chunks, remainder: '' };
+  }
+
+  return {
+    chunks: chunks.slice(0, -1),
+    remainder: lastChunk,
+  };
 }
 
 export function parseMouseEvent(data: string): MouseParseResult {

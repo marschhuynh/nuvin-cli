@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { useStdoutDimensions } from '@/hooks/index.js';
 import { AutoScrollBox } from '@/components/AutoScrollBox.js';
@@ -8,7 +8,7 @@ type ToolParametersProps = {
   toolCall: ToolCall;
 };
 
-export const ToolParameters: React.FC<ToolParametersProps> = ({ toolCall }) => {
+const ToolParametersInner: React.FC<ToolParametersProps> = ({ toolCall }) => {
   const { rows } = useStdoutDimensions();
   // Reserve space for: title bar (1) + margin (1) + actions (1) + margin (1) + edit input (1) + margin (1) + footer (1) + app footer (2) + buffer (2)
   const maxHeight = Math.max(5, rows - 12);
@@ -27,3 +27,5 @@ export const ToolParameters: React.FC<ToolParametersProps> = ({ toolCall }) => {
     </AutoScrollBox>
   );
 };
+
+export const ToolParameters = React.memo(ToolParametersInner);

@@ -12,6 +12,7 @@ import { useEditorState } from './useEditorState.js';
 import { useLineIndex } from './useLineIndex.js';
 import { TextInputScrollbar } from './TextInputScrollbar.js';
 import { useCursorBlink } from './useCursorBlink.js';
+import { applyBackspace, applyDelete } from './editing.js';
 
 type InputKey = Parameters<Parameters<typeof useInput>[0]>[1];
 
@@ -91,6 +92,7 @@ function TextInput({
 
   const {
     state: editorState,
+    stateRef: editorStateRef,
     setValue,
     moveCursor,
     setInitialCursor,
@@ -232,9 +234,6 @@ function TextInput({
     if (visualLineCount === 0) return 1;
     return Math.min(1, visibleLines / visualLineCount);
   }, [visualLineCount, visibleLines]);
-
-  const editorStateRef = useRef(editorState);
-  editorStateRef.current = editorState;
 
   const setValueRef = useRef(setValue);
   setValueRef.current = setValue;
@@ -453,13 +452,16 @@ function TextInput({
           moveCursorRef.current(target);
         }
         return true;
-      } else if (key.backspace || key.delete) {
-        if (currentCursorOffset > 0) {
-          const nextValue =
-            currentValue.slice(0, currentCursorOffset - 1) +
-            currentValue.slice(currentCursorOffset, currentValue.length);
-          const nextCursorOffset = currentCursorOffset - 1;
-          setValueRef.current(nextValue, nextCursorOffset);
+      } else if (key.backspace) {
+        const nextState = applyBackspace(currentValue, currentCursorOffset);
+        if (nextState) {
+          setValueRef.current(nextState.value, nextState.cursorOffset);
+        }
+        return true;
+      } else if (key.delete) {
+        const nextState = applyDelete(currentValue, currentCursorOffset);
+        if (nextState) {
+          setValueRef.current(nextState.value, nextState.cursorOffset);
         }
         return true;
       } else {
