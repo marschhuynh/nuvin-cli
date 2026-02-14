@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback, useState, useMemo, useLayoutEffe
 import { Box, Text, type BoxRef, measureElement } from 'ink';
 import type { Except } from 'type-fest';
 import { useInput } from '@/contexts/InputContext/index.js';
+import { useStdoutDimensionsContext } from '@/contexts/StdoutDimensionsContext.js';
 import { moveCursorVertically, moveCursorVisually } from '@/utils/textNavigation.js';
 import type { LineInfo } from '@/utils/textNavigation.js';
 
@@ -13,6 +14,7 @@ import { useLineIndex } from './useLineIndex.js';
 import { TextInputScrollbar } from './TextInputScrollbar.js';
 import { useCursorBlink } from './useCursorBlink.js';
 import { applyBackspace, applyDelete } from './editing.js';
+import { isTextInputDebugEnabled, isTextInputDebugVerbose, logTextInputDebug } from './debugLogger.js';
 
 type InputKey = Parameters<Parameters<typeof useInput>[0]>[1];
 
@@ -40,6 +42,87 @@ export type Props = {
   readonly scrollbarTrackColor?: string;
 };
 
+export function computeEffectiveWidth({
+  measuredContainerWidth,
+  terminalCols,
+  showScrollbar,
+  maxLines,
+}: {
+  measuredContainerWidth: number | undefined;
+  terminalCols: number;
+  showScrollbar: boolean;
+  maxLines: number | undefined;
+}): number {
+  // Keep a conservative fallback based on terminal width to avoid tiny
+  // measured widths causing pathological wrapping of short pasted text.
+  const fallbackContainerWidth = Math.max(1, terminalCols - 4);
+  const baseContainerWidth = Math.max(measuredContainerWidth ?? 0, fallbackContainerWidth);
+  const scrollbarWidth = showScrollbar && maxLines !== undefined ? 1 : 0;
+  return Math.max(1, baseContainerWidth - scrollbarWidth - 2);
+}
+
+export function stabilizeEffectiveWidth({
+  previousEffectiveWidth,
+  nextEffectiveWidth,
+  terminalColsChanged,
+}: {
+  previousEffectiveWidth: number | undefined;
+  nextEffectiveWidth: number;
+  terminalColsChanged: boolean;
+}): number {
+  if (previousEffectiveWidth === undefined || terminalColsChanged) {
+    return nextEffectiveWidth;
+  }
+
+  const collapsedTooFar = nextEffectiveWidth < Math.floor(previousEffectiveWidth * 0.35);
+  const suspiciousTinyWidth = nextEffectiveWidth < 12;
+
+  // Ignore transient tiny collapses (for example, width briefly measured as 1-2)
+  // when terminal columns did not actually change.
+  if (collapsedTooFar && suspiciousTinyWidth) {
+    return previousEffectiveWidth;
+  }
+
+  return nextEffectiveWidth;
+}
+
+
+export function resolveRenderedCursorColumn(rawCursorColInRow: number, rowTextLength: number): number {
+  if (rowTextLength <= 0) {
+    return rawCursorColInRow;
+  }
+
+  return rawCursorColInRow >= rowTextLength ? rowTextLength - 1 : rawCursorColInRow;
+}
+function formatInputForDebug(input: string): string {
+  return input
+    .replaceAll('\x1b', '<ESC>')
+    .replaceAll('\n', '\\n')
+    .replaceAll('\r', '\\r')
+    .replaceAll('\t', '\\t');
+}
+
+function summarizeLinesForDebug(lines: string[]): Array<{ index: number; length: number; preview: string }> {
+  return lines.slice(0, 8).map((line, index) => ({
+    index,
+    length: line.length,
+    preview: formatInputForDebug(line.slice(0, 120)),
+  }));
+}
+
+function summarizeVisualRowsForDebug(
+  rows: Array<{ text: string; logicalLine: number; startCol: number; endCol: number; isFullLine: boolean }>,
+): Array<{ index: number; logicalLine: number; startCol: number; endCol: number; length: number; preview: string }> {
+  return rows.slice(0, 20).map((row, index) => ({
+    index,
+    logicalLine: row.logicalLine,
+    startCol: row.startCol,
+    endCol: row.endCol,
+    length: row.text.length,
+    preview: formatInputForDebug(row.text.slice(0, 80)),
+  }));
+}
+
 function TextInput({
   value: originalValue,
   placeholder = '',
@@ -58,28 +141,109 @@ function TextInput({
   scrollbarColor,
   scrollbarTrackColor,
 }: Props) {
-  const boxRef = useRef<BoxRef>(null);
+  const measureRef = useRef<BoxRef>(null);
+  const scrollRef = useRef<BoxRef>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
+  const [scrollBoxWidth, setScrollBoxWidth] = useState<number | undefined>(undefined);
+  const { cols } = useStdoutDimensionsContext();
+  const previousColsRef = useRef(cols);
+  const lastRenderFingerprintRef = useRef<string>('');
 
   useLayoutEffect(() => {
-    if (boxRef.current) {
+    let measuredOuterWidth: number | undefined;
+    let measuredInnerWidth: number | undefined;
+
+    if (measureRef.current) {
       try {
-        const { width } = measureElement(boxRef.current);
-        if (width > 0 && (containerWidth === undefined || width > containerWidth)) {
-          setContainerWidth(width);
+        const { width } = measureElement(measureRef.current);
+        if (width > 0) {
+          measuredOuterWidth = width;
+          setContainerWidth((prev) => (prev === width ? prev : width));
         }
       } catch {
         // Element not ready
       }
     }
+
+    if (scrollRef.current) {
+      try {
+        const { width } = measureElement(scrollRef.current);
+        if (width > 0) {
+          measuredInnerWidth = width;
+          setScrollBoxWidth((prev) => (prev === width ? prev : width));
+        }
+      } catch {
+        // Element not ready
+      }
+    }
+
+    if (isTextInputDebugEnabled) {
+      const shouldLogWidthUpdate =
+        (measuredOuterWidth !== undefined && measuredOuterWidth !== containerWidth) ||
+        (measuredInnerWidth !== undefined && measuredInnerWidth !== scrollBoxWidth);
+
+      if (shouldLogWidthUpdate) {
+        logTextInputDebug('measure width updated', {
+          measuredOuterWidth,
+          previousOuterWidth: containerWidth,
+          measuredInnerWidth,
+          previousInnerWidth: scrollBoxWidth,
+          cols,
+        });
+      }
+    }
   });
 
-  const effectiveWidth = useMemo(() => {
-    if (!containerWidth) return undefined;
-    const scrollbarWidth = showScrollbar && maxLines !== undefined ? 1 : 0;
-    return Math.max(1, containerWidth - scrollbarWidth - 2);
-  }, [containerWidth, showScrollbar, maxLines]);
+  const nextEffectiveWidth = useMemo(() => {
+    return computeEffectiveWidth({
+      measuredContainerWidth: containerWidth,
+      terminalCols: cols,
+      showScrollbar,
+      maxLines,
+    });
+  }, [containerWidth, cols, showScrollbar, maxLines]);
+  const [effectiveWidth, setEffectiveWidth] = useState(nextEffectiveWidth);
+
+  useEffect(() => {
+    const terminalColsChanged = cols !== previousColsRef.current;
+    setEffectiveWidth((previousEffectiveWidth) => {
+      const stabilized = stabilizeEffectiveWidth({
+        previousEffectiveWidth,
+        nextEffectiveWidth,
+        terminalColsChanged,
+      });
+
+      if (isTextInputDebugEnabled) {
+        logTextInputDebug('effective width reconcile', {
+          previousEffectiveWidth,
+          nextEffectiveWidth,
+          stabilizedEffectiveWidth: stabilized,
+          terminalColsChanged,
+          cols,
+          measuredContainerWidth: containerWidth,
+          measuredScrollBoxWidth: scrollBoxWidth,
+          suspiciousTinyCandidate: nextEffectiveWidth < 12,
+          severeCollapseFromPrevious:
+            previousEffectiveWidth !== undefined && nextEffectiveWidth < Math.floor(previousEffectiveWidth * 0.35),
+        });
+
+        if (stabilized <= 4) {
+          logTextInputDebug('anomaly: tiny effective width', {
+            previousEffectiveWidth,
+            nextEffectiveWidth,
+            stabilizedEffectiveWidth: stabilized,
+            cols,
+            measuredContainerWidth: containerWidth,
+            measuredScrollBoxWidth: scrollBoxWidth,
+          });
+        }
+      }
+
+      return stabilized;
+    });
+    previousColsRef.current = cols;
+  }, [nextEffectiveWidth, cols, containerWidth, scrollBoxWidth]);
 
   const {
     mode: vimMode,
@@ -198,6 +362,98 @@ function TextInput({
   const visibleLines = maxLines ?? visualLineCount;
 
   useEffect(() => {
+    if (!isTextInputDebugEnabled) {
+      return;
+    }
+
+    const lineInfo = lineIndex.getLineInfo(editorState.cursorOffset);
+
+    const fingerprint = [
+      editorState.value.length,
+      editorState.cursorOffset,
+      cols,
+      containerWidth,
+      scrollBoxWidth,
+      nextEffectiveWidth,
+      effectiveWidth,
+      maxLines,
+      visualLineCount,
+      hasScrolling,
+      visibleLines,
+      scrollOffset,
+      cursorInfo.visualRow,
+      cursorInfo.visualCol,
+      lineInfo.lineIndex,
+      lineInfo.column,
+    ].join('|');
+
+    if (!isTextInputDebugVerbose && lastRenderFingerprintRef.current === fingerprint) {
+      return;
+    }
+
+    lastRenderFingerprintRef.current = fingerprint;
+
+    const summary: Record<string, unknown> = {
+      valueLength: editorState.value.length,
+      cursorOffset: editorState.cursorOffset,
+      cursorLogicalLine: lineInfo.lineIndex,
+      cursorLogicalCol: lineInfo.column,
+      cursorLineStart: lineInfo.lineStart,
+      cursorLineEnd: lineInfo.lineEnd,
+      cursorVisualRow: cursorInfo.visualRow,
+      cursorVisualCol: cursorInfo.visualCol,
+      cols,
+      measuredOuterWidth: containerWidth,
+      measuredInnerWidth: scrollBoxWidth,
+      nextEffectiveWidth,
+      effectiveWidth,
+      maxLines,
+      lineCount: lines.length,
+      lineLengths: lines.slice(0, 20).map((line) => line.length),
+      visualLineCount,
+      hasScrolling,
+      visibleLines,
+      scrollOffset,
+    };
+
+    if (isTextInputDebugVerbose) {
+      summary.linesHead = summarizeLinesForDebug(lines);
+      summary.visualRowsHead = summarizeVisualRowsForDebug(visualRows);
+    }
+
+    logTextInputDebug('render summary', summary);
+
+    if (effectiveWidth <= 4 || (scrollBoxWidth !== undefined && scrollBoxWidth <= 4)) {
+      logTextInputDebug('anomaly: suspicious tiny layout width in render', {
+        effectiveWidth,
+        measuredOuterWidth: containerWidth,
+        measuredInnerWidth: scrollBoxWidth,
+        cols,
+        cursorOffset: editorState.cursorOffset,
+        valueLength: editorState.value.length,
+      });
+    }
+  }, [
+    editorState.value.length,
+    editorState.cursorOffset,
+    cols,
+    containerWidth,
+    scrollBoxWidth,
+    nextEffectiveWidth,
+    effectiveWidth,
+    maxLines,
+    lines,
+    visualRows,
+    visualLineCount,
+    hasScrolling,
+    visibleLines,
+    scrollOffset,
+    cursorInfo.visualRow,
+    cursorInfo.visualCol,
+    lineIndex,
+  ]);
+
+  useEffect(() => {
     if (!hasScrolling) {
       if (scrollOffset !== 0) {
         setScrollOffset(0);
@@ -205,7 +461,7 @@ function TextInput({
       return;
     }
 
-    if (!boxRef.current) return;
+    if (!scrollRef.current) return;
 
     const { visualRow } = cursorInfo;
     const maxScroll = Math.max(0, visualLineCount - visibleLines);
@@ -213,14 +469,14 @@ function TextInput({
     if (visualRow < scrollOffset) {
       const newOffset = Math.max(0, visualRow);
       setScrollOffset(newOffset);
-      boxRef.current.scrollTo({ y: newOffset });
+      scrollRef.current.scrollTo({ y: newOffset });
     } else if (visualRow >= scrollOffset + visibleLines) {
       const newOffset = Math.min(maxScroll, visualRow - visibleLines + 1);
       setScrollOffset(newOffset);
-      boxRef.current.scrollTo({ y: newOffset });
+      scrollRef.current.scrollTo({ y: newOffset });
     } else if (scrollOffset > maxScroll) {
       setScrollOffset(maxScroll);
-      boxRef.current.scrollTo({ y: maxScroll });
+      scrollRef.current.scrollTo({ y: maxScroll });
     }
   }, [cursorInfo, hasScrolling, scrollOffset, visibleLines, visualLineCount]);
 
@@ -276,13 +532,41 @@ function TextInput({
 
   const handleInput = useCallback(
     (input: string, key: InputKey) => {
+      if (isTextInputDebugEnabled) {
+        logTextInputDebug('input event', {
+          input: formatInputForDebug(input),
+          inputLength: input.length,
+          key,
+          cursorOffset: editorStateRef.current.cursorOffset,
+          valueLength: editorStateRef.current.value.length,
+        });
+      }
+
       const pasteResult = processPaste(input);
 
+      if (isTextInputDebugEnabled) {
+        logTextInputDebug('paste processing result', {
+          shouldWaitForMore: pasteResult.shouldWaitForMore,
+          isPasteStart: pasteResult.isPasteStart,
+          processedInputLength: pasteResult.processedInput?.length ?? null,
+          processedInputPreview: pasteResult.processedInput ? formatInputForDebug(pasteResult.processedInput.slice(0, 80)) : null,
+        });
+      }
+
       if (pasteResult.shouldWaitForMore) {
+        if (isTextInputDebugEnabled) {
+          logTextInputDebug('paste waiting for more chunks');
+        }
         return true;
       }
 
       if (pasteResult.processedInput !== null) {
+        if (isTextInputDebugEnabled) {
+          logTextInputDebug('paste completed', {
+            pastedLength: pasteResult.processedInput.length,
+            pastedPreview: formatInputForDebug(pasteResult.processedInput.slice(0, 120)),
+          });
+        }
         input = pasteResult.processedInput;
       }
 
@@ -365,10 +649,24 @@ function TextInput({
         if (key.shift) {
           const nextValue = `${currentValue.slice(0, currentCursorOffset)}\n${currentValue.slice(currentCursorOffset)}`;
           const nextCursorOffset = currentCursorOffset + 1;
+          if (isTextInputDebugEnabled) {
+            logTextInputDebug('shift+enter inserted newline', {
+              previousValueLength: currentValue.length,
+              nextValueLength: nextValue.length,
+              previousCursorOffset: currentCursorOffset,
+              nextCursorOffset,
+            });
+          }
           setValueRef.current(nextValue, nextCursorOffset);
           return true;
         }
         if (onSubmit) {
+          if (isTextInputDebugEnabled) {
+            logTextInputDebug('submit triggered from return key', {
+              valueLength: currentValue.length,
+              cursorOffset: currentCursorOffset,
+            });
+          }
           onSubmit(currentValue);
         }
         return true;
@@ -472,6 +770,17 @@ function TextInput({
         const nextCursorOffset = currentCursorOffset + input.length;
         const nextCursorWidth = input.length > 1 ? input.length : 0;
 
+        if (isTextInputDebugEnabled) {
+          logTextInputDebug('text inserted', {
+            insertedInput: formatInputForDebug(input),
+            insertedLength: input.length,
+            previousValueLength: currentValue.length,
+            nextValueLength: nextValue.length,
+            previousCursorOffset: currentCursorOffset,
+            nextCursorOffset,
+          });
+        }
+
         setValueRef.current(nextValue, nextCursorOffset, nextCursorWidth);
         return true;
       }
@@ -508,10 +817,11 @@ function TextInput({
 
       // For full lines (non-scrolling), use logical col directly
       // For split rows (scrolling), use visual col within the row
-      const cursorColInRow = row.isFullLine ? cursorInfo.logicalCol : cursorInfo.visualCol;
+      const rawCursorColInRow = row.isFullLine ? cursorInfo.logicalCol : cursorInfo.visualCol;
+      const cursorColInRow = resolveRenderedCursorColumn(rawCursorColInRow, row.text.length);
       const before = row.text.slice(0, cursorColInRow);
       const cursorChar = row.text[cursorColInRow] ?? ' ';
-      const after = row.text.slice(cursorColInRow + 1);
+      const after = row.text.slice(Math.min(cursorColInRow + 1, row.text.length));
 
       return (
         <Text>
@@ -526,7 +836,7 @@ function TextInput({
 
   if (editorState.value.length === 0 && placeholder) {
     return (
-      <Box ref={boxRef} flexDirection="row" flexGrow={1}>
+      <Box ref={measureRef} flexDirection="row" flexGrow={1}>
         <Box flexGrow={1}>
           <Text dimColor>
             {showCursor && focus ? (
@@ -547,8 +857,8 @@ function TextInput({
 
   if (hasScrolling && maxLines) {
     return (
-      <Box key="scrolling" flexDirection="row" maxHeight={maxLines} width={'100%'}>
-        <Box ref={boxRef} flexDirection="column" flexGrow={1} maxHeight={maxLines} overflow="scroll">
+      <Box key="scrolling" ref={measureRef} flexDirection="row" maxHeight={maxLines} width={'100%'}>
+        <Box ref={scrollRef} flexDirection="column" flexGrow={1} maxHeight={maxLines} overflow="scroll" minWidth={0}>
           {visualRows.map((row, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since rows are stable
             <Box key={i} flexShrink={0} minHeight={1}>
@@ -570,7 +880,7 @@ function TextInput({
   }
 
   return (
-    <Box key="non-scrolling" ref={boxRef} flexDirection="column" flexGrow={1} width={'100%'}>
+    <Box key="non-scrolling" ref={measureRef} flexDirection="column" flexGrow={1} width={'100%'}>
       {visualRows.map((row, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since rows are stable
         <Box key={i} flexShrink={0} minHeight={1}>

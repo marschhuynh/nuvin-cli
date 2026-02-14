@@ -25,6 +25,7 @@ import { ConfigCliHandler } from './config/cli-handler.js';
 import { orchestratorManager } from './services/OrchestratorManager.js';
 import ansiEscapes from 'ansi-escapes';
 import { AltModeProvider } from './contexts/AltModeContext.js';
+import { installTerminalWriteDebugLogger } from './utils/terminal-write-debug.js';
 
 const ENTER_ALT_SCREEN = '\x1b[?1049h';
 const EXIT_ALT_SCREEN = '\x1b[?1049l';
@@ -34,6 +35,19 @@ const BRACKETED_PASTE_DISABLE = '\x1b[?2004l';
 
 const isAcpMode = process.argv.includes('--acp');
 
+const restoreTerminalWriteDebug = installTerminalWriteDebugLogger();
+let terminalWriteDebugRestored = false;
+
+const restoreTerminalWriteDebugOnce = () => {
+  if (terminalWriteDebugRestored) {
+    return;
+  }
+
+  terminalWriteDebugRestored = true;
+  restoreTerminalWriteDebug();
+};
+
+process.once('exit', restoreTerminalWriteDebugOnce);
 // Cleanup function to reset all terminal modes
 const cleanupTerminal = (isAlt: boolean | undefined) => {
   console.log(KITTY_KEYBOARD_DISABLE);
@@ -43,6 +57,8 @@ const cleanupTerminal = (isAlt: boolean | undefined) => {
   if (isAlt) {
     console.log(EXIT_ALT_SCREEN);
   }
+
+  restoreTerminalWriteDebugOnce();
 };
 
 declare global {
