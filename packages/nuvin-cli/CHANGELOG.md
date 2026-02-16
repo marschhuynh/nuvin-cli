@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.3
+
+### Patch Changes
+
+- [`ad6919d`](https://github.com/marschhuynh/nuvin-space/commit/ad6919dd31428131952a4e0640cb6645d31e8570) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove TextInput debug logging
+
 ## 1.37.0-rc.2
 
 ### Minor Changes
