@@ -5,7 +5,11 @@ import { isTextInputDebugEnabled, logTextInputDebug } from './debugLogger.js';
 const PASTE_TIMEOUT_MS = 2000;
 
 function previewInput(input: string): string {
-  return input.replaceAll('\x1b', '<ESC>').replaceAll('\n', '\\n').replaceAll('\r', '\\r').slice(0, 120);
+  return input
+    .replace(/\x1b/g, '<ESC>')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .slice(0, 120);
 }
 
 export type UsePasteReturn = {

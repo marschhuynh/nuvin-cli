@@ -64,11 +64,6 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
     cursorWidth: 0,
   });
 
-  // stateRef is the single source of truth for input handling.
-  // It's updated eagerly (synchronously) so rapid keystrokes between renders
-  // always read the latest state. setState is called only to trigger re-renders.
-  const stateRef = useRef(state);
-
   const lastExternalValue = useRef(initialValue);
   const hasSetInitialCursor = useRef(false);
   const pendingEchoesRef = useRef<string[]>([]);
@@ -77,14 +72,16 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
     if (initialValue !== lastExternalValue.current) {
       lastExternalValue.current = initialValue;
 
-      const reconciliation = reconcileExternalValue(stateRef.current, initialValue, vimMode, pendingEchoesRef.current);
-      pendingEchoesRef.current = reconciliation.nextPendingEchoes;
+      setState((current) => {
+        const reconciliation = reconcileExternalValue(current, initialValue, vimMode, pendingEchoesRef.current);
+        pendingEchoesRef.current = reconciliation.nextPendingEchoes;
 
-      if (reconciliation.nextState) {
-        const next = reconciliation.nextState;
-        stateRef.current = next;
-        setState(next);
-      }
+        if (reconciliation.nextState) {
+          return reconciliation.nextState;
+        }
+
+        return current;
+      });
 
       if (initialValue === '') {
         hasSetInitialCursor.current = false;
@@ -93,15 +90,16 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
   }, [initialValue]);
 
   const setValue = useCallback((value: string, offset: number, width = 0) => {
-    const current = stateRef.current;
     const clampedOffset = clampOffset(value.length, offset, vimMode);
-    if (value === current.value && clampedOffset === current.cursorOffset && width === current.cursorWidth) {
-      return;
-    }
-    const next: EditorState = { value, cursorOffset: clampedOffset, cursorWidth: width };
-    stateRef.current = next;
-    setState(next);
-    if (value !== current.value) {
+    let valueChanged = false;
+    setState((current) => {
+      if (value === current.value && clampedOffset === current.cursorOffset && width === current.cursorWidth) {
+        return current;
+      }
+      valueChanged = value !== current.value;
+      return { value, cursorOffset: clampedOffset, cursorWidth: width };
+    });
+    if (valueChanged) {
       pendingEchoesRef.current.push(value);
       if (pendingEchoesRef.current.length > 200) {
         pendingEchoesRef.current.shift();
@@ -111,20 +109,17 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
   }, [vimMode, onChange]);
 
   const moveCursor = useCallback((offset: number) => {
-    const current = stateRef.current;
-    const clampedOffset = clampOffset(current.value.length, offset, vimMode);
-    if (clampedOffset === current.cursorOffset) {
-      return;
-    }
-    const next: EditorState = { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
-    stateRef.current = next;
-    setState(next);
+    setState((current) => {
+      const clampedOffset = clampOffset(current.value.length, offset, vimMode);
+      if (clampedOffset === current.cursorOffset) {
+        return current;
+      }
+      return { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
+    });
   }, [vimMode]);
 
   const reset = useCallback(() => {
-    const next: EditorState = { value: '', cursorOffset: 0, cursorWidth: 0 };
-    stateRef.current = next;
-    setState(next);
+    setState({ value: '', cursorOffset: 0, cursorWidth: 0 });
     pendingEchoesRef.current.push('');
     if (pendingEchoesRef.current.length > 200) {
       pendingEchoesRef.current.shift();
@@ -133,22 +128,24 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
   }, [onChange]);
 
   const setInitialCursor = useCallback((focus: boolean) => {
-    if (!hasSetInitialCursor.current && focus && stateRef.current.value && stateRef.current.value.length > 0) {
-      hasSetInitialCursor.current = true;
-      const current = stateRef.current;
-      const offset = Math.max(0, current.value.length);
-      const clampedOffset = clampOffset(current.value.length, offset, vimMode);
-      if (clampedOffset !== current.cursorOffset) {
-        const next: EditorState = { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
-        stateRef.current = next;
-        setState(next);
-      }
+    if (!hasSetInitialCursor.current && focus) {
+      setState((current) => {
+        if (!current.value || current.value.length === 0) {
+          return current;
+        }
+        hasSetInitialCursor.current = true;
+        const offset = Math.max(0, current.value.length);
+        const clampedOffset = clampOffset(current.value.length, offset, vimMode);
+        if (clampedOffset === current.cursorOffset) {
+          return current;
+        }
+        return { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
+      });
     }
   }, [vimMode]);
 
   return {
     state,
-    stateRef,
     setValue,
     moveCursor,
     reset,

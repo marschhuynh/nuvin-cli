@@ -74,21 +74,23 @@ describe('TextInput width stabilization', () => {
 });
 
 describe('TextInput cursor rendering at end of row', () => {
-  it('pins cursor to last visible character when logical cursor is at end of non-empty row', () => {
-    const renderedColumn = resolveRenderedCursorColumn(6, 6);
+  it('allows cursor past end of non-empty row', () => {
+    const renderedColumn = resolveRenderedCursorColumn(6, 6, true);
+    expect(renderedColumn).toBe(6);
+  });
 
-    expect(renderedColumn).toBe(5);
+  it('allows cursor past end for split rows', () => {
+    const renderedColumn = resolveRenderedCursorColumn(6, 6, false);
+    expect(renderedColumn).toBe(6);
   });
 
   it('keeps cursor at start for empty rows', () => {
-    const renderedColumn = resolveRenderedCursorColumn(0, 0);
-
+    const renderedColumn = resolveRenderedCursorColumn(0, 0, true);
     expect(renderedColumn).toBe(0);
   });
 
   it('keeps cursor column when it is already inside row bounds', () => {
-    const renderedColumn = resolveRenderedCursorColumn(3, 6);
-
+    const renderedColumn = resolveRenderedCursorColumn(3, 6, false);
     expect(renderedColumn).toBe(3);
   });
 });

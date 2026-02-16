@@ -1,3 +1,5 @@
+import { splitByVisualWidth } from '@/components/TextInput/widthUtils.js';
+
 export type VimMode = 'insert' | 'normal';
 
 export type LineInfo = {
@@ -76,41 +78,60 @@ export function moveCursorVisually(
   const currentLine = info.lines[info.lineIndex] ?? '';
   const column = info.column;
 
-  const totalWrappedRows = Math.max(1, Math.ceil(currentLine.length / wrapWidth));
-  const maxRowIndex = totalWrappedRows - 1;
+  const chunks = splitByVisualWidth(currentLine, wrapWidth);
+  const totalWrappedRows = chunks.length;
 
-  let wrappedRowInLine = Math.floor(column / wrapWidth);
-  wrappedRowInLine = Math.min(wrappedRowInLine, maxRowIndex);
+  // Find which chunk the cursor is in
+  let wrappedRowInLine = 0;
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]!;
+    if (column >= chunk.charStart && column < chunk.charEnd) {
+      wrappedRowInLine = i;
+      break;
+    }
+    // Cursor at end of line — belongs to last chunk
+    if (column >= chunk.charEnd && i === chunks.length - 1) {
+      wrappedRowInLine = i;
+    }
+  }
 
-  const rowStartCol = wrappedRowInLine * wrapWidth;
-  const visualColInRow = column - rowStartCol;
+  const currentChunk = chunks[wrappedRowInLine]!;
+  const colInRow = column - currentChunk.charStart;
 
   if (direction === 'up') {
     if (wrappedRowInLine > 0) {
-      const newColumn = (wrappedRowInLine - 1) * wrapWidth + Math.min(visualColInRow, wrapWidth - 1);
-      return info.lineStart + Math.min(newColumn, currentLine.length);
+      const prevChunk = chunks[wrappedRowInLine - 1]!;
+      const prevChunkLen = prevChunk.charEnd - prevChunk.charStart;
+      const targetCol = Math.min(colInRow, prevChunkLen);
+      return info.lineStart + prevChunk.charStart + targetCol;
     }
     if (info.lineIndex === 0) {
       return null;
     }
     const prevLine = info.lines[info.lineIndex - 1] ?? '';
     const prevLineStart = info.lineStart - prevLine.length - 1;
-    const prevTotalRows = Math.max(1, Math.ceil(prevLine.length / wrapWidth));
-    const targetRowStart = (prevTotalRows - 1) * wrapWidth;
-    const targetColumn = targetRowStart + Math.min(visualColInRow, wrapWidth - 1);
-    return prevLineStart + Math.min(targetColumn, prevLine.length);
+    const prevChunks = splitByVisualWidth(prevLine, wrapWidth);
+    const lastPrevChunk = prevChunks[prevChunks.length - 1]!;
+    const lastPrevChunkLen = lastPrevChunk.charEnd - lastPrevChunk.charStart;
+    const targetCol = Math.min(colInRow, lastPrevChunkLen);
+    return prevLineStart + lastPrevChunk.charStart + targetCol;
   } else {
     if (wrappedRowInLine < totalWrappedRows - 1) {
-      const newColumn = (wrappedRowInLine + 1) * wrapWidth + Math.min(visualColInRow, wrapWidth - 1);
-      return info.lineStart + Math.min(newColumn, currentLine.length);
+      const nextChunk = chunks[wrappedRowInLine + 1]!;
+      const nextChunkLen = nextChunk.charEnd - nextChunk.charStart;
+      const targetCol = Math.min(colInRow, nextChunkLen);
+      return info.lineStart + nextChunk.charStart + targetCol;
     }
     if (info.lineIndex >= info.lines.length - 1) {
       return null;
     }
     const nextLine = info.lines[info.lineIndex + 1] ?? '';
     const nextLineStart = info.lineEnd + 1;
-    const targetColumn = Math.min(visualColInRow, wrapWidth - 1);
-    return nextLineStart + Math.min(targetColumn, nextLine.length);
+    const nextChunks = splitByVisualWidth(nextLine, wrapWidth);
+    const firstNextChunk = nextChunks[0]!;
+    const firstNextChunkLen = firstNextChunk.charEnd - firstNextChunk.charStart;
+    const targetCol = Math.min(colInRow, firstNextChunkLen);
+    return nextLineStart + firstNextChunk.charStart + targetCol;
   }
 }
 
