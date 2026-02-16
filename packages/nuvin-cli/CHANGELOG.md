@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.2
+
+### Minor Changes
+
+- [`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: inject available skills into system prompt for agent awareness
+
+### Patch Changes
+
+- Updated dependencies [[`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c)]:
+  - @nuvin/nuvin-core@2.0.0-rc.1
+
 ## 1.37.0-rc.1
 
 ### Patch Changes
