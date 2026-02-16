@@ -5,18 +5,9 @@ import type { LineInfo } from '@/utils/textNavigation.js';
 import type { EditorState } from './useEditorState.js';
 import type { LineIndex } from './useLineIndex.js';
 import { applyBackspace, applyDelete } from './editing.js';
-import { isTextInputDebugEnabled, logTextInputDebug } from './debugLogger.js';
 import { splitByVisualWidth } from './widthUtils.js';
 
 type InputKey = Parameters<Parameters<typeof useInput>[0]>[1];
-
-function formatInputForDebug(input: string): string {
-  return input
-    .replace(/\x1b/g, '<ESC>')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r')
-    .replace(/\t/g, '\\t');
-}
 
 export type UseInputHandlerOptions = {
   focus: boolean;
@@ -126,41 +117,13 @@ export function useInputHandler({
 
   const handleInput = useCallback(
     (input: string, key: InputKey) => {
-      if (isTextInputDebugEnabled) {
-        logTextInputDebug('input event', {
-          input: formatInputForDebug(input),
-          inputLength: input.length,
-          key,
-          cursorOffset: editorState.cursorOffset,
-          valueLength: editorState.value.length,
-        });
-      }
-
       const pasteResult = processPaste(input);
 
-      if (isTextInputDebugEnabled) {
-        logTextInputDebug('paste processing result', {
-          shouldWaitForMore: pasteResult.shouldWaitForMore,
-          isPasteStart: pasteResult.isPasteStart,
-          processedInputLength: pasteResult.processedInput?.length ?? null,
-          processedInputPreview: pasteResult.processedInput ? formatInputForDebug(pasteResult.processedInput.slice(0, 80)) : null,
-        });
-      }
-
       if (pasteResult.shouldWaitForMore) {
-        if (isTextInputDebugEnabled) {
-          logTextInputDebug('paste waiting for more chunks');
-        }
         return true;
       }
 
       if (pasteResult.processedInput !== null) {
-        if (isTextInputDebugEnabled) {
-          logTextInputDebug('paste completed', {
-            pastedLength: pasteResult.processedInput.length,
-            pastedPreview: formatInputForDebug(pasteResult.processedInput.slice(0, 120)),
-          });
-        }
         input = pasteResult.processedInput;
       }
 
@@ -243,24 +206,10 @@ export function useInputHandler({
         if (key.shift) {
           const nextValue = `${currentValue.slice(0, currentCursorOffset)}\n${currentValue.slice(currentCursorOffset)}`;
           const nextCursorOffset = currentCursorOffset + 1;
-          if (isTextInputDebugEnabled) {
-            logTextInputDebug('shift+enter inserted newline', {
-              previousValueLength: currentValue.length,
-              nextValueLength: nextValue.length,
-              previousCursorOffset: currentCursorOffset,
-              nextCursorOffset,
-            });
-          }
           setValueRef.current(nextValue, nextCursorOffset);
           return true;
         }
         if (onSubmit) {
-          if (isTextInputDebugEnabled) {
-            logTextInputDebug('submit triggered from return key', {
-              valueLength: currentValue.length,
-              cursorOffset: currentCursorOffset,
-            });
-          }
           onSubmit(currentValue);
         }
         return true;
@@ -370,17 +319,6 @@ export function useInputHandler({
           currentValue.slice(currentCursorOffset, currentValue.length);
         const nextCursorOffset = currentCursorOffset + input.length;
         const nextCursorWidth = input.length > 1 ? input.length : 0;
-
-        if (isTextInputDebugEnabled) {
-          logTextInputDebug('text inserted', {
-            insertedInput: formatInputForDebug(input),
-            insertedLength: input.length,
-            previousValueLength: currentValue.length,
-            nextValueLength: nextValue.length,
-            previousCursorOffset: currentCursorOffset,
-            nextCursorOffset,
-          });
-        }
 
         setValueRef.current(nextValue, nextCursorOffset, nextCursorWidth);
         return true;

@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Except } from 'type-fest';
 import type { LineInfo } from '@/utils/textNavigation.js';
-import { useStdoutDimensionsContext } from '@/contexts/StdoutDimensionsContext.js';
 import { useVimMode } from './useVimMode.js';
 import { usePaste } from './usePaste.js';
 import { useEditorState } from './useEditorState.js';
@@ -11,7 +10,6 @@ import { useTextInputLayout } from './useTextInputLayout.js';
 import { useVisualRows } from './useVisualRows.js';
 import { useTextInputScroll } from './useTextInputScroll.js';
 import { useInputHandler } from './useInputHandler.js';
-import { useTextInputDebugLogger } from './debugLogger.js';
 import { TextInputRenderer } from './TextInputRenderer.js';
 
 export type { LineInfo };
@@ -61,9 +59,7 @@ function TextInput({
   scrollbarColor,
   scrollbarTrackColor,
 }: Props) {
-  const { cols } = useStdoutDimensionsContext();
-
-  const { measureRef, scrollRef, effectiveWidth, containerWidth, scrollBoxWidth } = useTextInputLayout({
+  const { measureRef, scrollRef, effectiveWidth } = useTextInputLayout({
     showScrollbar,
     maxLines,
   });
@@ -92,7 +88,7 @@ function TextInput({
   const lineIndex = useLineIndex(editorState.value);
   const cursorVisible = useCursorBlink(editorState.value, editorState.cursorOffset);
 
-  const { lines, visualRows, cursorInfo } = useVisualRows({
+  const { visualRows, cursorInfo } = useVisualRows({
     value: editorState.value,
     cursorOffset: editorState.cursorOffset,
     mask,
@@ -103,7 +99,7 @@ function TextInput({
 
   const visualLineCount = visualRows.length;
 
-  const { scrollOffset, scrollRatio, visibleRatio, hasScrolling, visibleLines } = useTextInputScroll({
+  const { scrollRatio, visibleRatio, hasScrolling } = useTextInputScroll({
     scrollRef,
     maxLines,
     visualLineCount,
@@ -129,24 +125,6 @@ function TextInput({
     onUpArrow,
     onDownArrow,
     onTab,
-  });
-
-  useTextInputDebugLogger({
-    editorValue: editorState.value,
-    editorCursorOffset: editorState.cursorOffset,
-    cols,
-    containerWidth,
-    scrollBoxWidth,
-    effectiveWidth,
-    maxLines,
-    lines,
-    visualRows,
-    visualLineCount,
-    hasScrolling,
-    visibleLines,
-    scrollOffset,
-    cursorInfo,
-    lineIndex,
   });
 
   return (

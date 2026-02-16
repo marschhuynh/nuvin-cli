@@ -117,7 +117,7 @@ export function TextInputRenderer({
     <Box key="non-scrolling" ref={measureRef} flexDirection="column" flexGrow={1} width={'100%'}>
       {visualRows.map((row, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: <i> is fine here since rows are stable
-        <Box key={i} flexShrink={0} minHeight={1} backgroundColor={"red"}>
+        <Box key={i} flexShrink={0} minHeight={1}>
           {renderVisualRow(row, i)}
         </Box>
       ))}
