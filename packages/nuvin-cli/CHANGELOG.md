@@ -1,5 +1,18 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.2
+
+### Minor Changes
+
+- [`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: inject available skills into system prompt for agent awareness
+
+### Patch Changes
+
+- [`0681187`](https://github.com/marschhuynh/nuvin-space/commit/06811877eb259c52a154b24e57b5bfd418078e13) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Limit tool approval edit input to 3 lines with scrolling
+
+- Updated dependencies [[`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c)]:
+  - @nuvin/nuvin-core@2.0.0-rc.1
+
 ## 1.37.0-rc.1
 
 ### Patch Changes
