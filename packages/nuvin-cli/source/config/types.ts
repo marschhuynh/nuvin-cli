@@ -30,6 +30,8 @@ export interface ProviderConfig {
   model?: string;
   /** Default model to use when this provider is active */
   defaultModel?: string;
+  /** Small/cheap model for utility tasks (topic generation, summaries) */
+  smallModel?: string;
   /** Current active auth method type */
   'current-auth'?: string;
   /** Array of authentication methods */

@@ -55,14 +55,10 @@ const formatRelativeTime = (timestamp: string) => {
   });
 };
 
-const getSmartPreview = (message: string | undefined, maxLength: number = 50): string => {
-  if (!message) return 'No preview available';
+const truncateText = (text: string | undefined, maxLength: number = 50): string => {
+  if (!text) return 'No preview available';
 
-  const cleaned = message.replace(/\s+/g, ' ').trim();
-
-  if (cleaned.includes('successfully')) return '✓ Task completed';
-  if (cleaned.includes('error') || cleaned.includes('Error')) return '✗ Error occurred';
-  if (cleaned.includes('No message preview available')) return 'Empty session';
+  const cleaned = text.replace(/\s+/g, ' ').trim();
 
   if (cleaned.length <= maxLength) return cleaned;
 
@@ -73,7 +69,7 @@ const getSmartPreview = (message: string | undefined, maxLength: number = 50): s
     result += (result ? ' ' : '') + word;
   }
 
-  return result + (result.length < maxLength ? '...' : '');
+  return result + '...';
 };
 
 const getSessionStatus = (
@@ -111,8 +107,9 @@ const SessionItem: React.FC<{ item: SessionInfo; isSelected: boolean; cols: numb
 }) => {
   const { theme } = useTheme();
   const relativeTime = formatRelativeTime(item.timestamp);
+  // Prioritize topic - show it directly
   const displayText = item.topic || item.lastMessage;
-  const smartPreview = getSmartPreview(displayText, cols - 5);
+  const preview = truncateText(displayText, cols - 5);
   const status = getSessionStatus(item.lastMessage, item.messageCount, theme);
   const badge = getMessageCountBadge(item.messageCount, theme);
 
@@ -139,7 +136,7 @@ const SessionItem: React.FC<{ item: SessionInfo; isSelected: boolean; cols: numb
 
       <Box height={1} width={cols - 2}>
         <Text color={textColor} dimColor={dimmed}>
-          {smartPreview}
+          {preview}
         </Text>
       </Box>
     </Box>

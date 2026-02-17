@@ -7,9 +7,8 @@ import type { LLMPort } from '@nuvin/nuvin-core';
 vi.mock('../source/services/LLMFactory.js', () => {
   const mockLLM: LLMPort = {
     generateCompletion: vi.fn().mockResolvedValue({
-      content: [{ type: 'text', text: 'Test Topic' }],
-      stopReason: 'end_turn',
-      usage: { inputTokens: 10, outputTokens: 5, cacheWriteTokens: 0, cacheReadTokens: 0 },
+      content: 'Test Topic',
+      usage: { prompt_tokens: 10, completion_tokens: 5 },
     }),
   };
 
@@ -21,7 +20,7 @@ vi.mock('../source/services/LLMFactory.js', () => {
   };
 });
 
-describe.skip('OrchestratorManager - Topic Analysis', () => {
+describe('OrchestratorManager - Topic Analysis', () => {
   let manager: OrchestratorManager;
   let mockHandlers: UIHandlers;
   let mockConfigManager: ConfigManager;

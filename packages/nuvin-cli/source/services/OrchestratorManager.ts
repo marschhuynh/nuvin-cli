@@ -68,6 +68,15 @@ const defaultModels: Record<ProviderKey, string> = {
   anthropic: 'claude-sonnet-4-5',
   moonshot: 'moonshot-v1-8k',
 };
+
+const defaultSmallModels: Record<ProviderKey, string> = {
+  openrouter: 'openai/gpt-4.1-mini',
+  deepinfra: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
+  github: 'gpt-5-mini',
+  zai: 'glm-4.7',
+  anthropic: 'claude-haiku-4.5',
+  moonshot: 'moonshot-v1-8k',
+};
 export type { ProviderKey } from '@/config/providers.js';
 export { OrchestratorStatus } from '@/types/orchestrator.js';
 
@@ -193,6 +202,8 @@ export class OrchestratorManager {
     const config = this.configManager.getConfig();
     const provider = config.activeProvider || 'openrouter';
     const model = config.model || defaultModels[provider];
+    const providerConfig = config.providers?.[provider];
+    const smallModel = providerConfig?.smallModel || defaultSmallModels[provider] || model;
     const auth = getProviderAuth(config, provider);
     const mcpAllowedTools = config.mcpAllowedTools;
     const requireToolApproval = config.requireToolApproval;
@@ -206,6 +217,7 @@ export class OrchestratorManager {
       config,
       provider,
       model,
+      smallModel,
       auth,
       apiKey: auth?.apiKey,
       oauthConfig,
@@ -1314,53 +1326,27 @@ export class OrchestratorManager {
       }
     }
 
-    const topicAnalysisPrompt = conversationHistory
-      ? `Analyze the following user messages and extract the main topic or intent in 5-10 words. Be concise and descriptive.
-
-Previous user messages:
-${conversationHistory}
-
-Current user message: ${userMessage}
-
-Respond with only the topic, no explanation.`
-      : `Analyze the following user message and extract the main topic or intent in 5-10 words. Be concise and descriptive.
-
-User message: ${userMessage}
-
-Respond with only the topic, no explanation.`;
+    const topicPrompt = conversationHistory
+      ? `Analyze the following user messages and extract the main topic or intent in 5-10 words. Be concise and descriptive.\n\nPrevious user messages:\n${conversationHistory}\n\nCurrent user message: ${userMessage}\n\nRespond with only the topic, no explanation.`
+      : `Analyze the following user message and extract the main topic or intent in 5-10 words. Be concise and descriptive.\n\nUser message: ${userMessage}\n\nRespond with only the topic, no explanation.`;
 
     const currentConfig = this.getCurrentConfig();
-    const persistHttpLog = currentConfig.config.session?.persistHttpLog ?? false;
-    const httpLogFile = persistHttpLog && this.sessionDir ? path.join(this.sessionDir, 'http-log.json') : undefined;
-    const llm = this.createLLM(httpLogFile);
-
-    const topicMemory = new InMemoryMemory<Message>();
-    const topicTools = new ToolRegistry({ agentRegistry: new AgentRegistry({ localFilePersistence: undefined }) });
-
-    const topicConfig = {
-      id: 'topic-analyzer',
-      systemPrompt: 'You are a topic analyzer. Extract the main topic from user messages concisely.',
-      temperature: 0.3,
-      topP: 1,
-      model: currentConfig.model,
-      enabledTools: [],
-      maxToolConcurrency: 0,
-      reasoningEffort: undefined,
-    };
-
-    const topicOrchestrator = new AgentOrchestrator(topicConfig, {
-      memory: topicMemory,
-      llm,
-      tools: topicTools,
-    });
+    const llm = this.createLLM();
 
     try {
-      const response = await topicOrchestrator.send(topicAnalysisPrompt);
-      return response.content.trim();
-    } catch (_error) {
-      // Silently fail topic analysis to avoid crashing the main interaction loop
-      // Just return a generic fallback or the user message itself if short
-      return userMessage.length < 50 ? userMessage : 'Topic analysis failed';
+      const response = await llm.generateCompletion({
+        model: currentConfig.smallModel,
+        messages: [
+          { role: 'system', content: 'You are a topic analyzer. Extract the main topic from user messages concisely.' },
+          { role: 'user', content: topicPrompt },
+        ],
+        temperature: 0.3,
+        tools: [],
+      });
+
+      return response.content?.trim() || userMessage.substring(0, 50);
+    } catch {
+      return userMessage.length < 50 ? userMessage : userMessage.substring(0, 50);
     }
   }
 

@@ -40,10 +40,11 @@ type Props = {
   memPersist?: boolean;
   thinking?: string;
   historyPath?: string;
+  resumeSession?: { sessionId: string; sessionDir: string };
   initialSessions?: SessionInfo[] | null;
 };
 
-export default function App({ apiKey: _apiKey, memPersist = false, historyPath, initialSessions }: Props) {
+export default function App({ apiKey: _apiKey, memPersist = false, historyPath, resumeSession, initialSessions }: Props) {
   const { theme } = useTheme();
   const { cols, rows } = useStdoutDimensions();
   const { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, handleError } = useMessages();
@@ -164,45 +165,85 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
   }, [appendLine, handleError, clearMessages, setLines, theme.tokens.green]);
 
   useEffect(() => {
-    if (!historyPath || historyLoadedRef.current) return;
+    if (historyLoadedRef.current) return;
     if (status !== OrchestratorStatus.READY) return;
+    if (!historyPath && !resumeSession) return;
 
     const loadHistory = async () => {
       try {
-        const resolvedPath = path.resolve(historyPath);
-        const result = await loadHistoryFromFile(resolvedPath);
+        if (resumeSession) {
+          const { loadSessionHistory } = await import('@/hooks/useSessionManagement.js');
+          const result = await loadSessionHistory(resumeSession.sessionId);
 
-        if (result.kind === 'messages') {
-          if (result.cliMessages && result.cliMessages.length > 0) {
-            const memory = orchestratorManager.getMemory();
-            if (memory) {
-              await memory.set('default', result.cliMessages);
+          if (result.kind === 'messages') {
+            const switchResult = await orchestratorManager.switchToSession(resumeSession);
+
+            if (switchResult.memory && result.cliMessages.length > 0) {
+              const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
+              await switchResult.memory.set(conversationId, result.cliMessages);
             }
+
+            console.log(ansiEscapes.clearTerminal);
+            eventBus.emit('ui:header:refresh');
+            setLines(result.lines);
+
+            const sessionDate = new Date(parseInt(resumeSession.sessionId, 10)).toLocaleString();
+            appendLine({
+              id: crypto.randomUUID(),
+              type: 'info',
+              content: `Resumed session from ${sessionDate} (${result.cliMessages.length} messages loaded)`,
+              metadata: { timestamp: new Date().toISOString() },
+              color: theme.tokens.green,
+            });
+
+            historyLoadedRef.current = true;
+          } else {
+            appendLine({
+              id: crypto.randomUUID(),
+              type: 'error',
+              content: result.reason === 'no_messages'
+                ? 'Session has no messages to resume'
+                : `Session not found: ${resumeSession.sessionId}`,
+              metadata: { timestamp: new Date().toISOString() },
+              color: 'red',
+            });
           }
+        } else if (historyPath) {
+          const resolvedPath = path.resolve(historyPath);
+          const result = await loadHistoryFromFile(resolvedPath);
 
-          setLines(result.lines);
+          if (result.kind === 'messages') {
+            if (result.cliMessages && result.cliMessages.length > 0) {
+              const memory = orchestratorManager.getMemory();
+              if (memory) {
+                await memory.set('default', result.cliMessages);
+              }
+            }
 
-          appendLine({
-            id: crypto.randomUUID(),
-            type: 'info',
-            content: `Loaded ${result.count} messages from ${historyPath}`,
-            metadata: { timestamp: new Date().toISOString() },
-            color: theme.tokens.green,
-          });
+            setLines(result.lines);
 
-          historyLoadedRef.current = true;
-        } else {
-          const msg =
-            result.reason === 'no_messages'
-              ? `History file ${historyPath} has no messages`
-              : `History file not found: ${historyPath}`;
-          appendLine({
-            id: crypto.randomUUID(),
-            type: 'error',
-            content: msg,
-            metadata: { timestamp: new Date().toISOString() },
-            color: 'red',
-          });
+            appendLine({
+              id: crypto.randomUUID(),
+              type: 'info',
+              content: `Loaded ${result.count} messages from ${historyPath}`,
+              metadata: { timestamp: new Date().toISOString() },
+              color: theme.tokens.green,
+            });
+
+            historyLoadedRef.current = true;
+          } else {
+            const msg =
+              result.reason === 'no_messages'
+                ? `History file ${historyPath} has no messages`
+                : `History file not found: ${historyPath}`;
+            appendLine({
+              id: crypto.randomUUID(),
+              type: 'error',
+              content: msg,
+              metadata: { timestamp: new Date().toISOString() },
+              color: 'red',
+            });
+          }
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -217,7 +258,7 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
     };
 
     loadHistory();
-  }, [historyPath, status, loadHistoryFromFile, setLines, appendLine, theme.tokens.green]);
+  }, [historyPath, resumeSession, status, loadHistoryFromFile, setLines, appendLine, theme.tokens.green]);
 
   const processMessage = useCallback(
     async (submission: UserMessagePayload) => {
