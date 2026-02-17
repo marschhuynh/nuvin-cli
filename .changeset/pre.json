@@ -12,6 +12,8 @@
     "green-squids-sing",
     "optional-temperature-breaking",
     "rc-to-stable-update-fix",
+    "skill-awareness-system-prompt",
+    "tool-approval-input-max-lines",
     "update-checker-rc-fix"
   ]
 }
