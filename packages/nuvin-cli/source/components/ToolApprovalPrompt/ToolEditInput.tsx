@@ -41,6 +41,7 @@ export const ToolEditInput = forwardRef<ToolEditInputHandle, ToolEditInputProps>
             focus={isFocused}
             placeholder="Input your changes here"
             onSubmit={onSubmit}
+            maxLines={3}
           />
         </Box>
       </Box>
