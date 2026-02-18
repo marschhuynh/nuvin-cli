@@ -69,7 +69,7 @@ const truncateText = (text: string | undefined, maxLength: number = 50): string 
     result += (result ? ' ' : '') + word;
   }
 
-  return result + '...';
+  return `${result}...`;
 };
 
 const getSessionStatus = (

@@ -29,8 +29,8 @@ const isJsonRpcResponse = (
   return (
     message.id !== undefined &&
     typeof message.method !== "string" &&
-    (Object.prototype.hasOwnProperty.call(message, "result") ||
-      Object.prototype.hasOwnProperty.call(message, "error"))
+    (Object.hasOwn(message, "result") ||
+      Object.hasOwn(message, "error"))
   );
 };
 
@@ -92,7 +92,7 @@ export async function startAcpServer({
   stdin.on("data", async (chunk) => {
     buffer += chunk.toString();
 
-    let parsed;
+    let parsed: { messages: JsonRpcMessage[]; remainder: string } | undefined;
     try {
       parsed = decodeJsonRpcLines(buffer);
     } catch (error) {

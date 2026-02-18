@@ -356,15 +356,20 @@ function isIncompleteEscapeChunk(chunk: string): boolean {
 
   if (chunk.startsWith('\x1b[')) {
     // Complete CSI forms we support
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ESC is intentional in terminal parsing
     if (/^\x1b\[[0-9:;]+u$/.test(chunk)) return false; // Kitty CSI-u
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ESC is intentional in terminal parsing
     if (/^\x1b\[\d+(?:;\d+)?[~^$]$/.test(chunk)) return false; // fn/edit keys
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ESC is intentional in terminal parsing
     if (/^\x1b\[(?:1;)?\d?[a-zA-Z]$/.test(chunk)) return false; // arrows/home/end variants
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ESC is intentional in terminal parsing
     if (/^\x1b\[<\d+;\d+;\d+[Mm]$/.test(chunk)) return false; // SGR mouse
     if (chunk.startsWith('\x1b[200~') || chunk.startsWith('\x1b[201~')) return false; // paste markers
     return true;
   }
 
   if (chunk.startsWith('\x1bO')) {
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ESC is intentional in terminal parsing
     return !/^\x1bO[a-zA-Z]$/.test(chunk);
   }
 

@@ -58,7 +58,7 @@ export const GradientRunText: React.FC<Props> = ({
   return (
     <Box flexDirection="row">
       {styledChars.map((item, i) => (
-        <Text key={i}>{item.style}</Text>
+        <Text key={`${item.char}-${i}`}>{item.style}</Text>
       ))}
     </Box>
   );

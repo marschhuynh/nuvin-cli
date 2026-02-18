@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Box, Text, measureElement, type BoxRef } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import chalk from 'chalk';

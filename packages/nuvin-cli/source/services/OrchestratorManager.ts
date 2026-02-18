@@ -320,7 +320,7 @@ export class OrchestratorManager {
 
       // Local agents (project-specific in .nuvin/agents)
       const localAgentFilePersistence = new AgentFilePersistence({
-        agentsDir: localAgentsDir
+        agentsDir: localAgentsDir,
       });
 
       // Profile agents (profile-specific, only if not default profile)
@@ -329,7 +329,7 @@ export class OrchestratorManager {
       if (!isDefaultProfile) {
         fs.mkdirSync(agentsDir, { recursive: true });
         profileAgentFilePersistence = new AgentFilePersistence({
-          agentsDir
+          agentsDir,
         });
       }
 
@@ -337,13 +337,13 @@ export class OrchestratorManager {
       const globalAgentsDir = path.join(os.homedir(), '.nuvin', 'agents');
       fs.mkdirSync(globalAgentsDir, { recursive: true });
       const globalAgentFilePersistence = new AgentFilePersistence({
-        agentsDir: globalAgentsDir
+        agentsDir: globalAgentsDir,
       });
 
       const agentRegistry = new AgentRegistry({
         localFilePersistence: localAgentFilePersistence,
         profileFilePersistence: profileAgentFilePersistence,
-        globalFilePersistence: globalAgentFilePersistence
+        globalFilePersistence: globalAgentFilePersistence,
       });
       await agentRegistry.waitForLoad();
 
@@ -1540,9 +1540,7 @@ Rules:
     const { shell, gitBranch, gitRepo, recentCommits } = await getGitContextInfo();
 
     // Build injected system context with git info
-    const availableSkillsForSwap = skillsService
-      .list()
-      .map((s) => ({ name: s.name, description: s.description }));
+    const availableSkillsForSwap = skillsService.list().map((s) => ({ name: s.name, description: s.description }));
 
     const injectedSystem = buildInjectedSystem(
       {

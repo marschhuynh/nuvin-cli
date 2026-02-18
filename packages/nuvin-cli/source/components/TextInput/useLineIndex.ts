@@ -23,8 +23,8 @@ export function useLineIndex(value: string): LineIndex {
   const lines = useMemo(() => {
     const result: string[] = [];
     for (let i = 0; i < lineStarts.length; i++) {
-      const start = lineStarts[i]!;
-      const end = i < lineStarts.length - 1 ? lineStarts[i + 1]! - 1 : value.length;
+      const start = lineStarts[i] ?? 0;
+      const end = i < lineStarts.length - 1 ? (lineStarts[i + 1] ?? value.length) - 1 : value.length;
       result.push(value.slice(start, end));
     }
     return result;
@@ -39,7 +39,7 @@ export function useLineIndex(value: string): LineIndex {
 
       while (low < high) {
         const mid = Math.ceil((low + high + 1) / 2);
-        if (lineStarts[mid]! <= clampedOffset) {
+        if ((lineStarts[mid] ?? 0) <= clampedOffset) {
           low = mid;
         } else {
           high = mid - 1;
@@ -47,8 +47,8 @@ export function useLineIndex(value: string): LineIndex {
       }
 
       const lineIndex = low;
-      const lineStart = lineStarts[lineIndex]!;
-      const lineEnd = lineIndex < lineStarts.length - 1 ? lineStarts[lineIndex + 1]! - 1 : value.length;
+      const lineStart = lineStarts[lineIndex] ?? 0;
+      const lineEnd = lineIndex < lineStarts.length - 1 ? (lineStarts[lineIndex + 1] ?? value.length) - 1 : value.length;
 
       return {
         lines,

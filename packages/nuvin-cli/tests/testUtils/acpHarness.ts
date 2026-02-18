@@ -2,12 +2,13 @@ import { AgentEventTypes } from '@nuvin/nuvin-core';
 import { AcpServer } from '../../source/acp/server.js';
 import { routeAcpRequest } from '../../source/acp/router.js';
 import { TypedEventBus } from '../../source/services/EventBus.js';
+import type { JsonRpcMessage } from '../../source/acp/jsonrpc.js';
 
 export function createInMemoryAcpHarness() {
   const updates: Array<{ update: { sessionUpdate: string } }> = [];
 
   const transport = {
-    send: (message: any) => {
+    send: (message: JsonRpcMessage) => {
       if (message?.method === 'session/update' && message.params) {
         updates.push(message.params as { update: { sessionUpdate: string } });
       }

@@ -42,7 +42,13 @@ type Props = {
   initialSessions?: SessionInfo[] | null;
 };
 
-export default function App({ apiKey: _apiKey, memPersist = false, historyPath, resumeSession, initialSessions }: Props) {
+export default function App({
+  apiKey: _apiKey,
+  memPersist = false,
+  historyPath,
+  resumeSession,
+  initialSessions,
+}: Props) {
   const { theme } = useTheme();
   const { cols, rows } = useStdoutDimensions();
   const { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, handleError } = useMessages();
@@ -189,9 +195,10 @@ export default function App({ apiKey: _apiKey, memPersist = false, historyPath, 
             appendLine({
               id: crypto.randomUUID(),
               type: 'error',
-              content: result.reason === 'no_messages'
-                ? 'Session has no messages to resume'
-                : `Session not found: ${resumeSession.sessionId}`,
+              content:
+                result.reason === 'no_messages'
+                  ? 'Session has no messages to resume'
+                  : `Session not found: ${resumeSession.sessionId}`,
               metadata: { timestamp: new Date().toISOString() },
               color: 'red',
             });

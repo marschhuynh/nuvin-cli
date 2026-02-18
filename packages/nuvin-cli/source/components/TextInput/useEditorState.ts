@@ -90,7 +90,7 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
         hasSetInitialCursor.current = false;
       }
     }
-  }, [initialValue]);
+  }, [initialValue, vimMode]);
 
   const setValue = useCallback((value: string, offset: number, width = 0) => {
     const current = stateRef.current;
