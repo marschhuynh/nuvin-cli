@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Box, Text, measureElement, type BoxRef } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import chalk from 'chalk';
@@ -311,8 +312,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
                 listItem={listItem}
                 index={index}
                 isSelected={
-                  listItem.type === 'item' &&
-                  (listIndexToSelectablePosition.get(index) ?? -1) === selectedIndex
+                  listItem.type === 'item' && (listIndexToSelectablePosition.get(index) ?? -1) === selectedIndex
                 }
                 isHeader={listItem.type === 'header'}
                 hasGroups={hasGroups}
@@ -341,10 +341,7 @@ type ComboBoxListItemProps = {
 
 const ComboBoxListItem = memo<ComboBoxListItemProps>(
   ({ listItem, index, isSelected, isHeader, hasGroups, theme, renderItem, setItemRef }) => {
-    const refCallback = useCallback(
-      (ref: BoxRef | null) => setItemRef(index, ref),
-      [setItemRef, index],
-    );
+    const refCallback = useCallback((ref: BoxRef | null) => setItemRef(index, ref), [setItemRef, index]);
 
     let content: React.ReactNode;
     if (listItem.type === 'header') {

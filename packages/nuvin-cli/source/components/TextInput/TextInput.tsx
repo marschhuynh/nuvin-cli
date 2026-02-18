@@ -491,6 +491,8 @@ function TextInput({
       getVisualRowStart,
       getVisualRowEnd,
       onTab,
+      editorStateRef.current.cursorOffset,
+      editorStateRef.current.value,
     ],
   );
 

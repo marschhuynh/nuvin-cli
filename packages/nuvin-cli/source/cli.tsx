@@ -412,13 +412,17 @@ const cli = meow(
   }
 
   // Handle history flag or --resume
-  let historyPath = ensureString(cli.flags.history as string | undefined);
+  const historyPath = ensureString(cli.flags.history as string | undefined);
   const resumeFlag = cli.flags.resume;
 
+  let resumeSession: { sessionId: string; sessionDir: string } | undefined;
   if (resumeFlag && !historyPath) {
     if (initialSessions && initialSessions.length > 0) {
       const latestSession = initialSessions[0];
-      historyPath = path.join(getSessionDir(latestSession.sessionId, normalizedProfile), 'history.cli.json');
+      resumeSession = {
+        sessionId: latestSession.sessionId,
+        sessionDir: getSessionDir(latestSession.sessionId, normalizedProfile),
+      };
     } else {
       console.warn('No previous sessions found to resume.');
     }
@@ -456,6 +460,7 @@ const cli = meow(
                           memPersist={finalMemPersist}
                           thinking={thinkingSetting}
                           historyPath={historyPath}
+                          resumeSession={resumeSession}
                           initialSessions={initialSessions}
                         />
                       </ConfigBridge>

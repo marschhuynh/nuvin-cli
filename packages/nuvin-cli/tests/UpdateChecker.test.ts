@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { IncomingMessage } from 'node:http';
+import type { IncomingMessage, ClientRequest } from 'node:http';
 
 // Mock https module
 vi.mock('node:https', () => ({
@@ -45,7 +45,7 @@ describe('UpdateChecker', () => {
         return {
           on: vi.fn(),
           end: vi.fn(),
-        } as any;
+        } as unknown as ClientRequest;
       });
 
       const result = await UpdateChecker.checkForUpdate();
@@ -74,7 +74,7 @@ describe('UpdateChecker', () => {
         return {
           on: vi.fn(),
           end: vi.fn(),
-        } as any;
+        } as unknown as ClientRequest;
       });
 
       const result = await UpdateChecker.checkForUpdate();
@@ -103,7 +103,7 @@ describe('UpdateChecker', () => {
         return {
           on: vi.fn(),
           end: vi.fn(),
-        } as any;
+        } as unknown as ClientRequest;
       });
 
       const result = await UpdateChecker.checkForUpdate();
@@ -132,7 +132,7 @@ describe('UpdateChecker', () => {
         return {
           on: vi.fn(),
           end: vi.fn(),
-        } as any;
+        } as unknown as ClientRequest;
       });
 
       const result = await UpdateChecker.checkForUpdate();
@@ -161,7 +161,7 @@ describe('UpdateChecker', () => {
         return {
           on: vi.fn(),
           end: vi.fn(),
-        } as any;
+        } as unknown as ClientRequest;
       });
 
       const result = await UpdateChecker.checkForUpdate();
@@ -190,7 +190,7 @@ describe('UpdateChecker', () => {
         return {
           on: vi.fn(),
           end: vi.fn(),
-        } as any;
+        } as unknown as ClientRequest;
       });
 
       const result = await UpdateChecker.checkForUpdate();

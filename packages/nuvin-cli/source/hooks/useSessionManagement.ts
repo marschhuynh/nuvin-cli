@@ -124,7 +124,7 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
             }
           }
 
-          const metadataKey = '__metadata__cli';
+          const metadataKey = '__metadata__default';
           const metadataArray = historyData?.[metadataKey] as unknown[];
           const metadata = metadataArray && metadataArray.length > 0 ? metadataArray[0] : null;
           const topic =

@@ -3,6 +3,7 @@ import { AgentEventTypes } from '@nuvin/nuvin-core';
 import { AcpServer } from '../../source/acp/server.js';
 import { commandRegistry } from '../../source/modules/commands/registry.js';
 import { TypedEventBus } from '../../source/services/EventBus.js';
+import type { JsonRpcMessage } from '../../source/acp/jsonrpc.js';
 
 const mockTransport = {
   send: vi.fn(),
@@ -59,7 +60,7 @@ describe('AcpServer', () => {
   });
 
   it('emits descriptive tool call titles', async () => {
-    const sent: any[] = [];
+    const sent: JsonRpcMessage[] = [];
     const eventBus = new TypedEventBus();
     const server = new AcpServer({
       transport: { send: (message) => sent.push(message) },
@@ -116,7 +117,7 @@ describe('AcpServer', () => {
       title: `Session ${i}`,
       updatedAt: new Date(2026, 0, 1, 0, i).toISOString(),
     }));
-    vi.spyOn(server as any, 'listPersistedSessions').mockReturnValue(fakeSessions);
+    vi.spyOn(server as unknown as Record<string, () => unknown>, 'listPersistedSessions').mockReturnValue(fakeSessions);
 
     const first = (await server.handleSessionList({ cwd: '/tmp/work' })) as {
       sessions: Array<{ sessionId: string }>;
@@ -137,10 +138,10 @@ describe('AcpServer', () => {
   });
 
   it('emits available_commands_update after session/new', async () => {
-    const sent: any[] = [];
-    const listSpy = vi.spyOn(commandRegistry, 'list').mockReturnValue([
-      { id: '/clear', type: 'function', description: 'Clear messages', handler: vi.fn() } as never,
-    ]);
+    const sent: JsonRpcMessage[] = [];
+    const listSpy = vi
+      .spyOn(commandRegistry, 'list')
+      .mockReturnValue([{ id: '/clear', type: 'function', description: 'Clear messages', handler: vi.fn() } as never]);
 
     const server = new AcpServer({
       transport: { send: (message) => sent.push(message) },
@@ -152,7 +153,8 @@ describe('AcpServer', () => {
     server.flushDeferredUpdates();
 
     const commandsUpdate = sent.find(
-      (message) => message?.method === 'session/update' && message?.params?.update?.sessionUpdate === 'available_commands_update',
+      (message) =>
+        message?.method === 'session/update' && message?.params?.update?.sessionUpdate === 'available_commands_update',
     );
     expect(commandsUpdate?.params?.update?.availableCommands).toEqual([
       { name: 'clear', description: 'Clear messages' },
@@ -162,20 +164,20 @@ describe('AcpServer', () => {
   });
 
   it('handles slash command prompts via command registry without forwarding to orchestrator', async () => {
-    const sent: any[] = [];
+    const sent: JsonRpcMessage[] = [];
     const getSpy = vi.spyOn(commandRegistry, 'get').mockReturnValue({
       id: '/clear',
       type: 'function',
       description: 'Clear messages',
       handler: vi.fn(),
     } as never);
-    const executeSpy = vi
-      .spyOn(commandRegistry, 'execute')
-      .mockResolvedValue({ success: true, commandId: '/clear' });
+    const executeSpy = vi.spyOn(commandRegistry, 'execute').mockResolvedValue({ success: true, commandId: '/clear' });
 
     const localOrchestrator = {
       ...mockOrchestrator,
-      send: vi.fn().mockResolvedValue({ id: 'msg', content: 'ok', role: 'assistant', timestamp: new Date().toISOString() }),
+      send: vi
+        .fn()
+        .mockResolvedValue({ id: 'msg', content: 'ok', role: 'assistant', timestamp: new Date().toISOString() }),
     };
 
     const server = new AcpServer({
@@ -195,7 +197,8 @@ describe('AcpServer', () => {
     expect(localOrchestrator.send).not.toHaveBeenCalled();
 
     const commandAck = sent.find(
-      (message) => message?.method === 'session/update' && message?.params?.update?.sessionUpdate === 'agent_message_chunk',
+      (message) =>
+        message?.method === 'session/update' && message?.params?.update?.sessionUpdate === 'agent_message_chunk',
     );
     expect(commandAck?.params?.update?.content?.text ?? '').toContain('Command /clear executed');
 
@@ -204,15 +207,17 @@ describe('AcpServer', () => {
   });
 
   it('responds with available commands when slash command is unknown', async () => {
-    const sent: any[] = [];
+    const sent: JsonRpcMessage[] = [];
     const getSpy = vi.spyOn(commandRegistry, 'get').mockReturnValue(undefined);
-    const listSpy = vi.spyOn(commandRegistry, 'list').mockReturnValue([
-      { id: '/clear', type: 'function', description: 'Clear messages', handler: vi.fn() } as never,
-    ]);
+    const listSpy = vi
+      .spyOn(commandRegistry, 'list')
+      .mockReturnValue([{ id: '/clear', type: 'function', description: 'Clear messages', handler: vi.fn() } as never]);
 
     const localOrchestrator = {
       ...mockOrchestrator,
-      send: vi.fn().mockResolvedValue({ id: 'msg', content: 'ok', role: 'assistant', timestamp: new Date().toISOString() }),
+      send: vi
+        .fn()
+        .mockResolvedValue({ id: 'msg', content: 'ok', role: 'assistant', timestamp: new Date().toISOString() }),
     };
 
     const server = new AcpServer({
@@ -231,7 +236,8 @@ describe('AcpServer', () => {
     expect(localOrchestrator.send).not.toHaveBeenCalled();
 
     const messageUpdate = sent.find(
-      (message) => message?.method === 'session/update' && message?.params?.update?.sessionUpdate === 'agent_message_chunk',
+      (message) =>
+        message?.method === 'session/update' && message?.params?.update?.sessionUpdate === 'agent_message_chunk',
     );
     expect(messageUpdate?.params?.update?.content?.text ?? '').toContain('Command /init is not supported by Nuvin.');
     expect(messageUpdate?.params?.update?.content?.text ?? '').toContain('/clear');
@@ -261,7 +267,7 @@ describe('AcpServer', () => {
   });
 
   it('filters endpoint-style model paths such as /models from ACP model options', async () => {
-    const configState: any = {
+    const configState: Record<string, unknown> = {
       activeProvider: 'nvidia',
       model: '/models',
       requireToolApproval: true,
@@ -303,7 +309,7 @@ describe('AcpServer', () => {
   });
 
   it('disambiguates duplicate humanized model names', async () => {
-    const configState: any = {
+    const configState: Record<string, unknown> = {
       activeProvider: 'github',
       model: '',
       requireToolApproval: true,
@@ -389,9 +395,7 @@ describe('AcpServer', () => {
     // Response with an ID that was never registered as pending.
     server.handleClientResponse({ id: 999, result: { outcome: { outcome: 'selected', optionId: 'allow_once' } } });
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('unknown request id=999'),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown request id=999'));
     warnSpy.mockRestore();
   });
 
