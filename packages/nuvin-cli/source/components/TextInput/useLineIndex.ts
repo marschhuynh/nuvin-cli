@@ -48,7 +48,8 @@ export function useLineIndex(value: string): LineIndex {
 
       const lineIndex = low;
       const lineStart = lineStarts[lineIndex] ?? 0;
-      const lineEnd = lineIndex < lineStarts.length - 1 ? (lineStarts[lineIndex + 1] ?? value.length) - 1 : value.length;
+      const lineEnd =
+        lineIndex < lineStarts.length - 1 ? (lineStarts[lineIndex + 1] ?? value.length) - 1 : value.length;
 
       return {
         lines,

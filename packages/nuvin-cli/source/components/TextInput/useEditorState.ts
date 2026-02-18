@@ -92,34 +92,40 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
     }
   }, [initialValue, vimMode]);
 
-  const setValue = useCallback((value: string, offset: number, width = 0) => {
-    const current = stateRef.current;
-    const clampedOffset = clampOffset(value.length, offset, vimMode);
-    if (value === current.value && clampedOffset === current.cursorOffset && width === current.cursorWidth) {
-      return;
-    }
-    const next: EditorState = { value, cursorOffset: clampedOffset, cursorWidth: width };
-    stateRef.current = next;
-    setState(next);
-    if (value !== current.value) {
-      pendingEchoesRef.current.push(value);
-      if (pendingEchoesRef.current.length > 200) {
-        pendingEchoesRef.current.shift();
+  const setValue = useCallback(
+    (value: string, offset: number, width = 0) => {
+      const current = stateRef.current;
+      const clampedOffset = clampOffset(value.length, offset, vimMode);
+      if (value === current.value && clampedOffset === current.cursorOffset && width === current.cursorWidth) {
+        return;
       }
-      onChange(value);
-    }
-  }, [vimMode, onChange]);
+      const next: EditorState = { value, cursorOffset: clampedOffset, cursorWidth: width };
+      stateRef.current = next;
+      setState(next);
+      if (value !== current.value) {
+        pendingEchoesRef.current.push(value);
+        if (pendingEchoesRef.current.length > 200) {
+          pendingEchoesRef.current.shift();
+        }
+        onChange(value);
+      }
+    },
+    [vimMode, onChange],
+  );
 
-  const moveCursor = useCallback((offset: number) => {
-    const current = stateRef.current;
-    const clampedOffset = clampOffset(current.value.length, offset, vimMode);
-    if (clampedOffset === current.cursorOffset) {
-      return;
-    }
-    const next: EditorState = { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
-    stateRef.current = next;
-    setState(next);
-  }, [vimMode]);
+  const moveCursor = useCallback(
+    (offset: number) => {
+      const current = stateRef.current;
+      const clampedOffset = clampOffset(current.value.length, offset, vimMode);
+      if (clampedOffset === current.cursorOffset) {
+        return;
+      }
+      const next: EditorState = { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
+      stateRef.current = next;
+      setState(next);
+    },
+    [vimMode],
+  );
 
   const reset = useCallback(() => {
     const next: EditorState = { value: '', cursorOffset: 0, cursorWidth: 0 };
@@ -132,19 +138,22 @@ export function useEditorState({ initialValue, vimMode, onChange }: UseEditorSta
     onChange('');
   }, [onChange]);
 
-  const setInitialCursor = useCallback((focus: boolean) => {
-    if (!hasSetInitialCursor.current && focus && stateRef.current.value && stateRef.current.value.length > 0) {
-      hasSetInitialCursor.current = true;
-      const current = stateRef.current;
-      const offset = Math.max(0, current.value.length);
-      const clampedOffset = clampOffset(current.value.length, offset, vimMode);
-      if (clampedOffset !== current.cursorOffset) {
-        const next: EditorState = { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
-        stateRef.current = next;
-        setState(next);
+  const setInitialCursor = useCallback(
+    (focus: boolean) => {
+      if (!hasSetInitialCursor.current && focus && stateRef.current.value && stateRef.current.value.length > 0) {
+        hasSetInitialCursor.current = true;
+        const current = stateRef.current;
+        const offset = Math.max(0, current.value.length);
+        const clampedOffset = clampOffset(current.value.length, offset, vimMode);
+        if (clampedOffset !== current.cursorOffset) {
+          const next: EditorState = { ...current, cursorOffset: clampedOffset, cursorWidth: 0 };
+          stateRef.current = next;
+          setState(next);
+        }
       }
-    }
-  }, [vimMode]);
+    },
+    [vimMode],
+  );
 
   return {
     state,

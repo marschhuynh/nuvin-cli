@@ -312,8 +312,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
                 listItem={listItem}
                 index={index}
                 isSelected={
-                  listItem.type === 'item' &&
-                  (listIndexToSelectablePosition.get(index) ?? -1) === selectedIndex
+                  listItem.type === 'item' && (listIndexToSelectablePosition.get(index) ?? -1) === selectedIndex
                 }
                 isHeader={listItem.type === 'header'}
                 hasGroups={hasGroups}
@@ -342,10 +341,7 @@ type ComboBoxListItemProps = {
 
 const ComboBoxListItem = memo<ComboBoxListItemProps>(
   ({ listItem, index, isSelected, isHeader, hasGroups, theme, renderItem, setItemRef }) => {
-    const refCallback = useCallback(
-      (ref: BoxRef | null) => setItemRef(index, ref),
-      [setItemRef, index],
-    );
+    const refCallback = useCallback((ref: BoxRef | null) => setItemRef(index, ref), [setItemRef, index]);
 
     let content: React.ReactNode;
     if (listItem.type === 'header') {
