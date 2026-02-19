@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AnthropicAuthTransport } from '../transports/anthropic-transport.js';
-import { FetchTransport } from '../transports/transport.js';
+import type { FetchTransport } from '../transports/transport.js';
 
 describe('AnthropicAuthTransport', () => {
   let mockFetchTransport: FetchTransport;

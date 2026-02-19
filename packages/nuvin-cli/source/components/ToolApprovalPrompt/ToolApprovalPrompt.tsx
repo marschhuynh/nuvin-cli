@@ -156,11 +156,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
           <ToolActions onActionExecute={handleActionExecute} />
         </Box>
         <Box marginY={1}>
-          <ToolEditInput
-            ref={editInputRef}
-            onSubmit={handleEditSubmit}
-            onCancel={handleEditCancel}
-          />
+          <ToolEditInput ref={editInputRef} onSubmit={handleEditSubmit} onCancel={handleEditCancel} />
         </Box>
       </Box>
     </AppModal>

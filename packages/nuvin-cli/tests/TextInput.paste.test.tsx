@@ -286,7 +286,8 @@ export type Props = {
 
   describe('end marker as separate chunk', () => {
     it('completes paste when end marker arrives as its own chunk', () => {
-      const longUrl = 'https://y3o6d0zjyc.execute-api.us-east-1.amazonaws.com/prod/demodb/authorize?response_type=code&client_id=DcYECKPT707qFl1CRlo4Egs5kgoAEkif&redirect_uri=https://inferno.healthit.gov/suites/custom/smart/redirect&scope=launch/patient+openid+fhirUser+offline_access+patient/Medication.rs';
+      const longUrl =
+        'https://y3o6d0zjyc.execute-api.us-east-1.amazonaws.com/prod/demodb/authorize?response_type=code&client_id=DcYECKPT707qFl1CRlo4Egs5kgoAEkif&redirect_uri=https://inferno.healthit.gov/suites/custom/smart/redirect&scope=launch/patient+openid+fhirUser+offline_access+patient/Medication.rs';
       let state = createPasteState();
 
       // First chunk: start marker + content

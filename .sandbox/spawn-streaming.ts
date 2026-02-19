@@ -55,9 +55,12 @@ async function executeCommand(command: string): Promise<CommandResult> {
       stdout += text;
 
       // Print streaming output with prefix
-      process.stdout.write(text.split('\n').map(line =>
-        line ? `📤 ${line}` : ''
-      ).join('\n'));
+      process.stdout.write(
+        text
+          .split('\n')
+          .map((line) => (line ? `📤 ${line}` : ''))
+          .join('\n'),
+      );
     });
 
     // Stream stderr in real-time
@@ -66,9 +69,12 @@ async function executeCommand(command: string): Promise<CommandResult> {
       stderr += text;
 
       // Print streaming errors with prefix
-      process.stderr.write(text.split('\n').map(line =>
-        line ? `⚠️  ${line}` : ''
-      ).join('\n'));
+      process.stderr.write(
+        text
+          .split('\n')
+          .map((line) => (line ? `⚠️  ${line}` : ''))
+          .join('\n'),
+      );
     });
 
     // Handle process completion
@@ -89,7 +95,7 @@ async function executeCommand(command: string): Promise<CommandResult> {
 
       resolve({
         stdout,
-        stderr: stderr + `\nProcess error: ${error.message}`,
+        stderr: `${stderr}\nProcess error: ${error.message}`,
         exitCode: null,
         signal: null,
       });
@@ -128,7 +134,6 @@ rl.on('line', async (line) => {
     } else {
       console.log(`❌ Command failed with exit code ${result.exitCode}\n`);
     }
-
   } catch (error) {
     console.error(`\n❌ Error: ${error.message}\n`);
   }

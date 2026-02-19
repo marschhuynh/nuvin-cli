@@ -182,7 +182,6 @@ export class AgentOrchestrator {
     }
   >();
 
-
   private context: ContextBuilder = new SimpleContextBuilder();
   private ids: IdGenerator = new SimpleId();
   private clock: Clock = new SystemClock();
@@ -348,7 +347,6 @@ export class AgentOrchestrator {
     return readOnlyTools.includes(toolName) || todoTools.includes(toolName) || interactiveTools.includes(toolName);
   }
 
-
   /**
    * Process tool approval with per-tool granularity.
    * - Bypass tools (requiresApproval=false) execute immediately
@@ -360,11 +358,14 @@ export class AgentOrchestrator {
    */
   private async processToolApproval(
     enrichedToolCalls: ToolCall[],
-    approvalPromises: Map<string, {
-      promise: Promise<PerToolApprovalResult>;
-      resolve: (result: PerToolApprovalResult) => void;
-      reject: (err: Error) => void;
-    }>,
+    approvalPromises: Map<
+      string,
+      {
+        promise: Promise<PerToolApprovalResult>;
+        resolve: (result: PerToolApprovalResult) => void;
+        reject: (err: Error) => void;
+      }
+    >,
     conversationId: string,
     messageId: string,
     _accumulatedMessages: ChatMessage[],
@@ -373,7 +374,6 @@ export class AgentOrchestrator {
     _usage?: UsageData,
     signal?: AbortSignal,
   ): Promise<{ results: ToolExecutionResult[] }> {
-
     // Setup abort handlers for all approval promises
     if (signal) {
       const abortHandler = () => {
@@ -402,7 +402,7 @@ export class AgentOrchestrator {
         let approvalResult: PerToolApprovalResult;
         try {
           approvalResult = await approvalEntry.promise;
-        } catch (err) {
+        } catch (_err) {
           // Aborted
           result = {
             id: toolCall.id,
@@ -483,9 +483,10 @@ export class AgentOrchestrator {
           hookEvent: HookEventTypes.PreToolUse,
           cwd: process.cwd(),
           toolName: toolCall.function.name,
-          toolInput: typeof toolCall.function.arguments === 'string'
-            ? JSON.parse(toolCall.function.arguments)
-            : toolCall.function.arguments as Record<string, unknown>,
+          toolInput:
+            typeof toolCall.function.arguments === 'string'
+              ? JSON.parse(toolCall.function.arguments)
+              : (toolCall.function.arguments as Record<string, unknown>),
           toolUseId: toolCall.id,
         };
 
@@ -574,7 +575,7 @@ export class AgentOrchestrator {
               header: string;
               options: Array<{ label: string; description: string }>;
               multiSelect: boolean;
-            }>
+            }>,
           ) => {
             return new Promise<Record<string, string | string[]>>((resolve, reject) => {
               this.pendingQuestions.set(questionId, {
@@ -618,8 +619,6 @@ export class AgentOrchestrator {
 
     return { results };
   }
-
-
 
   async send(content: UserMessagePayload, opts: SendMessageOptions = {}): Promise<MessageResponse> {
     const convo = opts.conversationId ?? 'default';
@@ -822,8 +821,7 @@ export class AgentOrchestrator {
 
       // 1. Enrich tool calls with per-tool approval info
       const enrichedToolCalls = result.tool_calls.map((tc) => {
-        const requiresApproval = this.cfg.requireToolApproval !== false &&
-                                  !this.shouldBypassApproval(tc.function.name);
+        const requiresApproval = this.cfg.requireToolApproval !== false && !this.shouldBypassApproval(tc.function.name);
         return {
           ...tc,
           requiresApproval,
@@ -833,11 +831,14 @@ export class AgentOrchestrator {
 
       // 2. Pre-register pending approvals BEFORE emitting event
       // This prevents race condition where UI tries to approve before orchestrator is ready
-      const approvalPromises = new Map<string, {
-        promise: Promise<PerToolApprovalResult>;
-        resolve: (result: PerToolApprovalResult) => void;
-        reject: (err: Error) => void;
-      }>();
+      const approvalPromises = new Map<
+        string,
+        {
+          promise: Promise<PerToolApprovalResult>;
+          resolve: (result: PerToolApprovalResult) => void;
+          reject: (err: Error) => void;
+        }
+      >();
 
       for (const tc of enrichedToolCalls) {
         if (tc.requiresApproval && tc.approvalId) {
@@ -850,7 +851,7 @@ export class AgentOrchestrator {
           approvalPromises.set(tc.approvalId, {
             promise,
             resolve: resolveApproval!,
-            reject: rejectApproval!
+            reject: rejectApproval!,
           });
           this.pendingApprovals.set(tc.approvalId, {
             resolve: resolveApproval!,
@@ -861,7 +862,7 @@ export class AgentOrchestrator {
       }
 
       // 3. Trigger PermissionRequest hooks for tools requiring approval (e.g., notifications)
-      const toolsNeedingApproval = enrichedToolCalls.filter(tc => tc.requiresApproval && tc.approvalId);
+      const toolsNeedingApproval = enrichedToolCalls.filter((tc) => tc.requiresApproval && tc.approvalId);
       if (toolsNeedingApproval.length > 0 && this.hookPort?.hasHooks(HookEventTypes.PermissionRequest)) {
         for (const tc of toolsNeedingApproval) {
           const hookContext: HookContext = {
@@ -871,9 +872,10 @@ export class AgentOrchestrator {
             hookEvent: HookEventTypes.PermissionRequest,
             cwd: process.cwd(),
             toolName: tc.function.name,
-            toolInput: typeof tc.function.arguments === 'string'
-              ? JSON.parse(tc.function.arguments)
-              : tc.function.arguments as Record<string, unknown>,
+            toolInput:
+              typeof tc.function.arguments === 'string'
+                ? JSON.parse(tc.function.arguments)
+                : (tc.function.arguments as Record<string, unknown>),
             toolUseId: tc.approvalId,
             permissionType: 'tool_approval',
           };
@@ -915,7 +917,7 @@ export class AgentOrchestrator {
 
       // Check if all tools were denied
       const allDenied = toolResults.every(
-        (tr) => tr.status === 'error' && tr.metadata?.errorReason === ErrorReason.Denied
+        (tr) => tr.status === 'error' && tr.metadata?.errorReason === ErrorReason.Denied,
       );
       if (allDenied) {
         toolApprovalDenied = true;
@@ -1164,11 +1166,7 @@ export class AgentOrchestrator {
    * Handles a single tool's approval decision.
    * Called by UI per-tool (not batch).
    */
-  public handleToolApproval(
-    approvalId: string,
-    decision: ToolApprovalDecision,
-    editInstruction?: string,
-  ): void {
+  public handleToolApproval(approvalId: string, decision: ToolApprovalDecision, editInstruction?: string): void {
     const approval = this.pendingApprovals.get(approvalId);
     if (!approval) {
       console.warn(`[Orchestrator] Received approval for unknown or already processed ID: ${approvalId}`);
@@ -1181,7 +1179,9 @@ export class AgentOrchestrator {
       approval.resolve({ approved: false });
     } else if (decision === 'edit') {
       if (!editInstruction) {
-        console.warn(`[Orchestrator] Edit decision received without editInstruction for ${approvalId}, treating as denied`);
+        console.warn(
+          `[Orchestrator] Edit decision received without editInstruction for ${approvalId}, treating as denied`,
+        );
         approval.resolve({ approved: false });
       } else {
         approval.toolCall.editInstruction = editInstruction;
@@ -1198,10 +1198,7 @@ export class AgentOrchestrator {
    * Handles user's response to questions.
    * Called by UI when user submits answers.
    */
-  public handleUserQuestionResponse(
-    questionId: string,
-    answers: Record<string, string | string[]>,
-  ): void {
+  public handleUserQuestionResponse(questionId: string, answers: Record<string, string | string[]>): void {
     const pending = this.pendingQuestions.get(questionId);
     if (!pending) {
       console.warn(`[Orchestrator] Received response for unknown or already processed question ID: ${questionId}`);

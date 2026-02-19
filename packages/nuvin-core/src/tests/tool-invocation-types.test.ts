@@ -19,7 +19,7 @@ describe('ToolInvocation Type Safety', () => {
 
     if (result.valid) {
       const invocation = result.invocation;
-      
+
       if (invocation.name === 'file_read') {
         expect(invocation.parameters.path).toBe('test.txt');
         expect(invocation.parameters.lineStart).toBe(1);
@@ -43,7 +43,7 @@ describe('ToolInvocation Type Safety', () => {
 
     if (result.valid) {
       const invocation = result.invocation;
-      
+
       if (invocation.name === 'bash_tool') {
         expect(invocation.parameters.cmd).toBe('ls -la');
         expect(invocation.parameters.cwd).toBe('/tmp');
@@ -72,7 +72,7 @@ describe('ToolInvocation Type Safety', () => {
 
     if (result.valid) {
       const invocation = result.invocation;
-      
+
       if (invocation.name === 'web_search') {
         expect(invocation.parameters.query).toBe('typescript types');
         expect(invocation.parameters.count).toBe(10);
@@ -107,7 +107,7 @@ describe('ToolInvocation Type Safety', () => {
 
     if (result.valid) {
       const invocation = result.invocation;
-      
+
       if (invocation.name === 'todo_write') {
         expect(Array.isArray(invocation.parameters.todos)).toBe(true);
         expect(invocation.parameters.todos[0]?.id).toBe('1');

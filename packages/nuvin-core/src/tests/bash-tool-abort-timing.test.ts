@@ -54,7 +54,7 @@ describe('BashTool - Abort Timing Tests', () => {
 
       // Should always have Line 1 (immediate output)
       expect(result.result).toContain('Line 1');
-      
+
       // Line 2 might or might not be present depending on timing (sleep 1 + abort at 2s)
       // but Line 3 should never be present (requires sleep 3 after Line 2)
       expect(result.result).not.toContain('Line 3');

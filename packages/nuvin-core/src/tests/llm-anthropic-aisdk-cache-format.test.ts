@@ -59,7 +59,7 @@ describe('Anthropic Cache Control Format Verification', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
 
     // Extract the request body
-    const [url, requestInit] = mockFetch.mock.calls[0];
+    const [_url, requestInit] = mockFetch.mock.calls[0];
     const requestBody = JSON.parse(requestInit.body as string);
 
     // Verify system array exists
@@ -138,7 +138,7 @@ describe('Anthropic Cache Control Format Verification', () => {
     await llm.generateCompletion(params);
 
     // Extract the request body
-    const [url, requestInit] = mockFetch.mock.calls[0];
+    const [_url, requestInit] = mockFetch.mock.calls[0];
     const requestBody = JSON.parse(requestInit.body as string);
 
     // Verify messages array
@@ -216,7 +216,7 @@ describe('Anthropic Cache Control Format Verification', () => {
     await llm.generateCompletion(params);
 
     // Extract the request body
-    const [url, requestInit] = mockFetch.mock.calls[0];
+    const [_url, requestInit] = mockFetch.mock.calls[0];
     const requestBody = JSON.parse(requestInit.body as string);
 
     // Verify the assistant message with tool_use
@@ -306,7 +306,7 @@ describe('Anthropic Cache Control Format Verification', () => {
     await llm.generateCompletion(params);
 
     // Extract the request body
-    const [url, requestInit] = mockFetch.mock.calls[0];
+    const [_url, requestInit] = mockFetch.mock.calls[0];
     const requestBody = JSON.parse(requestInit.body as string);
 
     // Verify messages

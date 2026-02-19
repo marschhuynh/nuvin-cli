@@ -56,7 +56,7 @@ describe('BaseLLM', () => {
 
   describe('constructor', () => {
     it('should initialize with apiUrl', () => {
-      expect(llm['apiUrl']).toBe(apiUrl);
+      expect(llm.apiUrl).toBe(apiUrl);
     });
 
     it('should lazy-load transport on first use', async () => {
@@ -945,7 +945,7 @@ describe('BaseLLM', () => {
         'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" user"}}]}',
         'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" just"}}]}',
         'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" said"}}]}',
-        'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" \\\""}}]}',
+        'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" \\""}}]}',
         'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":"hi"}}]}',
         'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":"\\",", "}}]}',
         'data: {"id":"20251001154016c72e2da818044216","created":1759304416,"model":"glm-4.5","choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" which"}}]}',

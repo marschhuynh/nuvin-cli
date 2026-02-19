@@ -9,17 +9,17 @@ export interface GitContextInfo {
    * Shell name (e.g., 'bash', 'zsh', 'fish')
    */
   shell?: string;
-  
+
   /**
    * Current git branch name
    */
   gitBranch?: string;
-  
+
   /**
    * Git repository name (extracted from remote URL or folder name)
    */
   gitRepo?: string;
-  
+
   /**
    * Recent commit history (last 5 commits)
    */
@@ -28,16 +28,16 @@ export interface GitContextInfo {
 
 /**
  * Extract git context information from the current workspace.
- * 
+ *
  * This function gathers contextual information about the development environment:
  * - Shell information from environment variables
  * - Git branch, repository name, and recent commits (if in a git repository)
- * 
+ *
  * All operations are non-blocking and fail gracefully, returning undefined for
  * any information that cannot be retrieved.
- * 
+ *
  * @returns Promise resolving to GitContextInfo with available context data
- * 
+ *
  * @example
  * ```typescript
  * const context = await getGitContextInfo();

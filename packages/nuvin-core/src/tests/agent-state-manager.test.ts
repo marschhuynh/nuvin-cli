@@ -62,7 +62,7 @@ describe('AgentStateManager', () => {
 
   it('should return sessions by parent', () => {
     const id1 = manager.create('agent1', 'cli', 'Task 1');
-    const id2 = manager.create('agent2', 'other-parent', 'Task 2');
+    const _id2 = manager.create('agent2', 'other-parent', 'Task 2');
     const id3 = manager.create('agent3', 'cli', 'Task 3');
 
     const cliSessions = manager.getByParent('cli');

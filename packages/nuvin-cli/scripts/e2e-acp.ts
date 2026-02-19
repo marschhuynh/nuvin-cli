@@ -242,9 +242,7 @@ async function main() {
           typeof ((n.params as Record<string, unknown>).update as Record<string, unknown>)?.sessionUpdate !== 'string'),
     );
     if (invalidUpdates.length > 0) {
-      throw new Error(
-        `${invalidUpdates.length} session/update notification(s) missing a valid sessionUpdate field`,
-      );
+      throw new Error(`${invalidUpdates.length} session/update notification(s) missing a valid sessionUpdate field`);
     }
 
     process.stdout.write(

@@ -127,38 +127,48 @@ function buildToolCallStreamEvents(toolCalls: ToolCallDefinition[], usage: LLMRe
   const events: string[] = [];
 
   // First chunk with role
-  events.push(`data: ${JSON.stringify({
-    id: 'test-response',
-    model: 'test-model',
-    choices: [{ index: 0, delta: { role: 'assistant', content: '' } }],
-  })}\n\n`);
+  events.push(
+    `data: ${JSON.stringify({
+      id: 'test-response',
+      model: 'test-model',
+      choices: [{ index: 0, delta: { role: 'assistant', content: '' } }],
+    })}\n\n`,
+  );
 
   // Tool call chunks
   toolCalls.forEach((tc, index) => {
-    events.push(`data: ${JSON.stringify({
-      id: 'test-response',
-      model: 'test-model',
-      choices: [{
-        index: 0,
-        delta: {
-          tool_calls: [{
-            index,
-            id: tc.id,
-            type: 'function',
-            function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
-          }],
-        },
-      }],
-    })}\n\n`);
+    events.push(
+      `data: ${JSON.stringify({
+        id: 'test-response',
+        model: 'test-model',
+        choices: [
+          {
+            index: 0,
+            delta: {
+              tool_calls: [
+                {
+                  index,
+                  id: tc.id,
+                  type: 'function',
+                  function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+                },
+              ],
+            },
+          },
+        ],
+      })}\n\n`,
+    );
   });
 
   // Final chunk with finish_reason and usage
-  events.push(`data: ${JSON.stringify({
-    id: 'test-response',
-    model: 'test-model',
-    choices: [{ index: 0, finish_reason: 'tool_calls', delta: {} }],
-    usage,
-  })}\n\n`);
+  events.push(
+    `data: ${JSON.stringify({
+      id: 'test-response',
+      model: 'test-model',
+      choices: [{ index: 0, finish_reason: 'tool_calls', delta: {} }],
+      usage,
+    })}\n\n`,
+  );
 
   events.push('data: [DONE]\n\n');
   return events.join('');
@@ -169,29 +179,35 @@ function buildTextStreamEvents(content: string, usage: LLMResponse['usage']): st
   const events: string[] = [];
 
   // First chunk with role
-  events.push(`data: ${JSON.stringify({
-    id: 'test-response',
-    model: 'test-model',
-    choices: [{ index: 0, delta: { role: 'assistant', content: '' } }],
-  })}\n\n`);
+  events.push(
+    `data: ${JSON.stringify({
+      id: 'test-response',
+      model: 'test-model',
+      choices: [{ index: 0, delta: { role: 'assistant', content: '' } }],
+    })}\n\n`,
+  );
 
   // Content chunks - one per word
   words.forEach((word, i) => {
-    const delta = i === 0 ? word : ' ' + word;
-    events.push(`data: ${JSON.stringify({
-      id: 'test-response',
-      model: 'test-model',
-      choices: [{ index: 0, delta: { content: delta } }],
-    })}\n\n`);
+    const delta = i === 0 ? word : ` ${word}`;
+    events.push(
+      `data: ${JSON.stringify({
+        id: 'test-response',
+        model: 'test-model',
+        choices: [{ index: 0, delta: { content: delta } }],
+      })}\n\n`,
+    );
   });
 
   // Final chunk with finish_reason and usage
-  events.push(`data: ${JSON.stringify({
-    id: 'test-response',
-    model: 'test-model',
-    choices: [{ index: 0, finish_reason: 'stop', delta: {} }],
-    usage,
-  })}\n\n`);
+  events.push(
+    `data: ${JSON.stringify({
+      id: 'test-response',
+      model: 'test-model',
+      choices: [{ index: 0, finish_reason: 'stop', delta: {} }],
+      usage,
+    })}\n\n`,
+  );
 
   events.push('data: [DONE]\n\n');
   return events.join('');
@@ -514,9 +530,7 @@ function runMessageFlowTest(fixture: TestFixture) {
 
 // Get all fixture files
 const fixturesDir = path.join(__dirname, 'fixtures');
-const fixtureFiles = fs.existsSync(fixturesDir)
-  ? fs.readdirSync(fixturesDir).filter((f) => f.endsWith('.json'))
-  : [];
+const fixtureFiles = fs.existsSync(fixturesDir) ? fs.readdirSync(fixturesDir).filter((f) => f.endsWith('.json')) : [];
 
 describe('Message Flow Integration Tests (Data-Driven)', () => {
   if (fixtureFiles.length === 0) {

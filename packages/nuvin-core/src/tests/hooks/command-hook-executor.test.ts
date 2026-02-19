@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CommandHookExecutor } from '../../hooks/command-hook-executor.js';
-import { HookContext, HookEventTypes } from '../../hooks/types.js';
+import { type HookContext, HookEventTypes } from '../../hooks/types.js';
 
 describe('CommandHookExecutor', () => {
   let executor: CommandHookExecutor;
@@ -21,7 +21,7 @@ describe('CommandHookExecutor', () => {
   it('should execute a command and return result', async () => {
     const context = createContext();
     const result = await executor.execute('echo hello', context, 5);
-    
+
     expect(result.exitCode).toBe(0);
     expect(result.rawOutput?.trim()).toBe('hello');
     expect(result.continue).toBe(true);
@@ -30,7 +30,7 @@ describe('CommandHookExecutor', () => {
   it('should handle command timeout', async () => {
     const context = createContext();
     const result = await executor.execute('sleep 10', context, 1);
-    
+
     expect(result.exitCode).not.toBe(0);
     expect(result.error).toContain('timed out');
     expect(result.continue).toBe(true); // Timeout should still continue
@@ -38,12 +38,8 @@ describe('CommandHookExecutor', () => {
 
   it('should parse JSON output with continue flag', async () => {
     const context = createContext();
-    const result = await executor.execute(
-      'echo \'{"continue": true, "decision": "allow"}\'',
-      context,
-      5
-    );
-    
+    const result = await executor.execute('echo \'{"continue": true, "decision": "allow"}\'', context, 5);
+
     expect(result.continue).toBe(true);
     expect(result.decision).toBe('allow');
   });
@@ -53,9 +49,9 @@ describe('CommandHookExecutor', () => {
     const result = await executor.execute(
       'echo \'{"continue": false, "stopReason": "blocked by policy"}\'',
       context,
-      5
+      5,
     );
-    
+
     expect(result.continue).toBe(false);
     expect(result.stopReason).toBe('blocked by policy');
   });
@@ -63,7 +59,7 @@ describe('CommandHookExecutor', () => {
   it('should handle command failure with non-zero exit code', async () => {
     const context = createContext();
     const result = await executor.execute('exit 2', context, 5);
-    
+
     expect(result.exitCode).toBe(2);
     expect(result.continue).toBe(false); // Exit code 2 means block
   });
@@ -71,7 +67,7 @@ describe('CommandHookExecutor', () => {
   it('should handle exit code 1 and continue', async () => {
     const context = createContext();
     const result = await executor.execute('exit 1', context, 5);
-    
+
     expect(result.exitCode).toBe(1);
     expect(result.continue).toBe(true); // Exit code 1 continues with error
   });
@@ -81,9 +77,9 @@ describe('CommandHookExecutor', () => {
       toolName: 'bash_tool',
       sessionId: 'test-session-123',
     });
-    
+
     const result = await executor.execute('echo $NUVIN_TOOL_NAME-$NUVIN_SESSION_ID', context, 5);
-    
+
     expect(result.exitCode).toBe(0);
     expect(result.rawOutput?.trim()).toBe('bash_tool-test-session-123');
   });
@@ -91,7 +87,7 @@ describe('CommandHookExecutor', () => {
   it('should track duration', async () => {
     const context = createContext();
     const result = await executor.execute('sleep 0.1', context, 5);
-    
+
     expect(result.durationMs).toBeDefined();
     expect(result.durationMs).toBeGreaterThanOrEqual(50); // At least 50ms
   });
@@ -99,7 +95,7 @@ describe('CommandHookExecutor', () => {
   it('should handle invalid JSON as plain text', async () => {
     const context = createContext();
     const result = await executor.execute('echo "not json output"', context, 5);
-    
+
     expect(result.exitCode).toBe(0);
     expect(result.rawOutput?.trim()).toBe('not json output');
     expect(result.continue).toBe(true);
@@ -110,9 +106,9 @@ describe('CommandHookExecutor', () => {
     const result = await executor.execute(
       'echo \'{"continue": true, "updatedInput": {"cmd": "safe-command"}}\'',
       context,
-      5
+      5,
     );
-    
+
     expect(result.continue).toBe(true);
     expect(result.updatedInput).toEqual({ cmd: 'safe-command' });
   });

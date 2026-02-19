@@ -1,6 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { applyBackspace, applyDelete } from '../source/components/TextInput/editing.js';
-import { parseKeypress, setKittyProtocolEnabled, splitInputChunks } from '../source/contexts/InputContext/parseKeypress.js';
+import {
+  parseKeypress,
+  setKittyProtocolEnabled,
+  splitInputChunks,
+} from '../source/contexts/InputContext/parseKeypress.js';
 
 describe('TextInput editing operations', () => {
   it('applies backspace by removing character before cursor and moving cursor left', () => {

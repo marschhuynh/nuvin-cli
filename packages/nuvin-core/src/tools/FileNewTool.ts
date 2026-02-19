@@ -1,5 +1,5 @@
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import type { ToolDefinition } from '../ports.js';
 import { ErrorReason } from '../ports.js';
 import type { FunctionTool, ToolExecutionContext, ExecResultError } from './types.js';
@@ -54,7 +54,10 @@ export class FileNewTool implements FunctionTool<FileNewParams, ToolExecutionCon
 
       const abs = this.resolveSafePath(p.file_path, ctx);
 
-      const existsBefore = await fs.stat(abs).then(() => true).catch(() => false);
+      const existsBefore = await fs
+        .stat(abs)
+        .then(() => true)
+        .catch(() => false);
 
       await fs.mkdir(path.dirname(abs), { recursive: true });
 
@@ -62,8 +65,8 @@ export class FileNewTool implements FunctionTool<FileNewParams, ToolExecutionCon
       const lines = p.content.split(/\r?\n/).length;
       await this.writeAtomic(abs, bytes);
 
-      return okText(`File written at ${p.file_path}.`, { 
-        file_path: p.file_path, 
+      return okText(`File written at ${p.file_path}.`, {
+        file_path: p.file_path,
         bytes: bytes.length,
         lines,
         created: new Date().toISOString(),

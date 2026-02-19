@@ -29,7 +29,7 @@ describe('MiniMax Provider', () => {
   it('should support custom apiUrl', () => {
     const llm = createLLM('minimax', {
       apiKey: 'test-key',
-      apiUrl: 'https://custom.minimax.url/v1'
+      apiUrl: 'https://custom.minimax.url/v1',
     });
     expect((llm as any).apiUrl).toBe('https://custom.minimax.url/v1');
   });
@@ -45,7 +45,7 @@ describe('MiniMax Provider', () => {
 
     expect(models.length).toBeGreaterThan(0);
 
-    const m21 = models.find(m => m.id === 'MiniMax-M2.1');
+    const m21 = models.find((m) => m.id === 'MiniMax-M2.1');
     expect(m21).toBeDefined();
     expect(m21?.name).toBe('MiniMax M2.1');
     expect(m21?.limits?.contextWindow).toBe(200000);

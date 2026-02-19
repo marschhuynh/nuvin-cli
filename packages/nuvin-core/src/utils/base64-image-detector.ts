@@ -7,9 +7,7 @@ import type { ImageContentPart, TextContentPart } from '../ports.js';
  * - `text`  — plain text content (no data URI)
  * - `image` — a decoded data URI with its MIME type and raw base64 payload
  */
-export type ExtractedContent =
-  | { type: 'text'; text: string }
-  | { type: 'image'; mimeType: string; data: string };
+export type ExtractedContent = { type: 'text'; text: string } | { type: 'image'; mimeType: string; data: string };
 
 /**
  * Matches `data:image/<subtype>;base64,<payload>` where:
@@ -18,8 +16,7 @@ export type ExtractedContent =
  *
  * Uses the global flag so `String.prototype.matchAll` yields all occurrences.
  */
-const DATA_URI_REGEX =
-  /data:(image\/(?:png|jpeg|jpg|gif|webp));base64,([A-Za-z0-9+/\n\r]+=*)/g;
+const DATA_URI_REGEX = /data:(image\/(?:png|jpeg|jpg|gif|webp));base64,([A-Za-z0-9+/\n\r]+=*)/g;
 
 /**
  * Scans `input` for embedded base64 image data URIs and splits the string
@@ -86,9 +83,7 @@ export function hasBase64Images(input: string): boolean {
  * `TextContentPart | ImageContentPart` union used by the orchestrator's
  * message pipeline.
  */
-export function toMessageContentParts(
-  extracted: ExtractedContent[],
-): Array<TextContentPart | ImageContentPart> {
+export function toMessageContentParts(extracted: ExtractedContent[]): Array<TextContentPart | ImageContentPart> {
   return extracted.map((item) => {
     if (item.type === 'text') {
       return { type: 'text' as const, text: item.text };

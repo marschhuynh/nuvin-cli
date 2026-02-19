@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FileReadTool } from '../tools/FileReadTool.js';
-import { promises as fs } from 'fs';
-import * as path from 'path';
-import * as os from 'os';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
 
 describe('FileReadTool', () => {
   let tmpDir: string;
@@ -137,8 +137,8 @@ describe('FileReadTool', () => {
       expect(result.metadata?.created).toBeDefined();
       expect(result.metadata?.modified).toBeDefined();
 
-      const created = new Date(result.metadata!.created as string);
-      const modified = new Date(result.metadata!.modified as string);
+      const created = new Date(result.metadata?.created as string);
+      const modified = new Date(result.metadata?.modified as string);
 
       expect(created).toBeInstanceOf(Date);
       expect(modified).toBeInstanceOf(Date);
@@ -151,13 +151,13 @@ describe('FileReadTool', () => {
       await fs.writeFile(filePath, 'original');
 
       const result1 = await tool.execute({ path: 'mtime-test.txt' });
-      const modified1 = result1.metadata!.modified as string;
+      const modified1 = result1.metadata?.modified as string;
 
       await new Promise((resolve) => setTimeout(resolve, 10));
       await fs.writeFile(filePath, 'updated');
 
       const result2 = await tool.execute({ path: 'mtime-test.txt' });
-      const modified2 = result2.metadata!.modified as string;
+      const modified2 = result2.metadata?.modified as string;
 
       expect(new Date(modified2).getTime()).toBeGreaterThanOrEqual(new Date(modified1).getTime());
     });

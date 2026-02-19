@@ -279,24 +279,27 @@ export const InputProvider: React.FC<Props> = ({
     }
   }, []);
 
-  const dispatchParsedChunk = useCallback((chunk: string) => {
-    const { input, key } = parseKeypress(chunk);
+  const dispatchParsedChunk = useCallback(
+    (chunk: string) => {
+      const { input, key } = parseKeypress(chunk);
 
-    const middleware = middlewareRef.current;
-    let index = 0;
+      const middleware = middlewareRef.current;
+      let index = 0;
 
-    const next = () => {
-      if (index < middleware.length) {
-        const currentMiddleware = middleware[index];
-        index++;
-        currentMiddleware?.(input, key, next);
-      } else {
-        distributeInput(input, key);
-      }
-    };
+      const next = () => {
+        if (index < middleware.length) {
+          const currentMiddleware = middleware[index];
+          index++;
+          currentMiddleware?.(input, key, next);
+        } else {
+          distributeInput(input, key);
+        }
+      };
 
-    next();
-  }, [distributeInput]);
+      next();
+    },
+    [distributeInput],
+  );
 
   const clearEscapeFlushTimer = useCallback(() => {
     if (escapeFlushTimerRef.current) {

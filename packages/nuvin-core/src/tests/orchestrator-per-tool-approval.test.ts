@@ -20,7 +20,7 @@ import { AgentEventTypes, ErrorReason } from '../ports.js';
 
 /**
  * Tests for Per-Tool Approval functionality
- * 
+ *
  * Key requirements:
  * 1. Tools requiring approval must NOT execute until user approves
  * 2. Denied tools must NOT execute
@@ -123,7 +123,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
         systemPrompt: 'test',
         requireToolApproval,
         topP: 1,
-        temperature: 1
+        temperature: 1,
       },
       {
         memory: mockMemory,
@@ -145,9 +145,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Done',
@@ -190,9 +188,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"rm -rf /"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"rm -rf /"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Understood, cancelled.',
@@ -301,10 +297,10 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       // Check results
       const toolResults = emittedEvents.filter((e) => e.type === AgentEventTypes.ToolResult);
       expect(toolResults).toHaveLength(2);
-      
+
       const approvedResult = toolResults.find((r) => r.result.id === 'tc-1');
       const deniedResult = toolResults.find((r) => r.result.id === 'tc-2');
-      
+
       expect(approvedResult?.result.status).toBe('success');
       expect(deniedResult?.result.status).toBe('error');
       expect((deniedResult?.result.metadata as { errorReason?: string })?.errorReason).toBe(ErrorReason.Denied);
@@ -337,7 +333,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
 
       // Deny first, approve second
-      orchestrator.handleToolApproval(toolCallsEvent!.toolCalls[0].approvalId!, 'deny');
+      orchestrator.handleToolApproval(toolCallsEvent.toolCalls[0].approvalId!, 'deny');
       orchestrator.handleToolApproval(toolCallsEvent?.toolCalls?.[1]?.approvalId, 'approve');
 
       await sendPromise;
@@ -387,10 +383,10 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       // Approve bash
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
-      const bashTool = toolCallsEvent!.toolCalls.find((tc) => tc.function.name === 'bash');
+      const bashTool = toolCallsEvent?.toolCalls.find((tc) => tc.function.name === 'bash');
       expect(bashTool?.requiresApproval).toBe(true);
-      
-      orchestrator.handleToolApproval(bashTool!.approvalId!, 'approve');
+
+      orchestrator.handleToolApproval(bashTool.approvalId!, 'approve');
 
       await sendPromise;
 
@@ -406,9 +402,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Done.',
@@ -458,7 +452,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
-      const toolsNeedingApproval = toolCallsEvent!.toolCalls.filter((tc) => tc.requiresApproval);
+      const toolsNeedingApproval = toolCallsEvent?.toolCalls.filter((tc) => tc.requiresApproval);
 
       // All 3 tools need approval (bash, bash, file_edit)
       expect(toolsNeedingApproval).toHaveLength(3);
@@ -482,9 +476,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"rm -rf /"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"rm -rf /"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Understood.',
@@ -508,7 +500,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       // Verify ToolResult event has denied status and message
       const toolResultEvents = emittedEvents.filter((e) => e.type === AgentEventTypes.ToolResult);
       expect(toolResultEvents.length).toBeGreaterThan(0);
-      
+
       const deniedResult = toolResultEvents.find((e) => e.result?.status === 'error');
       expect(deniedResult).toBeDefined();
       expect((deniedResult?.result?.metadata as { errorReason?: string })?.errorReason).toBe(ErrorReason.Denied);
@@ -525,9 +517,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Done.',
@@ -561,22 +551,19 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse1: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo 1"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo 1"}' } }],
       };
       const toolCallResponse2: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo 2"}' } },
-        ],
+        tool_calls: [{ id: 'tc-2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo 2"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Cancelled.',
       };
 
       // First request - deny
-      mockLLM.generateCompletion = vi.fn()
+      mockLLM.generateCompletion = vi
+        .fn()
         .mockResolvedValueOnce(toolCallResponse1)
         .mockResolvedValueOnce(finalResponse);
 
@@ -593,7 +580,8 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       emittedEvents = [];
 
       // Second request - deny again
-      mockLLM.generateCompletion = vi.fn()
+      mockLLM.generateCompletion = vi
+        .fn()
         .mockResolvedValueOnce(toolCallResponse2)
         .mockResolvedValueOnce(finalResponse);
 
@@ -619,9 +607,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Done.',
@@ -646,9 +632,9 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       // Duplicate approval - should log warning but not crash
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       orchestrator.handleToolApproval(approvalId, 'approve');
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Received approval for unknown or already processed ID')
+        expect.stringContaining('Received approval for unknown or already processed ID'),
       );
       consoleSpy.mockRestore();
 
@@ -663,9 +649,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Cancelled.',
@@ -682,12 +666,9 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
-      
+
       // Invalid decision throws error
-      orchestrator.handleToolApproval(
-        toolCallsEvent?.toolCalls[0].approvalId as string,
-        'invalid_decision' as any,
-      );
+      orchestrator.handleToolApproval(toolCallsEvent?.toolCalls[0].approvalId as string, 'invalid_decision' as any);
 
       // The promise should still complete (error is caught internally)
       await sendPromise.catch(() => {});
@@ -703,9 +684,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Updated as requested.',
@@ -738,12 +717,8 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
       const editInstruction = 'change command to echo hello instead';
-      
-      orchestrator.handleToolApproval(
-        toolCallsEvent?.toolCalls[0].approvalId as string,
-        'edit',
-        editInstruction,
-      );
+
+      orchestrator.handleToolApproval(toolCallsEvent?.toolCalls[0].approvalId as string, 'edit', editInstruction);
 
       await sendPromise;
 
@@ -764,15 +739,11 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse1: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const toolCallResponse2: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo hello"}' } },
-        ],
+        tool_calls: [{ id: 'tc-2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo hello"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Command executed.',
@@ -815,7 +786,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       // First tool call - send edit instruction
       await new Promise((resolve) => setTimeout(resolve, 50));
-      let toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
+      const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
       orchestrator.handleToolApproval(
         toolCallsEvent?.toolCalls[0].approvalId as string,
         'edit',
@@ -843,18 +814,16 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
 
       mockLLM.generateCompletion = vi.fn(async () => toolCallResponse);
 
       const abortController = new AbortController();
 
-      const sendPromise = orchestrator.send('run command', { 
-        stream: false, 
-        signal: abortController.signal 
+      const sendPromise = orchestrator.send('run command', {
+        stream: false,
+        signal: abortController.signal,
       });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -877,9 +846,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const toolCallResponse: CompletionResult = {
         content: '',
-        tool_calls: [
-          { id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } },
-        ],
+        tool_calls: [{ id: 'tc-1', type: 'function', function: { name: 'bash', arguments: '{"cmd":"echo test"}' } }],
       };
       const finalResponse: CompletionResult = {
         content: 'Done.',
@@ -893,19 +860,19 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const abortController = new AbortController();
 
-      const sendPromise = orchestrator.send('run command', { 
-        stream: false, 
-        signal: abortController.signal 
+      const sendPromise = orchestrator.send('run command', {
+        stream: false,
+        signal: abortController.signal,
       });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Abort just before approving
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
-      
+
       // Abort first
       abortController.abort();
-      
+
       // Then try to approve (should be ignored/rejected)
       orchestrator.handleToolApproval(toolCallsEvent?.toolCalls[0].approvalId as string, 'approve');
 
@@ -928,9 +895,9 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       const abortController = new AbortController();
 
-      const sendPromise = orchestrator.send('run commands', { 
-        stream: false, 
-        signal: abortController.signal 
+      const sendPromise = orchestrator.send('run commands', {
+        stream: false,
+        signal: abortController.signal,
       });
 
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -942,14 +909,14 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
 
       // Subsequent approval attempts should warn (approvals were cleaned up)
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
       if (toolCallsEvent?.toolCalls[0]?.approvalId) {
         orchestrator.handleToolApproval(toolCallsEvent.toolCalls[0].approvalId, 'approve');
       }
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Received approval for unknown or already processed ID')
+        expect.stringContaining('Received approval for unknown or already processed ID'),
       );
       consoleSpy.mockRestore();
     });

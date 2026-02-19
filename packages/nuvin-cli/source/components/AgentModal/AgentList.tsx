@@ -55,13 +55,10 @@ export const AgentList: React.FC<AgentListProps> = ({
       const isBuiltin = agent.isDefault;
       const location = agent.location || (isBuiltin ? 'built-in' : 'local');
       const isMainAgent = agent.name === 'nuvin';
-      
+
       // Determine location badge color
-      const locationColor = location === 'built-in' 
-        ? theme.tokens.blue 
-        : location === 'global' 
-          ? theme.tokens.yellow 
-          : theme.tokens.cyan;
+      const locationColor =
+        location === 'built-in' ? theme.tokens.blue : location === 'global' ? theme.tokens.yellow : theme.tokens.cyan;
 
       const params: React.ReactNode[] = [];
 

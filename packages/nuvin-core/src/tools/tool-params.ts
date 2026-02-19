@@ -175,7 +175,9 @@ export function isGlobArgs(args: ToolArguments): args is GlobArgs {
 }
 
 export function isGrepArgs(args: ToolArguments): args is GrepArgs {
-  return 'pattern' in args && typeof args.pattern === 'string' && ('include' in args || !('path' in args && !args.path));
+  return (
+    'pattern' in args && typeof args.pattern === 'string' && ('include' in args || !('path' in args && !args.path))
+  );
 }
 
 export function isLsArgs(args: ToolArguments): args is LsArgs {

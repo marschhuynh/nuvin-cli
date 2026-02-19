@@ -73,7 +73,7 @@ describe('OpenRouterLLM Prompt Caching Edge Cases', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content[0].cache_control).toBeUndefined();
     expect(sentBody.messages[0].content[1].cache_control).toEqual({ type: 'ephemeral' });
     expect(sentBody.messages[1].content[0].cache_control).toEqual({ type: 'ephemeral' });
@@ -108,7 +108,7 @@ describe('OpenRouterLLM Prompt Caching Edge Cases', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content[0].cache_control).toBeUndefined();
     expect(sentBody.messages[0].content[1].cache_control).toBeUndefined();
     expect(sentBody.messages[0].content[2].cache_control).toEqual({ type: 'ephemeral' });
@@ -141,11 +141,11 @@ describe('OpenRouterLLM Prompt Caching Edge Cases', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content[0].cache_control).toBeUndefined();
     expect(sentBody.messages[0].content[1].cache_control).toBeUndefined();
     expect(sentBody.messages[0].content[2].cache_control).toEqual({ type: 'ephemeral' });
-    
+
     expect(sentBody.messages[1].content[0].cache_control).toBeUndefined();
     expect(sentBody.messages[1].content[1].cache_control).toEqual({ type: 'ephemeral' });
   });
@@ -168,7 +168,7 @@ describe('OpenRouterLLM Prompt Caching Edge Cases', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content[0].cache_control).toEqual({ type: 'ephemeral' });
     expect(sentBody.messages[1].content[0].cache_control).toBeUndefined();
     expect(sentBody.messages[2].content[0].cache_control).toBeUndefined();
@@ -196,7 +196,7 @@ describe('OpenRouterLLM Prompt Caching Edge Cases', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content[0].cache_control).toBeUndefined();
     expect(sentBody.messages[0].content[1].cache_control).toBeUndefined();
   });
@@ -232,7 +232,7 @@ describe('OpenRouterLLM Prompt Caching Edge Cases', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content[0].cache_control).toEqual({ type: 'ephemeral' });
     expect(sentBody.messages[1].content[0].cache_control).toEqual({ type: 'ephemeral' });
     expect(sentBody.messages[2].content[0].cache_control).toBeUndefined();

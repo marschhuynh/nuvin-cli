@@ -31,8 +31,8 @@ export class AgentRegistry {
 
   private loadingPromise?: Promise<void>;
 
-  constructor(options?: { 
-    persistence?: MemoryPort<AgentTemplate>; 
+  constructor(options?: {
+    persistence?: MemoryPort<AgentTemplate>;
     localFilePersistence?: AgentFilePersistence;
     profileFilePersistence?: AgentFilePersistence;
     globalFilePersistence?: AgentFilePersistence;
@@ -146,7 +146,10 @@ export class AgentRegistry {
   /**
    * Load agents from file system
    */
-  private async loadFromFiles(persistence: AgentFilePersistence, location: 'global' | 'profile' | 'local'): Promise<void> {
+  private async loadFromFiles(
+    persistence: AgentFilePersistence,
+    location: 'global' | 'profile' | 'local',
+  ): Promise<void> {
     try {
       const loadedAgents = await persistence.loadAll();
       for (const agent of loadedAgents) {
@@ -184,7 +187,7 @@ export class AgentRegistry {
     if (!complete.name) {
       throw new Error('Failed to generate agent name');
     }
-    
+
     // Preserve existing location only if the new agent doesn't explicitly set one
     const existing = this.agents.get(complete.name);
     if (!complete.location && existing?.location) {
@@ -193,14 +196,16 @@ export class AgentRegistry {
       // If not already set and not a default agent, mark as local
       complete.location = 'local';
     }
-    
+
     this.agents.set(complete.name, complete);
   }
 
   /**
    * Get the appropriate persistence layer for a given location
    */
-  private getPersistenceForLocation(location: 'built-in' | 'global' | 'profile' | 'local' | undefined): AgentFilePersistence | undefined {
+  private getPersistenceForLocation(
+    location: 'built-in' | 'global' | 'profile' | 'local' | undefined,
+  ): AgentFilePersistence | undefined {
     switch (location) {
       case 'local':
         return this.localFilePersistence;

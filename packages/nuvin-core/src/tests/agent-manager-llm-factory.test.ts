@@ -81,7 +81,6 @@ describe('AgentManager - LLM Factory', () => {
       expect(mockFactory.createLLM).toHaveBeenCalledWith({
         provider: undefined,
         model: undefined,
-        
       });
       expect(factoryCreatedLLM.generateCompletion).toHaveBeenCalled();
       expect(mockLLM.generateCompletion).not.toHaveBeenCalled();
@@ -105,7 +104,6 @@ describe('AgentManager - LLM Factory', () => {
       expect(mockFactory.createLLM).toHaveBeenCalledWith({
         provider: 'anthropic',
         model: undefined,
-        
       });
       expect(factoryCreatedLLM.generateCompletion).toHaveBeenCalled();
       expect(mockLLM.generateCompletion).not.toHaveBeenCalled();
@@ -129,7 +127,6 @@ describe('AgentManager - LLM Factory', () => {
       expect(mockFactory.createLLM).toHaveBeenCalledWith({
         provider: undefined,
         model: 'claude-3-opus',
-        
       });
       expect(factoryCreatedLLM.generateCompletion).toHaveBeenCalled();
       expect(mockLLM.generateCompletion).not.toHaveBeenCalled();

@@ -16,7 +16,9 @@ describe('GrepTool', () => {
     mkdirSync(testDir, { recursive: true });
     mkdirSync(path.join(testDir, 'src'), { recursive: true });
 
-    writeFileSync(path.join(testDir, 'index.ts'), `
+    writeFileSync(
+      path.join(testDir, 'index.ts'),
+      `
 export function greet(name: string) {
   return \`Hello, \${name}!\`;
 }
@@ -24,14 +26,20 @@ export function greet(name: string) {
 export function farewell(name: string) {
   return \`Goodbye, \${name}!\`;
 }
-`);
+`,
+    );
 
-    writeFileSync(path.join(testDir, 'config.json'), `{
+    writeFileSync(
+      path.join(testDir, 'config.json'),
+      `{
   "name": "test-project",
   "version": "1.0.0"
-}`);
+}`,
+    );
 
-    writeFileSync(path.join(testDir, 'src', 'utils.ts'), `
+    writeFileSync(
+      path.join(testDir, 'src', 'utils.ts'),
+      `
 // TODO: Implement this function
 export function formatDate(date: Date) {
   return date.toISOString();
@@ -41,13 +49,17 @@ export function formatDate(date: Date) {
 export function parseNumber(str: string) {
   return parseInt(str, 10);
 }
-`);
+`,
+    );
 
-    writeFileSync(path.join(testDir, 'src', 'main.js'), `
+    writeFileSync(
+      path.join(testDir, 'src', 'main.js'),
+      `
 function greet(name) {
   console.log("Hello, " + name);
 }
-`);
+`,
+    );
   }, 60000);
 
   describe('basic pattern matching', () => {

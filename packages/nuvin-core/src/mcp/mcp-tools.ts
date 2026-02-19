@@ -9,7 +9,7 @@ import type {
 import { ErrorReason } from '../ports.js';
 import type { CoreMCPClient, MCPToolSchema } from './mcp-client.js';
 import { jsonSchemaToZod } from 'json-zodify';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 type NameMap = Map<string, string>;
 

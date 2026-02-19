@@ -1,4 +1,13 @@
-import type { AgentConfig, LLMPort, ToolPort, Message, MessageResponse, AgentEvent, LLMFactory, MemoryPort } from './ports.js';
+import type {
+  AgentConfig,
+  LLMPort,
+  ToolPort,
+  Message,
+  MessageResponse,
+  AgentEvent,
+  LLMFactory,
+  MemoryPort,
+} from './ports.js';
 import { AgentEventTypes, ErrorReason } from './ports.js';
 import { LLMResolver } from './delegation/llm-resolver.js';
 import { DefaultAgentStateManager, type AgentStateManager } from './delegation/agent-manager.js';
@@ -182,16 +191,18 @@ export class AgentManager {
 
     // Create metrics port for this specialist agent
     // If a metricsPort is passed, use it; otherwise create one for events
-    const metrics = this.metricsPort ?? new InMemoryMetricsPort((snapshot) => {
-      this.eventCallback?.({
-        type: AgentEventTypes.SubAgentMetrics,
-        conversationId: config.conversationId ?? 'default',
-        messageId: config.messageId ?? '',
-        agentId: config.agentId,
-        toolCallId: config.toolCallId ?? '',
-        metrics: snapshot,
+    const metrics =
+      this.metricsPort ??
+      new InMemoryMetricsPort((snapshot) => {
+        this.eventCallback?.({
+          type: AgentEventTypes.SubAgentMetrics,
+          conversationId: config.conversationId ?? 'default',
+          messageId: config.messageId ?? '',
+          agentId: config.agentId,
+          toolCallId: config.toolCallId ?? '',
+          metrics: snapshot,
+        });
       });
-    });
 
     // Determine which LLM to use
     const llm = this.resolveLLM(config);
@@ -215,7 +226,14 @@ export class AgentManager {
     try {
       // Execute the task with timeout - use 'default' as conversation key since each agent has its own memory
       const timeoutMs = config.timeout_ms ?? DEFAULT_TIMEOUT_MS;
-      const response = await this.executeWithTimeout(specialistOrchestrator, config.taskDescription, 'default', timeoutMs, signal, config.stream);
+      const response = await this.executeWithTimeout(
+        specialistOrchestrator,
+        config.taskDescription,
+        'default',
+        timeoutMs,
+        signal,
+        config.stream,
+      );
 
       const executionTimeMs = Date.now() - startTime;
       const conversationHistory = await memory.get('default');

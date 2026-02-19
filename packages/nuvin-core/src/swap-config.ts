@@ -1,10 +1,7 @@
 import type { AgentConfig } from './ports.js';
 import type { CompleteAgent } from './agent-types.js';
 
-export function mergeAgentConfig(
-  mainConfig: AgentConfig,
-  agentTemplate: CompleteAgent,
-): AgentConfig {
+export function mergeAgentConfig(mainConfig: AgentConfig, agentTemplate: CompleteAgent): AgentConfig {
   const hasNonEmptySubTools = Array.isArray(agentTemplate.allowed_tools) && agentTemplate.allowed_tools.length > 0;
 
   return {

@@ -145,14 +145,21 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     this.orchestratorLLMFactory = llmFactory;
     this.orchestratorConfigResolver = configResolver;
 
-    const commandRunner = new AgentManagerCommandRunner(config, tools, llmFactory, configResolver, createMemoryForAgent);
+    const commandRunner = new AgentManagerCommandRunner(
+      config,
+      tools,
+      llmFactory,
+      configResolver,
+      createMemoryForAgent,
+    );
 
     const factory = this.delegationServiceFactory ?? new DelegationServiceFactory();
     const delegationService = factory.create({
       agentRegistry: this.agentRegistry,
       commandRunner,
       agentListProvider: () =>
-        this.agentRegistry.list()
+        this.agentRegistry
+          .list()
           .filter((agent) => agent.name !== 'nuvin')
           .map((agent) => ({
             id: agent.name,

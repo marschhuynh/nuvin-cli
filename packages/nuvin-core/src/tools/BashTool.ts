@@ -230,7 +230,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       if (child.stderr) {
         child.stderr.off('data', stderrHandler);
       }
-      if (child && child.pid && !child.killed) {
+      if (child?.pid && !child.killed) {
         try {
           this.killProcessGroup(child, isWindows);
         } catch {}

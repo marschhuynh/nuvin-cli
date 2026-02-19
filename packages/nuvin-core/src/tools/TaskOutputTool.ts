@@ -69,11 +69,7 @@ Example workflow:
 
   async execute(params: TaskOutputParams, _context?: ToolExecutionContext): Promise<TaskOutputResult> {
     if (!params.session_id || typeof params.session_id !== 'string') {
-      return err(
-        'Parameter "session_id" is required and must be a string',
-        undefined,
-        ErrorReason.InvalidInput,
-      );
+      return err('Parameter "session_id" is required and must be a string', undefined, ErrorReason.InvalidInput);
     }
 
     const blocking = params.blocking ?? false;
@@ -113,11 +109,19 @@ Example workflow:
         });
       }
 
-      return err(`No agent found with session ID: ${sessionId}`, { sessionId, state: 'not_found' as const }, ErrorReason.NotFound);
+      return err(
+        `No agent found with session ID: ${sessionId}`,
+        { sessionId, state: 'not_found' as const },
+        ErrorReason.NotFound,
+      );
     }
 
     if (!result.success) {
-      return err(result.error ?? 'Agent execution failed', { sessionId, state: 'failed' as const }, ErrorReason.Unknown);
+      return err(
+        result.error ?? 'Agent execution failed',
+        { sessionId, state: 'failed' as const },
+        ErrorReason.Unknown,
+      );
     }
 
     return okText(result.summary ?? 'Task completed', {
@@ -139,7 +143,11 @@ Example workflow:
     if (!this.delegationService.isBackgroundAgentRunning(sessionId)) {
       const result = await this.delegationService.getBackgroundResult(sessionId, false);
       if (result === null) {
-        return err(`No agent found with session ID: ${sessionId}`, { sessionId, state: 'not_found' as const }, ErrorReason.NotFound);
+        return err(
+          `No agent found with session ID: ${sessionId}`,
+          { sessionId, state: 'not_found' as const },
+          ErrorReason.NotFound,
+        );
       }
     }
 
@@ -157,7 +165,11 @@ Example workflow:
     }
 
     if (result === null || !result.success) {
-      return err(result?.error ?? 'Agent execution failed', { sessionId, state: 'failed' as const }, ErrorReason.Unknown);
+      return err(
+        result?.error ?? 'Agent execution failed',
+        { sessionId, state: 'failed' as const },
+        ErrorReason.Unknown,
+      );
     }
 
     return okText(result.summary ?? 'Task completed', {

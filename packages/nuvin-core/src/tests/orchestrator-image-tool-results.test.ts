@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { extractBase64Images, toMessageContentParts } from '../utils/base64-image-detector.js';
 
 // A minimal valid 1x1 PNG encoded in base64 — used across all tests
-const TINY_PNG =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+const TINY_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 describe('orchestrator image tool result handling', () => {
   // -------------------------------------------------------------------

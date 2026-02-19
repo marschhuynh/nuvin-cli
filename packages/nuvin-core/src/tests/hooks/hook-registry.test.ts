@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { HookRegistry } from '../../hooks/hook-registry.js';
-import { HookEventTypes, HooksConfig } from '../../hooks/types.js';
+import { HookEventTypes, type HooksConfig } from '../../hooks/types.js';
 
 describe('HookRegistry', () => {
   let registry: HookRegistry;
@@ -12,9 +12,7 @@ describe('HookRegistry', () => {
   it('should register hooks from a source', () => {
     const config: HooksConfig = {
       pre_tool_use: {
-        hooks: [
-          { matcher: 'Bash', command: { command: './check.sh' } },
-        ],
+        hooks: [{ matcher: 'Bash', command: { command: './check.sh' } }],
       },
     };
     registry.register('test-agent', config);
@@ -41,7 +39,7 @@ describe('HookRegistry', () => {
     const config: HooksConfig = {
       post_tool_use: {
         hooks: [
-          { command: { command: './audit.sh' } },  // No matcher
+          { command: { command: './audit.sh' } }, // No matcher
         ],
       },
     };
@@ -54,9 +52,7 @@ describe('HookRegistry', () => {
   it('should return empty array for no matching hooks', () => {
     const config: HooksConfig = {
       pre_tool_use: {
-        hooks: [
-          { matcher: 'Read', command: { command: './check.sh' } },
-        ],
+        hooks: [{ matcher: 'Read', command: { command: './check.sh' } }],
       },
     };
     registry.register('test', config);
@@ -90,11 +86,11 @@ describe('HookRegistry', () => {
 
   it('should check if hooks exist for event', () => {
     expect(registry.hasHooks(HookEventTypes.PreToolUse)).toBe(false);
-    
+
     registry.register('test', {
       pre_tool_use: { hooks: [{ command: { command: './check.sh' } }] },
     });
-    
+
     expect(registry.hasHooks(HookEventTypes.PreToolUse)).toBe(true);
     expect(registry.hasHooks(HookEventTypes.PostToolUse)).toBe(false);
   });
@@ -103,7 +99,7 @@ describe('HookRegistry', () => {
     registry.register('test', {
       pre_tool_use: { hooks: [{ matcher: 'Bash', command: { command: './check.sh' } }] },
     });
-    
+
     expect(registry.hasHooks(HookEventTypes.PreToolUse, 'Bash')).toBe(true);
     expect(registry.hasHooks(HookEventTypes.PreToolUse, 'Write')).toBe(false);
   });

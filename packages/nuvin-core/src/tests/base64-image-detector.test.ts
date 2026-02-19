@@ -27,9 +27,7 @@ describe('extractBase64Images', () => {
     const b64 = '/9j/4AAQSkZJRgABAQEASABIAAD';
     const input = `data:image/jpeg;base64,${b64}`;
     const result = extractBase64Images(input);
-    expect(result).toEqual([
-      { type: 'image', mimeType: 'image/jpeg', data: b64 },
-    ]);
+    expect(result).toEqual([{ type: 'image', mimeType: 'image/jpeg', data: b64 }]);
   });
 
   it('extracts multiple data URIs', () => {
@@ -48,9 +46,7 @@ describe('extractBase64Images', () => {
     const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const input = `data:image/png;base64,${b64}`;
     const result = extractBase64Images(input);
-    expect(result).toEqual([
-      { type: 'image', mimeType: 'image/png', data: b64 },
-    ]);
+    expect(result).toEqual([{ type: 'image', mimeType: 'image/png', data: b64 }]);
   });
 
   it('ignores non-image data URIs', () => {
@@ -68,25 +64,21 @@ describe('extractBase64Images', () => {
     const b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const input = `data:image/png;base64,${b64}`;
     const result = extractBase64Images(input);
-    expect(result.every(r => !(r.type === 'text' && r.text === ''))).toBe(true);
+    expect(result.every((r) => !(r.type === 'text' && r.text === ''))).toBe(true);
   });
 
   it('supports image/webp', () => {
     const b64 = 'UklGRlYAAABXRUJQVlA4IEoAAADQAQCdASoBAAEAAkA4JZQCdAEO/hepgAAA';
     const input = `data:image/webp;base64,${b64}`;
     const result = extractBase64Images(input);
-    expect(result).toEqual([
-      { type: 'image', mimeType: 'image/webp', data: b64 },
-    ]);
+    expect(result).toEqual([{ type: 'image', mimeType: 'image/webp', data: b64 }]);
   });
 
   it('supports image/gif', () => {
     const b64 = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     const input = `data:image/gif;base64,${b64}`;
     const result = extractBase64Images(input);
-    expect(result).toEqual([
-      { type: 'image', mimeType: 'image/gif', data: b64 },
-    ]);
+    expect(result).toEqual([{ type: 'image', mimeType: 'image/gif', data: b64 }]);
   });
 
   it('rejects unsupported MIME type svg+xml', () => {
@@ -155,21 +147,15 @@ describe('hasBase64Images', () => {
 
 describe('toMessageContentParts', () => {
   it('converts text segments to TextContentPart', () => {
-    const extracted: ExtractedContent[] = [
-      { type: 'text', text: 'Hello world' },
-    ];
+    const extracted: ExtractedContent[] = [{ type: 'text', text: 'Hello world' }];
     const result = toMessageContentParts(extracted);
     expect(result).toEqual([{ type: 'text', text: 'Hello world' }]);
   });
 
   it('converts image segments to ImageContentPart', () => {
-    const extracted: ExtractedContent[] = [
-      { type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' },
-    ];
+    const extracted: ExtractedContent[] = [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }];
     const result = toMessageContentParts(extracted);
-    expect(result).toEqual([
-      { type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' },
-    ]);
+    expect(result).toEqual([{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }]);
   });
 
   it('converts mixed text and image segments in order', () => {

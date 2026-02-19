@@ -151,30 +151,39 @@ Prompt`;
       fs.mkdirSync(profileDir, { recursive: true });
       fs.mkdirSync(localDir, { recursive: true });
 
-      fs.writeFileSync(path.join(globalDir, 'global-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(globalDir, 'global-cmd.md'),
+        `---
 description: Global cmd
 ---
 
-Global prompt`);
+Global prompt`,
+      );
 
-      fs.writeFileSync(path.join(profileDir, 'profile-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(profileDir, 'profile-cmd.md'),
+        `---
 description: Profile cmd
 ---
 
-Profile prompt`);
+Profile prompt`,
+      );
 
-      fs.writeFileSync(path.join(localDir, 'local-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(localDir, 'local-cmd.md'),
+        `---
 description: Local cmd
 ---
 
-Local prompt`);
+Local prompt`,
+      );
 
       const commands = await persistence.loadAll();
 
       expect(commands.length).toBe(3);
-      expect(commands.find(c => c.id === 'global-cmd')).toBeDefined();
-      expect(commands.find(c => c.id === 'profile-cmd')).toBeDefined();
-      expect(commands.find(c => c.id === 'local-cmd')).toBeDefined();
+      expect(commands.find((c) => c.id === 'global-cmd')).toBeDefined();
+      expect(commands.find((c) => c.id === 'profile-cmd')).toBeDefined();
+      expect(commands.find((c) => c.id === 'local-cmd')).toBeDefined();
     });
 
     it('should work when directories do not exist', async () => {
@@ -187,11 +196,14 @@ Local prompt`);
     it('should delete a command file', async () => {
       fs.mkdirSync(globalDir, { recursive: true });
       const filePath = path.join(globalDir, 'to-delete.md');
-      fs.writeFileSync(filePath, `---
+      fs.writeFileSync(
+        filePath,
+        `---
 description: To delete
 ---
 
-Prompt`);
+Prompt`,
+      );
 
       expect(fs.existsSync(filePath)).toBe(true);
 
@@ -208,11 +220,14 @@ Prompt`);
   describe('exists', () => {
     it('should return true when file exists', async () => {
       fs.mkdirSync(globalDir, { recursive: true });
-      fs.writeFileSync(path.join(globalDir, 'exists-cmd.md'), `---
+      fs.writeFileSync(
+        path.join(globalDir, 'exists-cmd.md'),
+        `---
 description: Exists
 ---
 
-Prompt`);
+Prompt`,
+      );
 
       expect(persistence.exists('exists-cmd', 'global')).toBe(true);
     });

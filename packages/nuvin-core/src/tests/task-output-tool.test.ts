@@ -89,9 +89,7 @@ describe('TaskOutputTool', () => {
       mockDelegationService.isBackgroundAgentRunning = vi.fn().mockReturnValue(true);
       mockDelegationService.getBackgroundResult = vi
         .fn()
-        .mockImplementation(
-          () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 10000)),
-        );
+        .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 10000)));
 
       const result = await tool.execute({
         session_id: 'test-123',

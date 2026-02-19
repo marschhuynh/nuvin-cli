@@ -1,7 +1,7 @@
-import { promises as fs } from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import * as crypto from 'crypto';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
+import * as crypto from 'node:crypto';
 import type { ToolDefinition } from '../ports.js';
 import { ErrorReason } from '../ports.js';
 import type { FunctionTool, ToolExecutionContext, ExecResultError } from './types.js';
@@ -93,7 +93,11 @@ export class FileEditTool implements FunctionTool<FileWriteOrEditParams, ToolExe
       const exists = !!st && st.isFile();
 
       if (!exists || !st) {
-        return err('File does not exist. Use a file creation tool to create new files.', undefined, ErrorReason.NotFound);
+        return err(
+          'File does not exist. Use a file creation tool to create new files.',
+          undefined,
+          ErrorReason.NotFound,
+        );
       }
 
       if (st.size > this.maxBytes) {
@@ -114,7 +118,7 @@ export class FileEditTool implements FunctionTool<FileWriteOrEditParams, ToolExe
         return err(
           `old_text not found in file. Make sure it matches exactly including whitespace.\nSearching for: "${preview}${oldTextLF.length > 100 ? '...' : ''}"`,
           undefined,
-          ErrorReason.NotFound
+          ErrorReason.NotFound,
         );
       }
 
@@ -124,7 +128,11 @@ export class FileEditTool implements FunctionTool<FileWriteOrEditParams, ToolExe
       const finalBytes = Buffer.from(finalText, 'utf8');
 
       if (finalBytes.length > this.maxBytes) {
-        return err(`Resulting file too large (${finalBytes.length} bytes). Cap is ${this.maxBytes}.`, undefined, ErrorReason.InvalidInput);
+        return err(
+          `Resulting file too large (${finalBytes.length} bytes). Cap is ${this.maxBytes}.`,
+          undefined,
+          ErrorReason.InvalidInput,
+        );
       }
 
       const beforeSha = sha256(originalBytes);

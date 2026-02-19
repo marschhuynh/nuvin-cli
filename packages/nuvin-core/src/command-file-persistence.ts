@@ -1,11 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import type {
-  CommandSource,
-  CustomCommandTemplate,
-  CustomCommandFrontmatter,
-} from './command-types.js';
+import type { CommandSource, CustomCommandTemplate, CustomCommandFrontmatter } from './command-types.js';
 import { sanitizeCommandId } from './command-types.js';
 
 export interface CommandFilePersistenceOptions {
@@ -52,7 +48,7 @@ export class CommandFilePersistence {
   async loadAll(): Promise<CustomCommandTemplate[]> {
     const commands: CustomCommandTemplate[] = [];
     const sources: CommandSource[] = ['global', 'local'];
-    
+
     if (this.profileDir) {
       sources.splice(1, 0, 'profile');
     }
@@ -99,9 +95,9 @@ export class CommandFilePersistence {
       const dir = this.getDir(source);
       const filePath = path.join(dir, filename);
       const content = fs.readFileSync(filePath, 'utf8');
-      
+
       const { frontmatter, body } = this.parseFrontmatter(content);
-      
+
       if (!frontmatter.description) {
         console.warn(`Invalid command template in ${filename}: missing description`);
         return null;

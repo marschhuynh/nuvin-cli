@@ -42,7 +42,7 @@ export type ToolExecutionContext = {
       header: string;
       options: Array<{ label: string; description: string }>;
       multiSelect: boolean;
-    }>
+    }>,
   ) => Promise<Record<string, string | string[]>>;
 } & Record<string, unknown>;
 

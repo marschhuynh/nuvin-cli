@@ -9,10 +9,10 @@ export { CommandHookExecutor } from './command-hook-executor.js';
 
 // Config loader for agent frontmatter
 export {
-	loadHooksFromFrontmatter,
-	type AgentFrontmatter,
-	type FrontmatterHooks,
-	type FrontmatterHookDef,
+  loadHooksFromFrontmatter,
+  type AgentFrontmatter,
+  type FrontmatterHooks,
+  type FrontmatterHookDef,
 } from './config-loader.js';
 
 // Composite hook port

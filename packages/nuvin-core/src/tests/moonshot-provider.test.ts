@@ -25,9 +25,9 @@ describe('Moonshot Provider', () => {
   });
 
   it('should support custom apiUrl', () => {
-    const llm = createLLM('moonshot', { 
+    const llm = createLLM('moonshot', {
       apiKey: 'test-key',
-      apiUrl: 'https://custom.moonshot.url/v1'
+      apiUrl: 'https://custom.moonshot.url/v1',
     });
     expect((llm as any).apiUrl).toBe('https://custom.moonshot.url/v1');
   });

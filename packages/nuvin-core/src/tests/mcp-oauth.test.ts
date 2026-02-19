@@ -43,7 +43,8 @@ describe('parseWWWAuthenticate', () => {
   });
 
   it('parses resource_metadata parameter', () => {
-    const header = 'Bearer resource_metadata="https://example.com/.well-known/oauth-protected-resource", scope="read write"';
+    const header =
+      'Bearer resource_metadata="https://example.com/.well-known/oauth-protected-resource", scope="read write"';
     const result = parseWWWAuthenticate(header);
 
     expect(result.scheme).toBe('Bearer');
@@ -93,29 +94,20 @@ describe('parseWWWAuthenticate', () => {
 
 describe('isInsufficientScopeError', () => {
   it('detects insufficient_scope error', () => {
-    const result = isInsufficientScopeError(
-      403,
-      'Bearer error="insufficient_scope", scope="files:read files:write"',
-    );
+    const result = isInsufficientScopeError(403, 'Bearer error="insufficient_scope", scope="files:read files:write"');
 
     expect(result.isError).toBe(true);
     expect(result.requiredScopes).toEqual(['files:read', 'files:write']);
   });
 
   it('returns false for non-403 status', () => {
-    const result = isInsufficientScopeError(
-      401,
-      'Bearer error="insufficient_scope", scope="files:read"',
-    );
+    const result = isInsufficientScopeError(401, 'Bearer error="insufficient_scope", scope="files:read"');
 
     expect(result.isError).toBe(false);
   });
 
   it('returns false for different error type', () => {
-    const result = isInsufficientScopeError(
-      403,
-      'Bearer error="invalid_token"',
-    );
+    const result = isInsufficientScopeError(403, 'Bearer error="invalid_token"');
 
     expect(result.isError).toBe(false);
   });
@@ -170,11 +162,7 @@ describe('MCPOAuthClient', () => {
 
   describe('getAccessToken', () => {
     it('returns null when no token stored', async () => {
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const token = await client.getAccessToken();
       expect(token).toBeNull();
@@ -186,11 +174,7 @@ describe('MCPOAuthClient', () => {
         expiresAt: Date.now() + 3600000,
       });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const token = await client.getAccessToken();
       expect(token).toBe('valid-token');
@@ -202,11 +186,7 @@ describe('MCPOAuthClient', () => {
         expiresAt: Date.now() - 1000,
       });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const token = await client.getAccessToken();
       expect(token).toBeNull();
@@ -236,22 +216,14 @@ describe('MCPOAuthClient', () => {
         expiresAt: Date.now() + 3600000,
       });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const hasToken = await client.hasValidToken();
       expect(hasToken).toBe(true);
     });
 
     it('returns false when no token exists', async () => {
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const hasToken = await client.hasValidToken();
       expect(hasToken).toBe(false);
@@ -260,11 +232,7 @@ describe('MCPOAuthClient', () => {
 
   describe('getAuthStatus', () => {
     it('returns unauthenticated when no token', async () => {
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const status = await client.getAuthStatus();
       expect(status.authenticated).toBe(false);
@@ -278,11 +246,7 @@ describe('MCPOAuthClient', () => {
         scope: 'read write',
       });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const status = await client.getAuthStatus();
       expect(status.authenticated).toBe(true);
@@ -296,11 +260,7 @@ describe('MCPOAuthClient', () => {
         expiresAt: Date.now() - 1000,
       });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const status = await client.getAuthStatus();
       expect(status.authenticated).toBe(false);
@@ -313,11 +273,7 @@ describe('MCPOAuthClient', () => {
         accessToken: 'token-to-clear',
       });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       await client.logout();
 
@@ -381,11 +337,7 @@ describe('MCPOAuthClient', () => {
           json: () => Promise.resolve(authMetadata),
         });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const result = await client.discoverOAuthServer();
 
@@ -411,7 +363,10 @@ describe('MCPOAuthClient', () => {
           ok: false,
           status: 401,
           headers: new Map([
-            ['WWW-Authenticate', 'Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource"'],
+            [
+              'WWW-Authenticate',
+              'Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource"',
+            ],
           ]),
         })
         .mockResolvedValueOnce({
@@ -423,11 +378,7 @@ describe('MCPOAuthClient', () => {
           json: () => Promise.resolve(authMetadata),
         });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const result = await client.discoverOAuthServer();
 
@@ -459,11 +410,7 @@ describe('MCPOAuthClient', () => {
           json: () => Promise.resolve(authMetadata),
         });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const result = await client.discoverOAuthServer();
 
@@ -502,11 +449,7 @@ describe('MCPOAuthClient', () => {
           json: () => Promise.resolve(authMetadata),
         });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com/api',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com/api', { clientId: 'test-client' }, mockTokenStorage);
 
       const result = await client.discoverProtectedResourceMetadata();
       expect(result).toEqual(metadata);
@@ -523,11 +466,7 @@ describe('MCPOAuthClient', () => {
         .mockRejectedValueOnce(new Error('Not found'))
         .mockRejectedValueOnce(new Error('Not found'));
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       await expect(client.discoverProtectedResourceMetadata()).rejects.toThrow(
         /Failed to discover protected resource metadata/,
@@ -583,15 +522,11 @@ describe('MCPOAuthClient', () => {
         mockTokenStorage,
       );
 
-      await expect(client.discoverAuthServerMetadata()).rejects.toThrow(
-        /does not support PKCE with S256/,
-      );
+      await expect(client.discoverAuthServerMetadata()).rejects.toThrow(/does not support PKCE with S256/);
     });
 
     it('throws error when metadata not found', async () => {
-      mockFetch
-        .mockRejectedValueOnce(new Error('Not found'))
-        .mockRejectedValueOnce(new Error('Not found'));
+      mockFetch.mockRejectedValueOnce(new Error('Not found')).mockRejectedValueOnce(new Error('Not found'));
 
       const client = new MCPOAuthClient(
         'https://mcp.example.com',
@@ -661,11 +596,7 @@ describe('MCPOAuthClient', () => {
           json: () => Promise.resolve(authMetadata),
         });
 
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
       const url = await client.buildAuthorizationUrl(3000);
       const parsed = new URL(url);
@@ -741,21 +672,13 @@ describe('MCPOAuthClient', () => {
 
       await client.buildAuthorizationUrl(3000);
 
-      await expect(client.handleCallback('auth-code', 'wrong-state')).rejects.toThrow(
-        /State mismatch/,
-      );
+      await expect(client.handleCallback('auth-code', 'wrong-state')).rejects.toThrow(/State mismatch/);
     });
 
     it('throws error when no pending flow', async () => {
-      const client = new MCPOAuthClient(
-        'https://mcp.example.com',
-        { clientId: 'test-client' },
-        mockTokenStorage,
-      );
+      const client = new MCPOAuthClient('https://mcp.example.com', { clientId: 'test-client' }, mockTokenStorage);
 
-      await expect(client.handleCallback('auth-code', 'some-state')).rejects.toThrow(
-        /No pending authorization flow/,
-      );
+      await expect(client.handleCallback('auth-code', 'some-state')).rejects.toThrow(/No pending authorization flow/);
     });
   });
 });

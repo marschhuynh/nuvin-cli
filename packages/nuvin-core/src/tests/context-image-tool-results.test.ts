@@ -31,9 +31,9 @@ describe('SimpleContextBuilder - image tool results', () => {
     const result = builder.toProviderMessages(history, 'system prompt', []);
     const toolMsg = result.find((m) => m.role === 'tool');
     expect(toolMsg).toBeDefined();
-    expect(Array.isArray(toolMsg!.content)).toBe(true);
+    expect(Array.isArray(toolMsg?.content)).toBe(true);
 
-    const content = toolMsg!.content as ProviderContentPart[];
+    const content = toolMsg?.content as ProviderContentPart[];
     expect(content.length).toBe(2);
     expect(content[0]).toEqual({ type: 'text', text: 'Screenshot captured:' });
     expect(content[1]).toEqual({
@@ -63,6 +63,6 @@ describe('SimpleContextBuilder - image tool results', () => {
     const result = builder.toProviderMessages(history, 'system prompt', []);
     const toolMsg = result.find((m) => m.role === 'tool');
     expect(toolMsg).toBeDefined();
-    expect(toolMsg!.content).toBe('file contents here');
+    expect(toolMsg?.content).toBe('file contents here');
   });
 });

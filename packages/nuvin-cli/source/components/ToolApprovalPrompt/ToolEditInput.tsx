@@ -13,40 +13,38 @@ type ToolEditInputProps = {
   onCancel: () => void;
 };
 
-export const ToolEditInput = forwardRef<ToolEditInputHandle, ToolEditInputProps>(
-  ({ onSubmit, onCancel }, ref) => {
-    const { theme } = useTheme();
-    const { isFocused, focus } = useFocus();
+export const ToolEditInput = forwardRef<ToolEditInputHandle, ToolEditInputProps>(({ onSubmit, onCancel }, ref) => {
+  const { theme } = useTheme();
+  const { isFocused, focus } = useFocus();
 
-    useImperativeHandle(ref, () => ({ focus }), [focus]);
+  useImperativeHandle(ref, () => ({ focus }), [focus]);
 
-    useInput(
-      (_input, key) => {
-        if (key.escape) {
-          onCancel();
-          return true;
-        }
-        return false;
-      },
-      { isActive: isFocused },
-    );
+  useInput(
+    (_input, key) => {
+      if (key.escape) {
+        onCancel();
+        return true;
+      }
+      return false;
+    },
+    { isActive: isFocused },
+  );
 
-    return (
-      <Box flexDirection="row" alignItems="flex-start">
-        <Text color={isFocused ? theme.toolApproval.actionSelected : theme.toolApproval.description} bold={isFocused}>
-          {isFocused ? '❯ ' : '│ '}
-        </Text>
-        <Box flexGrow={1}>
-          <UncontrolledTextInput
-            focus={isFocused}
-            placeholder="Input your changes here"
-            onSubmit={onSubmit}
-            maxLines={3}
-          />
-        </Box>
+  return (
+    <Box flexDirection="row" alignItems="flex-start">
+      <Text color={isFocused ? theme.toolApproval.actionSelected : theme.toolApproval.description} bold={isFocused}>
+        {isFocused ? '❯ ' : '│ '}
+      </Text>
+      <Box flexGrow={1}>
+        <UncontrolledTextInput
+          focus={isFocused}
+          placeholder="Input your changes here"
+          onSubmit={onSubmit}
+          maxLines={3}
+        />
       </Box>
-    );
-  },
-);
+    </Box>
+  );
+});
 
 ToolEditInput.displayName = 'ToolEditInput';

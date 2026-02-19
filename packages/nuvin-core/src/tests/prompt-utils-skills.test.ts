@@ -37,9 +37,7 @@ describe('buildInjectedSystem - skills', () => {
     const result = buildInjectedSystem({
       ...baseParams,
       folderTree: 'src/\n  index.ts',
-      availableSkills: [
-        { name: 'my-skill', description: 'A skill' },
-      ],
+      availableSkills: [{ name: 'my-skill', description: 'A skill' }],
     });
 
     const folderIdx = result.indexOf('Folder structure:');

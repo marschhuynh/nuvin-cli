@@ -5,11 +5,11 @@ import type { AgentEvent, EventPort } from '../ports.js';
 
 describe('AskUserTool Integration', () => {
   let emittedEvents: AgentEvent[];
-  let mockEvents: EventPort;
+  let _mockEvents: EventPort;
 
   beforeEach(() => {
     emittedEvents = [];
-    mockEvents = {
+    _mockEvents = {
       emit: vi.fn((event: AgentEvent) => {
         emittedEvents.push(event);
         return Promise.resolve();
@@ -23,7 +23,7 @@ describe('AskUserTool Integration', () => {
     // 2. Orchestrator receives it
     // 3. UI calls handleUserQuestionResponse
     // 4. Tool receives answer and returns success
-    
+
     // This would require a full orchestrator setup which is complex
     // For now we verify the pieces work independently via unit tests
     expect(true).toBe(true);

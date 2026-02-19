@@ -1,37 +1,29 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import type { AgentEvent, ToolExecutionResult } from "@nuvin/nuvin-core";
-import { AgentEventTypes } from "@nuvin/nuvin-core";
-import { ConfigManager } from "../config/manager.js";
-import { THINKING_LEVELS, type ThinkingLevel } from "../config/types.js";
-import { getSessionDir } from "../hooks/useSessionManagement.js";
-import { commandRegistry } from "../modules/commands/registry.js";
-import type { CommandDefinition } from "../modules/commands/types.js";
-import type { TypedEventBus } from "../services/EventBus.js";
-import { eventBus } from "../services/EventBus.js";
-import type { OrchestratorManager } from "../services/OrchestratorManager.js";
-import { getVersion } from "../utils/version.js";
-import {
-  toUserMessagePayload,
-  toTextContentBlock,
-  type AcpContentBlock,
-} from "./content.js";
-import { loadSessionHistoryUpdates } from "./history.js";
-import { AcpModelResolver } from "./model-resolver.js";
-import {
-  inferToolKind,
-  formatToolCallTitle,
-  safeParseArgs,
-} from "./tool-formatter.js";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import type { AgentEvent, ToolExecutionResult } from '@nuvin/nuvin-core';
+import { AgentEventTypes } from '@nuvin/nuvin-core';
+import { ConfigManager } from '../config/manager.js';
+import { THINKING_LEVELS, type ThinkingLevel } from '../config/types.js';
+import { getSessionDir } from '../hooks/useSessionManagement.js';
+import { commandRegistry } from '../modules/commands/registry.js';
+import type { CommandDefinition } from '../modules/commands/types.js';
+import type { TypedEventBus } from '../services/EventBus.js';
+import { eventBus } from '../services/EventBus.js';
+import type { OrchestratorManager } from '../services/OrchestratorManager.js';
+import { getVersion } from '../utils/version.js';
+import { toUserMessagePayload, toTextContentBlock, type AcpContentBlock } from './content.js';
+import { loadSessionHistoryUpdates } from './history.js';
+import { AcpModelResolver } from './model-resolver.js';
+import { inferToolKind, formatToolCallTitle, safeParseArgs } from './tool-formatter.js';
 
 const ACP_PROTOCOL_VERSION = 1;
-const ACP_DISABLED_TOOLS = new Set(["ask_user_tool"]);
+const ACP_DISABLED_TOOLS = new Set(['ask_user_tool']);
 
-type ToolApprovalDecision = "approve" | "deny" | "approve_all" | "edit";
+type ToolApprovalDecision = 'approve' | 'deny' | 'approve_all' | 'edit';
 
 type RequestPermissionResponse = {
   outcome?: {
-    outcome?: "cancelled" | "selected";
+    outcome?: 'cancelled' | 'selected';
     optionId?: string;
   };
 };
@@ -75,13 +67,13 @@ export type AcpTransport = {
 
 type SessionUpdate = {
   sessionUpdate:
-    | "user_message_chunk"
-    | "agent_message_chunk"
-    | "agent_thought_chunk"
-    | "tool_call"
-    | "tool_call_update"
-    | "config_option_update"
-    | "available_commands_update";
+    | 'user_message_chunk'
+    | 'agent_message_chunk'
+    | 'agent_thought_chunk'
+    | 'tool_call'
+    | 'tool_call_update'
+    | 'config_option_update'
+    | 'available_commands_update';
   [key: string]: unknown;
 };
 
@@ -155,10 +147,10 @@ type SessionConfigSelectOption = {
 };
 
 type SessionConfigOption = {
-  type: "select";
+  type: 'select';
   id: string;
   name: string;
-  category: "mode" | "model" | "thought_level" | "other";
+  category: 'mode' | 'model' | 'thought_level' | 'other';
   currentValue: string;
   options: SessionConfigSelectOption[];
 };
@@ -192,20 +184,15 @@ export class AcpServer {
       orchestratorManager: OrchestratorManager;
       eventBus?: TypedEventBus;
       configManager?: ConfigManager;
-    }
+    },
   ) {
     this.eventBus = deps.eventBus ?? eventBus;
     this.configManager = deps.configManager ?? ConfigManager.getInstance();
-    this.modelResolver = new AcpModelResolver(
-      deps.orchestratorManager,
-      this.configManager
-    );
-    this.eventBus.on("agent:event", (event) => this.handleAgentEvent(event));
+    this.modelResolver = new AcpModelResolver(deps.orchestratorManager, this.configManager);
+    this.eventBus.on('agent:event', (event) => this.handleAgentEvent(event));
   }
 
-  async handleInitialize(
-    _params: AcpInitializeParams
-  ): Promise<AcpInitializeResult> {
+  async handleInitialize(_params: AcpInitializeParams): Promise<AcpInitializeResult> {
     const config = this.configManager.getConfig();
     const memPersist = config.session?.memPersist ?? true;
 
@@ -235,7 +222,7 @@ export class AcpServer {
           },
         },
       },
-      agentInfo: { name: "nuvin", title: "Nuvin", version: getVersion() },
+      agentInfo: { name: 'nuvin', title: 'Nuvin', version: getVersion() },
       authMethods: [],
     };
   }
@@ -256,8 +243,7 @@ export class AcpServer {
 
     // Compute shared model IDs once for both config options and models state.
     const providers = this.deps.orchestratorManager.getAvailableProviders();
-    const precomputedModels =
-      await this.modelResolver.getAllModelIdsAcrossProviders(providers);
+    const precomputedModels = await this.modelResolver.getAllModelIdsAcrossProviders(providers);
 
     return {
       sessionId: this.sessionId,
@@ -270,13 +256,11 @@ export class AcpServer {
   async handleSessionLoad(params: AcpSessionLoadParams) {
     const sessionId = params.sessionId;
     if (!sessionId) {
-      throw new Error("sessionId is required");
+      throw new Error('sessionId is required');
     }
 
     if (!this.isMemPersistEnabled()) {
-      throw new Error(
-        "session/load is unavailable because session.memPersist is disabled"
-      );
+      throw new Error('session/load is unavailable because session.memPersist is disabled');
     }
 
     await this.ensureOrchestrator();
@@ -295,10 +279,7 @@ export class AcpServer {
     this.sessionId = sessionId;
     this.scheduleAvailableCommandsUpdate();
 
-    const historyFiles = [
-      path.join(sessionDir, "history.cli.json"),
-      path.join(sessionDir, "history.json"),
-    ];
+    const historyFiles = [path.join(sessionDir, 'history.cli.json'), path.join(sessionDir, 'history.json')];
     const historyFile = historyFiles.find((file) => fs.existsSync(file));
     if (historyFile) {
       const updates = await loadSessionHistoryUpdates(historyFile);
@@ -309,8 +290,7 @@ export class AcpServer {
 
     // Compute shared model IDs once for both config options and models state.
     const providers = this.deps.orchestratorManager.getAvailableProviders();
-    const precomputedModels =
-      await this.modelResolver.getAllModelIdsAcrossProviders(providers);
+    const precomputedModels = await this.modelResolver.getAllModelIdsAcrossProviders(providers);
 
     return {
       configOptions: await this.buildSessionConfigOptions(precomputedModels),
@@ -338,16 +318,13 @@ export class AcpServer {
 
     return {
       sessions: page,
-      nextCursor:
-        nextOffset < sessions.length
-          ? this.encodeSessionListCursor(nextOffset)
-          : null,
+      nextCursor: nextOffset < sessions.length ? this.encodeSessionListCursor(nextOffset) : null,
     };
   }
 
   async handleSessionPrompt(params: AcpSessionPromptParams) {
     if (!this.sessionId || this.sessionId !== params.sessionId) {
-      throw new Error("No active session");
+      throw new Error('No active session');
     }
 
     // Re-apply ACP restrictions in case background MCP updates refreshed enabled tools.
@@ -359,7 +336,7 @@ export class AcpServer {
       const handled = await this.tryHandleSlashCommand(slashCommand);
       if (handled) {
         return {
-          stopReason: "end_turn",
+          stopReason: 'end_turn',
         };
       }
     }
@@ -376,15 +353,15 @@ export class AcpServer {
       });
 
       return {
-        stopReason: "end_turn",
+        stopReason: 'end_turn',
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const cancelled = message.toLowerCase().includes("aborted");
+      const cancelled = message.toLowerCase().includes('aborted');
 
       if (cancelled) {
         return {
-          stopReason: "cancelled",
+          stopReason: 'cancelled',
         };
       }
 
@@ -402,7 +379,7 @@ export class AcpServer {
     const orchestrator = this.deps.orchestratorManager.getOrchestrator?.();
     if (orchestrator?.handleToolApproval) {
       for (const pending of this.pendingPermissionRequests.values()) {
-        orchestrator.handleToolApproval(pending.approvalId, "deny");
+        orchestrator.handleToolApproval(pending.approvalId, 'deny');
       }
     }
     this.pendingPermissionRequests.clear();
@@ -411,29 +388,22 @@ export class AcpServer {
   }
 
   async handleSessionSetConfigOption(params: AcpSetConfigOptionParams) {
-    if (
-      params.sessionId &&
-      this.sessionId &&
-      params.sessionId !== this.sessionId
-    ) {
-      throw new Error("sessionId does not match active session");
+    if (params.sessionId && this.sessionId && params.sessionId !== this.sessionId) {
+      throw new Error('sessionId does not match active session');
     }
 
     const configId = params.configId ?? params.option ?? params.name;
     if (!configId) {
-      throw new Error("configId is required");
+      throw new Error('configId is required');
     }
 
     await this.applyConfigOption(configId, params.value);
 
     // Compute shared model IDs once for both config options and models state.
     const providers = this.deps.orchestratorManager.getAvailableProviders();
-    const precomputedModels =
-      await this.modelResolver.getAllModelIdsAcrossProviders(providers);
+    const precomputedModels = await this.modelResolver.getAllModelIdsAcrossProviders(providers);
 
-    const configOptions = await this.buildSessionConfigOptions(
-      precomputedModels
-    );
+    const configOptions = await this.buildSessionConfigOptions(precomputedModels);
     this.emitConfigOptionsUpdate(configOptions);
 
     return {
@@ -446,12 +416,12 @@ export class AcpServer {
   async handleSessionSetModel(params: AcpSetModelParams) {
     const modelId = params.modelId;
     if (!modelId) {
-      throw new Error("modelId is required");
+      throw new Error('modelId is required');
     }
 
     return this.handleSessionSetConfigOption({
       sessionId: params.sessionId,
-      configId: "model",
+      configId: 'model',
       value: modelId,
     });
   }
@@ -459,26 +429,20 @@ export class AcpServer {
   async handleSessionSetMode(params: AcpSetModeParams) {
     const modeId = params.modeId;
     if (!modeId) {
-      throw new Error("modeId is required");
+      throw new Error('modeId is required');
     }
 
     return this.handleSessionSetConfigOption({
       sessionId: params.sessionId,
-      configId: "mode",
+      configId: 'mode',
       value: modeId,
     });
   }
 
-  async handleSessionResponsePermission(
-    params: LegacyPermissionResponseParams
-  ) {
+  async handleSessionResponsePermission(params: LegacyPermissionResponseParams) {
     const orchestrator = this.deps.orchestratorManager.getOrchestrator?.();
     if (orchestrator?.handleToolApproval) {
-      orchestrator.handleToolApproval(
-        params.approvalId,
-        params.decision,
-        params.editInstruction
-      );
+      orchestrator.handleToolApproval(params.approvalId, params.decision, params.editInstruction);
     }
 
     return {};
@@ -492,9 +456,7 @@ export class AcpServer {
     const key = String(message.id);
     const pending = this.pendingPermissionRequests.get(key);
     if (!pending) {
-      console.warn(
-        `[ACP] Received permission response for unknown request id=${key} (may have been cancelled)`
-      );
+      console.warn(`[ACP] Received permission response for unknown request id=${key} (may have been cancelled)`);
       return;
     }
 
@@ -515,8 +477,8 @@ export class AcpServer {
     if (!this.sessionId) return;
 
     this.deps.transport.send({
-      jsonrpc: "2.0",
-      method: "session/update",
+      jsonrpc: '2.0',
+      method: 'session/update',
       params: {
         sessionId: this.sessionId,
         update,
@@ -541,30 +503,30 @@ export class AcpServer {
     const toolTitle = formatToolCallTitle(toolCall.function.name, rawInput);
 
     this.deps.transport.send({
-      jsonrpc: "2.0",
+      jsonrpc: '2.0',
       id: requestId,
-      method: "session/request_permission",
+      method: 'session/request_permission',
       params: {
         sessionId: this.sessionId,
         toolCall: {
           toolCallId: toolCall.id,
           title: `Permission required: ${toolTitle}`,
           kind: toolKind,
-          status: "pending",
+          status: 'pending',
           rawInput,
         },
         options: [
-          { optionId: "allow_once", name: "Allow once", kind: "allow_once" },
+          { optionId: 'allow_once', name: 'Allow once', kind: 'allow_once' },
           {
-            optionId: "allow_always",
-            name: "Allow always",
-            kind: "allow_always",
+            optionId: 'allow_always',
+            name: 'Allow always',
+            kind: 'allow_always',
           },
-          { optionId: "reject_once", name: "Reject once", kind: "reject_once" },
+          { optionId: 'reject_once', name: 'Reject once', kind: 'reject_once' },
           {
-            optionId: "reject_always",
-            name: "Reject always",
-            kind: "reject_always",
+            optionId: 'reject_always',
+            name: 'Reject always',
+            kind: 'reject_always',
           },
         ],
       },
@@ -573,7 +535,7 @@ export class AcpServer {
 
   private emitConfigOptionsUpdate(configOptions: SessionConfigOption[]) {
     this.emitUpdate({
-      sessionUpdate: "config_option_update",
+      sessionUpdate: 'config_option_update',
       configOptions,
     });
   }
@@ -581,7 +543,7 @@ export class AcpServer {
   private scheduleAvailableCommandsUpdate() {
     const availableCommands = this.getAvailableCommands();
     this.deferUpdate({
-      sessionUpdate: "available_commands_update",
+      sessionUpdate: 'available_commands_update',
       availableCommands,
     });
   }
@@ -603,22 +565,20 @@ export class AcpServer {
 
   private getAvailableCommands(): AvailableCommand[] {
     const commands = commandRegistry.list({ includeHidden: true });
-    return commands
-      .filter((command) => command.id.startsWith("/"))
-      .map((command) => this.toAvailableCommand(command));
+    return commands.filter((command) => command.id.startsWith('/')).map((command) => this.toAvailableCommand(command));
   }
 
   private toAvailableCommand(command: CommandDefinition): AvailableCommand {
     const base: AvailableCommand = {
-      name: command.id.replace(/^\//, ""),
+      name: command.id.replace(/^\//, ''),
       description: command.description,
     };
 
-    if (command.type === "component" && command.handler) {
+    if (command.type === 'component' && command.handler) {
       return {
         ...base,
         input: {
-          hint: "arguments",
+          hint: 'arguments',
         },
       };
     }
@@ -630,67 +590,52 @@ export class AcpServer {
 
   private async applyConfigOption(configId: string, value: unknown) {
     switch (configId) {
-      case "model": {
-        const nextModel = this.modelResolver.normalizeConfiguredModel(
-          String(value)
-        );
+      case 'model': {
+        const nextModel = this.modelResolver.normalizeConfiguredModel(String(value));
         if (!nextModel) {
           throw new Error(`Invalid modelId: ${String(value)}`);
         }
-        const matchingProvider = await this.modelResolver.findProviderForModel(
-          nextModel
-        );
+        const matchingProvider = await this.modelResolver.findProviderForModel(nextModel);
         this.configManager.loadConfig(
           {
             model: nextModel,
             ...(matchingProvider ? { activeProvider: matchingProvider } : {}),
           },
-          "direct"
+          'direct',
         );
         return;
       }
-      case "provider":
-        this.configManager.loadConfig(
-          { activeProvider: String(value) },
-          "direct"
-        );
+      case 'provider':
+        this.configManager.loadConfig({ activeProvider: String(value) }, 'direct');
         return;
-      case "mode":
-      case "agent": {
+      case 'mode':
+      case 'agent': {
         const modeId = String(value);
-        if (modeId === "main" || modeId === "default") {
+        if (modeId === 'main' || modeId === 'default') {
           await this.deps.orchestratorManager.swapToMain();
           return;
         }
         await this.deps.orchestratorManager.swapToAgent(modeId);
         return;
       }
-      case "thought_level":
-      case "thinking":
-      case "reasoningEffort": {
+      case 'thought_level':
+      case 'thinking':
+      case 'reasoningEffort': {
         const normalized = String(value).toUpperCase();
-        if (
-          !Object.values(THINKING_LEVELS).includes(normalized as ThinkingLevel)
-        ) {
+        if (!Object.values(THINKING_LEVELS).includes(normalized as ThinkingLevel)) {
           throw new Error(`Unsupported thinking value: ${value}`);
         }
 
-        this.configManager.loadConfig(
-          { thinking: normalized as ThinkingLevel },
-          "direct"
-        );
+        this.configManager.loadConfig({ thinking: normalized as ThinkingLevel }, 'direct');
         return;
       }
-      case "require_tool_approval":
-      case "requireToolApproval": {
-        this.configManager.loadConfig(
-          { requireToolApproval: this.toBoolean(value) },
-          "direct"
-        );
+      case 'require_tool_approval':
+      case 'requireToolApproval': {
+        this.configManager.loadConfig({ requireToolApproval: this.toBoolean(value) }, 'direct');
         return;
       }
-      case "stream":
-      case "streaming": {
+      case 'stream':
+      case 'streaming': {
         this.streamingEnabled = this.toBoolean(value);
         return;
       }
@@ -699,60 +644,42 @@ export class AcpServer {
     }
   }
 
-  private async buildSessionConfigOptions(
-    precomputedModels?: string[]
-  ): Promise<SessionConfigOption[]> {
+  private async buildSessionConfigOptions(precomputedModels?: string[]): Promise<SessionConfigOption[]> {
     const config = this.configManager.getConfig();
-    const provider = String(config.activeProvider ?? "openrouter");
-    const model = this.modelResolver.normalizeConfiguredModel(
-      String(config.model ?? "")
-    );
-    const thinking = String(
-      config.thinking ?? THINKING_LEVELS.OFF
-    ).toUpperCase();
+    const provider = String(config.activeProvider ?? 'openrouter');
+    const model = this.modelResolver.normalizeConfiguredModel(String(config.model ?? ''));
+    const thinking = String(config.thinking ?? THINKING_LEVELS.OFF).toUpperCase();
     const requireToolApproval = config.requireToolApproval ?? true;
-    const availableProviders =
-      this.deps.orchestratorManager.getAvailableProviders();
+    const availableProviders = this.deps.orchestratorManager.getAvailableProviders();
     const availableModels =
-      precomputedModels ??
-      (await this.modelResolver.getAllModelIdsAcrossProviders(
-        availableProviders
-      ));
+      precomputedModels ?? (await this.modelResolver.getAllModelIdsAcrossProviders(availableProviders));
     const modes = this.buildModesState();
 
-    const providerOptions = this.modelResolver.toSelectOptions(
-      availableProviders,
-      provider,
-      "Current Provider"
-    );
-    const modelOptions = this.modelResolver.toSelectOptions(
-      availableModels,
-      model,
-      "Current Model"
-    );
+    const providerOptions = this.modelResolver.toSelectOptions(availableProviders, provider, 'Current Provider');
+    const modelOptions = this.modelResolver.toSelectOptions(availableModels, model, 'Current Model');
 
     return [
       {
-        type: "select",
-        id: "provider",
-        name: "Provider",
-        category: "model",
+        type: 'select',
+        id: 'provider',
+        name: 'Provider',
+        category: 'model',
         currentValue: providerOptions.currentValue,
         options: providerOptions.options,
       },
       {
-        type: "select",
-        id: "model",
-        name: "Model",
-        category: "model",
+        type: 'select',
+        id: 'model',
+        name: 'Model',
+        category: 'model',
         currentValue: modelOptions.currentValue,
         options: modelOptions.options,
       },
       {
-        type: "select",
-        id: "mode",
-        name: "Mode",
-        category: "mode",
+        type: 'select',
+        id: 'mode',
+        name: 'Mode',
+        category: 'mode',
         currentValue: modes.currentModeId,
         options: modes.availableModes.map((mode) => ({
           value: mode.id,
@@ -760,10 +687,10 @@ export class AcpServer {
         })),
       },
       {
-        type: "select",
-        id: "thought_level",
-        name: "Thought Level",
-        category: "thought_level",
+        type: 'select',
+        id: 'thought_level',
+        name: 'Thought Level',
+        category: 'thought_level',
         currentValue: thinking,
         options: Object.values(THINKING_LEVELS).map((level) => ({
           value: level,
@@ -771,25 +698,25 @@ export class AcpServer {
         })),
       },
       {
-        type: "select",
-        id: "streaming",
-        name: "Streaming",
-        category: "other",
-        currentValue: this.streamingEnabled ? "on" : "off",
+        type: 'select',
+        id: 'streaming',
+        name: 'Streaming',
+        category: 'other',
+        currentValue: this.streamingEnabled ? 'on' : 'off',
         options: [
-          { value: "on", name: "On" },
-          { value: "off", name: "Off" },
+          { value: 'on', name: 'On' },
+          { value: 'off', name: 'Off' },
         ],
       },
       {
-        type: "select",
-        id: "require_tool_approval",
-        name: "Require Tool Approval",
-        category: "other",
-        currentValue: requireToolApproval ? "on" : "off",
+        type: 'select',
+        id: 'require_tool_approval',
+        name: 'Require Tool Approval',
+        category: 'other',
+        currentValue: requireToolApproval ? 'on' : 'off',
         options: [
-          { value: "on", name: "On" },
-          { value: "off", name: "Off" },
+          { value: 'on', name: 'On' },
+          { value: 'off', name: 'Off' },
         ],
       },
     ];
@@ -806,16 +733,16 @@ export class AcpServer {
             {
               id: agent.agentId,
               name: agent.name,
-              description: agent.description ?? "",
+              description: agent.description ?? '',
             },
-          ])
-      ).values()
+          ]),
+      ).values(),
     );
 
     const activeAgentId = this.deps.orchestratorManager.getActiveAgentId();
     const currentModeId = dedupedModes.some((mode) => mode.id === activeAgentId)
       ? activeAgentId
-      : dedupedModes[0]?.id ?? "main";
+      : (dedupedModes[0]?.id ?? 'main');
 
     return {
       currentModeId,
@@ -854,7 +781,7 @@ export class AcpServer {
         updateLine: () => {},
         updateLineMetadata: () => {},
         handleError: () => {},
-      }
+      },
     );
 
     this.orchestratorReady = true;
@@ -867,7 +794,7 @@ export class AcpServer {
     switch (event.type) {
       case AgentEventTypes.ReasoningChunk: {
         this.emitUpdate({
-          sessionUpdate: "agent_thought_chunk",
+          sessionUpdate: 'agent_thought_chunk',
           content: toTextContentBlock(event.delta),
         });
         return;
@@ -875,7 +802,7 @@ export class AcpServer {
       case AgentEventTypes.AssistantChunk: {
         this.streamingMessageIds.add(event.messageId);
         this.emitUpdate({
-          sessionUpdate: "agent_message_chunk",
+          sessionUpdate: 'agent_message_chunk',
           content: toTextContentBlock(event.delta),
         });
         return;
@@ -884,7 +811,7 @@ export class AcpServer {
         if (this.streamingMessageIds.has(event.messageId)) return;
         if (event.content) {
           this.emitUpdate({
-            sessionUpdate: "agent_message_chunk",
+            sessionUpdate: 'agent_message_chunk',
             content: toTextContentBlock(event.content),
           });
         }
@@ -897,11 +824,11 @@ export class AcpServer {
           this.toolCallTitles.set(call.id, title);
 
           this.emitUpdate({
-            sessionUpdate: "tool_call",
+            sessionUpdate: 'tool_call',
             toolCallId: call.id,
             title,
             kind: inferToolKind(call.function.name),
-            status: call.requiresApproval ? "pending" : "in_progress",
+            status: call.requiresApproval ? 'pending' : 'in_progress',
             rawInput,
           });
 
@@ -913,30 +840,24 @@ export class AcpServer {
       }
       case AgentEventTypes.ToolResult: {
         const tool = event.result as ToolExecutionResult;
-        const contentText =
-          typeof tool.result === "string"
-            ? tool.result
-            : JSON.stringify(tool.result ?? "", null, 2);
-        const title =
-          this.toolCallTitles.get(tool.id) ?? formatToolCallTitle(tool.name);
+        const contentText = typeof tool.result === 'string' ? tool.result : JSON.stringify(tool.result ?? '', null, 2);
+        const title = this.toolCallTitles.get(tool.id) ?? formatToolCallTitle(tool.name);
 
         this.emitUpdate({
-          sessionUpdate: "tool_call_update",
+          sessionUpdate: 'tool_call_update',
           toolCallId: tool.id,
           title,
           kind: inferToolKind(tool.name),
           status: this.mapToolStatus(tool.status),
           rawOutput: tool.result,
-          content: [
-            { type: "content", content: toTextContentBlock(contentText) },
-          ],
+          content: [{ type: 'content', content: toTextContentBlock(contentText) }],
         });
         this.toolCallTitles.delete(tool.id);
         return;
       }
       case AgentEventTypes.Error: {
         this.emitUpdate({
-          sessionUpdate: "agent_message_chunk",
+          sessionUpdate: 'agent_message_chunk',
           content: toTextContentBlock(`Error: ${event.error}`),
         });
         return;
@@ -953,20 +874,13 @@ export class AcpServer {
       return prompt as AcpContentBlock[];
     }
 
-    if (
-      prompt &&
-      typeof prompt === "object" &&
-      Array.isArray((prompt as { content?: unknown[] }).content)
-    ) {
+    if (prompt && typeof prompt === 'object' && Array.isArray((prompt as { content?: unknown[] }).content)) {
       // Backward compatibility with our previous internal prompt wrapper shape.
       return (prompt as { content: AcpContentBlock[] }).content;
     }
 
     if (prompt !== undefined && prompt !== null) {
-      console.warn(
-        "[ACP] Unexpected prompt shape — expected array or { content: [...] }, got:",
-        typeof prompt
-      );
+      console.warn('[ACP] Unexpected prompt shape — expected array or { content: [...] }, got:', typeof prompt);
     }
 
     return [];
@@ -974,42 +888,40 @@ export class AcpServer {
 
   private extractSlashCommand(blocks: AcpContentBlock[]): string | null {
     const textBlock = blocks.find(
-      (block) =>
-        block?.type === "text" &&
-        typeof (block as { text?: unknown }).text === "string"
+      (block) => block?.type === 'text' && typeof (block as { text?: unknown }).text === 'string',
     );
     if (!textBlock) {
       return null;
     }
 
     const text = String((textBlock as { text: string }).text).trim();
-    if (!text.startsWith("/")) {
+    if (!text.startsWith('/')) {
       return null;
     }
     return text;
   }
 
   private async tryHandleSlashCommand(input: string): Promise<boolean> {
-    const commandId = input.split(/\s+/)[0] ?? "";
+    const commandId = input.split(/\s+/)[0] ?? '';
     const command = commandRegistry.get(commandId);
     if (!command) {
       const available = this.getAvailableCommands().map((item) => `/${item.name}`);
-      const availableText = available.length > 0 ? available.join(", ") : "none";
+      const availableText = available.length > 0 ? available.join(', ') : 'none';
       this.emitUpdate({
-        sessionUpdate: "agent_message_chunk",
+        sessionUpdate: 'agent_message_chunk',
         content: toTextContentBlock(
-          `Command ${commandId} is not supported by Nuvin.\n\nAvailable commands: ${availableText}`
+          `Command ${commandId} is not supported by Nuvin.\n\nAvailable commands: ${availableText}`,
         ),
       });
       return true;
     }
 
     const hasArgs = input.trim().split(/\s+/).length > 1;
-    if (command.type === "component" && (!command.handler || !hasArgs)) {
+    if (command.type === 'component' && (!command.handler || !hasArgs)) {
       this.emitUpdate({
-        sessionUpdate: "agent_message_chunk",
+        sessionUpdate: 'agent_message_chunk',
         content: toTextContentBlock(
-          `Command ${commandId} requires interactive terminal UI and is not available in ACP mode.`
+          `Command ${commandId} requires interactive terminal UI and is not available in ACP mode.`,
         ),
       });
       return true;
@@ -1027,8 +939,8 @@ export class AcpServer {
       }
     };
 
-    this.eventBus.on("ui:line", onLine as never);
-    this.eventBus.on("ui:error", onError as never);
+    this.eventBus.on('ui:line', onLine as never);
+    this.eventBus.on('ui:error', onError as never);
 
     try {
       const result = await commandRegistry.execute(input);
@@ -1036,12 +948,12 @@ export class AcpServer {
         captured.push(`Error: ${result.error.message}`);
       }
     } finally {
-      this.eventBus.off("ui:line", onLine as never);
-      this.eventBus.off("ui:error", onError as never);
+      this.eventBus.off('ui:line', onLine as never);
+      this.eventBus.off('ui:error', onError as never);
     }
 
     const isCustomCommand =
-      typeof command === "object" &&
+      typeof command === 'object' &&
       command !== null &&
       Boolean((command as unknown as { isCustomCommand?: boolean }).isCustomCommand);
 
@@ -1051,7 +963,7 @@ export class AcpServer {
 
     for (const text of captured) {
       this.emitUpdate({
-        sessionUpdate: "agent_message_chunk",
+        sessionUpdate: 'agent_message_chunk',
         content: toTextContentBlock(text),
       });
     }
@@ -1060,62 +972,54 @@ export class AcpServer {
   }
 
   private getPermissionDecision(result: unknown): ToolApprovalDecision {
-    const payload = result as
-      | RequestPermissionResponse
-      | LegacyPermissionResponseParams
-      | undefined;
+    const payload = result as RequestPermissionResponse | LegacyPermissionResponseParams | undefined;
 
-    if (payload && typeof payload === "object") {
-      if ("decision" in payload && typeof payload.decision === "string") {
+    if (payload && typeof payload === 'object') {
+      if ('decision' in payload && typeof payload.decision === 'string') {
         if (
-          payload.decision === "approve" ||
-          payload.decision === "deny" ||
-          payload.decision === "approve_all" ||
-          payload.decision === "edit"
+          payload.decision === 'approve' ||
+          payload.decision === 'deny' ||
+          payload.decision === 'approve_all' ||
+          payload.decision === 'edit'
         ) {
           return payload.decision;
         }
       }
 
       const outcome = (payload as RequestPermissionResponse).outcome;
-      if (outcome?.outcome === "selected") {
+      if (outcome?.outcome === 'selected') {
         switch (outcome.optionId) {
-          case "allow_once":
-            return "approve";
-          case "allow_always":
-            return "approve_all";
-          case "reject_once":
-          case "reject_always":
-            return "deny";
+          case 'allow_once':
+            return 'approve';
+          case 'allow_always':
+            return 'approve_all';
+          case 'reject_once':
+          case 'reject_always':
+            return 'deny';
           default:
-            return "deny";
+            return 'deny';
         }
       }
 
-      if (outcome?.outcome === "cancelled") {
-        return "deny";
+      if (outcome?.outcome === 'cancelled') {
+        return 'deny';
       }
     }
 
-    return "deny";
+    return 'deny';
   }
 
-  private mapToolStatus(status: ToolExecutionResult["status"]) {
-    return status === "success" ? "completed" : "failed";
+  private mapToolStatus(status: ToolExecutionResult['status']) {
+    return status === 'success' ? 'completed' : 'failed';
   }
 
   private toBoolean(value: unknown): boolean {
-    if (typeof value === "boolean") {
+    if (typeof value === 'boolean') {
       return value;
     }
 
     const normalized = String(value).toLowerCase();
-    return (
-      normalized === "1" ||
-      normalized === "true" ||
-      normalized === "yes" ||
-      normalized === "on"
-    );
+    return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
   }
 
   private isMemPersistEnabled(): boolean {
@@ -1125,16 +1029,12 @@ export class AcpServer {
 
   private applyAcpToolRestrictions() {
     const currentConfig = this.deps.orchestratorManager.getConfig?.();
-    const enabledTools = Array.isArray(currentConfig?.enabledTools)
-      ? currentConfig.enabledTools
-      : null;
+    const enabledTools = Array.isArray(currentConfig?.enabledTools) ? currentConfig.enabledTools : null;
     if (!enabledTools || enabledTools.length === 0) {
       return;
     }
 
-    const filteredTools = enabledTools.filter(
-      (toolName) => !ACP_DISABLED_TOOLS.has(toolName)
-    );
+    const filteredTools = enabledTools.filter((toolName) => !ACP_DISABLED_TOOLS.has(toolName));
     if (filteredTools.length === enabledTools.length) {
       return;
     }
@@ -1150,9 +1050,7 @@ export class AcpServer {
     title: string;
     updatedAt: string;
   }> {
-    const sessionsRoot = path.dirname(
-      getSessionDir("__acp_probe__", this.getCurrentProfile())
-    );
+    const sessionsRoot = path.dirname(getSessionDir('__acp_probe__', this.getCurrentProfile()));
     if (!fs.existsSync(sessionsRoot)) {
       return [];
     }
@@ -1175,12 +1073,8 @@ export class AcpServer {
       const sessionDir = path.join(sessionsRoot, sessionId);
       const parsedHistory = this.readSessionHistory(sessionDir);
       const history = parsedHistory?.messages ?? [];
-      const title =
-        parsedHistory?.topic ||
-        this.extractLastUserText(history) ||
-        `Session ${sessionId}`;
-      const updatedAt =
-        parsedHistory?.updatedAt || this.getSessionUpdatedAt(sessionDir);
+      const title = parsedHistory?.topic || this.extractLastUserText(history) || `Session ${sessionId}`;
+      const updatedAt = parsedHistory?.updatedAt || this.getSessionUpdatedAt(sessionDir);
 
       return {
         sessionId,
@@ -1196,16 +1090,15 @@ export class AcpServer {
     topic?: string;
     updatedAt?: string;
   } | null {
-    const historyFile = [
-      path.join(sessionDir, "history.cli.json"),
-      path.join(sessionDir, "history.json"),
-    ].find((file) => fs.existsSync(file));
+    const historyFile = [path.join(sessionDir, 'history.cli.json'), path.join(sessionDir, 'history.json')].find(
+      (file) => fs.existsSync(file),
+    );
     if (!historyFile) {
       return null;
     }
 
     try {
-      const raw = fs.readFileSync(historyFile, "utf-8");
+      const raw = fs.readFileSync(historyFile, 'utf-8');
       const parsed = JSON.parse(raw) as {
         default?: Array<{ role?: string; content?: unknown }>;
         cli?: Array<{ role?: string; content?: unknown }>;
@@ -1214,41 +1107,32 @@ export class AcpServer {
       };
 
       const messages = parsed.default ?? parsed.cli ?? [];
-      const metadata =
-        parsed.__metadata__default?.[0] ?? parsed.__metadata__cli?.[0];
+      const metadata = parsed.__metadata__default?.[0] ?? parsed.__metadata__cli?.[0];
 
       return {
         messages,
-        topic:
-          typeof metadata?.topic === "string" ? metadata.topic : undefined,
-        updatedAt:
-          typeof metadata?.updatedAt === "string"
-            ? metadata.updatedAt
-            : undefined,
+        topic: typeof metadata?.topic === 'string' ? metadata.topic : undefined,
+        updatedAt: typeof metadata?.updatedAt === 'string' ? metadata.updatedAt : undefined,
       };
     } catch {
       return null;
     }
   }
 
-  private extractLastUserText(
-    messages: Array<{ role?: string; content?: unknown }>
-  ): string | undefined {
+  private extractLastUserText(messages: Array<{ role?: string; content?: unknown }>): string | undefined {
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
-      if (message?.role !== "user") {
+      if (message?.role !== 'user') {
         continue;
       }
 
-      const text = typeof message.content === "string" ? message.content : "";
+      const text = typeof message.content === 'string' ? message.content : '';
       if (!text.trim()) {
         continue;
       }
 
-      const singleLine = text.replace(/\s+/g, " ").trim();
-      return singleLine.length > 80
-        ? `${singleLine.slice(0, 77)}...`
-        : singleLine;
+      const singleLine = text.replace(/\s+/g, ' ').trim();
+      return singleLine.length > 80 ? `${singleLine.slice(0, 77)}...` : singleLine;
     }
 
     return undefined;
@@ -1263,9 +1147,7 @@ export class AcpServer {
   }
 
   private encodeSessionListCursor(offset: number): string {
-    return Buffer.from(JSON.stringify({ offset }), "utf-8").toString(
-      "base64url"
-    );
+    return Buffer.from(JSON.stringify({ offset }), 'utf-8').toString('base64url');
   }
 
   private decodeSessionListCursor(cursor?: string): number {
@@ -1274,7 +1156,7 @@ export class AcpServer {
     }
 
     try {
-      const decoded = Buffer.from(cursor, "base64url").toString("utf-8");
+      const decoded = Buffer.from(cursor, 'base64url').toString('utf-8');
       const parsed = JSON.parse(decoded) as { offset?: unknown };
       const offset = Number(parsed.offset);
       if (Number.isFinite(offset) && offset >= 0) {
@@ -1288,7 +1170,7 @@ export class AcpServer {
   }
 
   private getCurrentProfile(): string | undefined {
-    if (typeof this.configManager.getCurrentProfile === "function") {
+    if (typeof this.configManager.getCurrentProfile === 'function') {
       return this.configManager.getCurrentProfile();
     }
     return undefined;

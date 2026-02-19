@@ -553,10 +553,13 @@ export class MCPOAuthClient {
         return;
       }
 
-      const timeout = setTimeout(() => {
-        this.stopCallbackServer();
-        resolve({ success: false, error: 'Authorization timed out after 5 minutes' });
-      }, 5 * 60 * 1000);
+      const timeout = setTimeout(
+        () => {
+          this.stopCallbackServer();
+          resolve({ success: false, error: 'Authorization timed out after 5 minutes' });
+        },
+        5 * 60 * 1000,
+      );
 
       this.callbackServer = http.createServer(async (req, res) => {
         const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);

@@ -261,14 +261,14 @@ export const useAgentCreationState = (
       model: normalizedModel.length > 0 ? normalizedModel : undefined,
     };
   }, [
-    editedDescription, 
-    editedModel, 
-    editedName, 
-    editedInstructions, 
-    editedTemperature, 
+    editedDescription,
+    editedModel,
+    editedName,
+    editedInstructions,
+    editedTemperature,
     editedMaxTokens,
-    editedAllowedTools, 
-    preview
+    editedAllowedTools,
+    preview,
   ]);
 
   const handleSaveEditing = useCallback(() => {

@@ -1,5 +1,5 @@
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import * as yaml from 'yaml';
 import type { ToolDefinition } from '../ports.js';
 import { ErrorReason } from '../ports.js';
@@ -202,13 +202,10 @@ export class LsTool implements FunctionTool<LsParams, ToolExecutionContext, LsRe
         }),
       };
 
-      const result: LsSuccessResult = okText(
-        yaml.stringify(yamlData, { indent: 2, lineWidth: 0 }),
-        {
-          limit,
-          includeHidden,
-        },
-      );
+      const result: LsSuccessResult = okText(yaml.stringify(yamlData, { indent: 2, lineWidth: 0 }), {
+        limit,
+        includeHidden,
+      });
       return result;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);

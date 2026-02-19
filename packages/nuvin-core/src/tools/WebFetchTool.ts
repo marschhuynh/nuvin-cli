@@ -106,9 +106,9 @@ export class WebFetchTool implements FunctionTool<WebFetchParams, ToolExecutionC
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isAborted = errorMessage.includes('aborted') || (error as Error).name === 'AbortError';
       return err(
-        isAborted ? 'Fetch aborted by user' : errorMessage, 
-        { url: target }, 
-        isAborted ? ErrorReason.Aborted : ErrorReason.NetworkError
+        isAborted ? 'Fetch aborted by user' : errorMessage,
+        { url: target },
+        isAborted ? ErrorReason.Aborted : ErrorReason.NetworkError,
       );
     }
   }

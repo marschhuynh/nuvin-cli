@@ -48,9 +48,12 @@ type AnthropicAISDKOptions = {
  *
  * @see LanguageModelV2ToolResultOutput from @ai-sdk/provider
  */
-export function buildAISDKToolResultOutput(
-  content: string | null | ProviderContentPart[],
-): { type: 'text'; value: string } | { type: 'content'; value: Array<{ type: 'text'; text: string } | { type: 'media'; data: string; mediaType: string }> } {
+export function buildAISDKToolResultOutput(content: string | null | ProviderContentPart[]):
+  | { type: 'text'; value: string }
+  | {
+      type: 'content';
+      value: Array<{ type: 'text'; text: string } | { type: 'media'; data: string; mediaType: string }>;
+    } {
   if (typeof content === 'string') {
     return { type: 'text' as const, value: content };
   }
@@ -60,7 +63,8 @@ export function buildAISDKToolResultOutput(
     const hasImages = parts.some((p) => p.type === 'image_url');
 
     if (hasImages) {
-      const contentParts: Array<{ type: 'text'; text: string } | { type: 'media'; data: string; mediaType: string }> = [];
+      const contentParts: Array<{ type: 'text'; text: string } | { type: 'media'; data: string; mediaType: string }> =
+        [];
 
       for (const part of parts) {
         if (part.type === 'text') {

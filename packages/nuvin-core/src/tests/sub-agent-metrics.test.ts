@@ -1,13 +1,6 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AgentManager } from '../agent-manager.js';
-import {
-  AgentEventTypes,
-  type AgentConfig,
-  type LLMFactory,
-  type LLMPort,
-  type ToolPort,
-} from '../ports.js';
+import { AgentEventTypes, type AgentConfig, type LLMFactory, type LLMPort, type ToolPort } from '../ports.js';
 
 describe('AgentManager - Sub-Agent Metrics Streaming', () => {
   let agentManager: AgentManager;
@@ -50,12 +43,7 @@ describe('AgentManager - Sub-Agent Metrics Streaming', () => {
       executeToolCalls: vi.fn().mockResolvedValue([]),
     };
 
-    agentManager = new AgentManager(
-      delegatingConfig,
-      mockTools,
-      mockLLMFactory,
-      (event) => events.push(event)
-    );
+    agentManager = new AgentManager(delegatingConfig, mockTools, mockLLMFactory, (event) => events.push(event));
   });
 
   it('should emit SubAgentMetrics event when sub-agent records usage', async () => {
@@ -70,9 +58,7 @@ describe('AgentManager - Sub-Agent Metrics Streaming', () => {
     await agentManager.executeTask(taskConfig);
 
     // Find the metrics event
-    const metricsEvent = events.find(
-      (e) => e.type === AgentEventTypes.SubAgentMetrics
-    );
+    const metricsEvent = events.find((e) => e.type === AgentEventTypes.SubAgentMetrics);
 
     expect(metricsEvent).toBeDefined();
     expect(metricsEvent).toMatchObject({

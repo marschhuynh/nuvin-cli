@@ -6,7 +6,8 @@ import type { ChatMessage, ProviderContentPart } from '../ports.js';
 
 // ─── Test Fixtures ──────────────────────────────────────────────────────────
 
-const SAMPLE_BASE64_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+const SAMPLE_BASE64_PNG =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 const SAMPLE_BASE64_JPEG = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//';
 
 /** Helper to build a ProviderContentPart[] with both text and image parts */
@@ -85,9 +86,7 @@ describe('Anthropic Compat: image content in tool results', () => {
         {
           role: 'assistant',
           content: '',
-          tool_calls: [
-            { id: 'tc_1', type: 'function', function: { name: 'screenshot', arguments: '{}' } },
-          ],
+          tool_calls: [{ id: 'tc_1', type: 'function', function: { name: 'screenshot', arguments: '{}' } }],
         },
         {
           role: 'tool',
@@ -103,14 +102,13 @@ describe('Anthropic Compat: image content in tool results', () => {
     const body = getRequestBody();
     const userMsg = body.messages.find(
       (m: Record<string, unknown>) =>
-        m.role === 'user' && Array.isArray(m.content) &&
-        (m.content as Array<Record<string, unknown>>).some(
-          (p: Record<string, unknown>) => p.type === 'tool_result',
-        ),
+        m.role === 'user' &&
+        Array.isArray(m.content) &&
+        (m.content as Array<Record<string, unknown>>).some((p: Record<string, unknown>) => p.type === 'tool_result'),
     ) as Record<string, unknown> | undefined;
 
     expect(userMsg).toBeDefined();
-    const toolResult = (userMsg!.content as Array<Record<string, unknown>>).find(
+    const toolResult = (userMsg.content as Array<Record<string, unknown>>).find(
       (p: Record<string, unknown>) => p.type === 'tool_result',
     )!;
 
@@ -144,9 +142,7 @@ describe('Anthropic Compat: image content in tool results', () => {
         {
           role: 'assistant',
           content: '',
-          tool_calls: [
-            { id: 'tc_2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"ls"}' } },
-          ],
+          tool_calls: [{ id: 'tc_2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"ls"}' } }],
         },
         {
           role: 'tool',
@@ -162,10 +158,9 @@ describe('Anthropic Compat: image content in tool results', () => {
     const body = getRequestBody();
     const userMsg = body.messages.find(
       (m: Record<string, unknown>) =>
-        m.role === 'user' && Array.isArray(m.content) &&
-        (m.content as Array<Record<string, unknown>>).some(
-          (p: Record<string, unknown>) => p.type === 'tool_result',
-        ),
+        m.role === 'user' &&
+        Array.isArray(m.content) &&
+        (m.content as Array<Record<string, unknown>>).some((p: Record<string, unknown>) => p.type === 'tool_result'),
     ) as Record<string, unknown>;
 
     const toolResult = (userMsg.content as Array<Record<string, unknown>>).find(
@@ -185,9 +180,7 @@ describe('Anthropic Compat: image content in tool results', () => {
         {
           role: 'assistant',
           content: '',
-          tool_calls: [
-            { id: 'tc_3', type: 'function', function: { name: 'capture', arguments: '{}' } },
-          ],
+          tool_calls: [{ id: 'tc_3', type: 'function', function: { name: 'capture', arguments: '{}' } }],
         },
         {
           role: 'tool',
@@ -203,10 +196,9 @@ describe('Anthropic Compat: image content in tool results', () => {
     const body = getRequestBody();
     const userMsg = body.messages.find(
       (m: Record<string, unknown>) =>
-        m.role === 'user' && Array.isArray(m.content) &&
-        (m.content as Array<Record<string, unknown>>).some(
-          (p: Record<string, unknown>) => p.type === 'tool_result',
-        ),
+        m.role === 'user' &&
+        Array.isArray(m.content) &&
+        (m.content as Array<Record<string, unknown>>).some((p: Record<string, unknown>) => p.type === 'tool_result'),
     ) as Record<string, unknown>;
 
     const toolResult = (userMsg.content as Array<Record<string, unknown>>).find(
@@ -260,10 +252,9 @@ describe('Anthropic Compat: image content in tool results', () => {
     // Anthropic merges consecutive tool results into a single user message
     const userMsgs = (body.messages as Array<Record<string, unknown>>).filter(
       (m: Record<string, unknown>) =>
-        m.role === 'user' && Array.isArray(m.content) &&
-        (m.content as Array<Record<string, unknown>>).some(
-          (p: Record<string, unknown>) => p.type === 'tool_result',
-        ),
+        m.role === 'user' &&
+        Array.isArray(m.content) &&
+        (m.content as Array<Record<string, unknown>>).some((p: Record<string, unknown>) => p.type === 'tool_result'),
     );
 
     expect(userMsgs).toHaveLength(1);
@@ -288,9 +279,7 @@ describe('Anthropic Compat: image content in tool results', () => {
         {
           role: 'assistant',
           content: '',
-          tool_calls: [
-            { id: 'tc_4', type: 'function', function: { name: 'tool', arguments: '{}' } },
-          ],
+          tool_calls: [{ id: 'tc_4', type: 'function', function: { name: 'tool', arguments: '{}' } }],
         },
         {
           role: 'tool',
@@ -306,10 +295,9 @@ describe('Anthropic Compat: image content in tool results', () => {
     const body = getRequestBody();
     const userMsg = body.messages.find(
       (m: Record<string, unknown>) =>
-        m.role === 'user' && Array.isArray(m.content) &&
-        (m.content as Array<Record<string, unknown>>).some(
-          (p: Record<string, unknown>) => p.type === 'tool_result',
-        ),
+        m.role === 'user' &&
+        Array.isArray(m.content) &&
+        (m.content as Array<Record<string, unknown>>).some((p: Record<string, unknown>) => p.type === 'tool_result'),
     ) as Record<string, unknown>;
 
     const toolResult = (userMsg.content as Array<Record<string, unknown>>).find(
@@ -333,9 +321,7 @@ describe('Responses API: image content in tool results', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'call_1', type: 'function', function: { name: 'screenshot', arguments: '{}' } },
-        ],
+        tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'screenshot', arguments: '{}' } }],
       },
       {
         role: 'tool',
@@ -346,11 +332,9 @@ describe('Responses API: image content in tool results', () => {
 
     const result = transformToResponsesInput(messages);
 
-    const functionOutput = result.input.find(
-      (item) => item.type === 'function_call_output',
-    );
+    const functionOutput = result.input.find((item) => item.type === 'function_call_output');
     expect(functionOutput).toBeDefined();
-    expect(functionOutput!.type).toBe('function_call_output');
+    expect(functionOutput?.type).toBe('function_call_output');
 
     const output = (functionOutput as { output: string }).output;
     expect(output).toContain('Screenshot captured successfully.');
@@ -365,9 +349,7 @@ describe('Responses API: image content in tool results', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'call_2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"ls"}' } },
-        ],
+        tool_calls: [{ id: 'call_2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"ls"}' } }],
       },
       {
         role: 'tool',
@@ -378,9 +360,7 @@ describe('Responses API: image content in tool results', () => {
 
     const result = transformToResponsesInput(messages);
 
-    const functionOutput = result.input.find(
-      (item) => item.type === 'function_call_output',
-    );
+    const functionOutput = result.input.find((item) => item.type === 'function_call_output');
     expect(functionOutput).toBeDefined();
     expect((functionOutput as { output: string }).output).toBe('file1.txt\nfile2.txt');
   });
@@ -396,9 +376,7 @@ describe('Responses API: image content in tool results', () => {
 
     const result = transformToResponsesInput(messages);
 
-    const functionOutput = result.input.find(
-      (item) => item.type === 'function_call_output',
-    );
+    const functionOutput = result.input.find((item) => item.type === 'function_call_output');
     expect(functionOutput).toBeDefined();
     const output = (functionOutput as { output: string }).output;
     expect(output).toBe('[Image content returned by tool]');
@@ -413,19 +391,13 @@ describe('Responses API: image content in tool results', () => {
       { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${SAMPLE_BASE64_JPEG}` } },
     ];
 
-    const messages: ChatMessage[] = [
-      { role: 'tool', content, tool_call_id: 'call_4' },
-    ];
+    const messages: ChatMessage[] = [{ role: 'tool', content, tool_call_id: 'call_4' }];
 
     const result = transformToResponsesInput(messages);
-    const functionOutput = result.input.find(
-      (item) => item.type === 'function_call_output',
-    );
+    const functionOutput = result.input.find((item) => item.type === 'function_call_output');
     const output = (functionOutput as { output: string }).output;
 
-    expect(output).toBe(
-      'First text\n[Image content returned by tool]\nSecond text\n[Image content returned by tool]',
-    );
+    expect(output).toBe('First text\n[Image content returned by tool]\nSecond text\n[Image content returned by tool]');
   });
 
   it('should handle non-string, non-array content with JSON.stringify', () => {
@@ -438,9 +410,7 @@ describe('Responses API: image content in tool results', () => {
     ];
 
     const result = transformToResponsesInput(messages);
-    const functionOutput = result.input.find(
-      (item) => item.type === 'function_call_output',
-    );
+    const functionOutput = result.input.find((item) => item.type === 'function_call_output');
     expect((functionOutput as { output: string }).output).toBe('{"result":"success"}');
   });
 });
@@ -523,7 +493,9 @@ describe('AI SDK adapter: transformMessages integration', () => {
    */
   function callTransformMessages(messages: ChatMessage[]) {
     const instance = new AnthropicAISDKLLM();
-    return (instance as unknown as { transformMessages: (msgs: ChatMessage[]) => unknown[] }).transformMessages(messages);
+    return (instance as unknown as { transformMessages: (msgs: ChatMessage[]) => unknown[] }).transformMessages(
+      messages,
+    );
   }
 
   it('should transform tool message with image content into tool-result with media output', () => {
@@ -532,9 +504,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'tc_1', type: 'function', function: { name: 'screenshot', arguments: '{}' } },
-        ],
+        tool_calls: [{ id: 'tc_1', type: 'function', function: { name: 'screenshot', arguments: '{}' } }],
       },
       {
         role: 'tool',
@@ -547,9 +517,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
     const result = callTransformMessages(messages);
 
     // Find the tool message in the transformed output
-    const toolMsg = result.find(
-      (m: Record<string, unknown>) => m.role === 'tool',
-    ) as Record<string, unknown>;
+    const toolMsg = result.find((m: Record<string, unknown>) => m.role === 'tool') as Record<string, unknown>;
     expect(toolMsg).toBeDefined();
 
     const content = toolMsg.content as Array<Record<string, unknown>>;
@@ -578,9 +546,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'tc_2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"ls"}' } },
-        ],
+        tool_calls: [{ id: 'tc_2', type: 'function', function: { name: 'bash', arguments: '{"cmd":"ls"}' } }],
       },
       {
         role: 'tool',
@@ -591,9 +557,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
 
     const result = callTransformMessages(messages);
 
-    const toolMsg = result.find(
-      (m: Record<string, unknown>) => m.role === 'tool',
-    ) as Record<string, unknown>;
+    const toolMsg = result.find((m: Record<string, unknown>) => m.role === 'tool') as Record<string, unknown>;
     expect(toolMsg).toBeDefined();
 
     const content = toolMsg.content as Array<Record<string, unknown>>;
@@ -611,9 +575,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'tc_3', type: 'function', function: { name: 'capture', arguments: '{}' } },
-        ],
+        tool_calls: [{ id: 'tc_3', type: 'function', function: { name: 'capture', arguments: '{}' } }],
       },
       {
         role: 'tool',
@@ -624,9 +586,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
 
     const result = callTransformMessages(messages);
 
-    const toolMsg = result.find(
-      (m: Record<string, unknown>) => m.role === 'tool',
-    ) as Record<string, unknown>;
+    const toolMsg = result.find((m: Record<string, unknown>) => m.role === 'tool') as Record<string, unknown>;
     const content = toolMsg.content as Array<Record<string, unknown>>;
     const output = content[0].output as { type: string; value: unknown[] };
 
@@ -646,9 +606,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'tc_4', type: 'function', function: { name: 'tool', arguments: '{}' } },
-        ],
+        tool_calls: [{ id: 'tc_4', type: 'function', function: { name: 'tool', arguments: '{}' } }],
       },
       {
         role: 'tool',
@@ -659,9 +617,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
 
     const result = callTransformMessages(messages);
 
-    const toolMsg = result.find(
-      (m: Record<string, unknown>) => m.role === 'tool',
-    ) as Record<string, unknown>;
+    const toolMsg = result.find((m: Record<string, unknown>) => m.role === 'tool') as Record<string, unknown>;
     const content = toolMsg.content as Array<Record<string, unknown>>;
     const output = content[0].output as { type: string; value: string };
 
@@ -675,9 +631,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
       {
         role: 'assistant',
         content: '',
-        tool_calls: [
-          { id: 'unique-id-123', type: 'function', function: { name: 'my_tool', arguments: '{}' } },
-        ],
+        tool_calls: [{ id: 'unique-id-123', type: 'function', function: { name: 'my_tool', arguments: '{}' } }],
       },
       {
         role: 'tool',
@@ -689,9 +643,7 @@ describe('AI SDK adapter: transformMessages integration', () => {
 
     const result = callTransformMessages(messages);
 
-    const toolMsg = result.find(
-      (m: Record<string, unknown>) => m.role === 'tool',
-    ) as Record<string, unknown>;
+    const toolMsg = result.find((m: Record<string, unknown>) => m.role === 'tool') as Record<string, unknown>;
     const content = toolMsg.content as Array<Record<string, unknown>>;
     const toolResult = content[0];
 

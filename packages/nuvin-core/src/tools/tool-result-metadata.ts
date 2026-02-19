@@ -1,10 +1,5 @@
 import type { ErrorReason } from '../ports.js';
-import type {
-  FileMetadata,
-  LineRangeMetadata,
-  CommandMetadata,
-  DelegationMetadata,
-} from './metadata-types.js';
+import type { FileMetadata, LineRangeMetadata, CommandMetadata, DelegationMetadata } from './metadata-types.js';
 
 export type BashToolMetadata = CommandMetadata & {
   stdout?: string;

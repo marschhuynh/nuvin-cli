@@ -1,5 +1,5 @@
 import type { AgentEvent, Message, MetricsSnapshot } from './ports.js';
-import { ErrorReason } from './ports.js';
+import type { ErrorReason } from './ports.js';
 
 export type AgentFrontmatter = {
   name?: string;
@@ -47,10 +47,22 @@ export type AgentTemplate = {
   location?: 'built-in' | 'global' | 'profile' | 'local';
 };
 
-export type CompleteAgent = Required<
-  Pick<AgentTemplate, 'instructions' | 'name' | 'description' | 'allowed_tools'>
-> &
-  Pick<AgentTemplate, 'model' | 'disable_model_invocation' | 'user_invocable' | 'context' | 'agent' | 'provider' | 'temperature' | 'top_p' | 'max_tokens' | 'timeout_ms' | 'share_context' | 'metadata'> & {
+export type CompleteAgent = Required<Pick<AgentTemplate, 'instructions' | 'name' | 'description' | 'allowed_tools'>> &
+  Pick<
+    AgentTemplate,
+    | 'model'
+    | 'disable_model_invocation'
+    | 'user_invocable'
+    | 'context'
+    | 'agent'
+    | 'provider'
+    | 'temperature'
+    | 'top_p'
+    | 'max_tokens'
+    | 'timeout_ms'
+    | 'share_context'
+    | 'metadata'
+  > & {
     location?: 'built-in' | 'global' | 'profile' | 'local';
   };
 

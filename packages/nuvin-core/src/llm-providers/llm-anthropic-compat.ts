@@ -1,4 +1,12 @@
-import type { CompletionParams, CompletionResult, LLMPort, UsageData, ToolCall, ChatMessage, ProviderContentPart } from '../ports.js';
+import type {
+  CompletionParams,
+  CompletionResult,
+  LLMPort,
+  UsageData,
+  ToolCall,
+  ChatMessage,
+  ProviderContentPart,
+} from '../ports.js';
 import type { HttpTransport, RetryConfig } from '../transports/index.js';
 import {
   FetchTransport,
@@ -26,8 +34,7 @@ export interface GenericAnthropicLLMOptions {
 }
 
 type AnthropicToolResultContent = Array<
-  | { type: 'text'; text: string }
-  | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
+  { type: 'text'; text: string } | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
 >;
 
 type AnthropicContentPart =
@@ -580,7 +587,7 @@ export class GenericAnthropicLLM implements LLMPort {
             }
             if (evt.usage) {
               const partialUsage = evt.usage as Partial<AnthropicUsage>;
-              
+
               // If message_delta contains input_tokens, it has cumulative usage - recalculate everything
               if (partialUsage.input_tokens !== undefined) {
                 const inputTokens = partialUsage.input_tokens;
@@ -588,11 +595,11 @@ export class GenericAnthropicLLM implements LLMPort {
                 const cacheCreation = partialUsage.cache_creation_input_tokens ?? 0;
                 const cacheRead = partialUsage.cache_read_input_tokens ?? 0;
                 const cachedTokens = cacheCreation + cacheRead;
-                
+
                 // Calculate prompt_tokens as input_tokens + cached tokens (per Anthropic docs)
                 const promptTokens = inputTokens + cachedTokens;
                 const totalTokens = promptTokens + outputTokens;
-                
+
                 usage = {
                   prompt_tokens: promptTokens,
                   completion_tokens: outputTokens,

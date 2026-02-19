@@ -800,9 +800,7 @@ describe('AnthropicAISDKLLM', () => {
         },
       ]);
 
-      const userAssistantMessages = messages.filter(
-        (m: any) => m.role === 'user' || m.role === 'assistant',
-      );
+      const userAssistantMessages = messages.filter((m: any) => m.role === 'user' || m.role === 'assistant');
       expect(userAssistantMessages).toHaveLength(2);
       expect(userAssistantMessages[0].providerOptions?.anthropic?.cacheControl?.type).toBe('ephemeral');
       expect(userAssistantMessages[1].providerOptions?.anthropic?.cacheControl?.type).toBe('ephemeral');
@@ -927,7 +925,7 @@ describe('AnthropicAISDKLLM', () => {
       expect(messages.filter((m: any) => m.role === 'tool')).toHaveLength(2);
 
       const toolMessages = messages.filter((m: any) => m.role === 'tool');
-      
+
       expect(toolMessages[0]).toEqual({
         role: 'tool',
         content: [
@@ -960,7 +958,7 @@ describe('AnthropicAISDKLLM', () => {
 
       expect(toolMessages[0].content[0]).not.toHaveProperty('result');
       expect(toolMessages[1].content[0]).not.toHaveProperty('result');
-      
+
       expect(toolMessages[0].content[0]).toHaveProperty('output');
       expect(toolMessages[0].content[0].output).toHaveProperty('type', 'text');
       expect(toolMessages[0].content[0].output).toHaveProperty('value');
@@ -1284,11 +1282,14 @@ describe('AnthropicAISDKLLM', () => {
 
       await llm.streamCompletion(params, { onStreamFinish });
 
-      expect(onStreamFinish).toHaveBeenCalledWith('stop', expect.objectContaining({
-        prompt_tokens: 5,
-        completion_tokens: 2,
-        total_tokens: 7,
-      }));
+      expect(onStreamFinish).toHaveBeenCalledWith(
+        'stop',
+        expect.objectContaining({
+          prompt_tokens: 5,
+          completion_tokens: 2,
+          total_tokens: 7,
+        }),
+      );
     });
 
     it('should pass maxTokens correctly in streaming', async () => {
@@ -1440,7 +1441,7 @@ describe('AnthropicAISDKLLM', () => {
         isRetryable: false,
       });
 
-      let errorCaptured: Error | null = null;
+      let _errorCaptured: Error | null = null;
       const mockTextStream = (async function* () {
         throw apiCallError;
       })();
@@ -1455,7 +1456,7 @@ describe('AnthropicAISDKLLM', () => {
         }),
         finishReason: Promise.resolve('stop'),
         onError: (event: { error: Error }) => {
-          errorCaptured = event.error;
+          _errorCaptured = event.error;
         },
       };
 

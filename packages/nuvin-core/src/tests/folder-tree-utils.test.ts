@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { generateFolderTree } from '../folder-tree-utils.js';
-import { promises as fs } from 'fs';
-import * as path from 'path';
-import * as os from 'os';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
 
 describe('generateFolderTree', () => {
   let testDir: string;
@@ -243,7 +243,7 @@ describe('generateFolderTree', () => {
       const tree = await generateFolderTree(testDir);
       const rootName = path.basename(testDir);
 
-      expect(tree).toContain(rootName + '/');
+      expect(tree).toContain(`${rootName}/`);
     });
   });
 });

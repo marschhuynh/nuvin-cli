@@ -52,17 +52,17 @@ describe('LLM Factory', () => {
     });
 
     it('should support custom apiUrl', () => {
-      const llm = createLLM('deepinfra', { 
+      const llm = createLLM('deepinfra', {
         apiKey: 'test-key',
-        apiUrl: 'https://custom.api.url'
+        apiUrl: 'https://custom.api.url',
       });
       expect((llm as any).apiUrl).toBe('https://custom.api.url');
     });
 
     it('should override config options with provided options', () => {
-      const llm = createLLM('openrouter', { 
+      const llm = createLLM('openrouter', {
         apiKey: 'test-key',
-        enablePromptCaching: false
+        enablePromptCaching: false,
       });
       expect((llm as any).enablePromptCaching).toBe(false);
     });

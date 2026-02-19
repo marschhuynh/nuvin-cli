@@ -1,4 +1,4 @@
-import { stripVTControlCharacters } from 'util';
+import { stripVTControlCharacters } from 'node:util';
 
 // terminalCanonicalize.ts
 export function normalizeNewlines(s: string): string {

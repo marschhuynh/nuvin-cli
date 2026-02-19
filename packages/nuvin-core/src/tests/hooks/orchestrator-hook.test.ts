@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AgentOrchestrator } from '../../orchestrator.js';
 import { NoopEventPort } from '../../events.js';
-import { HookPort, HookContext, HookResult, HookEventTypes } from '../../hooks/types.js';
+import { type HookPort, HookContext, HookResult, HookEventTypes } from '../../hooks/types.js';
 import type {
   MemoryPort,
   Message,
@@ -51,9 +51,7 @@ describe('Hook Integration', () => {
     };
 
     mockTools = {
-      list: vi.fn().mockReturnValue([
-        { name: 'bash_tool', description: 'Run bash commands', inputSchema: {} },
-      ]),
+      list: vi.fn().mockReturnValue([{ name: 'bash_tool', description: 'Run bash commands', inputSchema: {} }]),
       getToolDefinitions: vi.fn().mockReturnValue([
         {
           type: 'function',
@@ -132,7 +130,7 @@ describe('Hook Integration', () => {
         cost: mockCost,
         reminders: mockReminders,
         hookPort,
-      }
+      },
     );
   };
 
@@ -193,7 +191,7 @@ describe('Hook Integration', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Verify ToolCalls event was emitted
-    const toolCallsEvent = emittedEvents.find(e => e.type === AgentEventTypes.ToolCalls);
+    const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
     expect(toolCallsEvent).toBeDefined();
 
     // Verify PermissionRequest hook was called
@@ -202,7 +200,7 @@ describe('Hook Integration', () => {
         hookEvent: HookEventTypes.PermissionRequest,
         toolName: 'bash_tool',
         permissionType: 'tool_approval',
-      })
+      }),
     );
 
     // Now approve the tool to complete the test

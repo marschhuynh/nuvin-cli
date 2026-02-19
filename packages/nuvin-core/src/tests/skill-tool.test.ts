@@ -26,9 +26,7 @@ class MockSkillProvider implements SkillProvider {
       return 'Load a skill to get detailed instructions. No skills available.';
     }
 
-    const lines = [
-      'Load a skill to get detailed instructions for a specific task.',
-    ];
+    const lines = ['Load a skill to get detailed instructions for a specific task.'];
 
     for (const skill of skillList) {
       lines.push(`- ${skill.name}: ${skill.description}`);

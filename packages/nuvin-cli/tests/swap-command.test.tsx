@@ -4,7 +4,7 @@ import { orchestratorManager } from '../source/services/OrchestratorManager.js';
 
 describe('/swap command - event handling', () => {
   // biome-ignore lint/suspicious/noExplicitAny: test mock handler
-let eventHandler: any;
+  let eventHandler: any;
 
   beforeEach(() => {
     eventHandler = vi.fn();
@@ -36,7 +36,9 @@ let eventHandler: any;
       }),
     };
 
-    vi.spyOn(orchestratorManager, 'getOrchestrator').mockReturnValue(mockOrchestrator as unknown as ReturnType<typeof orchestratorManager.getOrchestrator>);
+    vi.spyOn(orchestratorManager, 'getOrchestrator').mockReturnValue(
+      mockOrchestrator as unknown as ReturnType<typeof orchestratorManager.getOrchestrator>,
+    );
     vi.spyOn(orchestratorManager, 'getMemory').mockReturnValue({
       get: vi.fn().mockResolvedValue([]),
     } as unknown as ReturnType<typeof orchestratorManager.getMemory>);
@@ -177,7 +179,9 @@ describe('Memory preservation during swap', () => {
     const getConversationContextSpy = vi
       .spyOn(orchestratorManager, 'getConversationContext')
       .mockReturnValue(mockContext as unknown as ReturnType<typeof orchestratorManager.getConversationContext>);
-    const getMemorySpy = vi.spyOn(orchestratorManager, 'getMemory').mockReturnValue(mockMemory as unknown as ReturnType<typeof orchestratorManager.getMemory>);
+    const getMemorySpy = vi
+      .spyOn(orchestratorManager, 'getMemory')
+      .mockReturnValue(mockMemory as unknown as ReturnType<typeof orchestratorManager.getMemory>);
 
     const orchestrator = orchestratorManager.getOrchestrator();
     const context = orchestratorManager.getConversationContext();

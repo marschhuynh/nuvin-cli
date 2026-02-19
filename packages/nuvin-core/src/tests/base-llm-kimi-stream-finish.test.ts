@@ -79,7 +79,7 @@ describe('BaseLLM - Kimi/Moonshot stream_finish', () => {
     ];
 
     const mockResponse = createMockStreamResponse(chunks);
-    const postSpy = vi.spyOn(llm.getTransportForSpy(), 'post').mockResolvedValueOnce(mockResponse as Response);
+    const _postSpy = vi.spyOn(llm.getTransportForSpy(), 'post').mockResolvedValueOnce(mockResponse as Response);
 
     const onChunk = vi.fn();
     const onStreamFinish = vi.fn();

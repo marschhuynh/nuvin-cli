@@ -32,9 +32,7 @@ describe('flattenMcpContent', () => {
 
   describe('image-only content', () => {
     it('should return mixed with a single image part', () => {
-      const result = flattenMcpContent([
-        { type: 'image', data: 'iVBORw0KGgo=', mimeType: 'image/png' },
-      ]);
+      const result = flattenMcpContent([{ type: 'image', data: 'iVBORw0KGgo=', mimeType: 'image/png' }]);
       expect(result).toEqual({
         type: 'mixed',
         parts: [{ type: 'image', mimeType: 'image/png', data: 'iVBORw0KGgo=' }],
@@ -108,9 +106,7 @@ describe('flattenMcpContent', () => {
 
   describe('image blocks with missing fields', () => {
     it('should fall through to json when image block is missing data', () => {
-      const result = flattenMcpContent([
-        { type: 'image', mimeType: 'image/png' },
-      ]);
+      const result = flattenMcpContent([{ type: 'image', mimeType: 'image/png' }]);
       expect(result.type).toBe('json');
       if (result.type === 'json') {
         expect(result.value).toEqual([{ type: 'image', mimeType: 'image/png' }]);
@@ -118,9 +114,7 @@ describe('flattenMcpContent', () => {
     });
 
     it('should fall through to json when image block is missing mimeType', () => {
-      const result = flattenMcpContent([
-        { type: 'image', data: 'someBase64' },
-      ]);
+      const result = flattenMcpContent([{ type: 'image', data: 'someBase64' }]);
       expect(result.type).toBe('json');
       if (result.type === 'json') {
         expect(result.value).toEqual([{ type: 'image', data: 'someBase64' }]);
@@ -128,18 +122,14 @@ describe('flattenMcpContent', () => {
     });
 
     it('should fall through to json when image block is missing both data and mimeType', () => {
-      const result = flattenMcpContent([
-        { type: 'image' },
-      ]);
+      const result = flattenMcpContent([{ type: 'image' }]);
       expect(result.type).toBe('json');
     });
   });
 
   describe('non-text, non-image content (unknown types)', () => {
     it('should return json for unknown content types', () => {
-      const result = flattenMcpContent([
-        { type: 'resource', text: 'some resource data' },
-      ]);
+      const result = flattenMcpContent([{ type: 'resource', text: 'some resource data' }]);
       expect(result.type).toBe('json');
       if (result.type === 'json') {
         expect(result.value).toEqual([{ type: 'resource', text: 'some resource data' }]);

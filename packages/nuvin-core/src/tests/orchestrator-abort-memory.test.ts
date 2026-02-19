@@ -35,7 +35,7 @@ describe('AgentOrchestrator - Abort Memory Persistence', () => {
     mockMemory = {
       get: vi.fn().mockResolvedValue([]),
       set: vi.fn().mockResolvedValue(undefined),
-      append: vi.fn().mockImplementation(async (key: string, messages: Message[]) => {
+      append: vi.fn().mockImplementation(async (_key: string, messages: Message[]) => {
         savedMessages.push(...messages);
       }),
       delete: vi.fn().mockResolvedValue(undefined),
@@ -60,7 +60,11 @@ describe('AgentOrchestrator - Abort Memory Persistence', () => {
           function: {
             name: 'assign_task',
             description: 'Assign a task to a specialist agent',
-            parameters: { type: 'object', properties: { agent: { type: 'string' }, task: { type: 'string' }, description: { type: 'string' } }, required: ['agent', 'task', 'description'] },
+            parameters: {
+              type: 'object',
+              properties: { agent: { type: 'string' }, task: { type: 'string' }, description: { type: 'string' } },
+              required: ['agent', 'task', 'description'],
+            },
           },
         },
       ]),
@@ -267,7 +271,7 @@ describe('AgentOrchestrator - Abort Memory Persistence', () => {
       ]);
 
       let callCount = 0;
-      vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+      vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
         callCount++;
         if (callCount === 1) {
           return firstResponse;
@@ -397,14 +401,16 @@ describe('AgentOrchestrator - Abort Memory Persistence', () => {
 
       // Simulate assign_task tool call
       const response: CompletionResult = {
-        content: "I'll delegate this to the code-reviewer specialist agent to perform a thorough review of the codebase.",
+        content:
+          "I'll delegate this to the code-reviewer specialist agent to perform a thorough review of the codebase.",
         tool_calls: [
           {
             id: 'toolu_01UyyabdMhNxb31mMZE8D3jG',
             type: 'function',
             function: {
               name: 'assign_task',
-              arguments: '{"agent":"code-reviewer","description":"Delegate comprehensive codebase review","task":"Review"}',
+              arguments:
+                '{"agent":"code-reviewer","description":"Delegate comprehensive codebase review","task":"Review"}',
             },
           },
         ],
@@ -473,7 +479,7 @@ describe('AgentOrchestrator - Abort Memory Persistence', () => {
         content: 'Streamed content',
       };
 
-      vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+      vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
         await handlers?.onChunk?.('Streamed');
         await handlers?.onChunk?.(' content');
         await handlers?.onStreamFinish?.();
@@ -490,7 +496,7 @@ describe('AgentOrchestrator - Abort Memory Persistence', () => {
     it('should not save partial content on abort during streaming', async () => {
       const controller = new AbortController();
 
-      vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+      vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
         await handlers?.onChunk?.('Partial');
         controller.abort();
         throw new Error('Aborted');

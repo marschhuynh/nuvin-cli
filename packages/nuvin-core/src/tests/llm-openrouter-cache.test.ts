@@ -260,17 +260,17 @@ describe('OpenRouterLLM Prompt Caching', () => {
     await llm.generateCompletion(params);
 
     const sentBody = mockTransport.post.mock.calls[0][1];
-    
+
     expect(sentBody.messages[0].content).toEqual([
-      { type: 'text', text: 'System prompt as string', cache_control: { type: 'ephemeral' } }
+      { type: 'text', text: 'System prompt as string', cache_control: { type: 'ephemeral' } },
     ]);
-    
+
     expect(sentBody.messages[1].content).toBe('First user message');
     expect(sentBody.messages[2].content).toEqual([
-      { type: 'text', text: 'First assistant response', cache_control: { type: 'ephemeral' } }
+      { type: 'text', text: 'First assistant response', cache_control: { type: 'ephemeral' } },
     ]);
     expect(sentBody.messages[3].content).toEqual([
-      { type: 'text', text: 'Second user message', cache_control: { type: 'ephemeral' } }
+      { type: 'text', text: 'Second user message', cache_control: { type: 'ephemeral' } },
     ]);
   });
 });

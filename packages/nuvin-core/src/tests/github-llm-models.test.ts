@@ -214,7 +214,13 @@ describe('GithubLLM', () => {
     const result = await llm.generateCompletion(params);
 
     expect(llm.mockTransport.post).toHaveBeenCalledTimes(2);
-    expect(llm.mockTransport.post).toHaveBeenNthCalledWith(1, '/chat/completions', expect.any(Object), undefined, undefined);
+    expect(llm.mockTransport.post).toHaveBeenNthCalledWith(
+      1,
+      '/chat/completions',
+      expect.any(Object),
+      undefined,
+      undefined,
+    );
     expect(llm.mockTransport.post).toHaveBeenNthCalledWith(2, '/responses', expect.any(Object), undefined, undefined);
     expect(result.content).toBe('Hello from responses API!');
   });
@@ -266,7 +272,7 @@ describe('GithubLLM', () => {
     const modelIds = models.map((m) => m.id);
     expect(modelIds).toEqual(['gpt-4', 'claude-sonnet-4.5']);
     expect(new Set(modelIds).size).toBe(2);
-    
+
     const gpt4Model = models.find((m) => m.id === 'gpt-4');
     expect(gpt4Model?.name).toBe('GPT 4');
     expect(gpt4Model?.limits?.contextWindow).toBe(128000);

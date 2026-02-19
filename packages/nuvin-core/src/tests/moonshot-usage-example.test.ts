@@ -67,14 +67,14 @@ describe('Moonshot Usage Example', () => {
         stream: false,
       }),
       undefined,
-      undefined
+      undefined,
     );
   });
 
   it('should demonstrate getModels usage', async () => {
     if ('getModels' in llm && typeof llm.getModels === 'function') {
       const models = await llm.getModels();
-      
+
       expect(models).toHaveLength(3);
       expect(models[0].id).toBe('moonshot-v1-8k');
       expect(models[1].id).toBe('moonshot-v1-32k');

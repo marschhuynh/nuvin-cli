@@ -142,9 +142,7 @@ type CheerioElement = {
   attr(name: string): string | undefined;
 };
 
-type CheerioAPI = {
-  (selector: string): CheerioElement;
-};
+type CheerioAPI = (selector: string) => CheerioElement;
 
 type CheerioLoad = (html: string) => CheerioAPI;
 
@@ -394,7 +392,11 @@ export class WebSearchTool implements FunctionTool<WebSearchParams, ToolExecutio
     }
 
     if (!process.env.GOOGLE_CSE_KEY || !process.env.GOOGLE_CSE_CX) {
-      return err('GOOGLE_CSE_KEY and GOOGLE_CSE_CX are required for this tool (Google CSE only).', undefined, ErrorReason.InvalidInput);
+      return err(
+        'GOOGLE_CSE_KEY and GOOGLE_CSE_CX are required for this tool (Google CSE only).',
+        undefined,
+        ErrorReason.InvalidInput,
+      );
     }
 
     try {
@@ -420,24 +422,27 @@ export class WebSearchTool implements FunctionTool<WebSearchParams, ToolExecutio
       if (p.lang && p.lang !== 'en') appliedFilters.lang = p.lang;
       if (p.region) appliedFilters.region = p.region;
 
-      return okJson({
-        engine: this.provider.name as 'google-cse',
-        count: results.length,
-        items: results,
-        query: p.query,
-        appliedFilters: Object.keys(appliedFilters).length > 0 ? appliedFilters : undefined,
-      }, {
-        offset: p.offset,
-        totalRequested: p.count,
-        hydrated: p.hydrateMeta,
-      });
+      return okJson(
+        {
+          engine: this.provider.name as 'google-cse',
+          count: results.length,
+          items: results,
+          query: p.query,
+          appliedFilters: Object.keys(appliedFilters).length > 0 ? appliedFilters : undefined,
+        },
+        {
+          offset: p.offset,
+          totalRequested: p.count,
+          hydrated: p.hydrateMeta,
+        },
+      );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       const isAborted = message.includes('aborted by user');
       return err(
-        isAborted ? 'Search aborted by user' : message.slice(0, 500), 
-        undefined, 
-        isAborted ? ErrorReason.Aborted : ErrorReason.Unknown
+        isAborted ? 'Search aborted by user' : message.slice(0, 500),
+        undefined,
+        isAborted ? ErrorReason.Aborted : ErrorReason.Unknown,
       );
     }
   }

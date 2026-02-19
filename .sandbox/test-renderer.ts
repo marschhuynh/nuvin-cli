@@ -50,7 +50,7 @@ Successfully removed the \`--require-approval\` CLI flag:
 
 The build completed successfully and the help output no longer shows the removed flag.`;
 
-const exampleMarkdown2 = `
+const _exampleMarkdown2 = `
 Perfect! Now I have the full context. Let me provide a comprehensive summary of the new application creation logic:
 
 ## New Application Creation Logic

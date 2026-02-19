@@ -127,7 +127,7 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
             matches: [],
           });
         }
-        filesWithMtime.get(fullPath)!.matches.push(match);
+        filesWithMtime.get(fullPath)?.matches.push(match);
       }
 
       const sortedFiles = Array.from(filesWithMtime.entries()).sort((a, b) => b[1].mtime - a[1].mtime);
@@ -150,7 +150,7 @@ export class GrepTool implements FunctionTool<GrepParams, ToolExecutionContext, 
           for (const match of fileData.matches) {
             const lineText =
               match.lineText.length > MAX_LINE_LENGTH
-                ? match.lineText.substring(0, MAX_LINE_LENGTH) + '...'
+                ? `${match.lineText.substring(0, MAX_LINE_LENGTH)}...`
                 : match.lineText;
             const prefix = match.isContext ? '  ' : '> ';
             output += `${prefix}Line ${match.lineNum}: ${lineText}\n`;

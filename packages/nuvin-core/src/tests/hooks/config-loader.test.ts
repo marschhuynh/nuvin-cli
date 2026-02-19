@@ -6,22 +6,18 @@ describe('Hook Config Loader', () => {
   it('should load hooks from agent frontmatter', () => {
     const frontmatter: AgentFrontmatter = {
       hooks: {
-        pre_tool_use: [
-          { matcher: 'Bash', command: { command: './check.sh', timeout: 30 } },
-        ],
-        post_tool_use: [
-          { matcher: 'Write|Edit', command: { command: './lint.sh' } },
-        ],
+        pre_tool_use: [{ matcher: 'Bash', command: { command: './check.sh', timeout: 30 } }],
+        post_tool_use: [{ matcher: 'Write|Edit', command: { command: './lint.sh' } }],
       },
     };
 
     const config = loadHooksFromFrontmatter(frontmatter);
-    
+
     expect(config.pre_tool_use?.hooks).toHaveLength(1);
     expect(config.pre_tool_use?.hooks[0].matcher).toBe('Bash');
     expect(config.pre_tool_use?.hooks[0].command?.command).toBe('./check.sh');
     expect(config.pre_tool_use?.hooks[0].command?.timeout).toBe(30);
-    
+
     expect(config.post_tool_use?.hooks).toHaveLength(1);
     expect(config.post_tool_use?.hooks[0].matcher).toBe('Write|Edit');
   });
@@ -55,7 +51,7 @@ describe('Hook Config Loader', () => {
     };
 
     const config = loadHooksFromFrontmatter(frontmatter);
-    
+
     expect(config.pre_user_prompt?.hooks).toHaveLength(1);
     expect(config.pre_tool_use?.hooks).toHaveLength(1);
     expect(config.permission_request?.hooks).toHaveLength(1);
@@ -71,7 +67,7 @@ describe('Hook Config Loader', () => {
     const frontmatter: AgentFrontmatter = {
       hooks: {
         pre_tool_use: [
-          { 
+          {
             matcher: 'Bash',
             command: { command: './check.sh' },
             enabled: false,
@@ -82,7 +78,7 @@ describe('Hook Config Loader', () => {
     };
 
     const config = loadHooksFromFrontmatter(frontmatter);
-    
+
     expect(config.pre_tool_use?.hooks[0].enabled).toBe(false);
     expect(config.pre_tool_use?.hooks[0].once).toBe(true);
   });
@@ -91,9 +87,9 @@ describe('Hook Config Loader', () => {
     const frontmatter: AgentFrontmatter = {
       hooks: {
         pre_tool_use: [
-          { 
+          {
             matcher: 'Bash',
-            prompt: { 
+            prompt: {
               prompt: 'Should I allow this command?',
               timeout: 60,
             },
@@ -103,7 +99,7 @@ describe('Hook Config Loader', () => {
     };
 
     const config = loadHooksFromFrontmatter(frontmatter);
-    
+
     expect(config.pre_tool_use?.hooks[0].prompt?.prompt).toBe('Should I allow this command?');
     expect(config.pre_tool_use?.hooks[0].prompt?.timeout).toBe(60);
   });
@@ -120,7 +116,7 @@ describe('Hook Config Loader', () => {
     };
 
     const config = loadHooksFromFrontmatter(frontmatter);
-    
+
     expect(config.pre_tool_use?.hooks).toHaveLength(3);
     expect(config.pre_tool_use?.hooks[2].matcher).toBeUndefined();
   });

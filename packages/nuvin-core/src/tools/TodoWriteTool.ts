@@ -174,7 +174,7 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
         const m = line.match(/^(\d+)\. \[([^\]]+)\] (.+)$/);
         if (!m) return line;
         const [, num, status, content] = m;
-        const idx = parseInt(num ?? '0') - 1;
+        const idx = parseInt(num ?? '0', 10) - 1;
         return `{"content":"${content}","status":"${status}","id":"${items[idx]?.id || ''}"}`;
       })
       .join(',');

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import * as os from 'node:os';
 import { HookRegistry } from '../../hooks/hook-registry.js';
 import { CompositeHookPort } from '../../hooks/composite-hook-port.js';
 import { loadHooksFromFrontmatter, type AgentFrontmatter } from '../../hooks/config-loader.js';
@@ -37,17 +37,21 @@ describe('Hook System Integration', () => {
   it('should execute full flow: frontmatter → registry → hook execution', async () => {
     // 1. Create a test hook script
     const hookScript = path.join(tempDir, 'pre-tool-hook.sh');
-    await fs.writeFile(hookScript, `#!/bin/bash
+    await fs.writeFile(
+      hookScript,
+      `#!/bin/bash
 echo '{"continue": true, "additionalContext": "hook executed successfully"}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     // 2. Simulate agent frontmatter
     const frontmatter: AgentFrontmatter = {
       hooks: {
         pre_tool_use: [
-          { 
+          {
             matcher: 'bash_tool',
-            command: { 
+            command: {
               command: hookScript,
               timeout: 10,
             },
@@ -73,15 +77,19 @@ echo '{"continue": true, "additionalContext": "hook executed successfully"}'
   it('should block tool execution when hook returns continue:false', async () => {
     // Hook that blocks execution
     const hookScript = path.join(tempDir, 'block-hook.sh');
-    await fs.writeFile(hookScript, `#!/bin/bash
+    await fs.writeFile(
+      hookScript,
+      `#!/bin/bash
 echo '{"continue": false, "stopReason": "dangerous command detected"}'
 exit 2
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const frontmatter: AgentFrontmatter = {
       hooks: {
         pre_tool_use: [
-          { 
+          {
             matcher: 'bash_tool',
             command: { command: hookScript },
           },
@@ -102,14 +110,18 @@ exit 2
   it('should modify tool input via hook', async () => {
     // Hook that modifies input
     const hookScript = path.join(tempDir, 'modify-hook.sh');
-    await fs.writeFile(hookScript, `#!/bin/bash
+    await fs.writeFile(
+      hookScript,
+      `#!/bin/bash
 echo '{"continue": true, "updatedInput": {"cmd": "sanitized-command", "safe": true}}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const frontmatter: AgentFrontmatter = {
       hooks: {
         pre_tool_use: [
-          { 
+          {
             command: { command: hookScript },
           },
         ],
@@ -131,24 +143,36 @@ echo '{"continue": true, "updatedInput": {"cmd": "sanitized-command", "safe": tr
   it('should execute hooks for different event types', async () => {
     // Create hook scripts that write to a tracking file
     const trackFile = path.join(tempDir, 'track.txt');
-    
+
     const preToolHook = path.join(tempDir, 'pre-tool.sh');
-    await fs.writeFile(preToolHook, `#!/bin/bash
+    await fs.writeFile(
+      preToolHook,
+      `#!/bin/bash
 echo "pre_tool_use" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const postToolHook = path.join(tempDir, 'post-tool.sh');
-    await fs.writeFile(postToolHook, `#!/bin/bash
+    await fs.writeFile(
+      postToolHook,
+      `#!/bin/bash
 echo "post_tool_use" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const sessionStartHook = path.join(tempDir, 'session-start.sh');
-    await fs.writeFile(sessionStartHook, `#!/bin/bash
+    await fs.writeFile(
+      sessionStartHook,
+      `#!/bin/bash
 echo "session_start" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const frontmatter: AgentFrontmatter = {
       hooks: {
@@ -177,16 +201,24 @@ echo '{"continue": true}'
     const trackFile = path.join(tempDir, 'matched.txt');
 
     const bashHook = path.join(tempDir, 'bash-hook.sh');
-    await fs.writeFile(bashHook, `#!/bin/bash
+    await fs.writeFile(
+      bashHook,
+      `#!/bin/bash
 echo "bash_matched" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const fileHook = path.join(tempDir, 'file-hook.sh');
-    await fs.writeFile(fileHook, `#!/bin/bash
+    await fs.writeFile(
+      fileHook,
+      `#!/bin/bash
 echo "file_matched" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const frontmatter: AgentFrontmatter = {
       hooks: {
@@ -208,7 +240,7 @@ echo '{"continue": true}'
 
     const trackContent = await fs.readFile(trackFile, 'utf-8');
     const lines = trackContent.trim().split('\n');
-    
+
     expect(lines).toHaveLength(2);
     expect(lines[0]).toBe('bash_matched');
     expect(lines[1]).toBe('file_matched');
@@ -218,16 +250,24 @@ echo '{"continue": true}'
     const trackFile = path.join(tempDir, 'sources.txt');
 
     const agentHook = path.join(tempDir, 'agent-hook.sh');
-    await fs.writeFile(agentHook, `#!/bin/bash
+    await fs.writeFile(
+      agentHook,
+      `#!/bin/bash
 echo "agent" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const globalHook = path.join(tempDir, 'global-hook.sh');
-    await fs.writeFile(globalHook, `#!/bin/bash
+    await fs.writeFile(
+      globalHook,
+      `#!/bin/bash
 echo "global" >> ${trackFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     // Register hooks from different sources
     const agentFrontmatter: AgentFrontmatter = {
@@ -254,12 +294,16 @@ echo '{"continue": true}'
 
   it('should pass NUVIN_ environment variables to hook scripts', async () => {
     const outputFile = path.join(tempDir, 'env.txt');
-    
+
     const envHook = path.join(tempDir, 'env-hook.sh');
-    await fs.writeFile(envHook, `#!/bin/bash
+    await fs.writeFile(
+      envHook,
+      `#!/bin/bash
 echo "$NUVIN_SESSION_ID,$NUVIN_TOOL_NAME,$NUVIN_HOOK_EVENT" > ${outputFile}
 echo '{"continue": true}'
-`, { mode: 0o755 });
+`,
+      { mode: 0o755 },
+    );
 
     const frontmatter: AgentFrontmatter = {
       hooks: {

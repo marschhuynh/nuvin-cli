@@ -11,13 +11,15 @@ import type { WebFetchSuccessResult as WebFetchSuccess } from './WebFetchTool.js
 import type { TodoWriteSuccessResult as TodoWriteSuccess } from './TodoWriteTool.js';
 import type { AssignSuccessResult as AssignSuccess } from './AssignTool.js';
 
-type WithToolExecutionFields<T extends { status: string; type: string; result: unknown; metadata?: unknown }> = 
-  Omit<T, 'metadata'> & {
-    id: string;
-    name: string;
-    durationMs?: number;
-    metadata: T['metadata'];
-  };
+type WithToolExecutionFields<T extends { status: string; type: string; result: unknown; metadata?: unknown }> = Omit<
+  T,
+  'metadata'
+> & {
+  id: string;
+  name: string;
+  durationMs?: number;
+  metadata: T['metadata'];
+};
 
 type BashSuccessResult = WithToolExecutionFields<BashSuccess>;
 type FileReadSuccessResult = WithToolExecutionFields<FileReadSuccess>;

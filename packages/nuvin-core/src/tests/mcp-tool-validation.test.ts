@@ -205,7 +205,7 @@ describe('MCP Tool Schema Validation', () => {
       },
     ];
 
-    const results = (await port.executeToolCalls(toolCalls, {}, 3)) as ToolExecutionResult[];
+    const _results = (await port.executeToolCalls(toolCalls, {}, 3)) as ToolExecutionResult[];
 
     // Should skip validation and proceed with the call when schema conversion fails
     expect(mockCallTool).toHaveBeenCalledTimes(1);
@@ -243,7 +243,7 @@ describe('MCP Tool Schema Validation', () => {
       },
     ];
 
-    const results = (await port.executeToolCalls(toolCalls, {}, 3)) as ToolExecutionResult[];
+    const _results = (await port.executeToolCalls(toolCalls, {}, 3)) as ToolExecutionResult[];
 
     expect(mockCallTool).toHaveBeenCalledTimes(1);
   });

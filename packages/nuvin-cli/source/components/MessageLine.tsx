@@ -22,20 +22,24 @@ type MessageLineProps = {
   liveMessage?: boolean;
 };
 
-const BlockMessage = ({ content, backgroundColor, textColor }: { content: string; backgroundColor: string; textColor: string }) => {
+const BlockMessage = ({
+  content,
+  backgroundColor,
+  textColor,
+}: {
+  content: string;
+  backgroundColor: string;
+  textColor: string;
+}) => {
   return (
-    <Box
-      flexDirection="row"
-      marginTop={1}
-      flexShrink={0}
-      backgroundColor={backgroundColor}
-      width={'100%'}
-    >
-      <Box width={1} marginRight={2}><Text color={textColor}>▍</Text></Box>
+    <Box flexDirection="row" marginTop={1} flexShrink={0} backgroundColor={backgroundColor} width={'100%'}>
+      <Box width={1} marginRight={2}>
+        <Text color={textColor}>▍</Text>
+      </Box>
       <Text color={textColor}>{content}</Text>
     </Box>
-  )
-}
+  );
+};
 
 const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false }) => {
   const { altMode } = useAltMode();
@@ -260,12 +264,12 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         marginBottom={1}
         {...(liveMessage
           ? {
-            borderStyle: 'single',
-            borderColor: theme.colors.accent,
-            borderBottom: false,
-            borderTop: false,
-            borderLeft: false,
-          }
+              borderStyle: 'single',
+              borderColor: theme.colors.accent,
+              borderBottom: false,
+              borderTop: false,
+              borderLeft: false,
+            }
           : {})}
       >
         {content}

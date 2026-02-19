@@ -288,7 +288,10 @@ function buildToolMocks(
   toolCalls: ToolCall[],
   toolResults: ToolResult[],
 ): Record<string, { name: string; result: string; metadata?: Record<string, unknown>; durationMs?: number }> {
-  const mocks: Record<string, { name: string; result: string; metadata?: Record<string, unknown>; durationMs?: number }> = {};
+  const mocks: Record<
+    string,
+    { name: string; result: string; metadata?: Record<string, unknown>; durationMs?: number }
+  > = {};
 
   for (const tr of toolResults) {
     // Find the matching tool call to get the ID

@@ -139,7 +139,7 @@ describe('AgentOrchestrator - Usage Data During Tool Calls', () => {
       usage: usageData,
     };
 
-    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
       await handlers?.onChunk?.('Initial', usageData);
       await handlers?.onChunk?.(' response', usageData);
       return firstResponse;
@@ -195,7 +195,7 @@ describe('AgentOrchestrator - Usage Data During Tool Calls', () => {
     };
 
     let callCount = 0;
-    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
       if (callCount === 0) {
         callCount++;
         return firstResponse;
@@ -254,7 +254,7 @@ describe('AgentOrchestrator - Usage Data During Tool Calls', () => {
       usage: finalUsage,
     };
 
-    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
       await handlers?.onChunk?.('Final', finalUsage);
       await handlers?.onChunk?.(' response', finalUsage);
       return response;
@@ -293,7 +293,7 @@ describe('AgentOrchestrator - Usage Data During Tool Calls', () => {
     };
 
     let callCount = 0;
-    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
       callCount++;
       if (callCount === 1) {
         return response1;
@@ -333,7 +333,7 @@ describe('AgentOrchestrator - Usage Data During Tool Calls', () => {
       content: 'Response without usage',
     };
 
-    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (params, handlers) => {
+    vi.mocked(mockLLM.streamCompletion).mockImplementation(async (_params, handlers) => {
       await handlers?.onChunk?.('Response', undefined);
       await handlers?.onChunk?.(' without', undefined);
       await handlers?.onChunk?.(' usage', undefined);

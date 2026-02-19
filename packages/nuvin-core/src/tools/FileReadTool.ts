@@ -1,5 +1,5 @@
-import { promises as fs } from 'fs';
-import * as path from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 import type { ToolDefinition } from '../ports.js';
 import { ErrorReason } from '../ports.js';
 import type { FunctionTool, ToolExecutionContext, ExecResultError } from './types.js';
@@ -105,10 +105,15 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
 
       const abs = this.resolveSafePath(params.path, context);
       const st = await fs.stat(abs).catch(() => null);
-      if (!st || !st.isFile()) return err(`File not found: ${params.path}`, { path: params.path }, ErrorReason.NotFound);
+      if (!st || !st.isFile())
+        return err(`File not found: ${params.path}`, { path: params.path }, ErrorReason.NotFound);
 
       if (st.size > this.maxBytesHard) {
-        return err(`File too large (${st.size} bytes). Hard cap is ${this.maxBytesHard} bytes.`, { path: params.path }, ErrorReason.InvalidInput);
+        return err(
+          `File too large (${st.size} bytes). Hard cap is ${this.maxBytesHard} bytes.`,
+          { path: params.path },
+          ErrorReason.InvalidInput,
+        );
       }
 
       const payload = await fs.readFile(abs);

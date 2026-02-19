@@ -1,5 +1,5 @@
-import { exec, type ExecOptions } from 'child_process';
-import { promisify } from 'util';
+import { exec, type ExecOptions } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { HookContext, HookResult, HookDecisionType } from './types.js';
 
 const execAsync = promisify(exec);
@@ -32,11 +32,7 @@ export class CommandHookExecutor {
    * @param timeoutSeconds - Maximum time to wait for command (default: 60s)
    * @returns The parsed hook result
    */
-  async execute(
-    command: string,
-    context: HookContext,
-    timeoutSeconds: number = 60,
-  ): Promise<HookResult> {
+  async execute(command: string, context: HookContext, timeoutSeconds: number = 60): Promise<HookResult> {
     const startTime = Date.now();
 
     const env: Record<string, string> = {
@@ -118,12 +114,7 @@ export class CommandHookExecutor {
    * @param durationMs - How long the command took
    * @returns Parsed hook result
    */
-  private parseOutput(
-    stdout: string,
-    stderr: string,
-    exitCode: number,
-    durationMs: number,
-  ): HookResult {
+  private parseOutput(stdout: string, stderr: string, exitCode: number, durationMs: number): HookResult {
     // Try to parse as JSON
     let jsonOutput: Record<string, unknown> | null = null;
     try {
