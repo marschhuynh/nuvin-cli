@@ -527,6 +527,7 @@ export default function App({
           vimModeEnabled={vimModeEnabled}
           vimMode={vimMode}
           workingDirectory={process.cwd()}
+          sessionId={sessionId ?? undefined}
         />
       </Box>
     </ErrorBoundary>
