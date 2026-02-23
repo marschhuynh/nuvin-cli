@@ -20,6 +20,7 @@ import { registerSummaryCommand } from './summary/index.js';
 import { registerStatCommand } from './stat.js';
 import { registerSkillsCommand } from './skills.js';
 import { registerSwapCommand } from './swap.js';
+import { registerStatuslineCommand } from './statusline.js';
 
 export async function registerCommands(orchestratorManager: OrchestratorManager) {
   commandRegistry.setOrchestrator(orchestratorManager);
@@ -41,6 +42,7 @@ export async function registerCommands(orchestratorManager: OrchestratorManager)
   registerStatCommand(commandRegistry);
   registerSkillsCommand(commandRegistry);
   registerSwapCommand(commandRegistry);
+  registerStatuslineCommand(commandRegistry);
 
   await loadAndRegisterCustomCommands(commandRegistry);
 }
