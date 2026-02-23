@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Box, Text, measureElement, type BoxRef } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
+import TextInput from '@/components/TextInput/index.js';
 import { AutoScrollBox, type AutoScrollBoxHandle } from '@/components/AutoScrollBox.js';
 
 export type ComboBoxItem = {
@@ -48,7 +48,6 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   const [input, setInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const pasteStateRef = useRef<PasteState>(createPasteState());
   const scrollBoxRef = useRef<AutoScrollBoxHandle>(null);
   const itemRefs = useRef<Map<number, BoxRef>>(new Map());
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -188,43 +187,28 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     [selectableIndices.length, enableRotation],
   );
 
+  const handleSelect = useCallback(() => {
+    if (selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
+      const listIndex = selectableIndices[selectedIndex];
+      const listItem = listItems[listIndex];
+      if (listItem?.type === 'item') {
+        onSelect(listItem.item);
+      }
+    }
+  }, [selectableIndices, selectedIndex, listItems, onSelect]);
+
   useInput(
     (inputChar, key) => {
-      const pasteResult = processPasteChunk(inputChar, pasteStateRef.current);
-      pasteStateRef.current = pasteResult.newState;
-
-      if (pasteResult.shouldWaitForMore) {
-        return;
-      }
-
-      if (pasteResult.processedInput !== null) {
-        inputChar = pasteResult.processedInput;
-      }
-
-      if (key.return) {
-        if (selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
-          const listIndex = selectableIndices[selectedIndex];
-          const listItem = listItems[listIndex];
-          if (listItem?.type === 'item') {
-            onSelect(listItem.item);
-          }
-        }
-        return;
-      }
-
       if (key.escape) {
         onCancel?.();
         return;
       }
 
-      if (key.upArrow) {
-        navigate('up');
-        return;
-      }
-
-      if (key.downArrow) {
-        navigate('down');
-        return;
+      // When TextInput is not rendered, handle navigation directly
+      if (!showSearchInput) {
+        if (key.return) { handleSelect(); return; }
+        if (key.upArrow) { navigate('up'); return; }
+        if (key.downArrow) { navigate('down'); return; }
       }
 
       if (inputChar === ' ' && onSpace) {
@@ -242,15 +226,6 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         onNew();
         return;
       }
-
-      if (key.backspace || key.delete) {
-        setInput((prev) => prev.slice(0, -1));
-        return;
-      }
-
-      if (inputChar && !key.ctrl && !key.meta && inputChar.length === 1 && inputChar >= ' ') {
-        setInput((prev) => prev + inputChar);
-      }
     },
     { isActive: focus },
   );
@@ -263,34 +238,21 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     }
   }, []);
 
-  const renderedInput = input ? (
-    <>
-      <Text>{input}</Text>
-      <Text color={theme.model?.input || theme.colors.text}>█</Text>
-    </>
-  ) : (
-    <Text>
-      {placeholder.length > 0 ? (
-        <>
-          <Text backgroundColor={theme.footer.infoBg} color={theme.model?.input || theme.colors.text}>
-            {placeholder[0]}
-          </Text>
-          <Text color={theme.colors.muted}>{placeholder.slice(1)}</Text>
-        </>
-      ) : (
-        <Text backgroundColor={theme.footer.infoBg} color={theme.model?.input || theme.colors.text}>
-          {' '}
-        </Text>
-      )}
-    </Text>
-  );
-
   return (
     <Box flexDirection="column" flexGrow={1} overflow="hidden">
       {showSearchInput && (
         <Box marginBottom={1} flexShrink={0}>
           <Text color={theme.model?.label || theme.colors.info}>Search: </Text>
-          {renderedInput}
+          <TextInput
+            value={input}
+            onChange={setInput}
+            onSubmit={handleSelect}
+            onUpArrow={() => navigate('up')}
+            onDownArrow={() => navigate('down')}
+            placeholder={placeholder}
+            focus={focus}
+            showCursor={true}
+          />
         </Box>
       )}
 
