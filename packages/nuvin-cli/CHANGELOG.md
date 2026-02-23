@@ -1,5 +1,17 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.5
+
+### Minor Changes
+
+- [`84c800c`](https://github.com/marschhuynh/nuvin-space/commit/84c800c68b0bc0deef223e307e8f5953c399c902) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Statusline `|` separator for left/right alignment per row; Shift+←→ to reorder; footer segments renderable on either side.
+
+- [`a2c48a0`](https://github.com/marschhuynh/nuvin-space/commit/a2c48a018f3291e810ba978dc021ecc9bde7b7cd) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `WindowedComboBox` with virtualized rendering, fuzzy search, and `TextInput` integration; refactor `ComboBox` input handling.
+
+### Patch Changes
+
+- [`7d35006`](https://github.com/marschhuynh/nuvin-space/commit/7d350067d4caff60b4a040e7225ac08339a5ed67) Thanks [@marschhuynh](https://github.com/marschhuynh)! - History selection uses `WindowedComboBox` with fuzzy search; modal height adapts to terminal size.
+
 ## 1.37.0-rc.4
 
 ### Patch Changes
