@@ -108,6 +108,27 @@ export interface UIThemeSettings {
   backgrounds?: 'auto' | 'on' | 'off';
 }
 
+export type StatuslineSegment =
+  | 'session'
+  | 'thinking'
+  | 'sudo'
+  | 'tokens'
+  | 'context'
+  | 'cached'
+  | 'requests'
+  | 'tools'
+  | 'cost'
+  | 'lsp'
+  | 'gitBranch'
+  | 'keybindings';
+
+export interface StatuslineConfig {
+  /** Two rows of segments. Each row is an ordered list of segment keys.
+   * Segments not listed in either row are hidden.
+   * Default: all segments in visual order across 2 rows. */
+  rows?: [StatuslineSegment[], StatuslineSegment[]];
+}
+
 export interface CLIConfig {
   /** Currently active provider */
   activeProvider?: ProviderKey;
@@ -140,6 +161,7 @@ export interface CLIConfig {
   /** UI customization options */
   ui?: {
     theme?: UIThemeSettings;
+    statusline?: StatuslineConfig;
   };
   /** Allow additional custom keys */
   [key: string]: unknown;
