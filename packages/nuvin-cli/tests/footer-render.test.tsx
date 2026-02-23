@@ -318,6 +318,29 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
     expect(lastFrame()).toContain('anthropic:claude-3-5-sonnet');
   });
 
+  it('renders gitBranch and keybindings on the right when | is at start of row', async () => {
+    const { useConfig } = await import('@/contexts/ConfigContext.js');
+    vi.mocked(useConfig).mockReturnValueOnce({
+      get: vi.fn().mockImplementation((key: string) => {
+        if (key === 'thinking') return 'OFF';
+        if (key === 'activeProvider') return 'anthropic';
+        if (key === 'model') return 'claude-3-5-sonnet';
+        if (key === 'ui.statusline.rows') return [
+          ['model', 'session', 'thinking', 'sudo', '|', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['|', 'gitBranch', 'keybindings'],
+        ];
+        return undefined;
+      }),
+      getCurrentProfile: vi.fn().mockReturnValue('default'),
+    });
+
+    const { lastFrame } = render(<Footer {...baseProps} />);
+    const frame = lastFrame()!;
+    // gitBranch and keybindings should both render
+    expect(frame).toContain('projects/myapp');
+    expect(frame).toContain('/ command');
+  });
+
   it('shows all segments from DEFAULT_STATUSLINE_ROWS with full metrics', () => {
     const { lastFrame } = render(
       <Footer

@@ -95,17 +95,14 @@ const FooterComponent: React.FC<FooterProps> = ({
     };
   };
 
-  // Build the status string for the left side
-  const hasStatusSegments = (leftSegs: StatuslineSegment[]) =>
-    leftSegs.some((s) => s === 'model' || s === 'session' || s === 'thinking' || s === 'sudo');
-
-  const renderStatusString = (leftSegs: StatuslineSegment[]) => {
+  // Build the status string from whichever segments are present in the given list
+  const renderStatusString = (segs: StatuslineSegment[]) => {
     const parts: (string | null)[] = [
       currentProfile && currentProfile !== 'default' ? currentProfile : null,
-      leftSegs.includes('model') ? `${provider}:${model}` : null,
-      leftSegs.includes('session') && sessionId ? `Session: ${sessionId}` : null,
-      leftSegs.includes('thinking') && thinking && thinking !== THINKING_LEVELS.OFF ? `Thinking: ${thinking}` : null,
-      leftSegs.includes('sudo') && !toolApprovalMode ? 'SUDO' : null,
+      segs.includes('model') ? `${provider}:${model}` : null,
+      segs.includes('session') && sessionId ? `Session: ${sessionId}` : null,
+      segs.includes('thinking') && thinking && thinking !== THINKING_LEVELS.OFF ? `Thinking: ${thinking}` : null,
+      segs.includes('sudo') && !toolApprovalMode ? 'SUDO' : null,
     ].filter(Boolean);
     return parts.join(' | ');
   };
@@ -188,56 +185,74 @@ const FooterComponent: React.FC<FooterProps> = ({
     }
   };
 
+  const STATUS_SEGMENTS = new Set<StatuslineSegment>(['model', 'session', 'thinking', 'sudo']);
+
+  /** Render a group of segments (left or right side of a row). */
+  const renderGroup = (segs: StatuslineSegment[], isNotificationRow: boolean) => {
+    // Notification replaces everything on row 0 left
+    if (isNotificationRow && notification) {
+      return <Text color={theme.tokens.yellow}>{notification}</Text>;
+    }
+
+    const statusSegs = segs.filter((s) => STATUS_SEGMENTS.has(s));
+    const hasStatus = statusSegs.length > 0;
+    const otherSegs = segs.filter((s) => !STATUS_SEGMENTS.has(s));
+
+    return (
+      <>
+        {hasStatus && (
+          <>
+            {vimModeEnabled && (
+              <Text color={theme.footer.status} dimColor>
+                {vimMode === 'insert' ? '-- INSERT --' : '-- NORMAL --'}
+                {' | '}
+              </Text>
+            )}
+            <Text color={theme.footer.status} dimColor>
+              {renderStatusString(statusSegs)}
+            </Text>
+          </>
+        )}
+        {otherSegs.map((seg) => {
+          if (seg === 'gitBranch') {
+            if (!workingDirectory) return null;
+            return (
+              <React.Fragment key="gitBranch">
+                <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory)}</Text>
+                <Text dimColor color={theme.footer.gitBranch}>
+                  {gitBranch && `:${gitBranch}`}
+                </Text>
+              </React.Fragment>
+            );
+          }
+          if (seg === 'keybindings') {
+            return (
+              <Text key="keybindings" dimColor>
+                <Text color={theme.colors.accent}>/</Text> command{' · '}
+                <Text color={theme.colors.accent}>ESC×2</Text> stop
+              </Text>
+            );
+          }
+          return renderMetricSegment(seg);
+        })}
+      </>
+    );
+  };
+
   return (
     <Box justifyContent="space-between" flexDirection="column" flexShrink={0}>
       {rows.map((row, rowIdx) => {
         const { left, right } = partitionRow(row);
-        const hasStatus = hasStatusSegments(left);
-        const statusStr = hasStatus ? renderStatusString(left) : '';
-        const hasGitBranch = left.includes('gitBranch') && !!workingDirectory;
-        const hasKeybindings = right.includes('keybindings');
 
         return (
           <Box key={rowIdx} justifyContent="space-between" flexWrap="wrap">
             {/* Left side */}
             <Box>
-              {rowIdx === 0 && notification ? (
-                <Text color={theme.tokens.yellow}>{notification}</Text>
-              ) : (
-                <>
-                  {hasStatus && (
-                    <>
-                      {vimModeEnabled && (
-                        <Text color={theme.footer.status} dimColor>
-                          {vimMode === 'insert' ? '-- INSERT --' : '-- NORMAL --'}
-                          {' | '}
-                        </Text>
-                      )}
-                      <Text color={theme.footer.status} dimColor>
-                        {statusStr}
-                      </Text>
-                    </>
-                  )}
-                  {hasGitBranch && (
-                    <>
-                      <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory!)}</Text>
-                      <Text dimColor color={theme.footer.gitBranch}>
-                        {gitBranch && `:${gitBranch}`}
-                      </Text>
-                    </>
-                  )}
-                </>
-              )}
+              {renderGroup(left, rowIdx === 0)}
             </Box>
             {/* Right side */}
             <Box alignSelf="flex-end" flexGrow={1} justifyContent="flex-end">
-              {right.filter((s) => s !== 'keybindings').map((s) => renderMetricSegment(s))}
-              {hasKeybindings && (
-                <Text dimColor>
-                  <Text color={theme.colors.accent}>/</Text> command{' · '}
-                  <Text color={theme.colors.accent}>ESC×2</Text> stop
-                </Text>
-              )}
+              {renderGroup(right, false)}
             </Box>
           </Box>
         );
