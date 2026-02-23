@@ -1,12 +1,11 @@
 import type React from 'react';
-import { useState, useRef } from 'react';
+import { useMemo } from 'react';
 import { Box, Text } from 'ink';
-import { useInput } from '@/contexts/InputContext/index.js';
 import { eventBus } from '@/services/EventBus.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { SessionInfo } from '@/types.js';
-import SelectInput from './SelectInput/index.js';
+import { WindowedComboBox, type ComboBoxItem } from '@/components/ComboBox/index.js';
 
 type HistorySelectionProps = {
   availableSessions: SessionInfo[];
@@ -107,7 +106,6 @@ const SessionItem: React.FC<{ item: SessionInfo; isSelected: boolean; cols: numb
 }) => {
   const { theme } = useTheme();
   const relativeTime = formatRelativeTime(item.timestamp);
-  // Prioritize topic - show it directly
   const displayText = item.topic || item.lastMessage;
   const preview = truncateText(displayText, cols - 5);
   const status = getSessionStatus(item.lastMessage, item.messageCount, theme);
@@ -143,72 +141,42 @@ const SessionItem: React.FC<{ item: SessionInfo; isSelected: boolean; cols: numb
   );
 };
 
-const VISIBLE_ITEMS = 7;
-
 export const HistorySelection: React.FC<HistorySelectionProps> = ({ availableSessions }) => {
-  const { theme } = useTheme();
   const { cols } = useStdoutDimensions();
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const lastSelectedRef = useRef<string | null>(null);
 
-  useInput(
-    (_input, key) => {
-      if (key.escape) {
-      }
-    },
-    { isActive: true },
+  const comboBoxItems = useMemo<ComboBoxItem[]>(
+    () =>
+      availableSessions.map((session) => ({
+        label: session.topic || session.lastMessage || session.sessionId,
+        value: session.sessionId,
+      })),
+    [availableSessions],
   );
 
+  const handleSelect = (item: ComboBoxItem) => {
+    const session = availableSessions.find((s) => s.sessionId === item.value);
+    if (session) {
+      eventBus.emit('ui:history:selected', session);
+    }
+  };
+
   return (
-    <Box flexDirection="column">
-      <Box marginBottom={1} justifyContent="space-between">
-        <Box>
-          <Text color={theme.history.title} bold>
-            Session History{' '}
-          </Text>
-          <Text color={theme.history.help} dimColor>
-            (↑↓ navigate • Enter select • ESC cancel)
-          </Text>
-        </Box>
-        {availableSessions.length > VISIBLE_ITEMS && (
-          <Text color={theme.history.keybind} dimColor>
-            <Text>{String(selectedIndex + 1)}</Text> of <Text>{String(availableSessions.length)}</Text>
-          </Text>
-        )}
-      </Box>
-
-      {availableSessions.length === 0 ? (
-        <Box flexDirection="column" paddingX={1}>
-          <Text color={theme.history.help} dimColor>
-            No previous sessions found.
-          </Text>
-          <Text color={theme.history.help} dimColor>
-            Start chatting to create your first session!
-          </Text>
-        </Box>
-      ) : (
-        <SelectInput<SessionInfo>
-          limit={VISIBLE_ITEMS}
-          items={availableSessions.map((session, _index) => ({
-            key: session.sessionId,
-            label: session.sessionId,
-            value: session,
-          }))}
-          itemComponent={(props: { isSelected?: boolean; label: string; value: SessionInfo }) => {
-            const sessionId = props.value.sessionId;
-
-            if (props.isSelected && lastSelectedRef.current !== sessionId) {
-              const itemIndex = availableSessions.findIndex((s) => s.sessionId === sessionId);
-              if (itemIndex !== -1) {
-                lastSelectedRef.current = sessionId;
-                setTimeout(() => setSelectedIndex(itemIndex), 0);
-              }
-            }
-            return <SessionItem cols={cols - 2} item={props.value} isSelected={!!props.isSelected} />;
-          }}
-          onSelect={(item) => eventBus.emit('ui:history:selected', item.value)}
-        />
-      )}
+    <Box flexDirection="column" flexGrow={1} overflow="hidden">
+      <WindowedComboBox
+        items={comboBoxItems}
+        showSearchInput={true}
+        placeholder="Search sessions..."
+        showItemCount={false}
+        enableRotation={true}
+        focus={true}
+        fuzzySearch={true}
+        renderItem={(item, isSelected) => {
+          const session = availableSessions.find((s) => s.sessionId === item.value);
+          if (!session) return null;
+          return <SessionItem cols={cols - 2} item={session} isSelected={isSelected} />;
+        }}
+        onSelect={handleSelect}
+      />
     </Box>
   );
 };

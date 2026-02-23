@@ -7,12 +7,14 @@ import { HistorySelection } from '@/components/HistorySelection.js';
 import { scanAvailableSessions, loadSessionHistory, getSessionDir } from '@/hooks/useSessionManagement.js';
 import { ConfigManager } from '@/config/manager.js';
 import { AppModal } from '@/components/AppModal.js';
+import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
 import type { SessionInfo } from '@/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 
 const HistoryCommandComponent = ({ context, deactivate }: CommandComponentProps) => {
   const { theme } = useTheme();
+  const { rows } = useStdoutDimensions();
   const [availableSessions, setAvailableSessions] = useState<SessionInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -146,8 +148,10 @@ const HistoryCommandComponent = ({ context, deactivate }: CommandComponentProps)
     return null;
   }
 
+  const modalHeight = Math.min(rows - 4, 24);
+
   return (
-    <AppModal visible={true} title="Session History" onClose={deactivate} closeOnEscape={false}>
+    <AppModal visible={true} title="Session History" onClose={deactivate} closeOnEscape={false} height={modalHeight}>
       <HistorySelection availableSessions={availableSessions} />
     </AppModal>
   );
