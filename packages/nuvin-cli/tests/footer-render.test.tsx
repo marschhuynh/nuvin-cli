@@ -199,6 +199,30 @@ describe('Footer — default layout (snapshot)', () => {
     const { lastFrame } = render(<Footer {...baseProps} />);
     expect(lastFrame()).not.toContain('Session:');
   });
+
+  it('shows notification text on row 0 when notification is active', async () => {
+    const { useNotification } = await import('@/hooks/useNotification.js');
+    vi.mocked(useNotification).mockReturnValueOnce({ notification: 'Tool approved' });
+
+    const { lastFrame } = render(<Footer {...baseProps} />);
+    expect(lastFrame()).toContain('Tool approved');
+  });
+
+  it('notification replaces row 0 left content, not row 1', async () => {
+    const { useNotification } = await import('@/hooks/useNotification.js');
+    vi.mocked(useNotification).mockReturnValueOnce({ notification: 'Saving...' });
+
+    const { lastFrame } = render(<Footer {...baseProps} />);
+    const frame = lastFrame()!;
+    // Notification appears
+    expect(frame).toContain('Saving...');
+    // Row 0 status items replaced — provider:model should not appear alongside notification
+    const notifLine = frame.split('\n').find(l => l.includes('Saving...'))!;
+    expect(notifLine).not.toContain('anthropic:claude-3-5-sonnet');
+    // Row 1 (dir + keybindings) still renders
+    expect(frame).toContain('projects/myapp');
+    expect(frame).toContain('/ command');
+  });
 });
 
 describe('Footer — segment visibility via ui.statusline.rows config', () => {

@@ -197,11 +197,11 @@ const FooterComponent: React.FC<FooterProps> = ({
           <Box key={rowIdx} justifyContent="space-between" flexWrap="wrap">
             {/* Left side */}
             <Box>
-              {hasStatus && (
+              {rowIdx === 0 && notification ? (
+                <Text color={theme.tokens.yellow}>{notification}</Text>
+              ) : (
                 <>
-                  {notification ? (
-                    <Text color={theme.tokens.yellow}>{notification}</Text>
-                  ) : (
+                  {hasStatus && (
                     <>
                       {vimModeEnabled && (
                         <Text color={theme.footer.status} dimColor>
@@ -214,14 +214,14 @@ const FooterComponent: React.FC<FooterProps> = ({
                       </Text>
                     </>
                   )}
-                </>
-              )}
-              {hasGitBranch && (
-                <>
-                  <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory!)}</Text>
-                  <Text dimColor color={theme.footer.gitBranch}>
-                    {gitBranch && `:${gitBranch}`}
-                  </Text>
+                  {hasGitBranch && (
+                    <>
+                      <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory!)}</Text>
+                      <Text dimColor color={theme.footer.gitBranch}>
+                        {gitBranch && `:${gitBranch}`}
+                      </Text>
+                    </>
+                  )}
                 </>
               )}
             </Box>
