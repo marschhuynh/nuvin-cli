@@ -74,7 +74,11 @@ export class DefaultDelegationService implements DelegationService {
   }
 
   listEnabledAgents() {
-    return this.catalog.list().filter((agent) => !agent.name || this.enabledAgents[agent.name] !== false);
+    return this.catalog.list().filter((agent) => {
+      if (!agent.name) return true;
+      if (agent.name === 'nuvin') return false;
+      return this.enabledAgents[agent.name] !== false;
+    });
   }
 
   async delegate(params: AssignParams, context?: ToolExecutionContext): Promise<DelegationResult> {
