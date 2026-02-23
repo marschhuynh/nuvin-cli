@@ -30,6 +30,7 @@ import { AssignTool } from './tools/AssignTool.js';
 import { LspTool, type LspService } from './tools/LspTool.js';
 import { AgentManagerCommandRunner, DelegationServiceFactory } from './delegation/index.js';
 import { AskUserTool } from './tools/AskUserTool.js';
+import { memorySaveToolDefinition, type MemorySaveToolInput } from './tools/memory-save-tool.js';
 
 export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorAwareToolPort {
   private tools = new Map<string, FunctionTool<unknown, unknown>>();
@@ -40,6 +41,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
   private lspTool?: LspTool;
   private skillTool?: SkillTool;
   private enabledAgentsConfig: Record<string, boolean> = {};
+  private memoryHandler: ((input: MemorySaveToolInput) => Promise<string>) | null = null;
 
   // Stored for re-initialization when memory changes (lazy session init)
   private orchestratorConfig?: AgentConfig;
@@ -107,6 +109,14 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     }
   }
 
+  /**
+   * Wire the memory_save tool handler from the CLI layer.
+   * Called after the MemoryService is available (in OrchestratorManager.init).
+   */
+  setMemoryHandler(handler: (input: MemorySaveToolInput) => Promise<string>): void {
+    this.memoryHandler = handler;
+  }
+
   private async persistToolNames() {
     try {
       const names = Array.from(this.tools.keys());
@@ -123,6 +133,12 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
   getToolDefinitions(enabledTools: string[]): ToolDefinition[] {
     const list: ToolDefinition[] = [];
     for (const name of enabledTools) {
+      if (name === 'memory_save') {
+        if (this.memoryHandler) {
+          list.push({ type: 'function', function: memorySaveToolDefinition });
+        }
+        continue;
+      }
       const impl = this.tools.get(name);
       if (impl) list.push({ type: 'function', function: impl.definition() });
     }
@@ -260,6 +276,45 @@ DO NOT mention this explicitly to the user.
           }
 
           const startTime = performance.now();
+
+          if (c.name === 'memory_save') {
+            if (!this.memoryHandler) {
+              const durationMs = Math.round(performance.now() - startTime);
+              return {
+                id: c.id,
+                name: c.name,
+                status: 'error' as const,
+                type: 'text' as const,
+                result: 'Memory system is not enabled.',
+                metadata: { errorReason: ErrorReason.ToolNotFound },
+                durationMs,
+              };
+            }
+            try {
+              const result = await this.memoryHandler(c.parameters as unknown as MemorySaveToolInput);
+              const durationMs = Math.round(performance.now() - startTime);
+              return {
+                id: c.id,
+                name: c.name,
+                status: 'success' as const,
+                type: 'text' as const,
+                result,
+                durationMs,
+              };
+            } catch (error) {
+              const durationMs = Math.round(performance.now() - startTime);
+              return {
+                id: c.id,
+                name: c.name,
+                status: 'error' as const,
+                type: 'text' as const,
+                result: `Failed to save memory: ${error instanceof Error ? error.message : String(error)}`,
+                metadata: { errorReason: ErrorReason.Unknown },
+                durationMs,
+              };
+            }
+          }
+
           const impl = this.tools.get(c.name);
           if (!impl) {
             const durationMs = Math.round(performance.now() - startTime);

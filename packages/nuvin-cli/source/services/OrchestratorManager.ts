@@ -41,6 +41,7 @@ import {
   DefaultSpecialistAgentFactory,
   DefaultDelegationService,
   type DelegationServiceConfig,
+  MemoryExtractor,
 } from '@nuvin/nuvin-core';
 import { UIEventAdapter, type MessageLine, type LineMetadata } from '@/adapters/index.js';
 import { builtinAgents } from '@/agents/index.js';
@@ -58,6 +59,7 @@ import { theme } from '@/theme.js';
 import { LSP } from './lsp/index.js';
 import { skillsService } from './SkillsService.js';
 import { getGitContextInfo } from '@/utils/git-context.js';
+import { MemoryService } from './MemoryService.js';
 
 // Directory paths will be resolved dynamically based on active profile
 const defaultModels: Record<ProviderKey, string> = {
@@ -95,6 +97,7 @@ const baseEnabledTools: string[] = [
   'lsp',
   'skill',
   'ask_user_tool',
+  'memory_save',
 ];
 
 function getEnabledTools(): string[] {
@@ -166,6 +169,7 @@ export class OrchestratorManager {
   private toolRegistry: ToolRegistry | null = null;
   private activeAgentId: string = 'main';
   private previousOrchestrator: AgentOrchestrator | null = null;
+  private memoryService: MemoryService | null = null;
 
   private static readonly WARNING_THRESHOLD = 0.85;
   private static readonly AUTO_SUMMARY_THRESHOLD = 0.95;
@@ -556,6 +560,21 @@ export class OrchestratorManager {
       this.mcpManager = mcpManager;
       this.toolRegistry = toolRegistry;
 
+      this.initializeMemoryService();
+
+      // Wire memory_save tool handler
+      toolRegistry.setMemoryHandler(async (input) => {
+        if (!this.memoryService) return 'Memory system is not enabled.';
+        const entry = await this.memoryService.addMemory({
+          content: input.content,
+          type: input.type,
+          scope: input.scope,
+          tags: input.tags ?? [],
+          source: 'explicit',
+        });
+        return `Memory saved: "${entry.content}" [${entry.type}/${entry.scope}]`;
+      });
+
       // Set initial LLM - will be refreshed on each send() call
       const initialLLM = this.createLLM();
       this.orchestrator.setLLM(initialLLM);
@@ -592,6 +611,30 @@ export class OrchestratorManager {
 
   getMemory() {
     return this.memory;
+  }
+
+  getMemoryService(): MemoryService | null {
+    return this.memoryService;
+  }
+
+  private initializeMemoryService(): void {
+    const currentConfig = this.getCurrentConfig();
+    const memoryConfig = currentConfig.config.memory;
+    if (memoryConfig?.enabled === false) return;
+
+    const currentProfile =
+      typeof this.configManager.getCurrentProfile === 'function' ? this.configManager.getCurrentProfile() : undefined;
+    const isDefaultProfile = !currentProfile || currentProfile === 'default';
+    const profileSuffix = isDefaultProfile ? '' : `-${currentProfile}`;
+
+    const globalDir = path.join(os.homedir(), `.nuvin${profileSuffix}`, 'memory');
+    const projectDir = path.join(process.cwd(), '.nuvin', 'memory');
+
+    this.memoryService = new MemoryService({
+      globalDir,
+      projectDir,
+      maxInjectionTokens: memoryConfig?.maxInjectionTokens,
+    });
   }
 
   getStatus() {
@@ -1150,6 +1193,28 @@ export class OrchestratorManager {
       ...agentConfigOverrides,
     };
 
+    // Inject long-term memories into system prompt
+    if (this.memoryService) {
+      const memoryBlock = await this.memoryService.getMemoryPromptInjection();
+      const currentSystemPrompt = this.orchestrator.getConfig().systemPrompt ?? '';
+      const memorySection = [
+        '## Long-Term Memory',
+        '',
+        'You have a long-term memory system that persists across sessions.',
+        'Use the `memory_save` tool to explicitly save important information:',
+        '- User preferences (coding style, tool choices, naming conventions)',
+        '- Project facts (tech stack, architecture decisions, team conventions)',
+        '- Lessons learned (debugging approaches that worked, common pitfalls)',
+        '',
+        'Save when the user states a preference, when you discover a project pattern, or when the user corrects your behavior.',
+        'Do NOT save transient task details, information already in project docs, or duplicate facts.',
+      ];
+      if (memoryBlock) {
+        memorySection.push('', 'Remembered from previous sessions:', '', memoryBlock);
+      }
+      agentConfig.systemPrompt = `${currentSystemPrompt}\n\n${memorySection.join('\n')}`;
+    }
+
     if (Object.keys(agentConfig).length > 0) {
       this.orchestrator.updateConfig(agentConfig);
 
@@ -1183,9 +1248,57 @@ export class OrchestratorManager {
           signal: opts.signal,
         });
       }
+
+      // Background memory extraction (fire and forget)
+      this.extractMemoriesInBackground(conversationId, currentConfig.provider, currentConfig.smallModel).catch(() => {});
     }
 
     return result;
+  }
+
+  private async extractMemoriesInBackground(
+    conversationId: string,
+    provider: string,
+    model: string,
+  ): Promise<void> {
+    if (!this.memoryService || !this.conversationStore) return;
+    const config = this.getCurrentConfig();
+    if (config.config.memory?.backgroundExtraction === false) return;
+
+    try {
+      const conversation = await this.conversationStore.getConversation(conversationId);
+      if (!conversation || conversation.messages.length < 2) return;
+
+      // Take the last 10 messages for extraction context
+      const recentMessages = conversation.messages.slice(-10);
+
+      const extractor = new MemoryExtractor();
+      const prompt = extractor.buildExtractionPrompt(recentMessages);
+      if (!prompt) return;
+
+      const llm = this.llmFactory.createLLM(provider as ProviderKey);
+
+      const response = await llm.generateCompletion({
+        messages: [{ role: 'user', content: prompt }],
+        model,
+      });
+
+      const responseText = typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
+
+      const candidates = extractor.parseExtractionResponse(responseText);
+
+      for (const candidate of candidates) {
+        await this.memoryService.addMemory({
+          content: candidate.content,
+          type: candidate.type,
+          scope: 'global',
+          tags: candidate.tags,
+          source: 'extracted',
+        });
+      }
+    } catch {
+      // Background extraction should never break the main flow
+    }
   }
 
   reset() {

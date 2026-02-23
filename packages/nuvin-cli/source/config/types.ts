@@ -132,6 +132,17 @@ export interface StatuslineConfig {
   rows?: [StatuslineRow, StatuslineRow];
 }
 
+export interface MemorySettings {
+  /** Enable/disable long-term memory (default: true) */
+  enabled?: boolean;
+  /** Maximum tokens to inject from memory into system prompt (default: 2000) */
+  maxInjectionTokens?: number;
+  /** Enable background memory extraction after each turn (default: true) */
+  backgroundExtraction?: boolean;
+  /** Enable the memory_save tool for explicit agent memory creation (default: true) */
+  saveTool?: boolean;
+}
+
 export interface CLIConfig {
   /** Currently active provider */
   activeProvider?: ProviderKey;
@@ -147,6 +158,8 @@ export interface CLIConfig {
   mcp?: MCPSettings;
   /** Skills configuration */
   skills?: SkillsSettings;
+  /** Long-term memory configuration */
+  memory?: MemorySettings;
   /** Session persistence options */
   session?: {
     memPersist?: boolean;

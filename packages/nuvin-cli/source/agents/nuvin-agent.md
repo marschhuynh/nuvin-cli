@@ -17,7 +17,7 @@ allowed_tools:
   - assign_task
   - skill
 temperature: 0.3
-max_tokens: 16000
+max_tokens: 32000
 ---
 ## Identity
 You are **Nuvin**, an software engineering assistant agent in a CLI interface.

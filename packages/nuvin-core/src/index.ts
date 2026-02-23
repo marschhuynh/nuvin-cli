@@ -13,6 +13,11 @@ export type { FolderTreeOptions } from './folder-tree-utils.js';
 
 // Memory and persistence
 export { InMemoryMemory, PersistedMemory, JsonFileMemoryPersistence } from './persistent/index.js';
+export { JsonFileMemoryStore } from './memory/memory-store.js';
+export { rankMemories, formatMemoriesForPrompt } from './memory/memory-ranker.js';
+export type { MemoryEntry, MemoryType, MemoryScope, MemorySource, MemorySearchOptions, MemoryStorePort } from './memory/types.js';
+export { MemoryExtractor } from './memory/memory-extractor.js';
+export type { MemoryCandidate } from './memory/memory-extractor.js';
 export { InMemoryMetadata, MemoryPortMetadataAdapter } from './persistent/metadata-memory.js';
 export { ConversationStore } from './conversation-store.js';
 export { ConversationContext } from './conversation-context.js';
@@ -154,6 +159,8 @@ export type { AssignResult, AssignSuccessResult, AssignErrorResult } from './too
 export { AskUserTool } from './tools/AskUserTool.js';
 export type { AskUserArgs } from './tools/tool-params.js';
 export type { AskUserMetadata } from './tools/tool-result-metadata.js';
+export { memorySaveToolDefinition } from './tools/memory-save-tool.js';
+export type { MemorySaveToolInput } from './tools/memory-save-tool.js';
 export { SkillTool, type SkillProvider, type SkillInfo as SkillToolInfo } from './tools/SkillTool.js';
 export type {
   SkillParams,
