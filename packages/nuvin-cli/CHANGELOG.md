@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.4
+
+### Patch Changes
+
+- [`9b61b2c`](https://github.com/marschhuynh/nuvin-space/commit/9b61b2c764068a69349a1483aa817bb3b4b05ff0) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Run conversation topic analysis in parallel with message sending without waiting for send completion.
+
 ## 1.37.0-rc.3
 
 ### Patch Changes
