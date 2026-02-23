@@ -253,6 +253,48 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
         if (mode === 'rows') {
           const row = rows[activeRow];
 
+          // Shift+↑: move segment up (Row 2→Row 1) or no-op from Row 1
+          if (key.upArrow && key.shift) {
+            if (row.length === 0) return prev;
+            const focused = row[activeIndex];
+            if (focused === '|') return prev; // separator stays in its row
+            if (activeRow === 0) return prev; // already top row
+            // Move from row 1 to row 0
+            const newSrc = row.filter((_, i) => i !== activeIndex);
+            const newDst = [...rows[0], focused];
+            const newRows: Rows = [newDst, newSrc];
+            return {
+              ...prev,
+              rows: newRows,
+              activeRow: 0,
+              activeIndex: newDst.length - 1,
+            };
+          }
+
+          // Shift+↓: move segment down (Row 1→Row 2, Row 2→hidden)
+          if (key.downArrow && key.shift) {
+            if (row.length === 0) return prev;
+            const focused = row[activeIndex];
+            if (focused === '|') return prev; // separator stays in its row
+            if (activeRow === 0) {
+              // Move from row 0 to row 1
+              const newSrc = row.filter((_, i) => i !== activeIndex);
+              const newDst = [...rows[1], focused];
+              const newRows: Rows = [newSrc, newDst];
+              return {
+                ...prev,
+                rows: newRows,
+                activeRow: 1,
+                activeIndex: newDst.length - 1,
+              };
+            }
+            // activeRow === 1 → move to hidden (same as 'x')
+            const newRow = row.filter((_, i) => i !== activeIndex);
+            const newRows: Rows = [...rows] as Rows;
+            newRows[activeRow] = newRow;
+            return { ...prev, rows: newRows, activeIndex: clamp(activeIndex, newRow.length) };
+          }
+
           // Reorder: shift+← move focused item left
           if (key.leftArrow && key.shift) {
             if (row.length === 0 || activeIndex === 0) return prev;
@@ -337,6 +379,18 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
         if (mode === 'hidden') {
           const hidden = getHidden(rows);
 
+          // Shift+↑: add focused hidden segment to row 1 (nearest row above)
+          if (key.upArrow && key.shift) {
+            if (hidden.length === 0) return prev;
+            const seg = hidden[hiddenIndex];
+            const newRows: Rows = [[...rows[0]], [...rows[1], seg]];
+            const newHidden = getHidden(newRows);
+            if (newHidden.length === 0) {
+              return { ...prev, rows: newRows, mode: 'rows', activeRow: 1, activeIndex: newRows[1].length - 1 };
+            }
+            return { ...prev, rows: newRows, hiddenIndex: clamp(hiddenIndex, newHidden.length) };
+          }
+
           // Navigate left/right through hidden list
           if (key.leftArrow) {
             if (hidden.length === 0) return prev;
@@ -413,6 +467,8 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             { text: ' switch row  ' },
             { text: 'S+←→', highlight: true },
             { text: ' reorder  ' },
+            { text: 'S+↑↓', highlight: true },
+            { text: ' move  ' },
             { text: 'x', highlight: true },
             { text: ' hide  ' },
             { text: 'Tab', highlight: true },
@@ -430,6 +486,8 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
           segments={[
             { text: '←→', highlight: true },
             { text: ' navigate  ' },
+            { text: 'S+↑', highlight: true },
+            { text: ' add→row2  ' },
             { text: '1', highlight: true },
             { text: ' add→row1  ' },
             { text: '2', highlight: true },

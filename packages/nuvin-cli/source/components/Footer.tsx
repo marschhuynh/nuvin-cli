@@ -95,20 +95,36 @@ const FooterComponent: React.FC<FooterProps> = ({
     };
   };
 
-  // Build the status string from whichever segments are present in the given list
-  const renderStatusString = (segs: StatuslineSegment[]) => {
-    const parts: (string | null)[] = [
-      currentProfile && currentProfile !== 'default' ? currentProfile : null,
-      segs.includes('model') ? `${provider}:${model}` : null,
-      segs.includes('session') && sessionId ? `Session: ${sessionId}` : null,
-      segs.includes('thinking') && thinking && thinking !== THINKING_LEVELS.OFF ? `Thinking: ${thinking}` : null,
-      segs.includes('sudo') && !toolApprovalMode ? 'SUDO' : null,
-    ].filter(Boolean);
-    return parts.join(' | ');
-  };
-
-  const renderMetricSegment = (seg: StatuslineSegment): React.ReactNode => {
+  /** Render a single segment — returns only its label+value, no separators. */
+  const renderSegment = (seg: StatuslineSegment): React.ReactNode => {
     switch (seg) {
+      case 'model':
+        return (
+          <Text key="model" color={theme.footer.status} dimColor>
+            {provider}:{model}
+          </Text>
+        );
+      case 'session':
+        if (!sessionId) return null;
+        return (
+          <Text key="session" color={theme.footer.status} dimColor>
+            Session: {sessionId}
+          </Text>
+        );
+      case 'thinking':
+        if (!thinking || thinking === THINKING_LEVELS.OFF) return null;
+        return (
+          <Text key="thinking" color={theme.footer.status} dimColor>
+            Thinking: {thinking}
+          </Text>
+        );
+      case 'sudo':
+        if (toolApprovalMode) return null;
+        return (
+          <Text key="sudo" color={theme.footer.status} dimColor>
+            SUDO
+          </Text>
+        );
       case 'tokens':
         if (!metrics?.currentTokens && !metrics?.totalTokens) return null;
         return (
@@ -132,7 +148,6 @@ const FooterComponent: React.FC<FooterProps> = ({
         if (!metrics?.contextWindowLimit || metrics.contextWindowUsage === undefined) return null;
         return (
           <Text key="context" color={getUsageColor(metrics.contextWindowUsage, theme)} dimColor>
-            {' '}
             ({Math.round(metrics.contextWindowUsage * 100)}%)
           </Text>
         );
@@ -140,32 +155,28 @@ const FooterComponent: React.FC<FooterProps> = ({
         if (!metrics?.currentCachedTokens || metrics.currentCachedTokens <= 0) return null;
         return (
           <Text key="cached" color={theme.tokens.green} dimColor>
-            {' '}
-            | Cached: {formatTokens(metrics.currentCachedTokens)}
+            Cached: {formatTokens(metrics.currentCachedTokens)}
           </Text>
         );
       case 'requests':
         if (!metrics?.llmCallCount || metrics.llmCallCount <= 0) return null;
         return (
           <Text key="requests" color={theme.tokens.magenta} dimColor>
-            {' '}
-            | Req: {metrics.llmCallCount}
+            Req: {metrics.llmCallCount}
           </Text>
         );
       case 'tools':
         if (!metrics?.toolCallCount || metrics.toolCallCount <= 0) return null;
         return (
           <Text key="tools" color={theme.tokens.blue} dimColor>
-            {' '}
-            | Tools: {metrics.toolCallCount}
+            Tools: {metrics.toolCallCount}
           </Text>
         );
       case 'cost':
         if (!metrics?.totalCost || metrics.totalCost <= 0) return null;
         return (
           <Text key="cost" color={theme.tokens.cyan} dimColor>
-            {' '}
-            | ${formatCost(metrics.totalCost)}
+            ${formatCost(metrics.totalCost)}
           </Text>
         );
       case 'lsp':
@@ -176,8 +187,24 @@ const FooterComponent: React.FC<FooterProps> = ({
             color={lspConnected > 0 ? theme.tokens.green : lspConnecting > 0 ? theme.tokens.yellow : theme.tokens.gray}
             dimColor
           >
-            {' '}
-            | LSP: {lspConnected}/{lspTotal}
+            LSP: {lspConnected}/{lspTotal}
+          </Text>
+        );
+      case 'gitBranch':
+        if (!workingDirectory) return null;
+        return (
+          <React.Fragment key="gitBranch">
+            <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory)}</Text>
+            <Text dimColor color={theme.footer.gitBranch}>
+              {gitBranch && `:${gitBranch}`}
+            </Text>
+          </React.Fragment>
+        );
+      case 'keybindings':
+        return (
+          <Text key="keybindings" dimColor>
+            <Text color={theme.colors.accent}>/</Text> command{' · '}
+            <Text color={theme.colors.accent}>ESC×2</Text> stop
           </Text>
         );
       default:
@@ -185,56 +212,47 @@ const FooterComponent: React.FC<FooterProps> = ({
     }
   };
 
-  const STATUS_SEGMENTS = new Set<StatuslineSegment>(['model', 'session', 'thinking', 'sudo']);
-
-  /** Render a group of segments (left or right side of a row). */
+  /** Render a group of segments joined by ' | ' separators. */
   const renderGroup = (segs: StatuslineSegment[], isNotificationRow: boolean) => {
     // Notification replaces everything on row 0 left
     if (isNotificationRow && notification) {
       return <Text color={theme.tokens.yellow}>{notification}</Text>;
     }
 
-    const statusSegs = segs.filter((s) => STATUS_SEGMENTS.has(s));
-    const hasStatus = statusSegs.length > 0;
-    const otherSegs = segs.filter((s) => !STATUS_SEGMENTS.has(s));
+    // Collect special prefix items
+    const prefixNodes: React.ReactNode[] = [];
+    if (vimModeEnabled && segs.some((s) => s === 'model' || s === 'session' || s === 'thinking' || s === 'sudo')) {
+      prefixNodes.push(
+        <Text key="vim" color={theme.footer.status} dimColor>
+          {vimMode === 'insert' ? '-- INSERT --' : '-- NORMAL --'}
+        </Text>,
+      );
+    }
+    if (currentProfile && currentProfile !== 'default' && segs.some((s) => s === 'model')) {
+      prefixNodes.push(
+        <Text key="profile" color={theme.footer.status} dimColor>
+          {currentProfile}
+        </Text>,
+      );
+    }
 
+    // Render each segment
+    const segNodes = segs.map(renderSegment).filter(Boolean) as React.ReactElement[];
+
+    const allNodes = [...prefixNodes, ...segNodes];
+    if (allNodes.length === 0) return null;
+
+    // Join with ' | '
     return (
       <>
-        {hasStatus && (
-          <>
-            {vimModeEnabled && (
-              <Text color={theme.footer.status} dimColor>
-                {vimMode === 'insert' ? '-- INSERT --' : '-- NORMAL --'}
-                {' | '}
-              </Text>
+        {allNodes.map((node, idx) => (
+          <React.Fragment key={(node as React.ReactElement).key ?? idx}>
+            {idx > 0 && (
+              <Text dimColor>{' | '}</Text>
             )}
-            <Text color={theme.footer.status} dimColor>
-              {renderStatusString(statusSegs)}
-            </Text>
-          </>
-        )}
-        {otherSegs.map((seg) => {
-          if (seg === 'gitBranch') {
-            if (!workingDirectory) return null;
-            return (
-              <React.Fragment key="gitBranch">
-                <Text color={theme.footer.currentDir}>{formatDirectory(workingDirectory)}</Text>
-                <Text dimColor color={theme.footer.gitBranch}>
-                  {gitBranch && `:${gitBranch}`}
-                </Text>
-              </React.Fragment>
-            );
-          }
-          if (seg === 'keybindings') {
-            return (
-              <Text key="keybindings" dimColor>
-                <Text color={theme.colors.accent}>/</Text> command{' · '}
-                <Text color={theme.colors.accent}>ESC×2</Text> stop
-              </Text>
-            );
-          }
-          return renderMetricSegment(seg);
-        })}
+            {node}
+          </React.Fragment>
+        ))}
       </>
     );
   };
