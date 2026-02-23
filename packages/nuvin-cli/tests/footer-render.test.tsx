@@ -210,7 +210,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          ['session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', /* no cost */ 'lsp'],
+          ['model', 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', /* no cost */ 'lsp'],
           ['gitBranch', 'keybindings'],
         ];
         return undefined;
@@ -233,7 +233,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          ['session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['model', 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
           ['gitBranch' /* no keybindings */],
         ];
         return undefined;
@@ -254,7 +254,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          ['session', 'thinking', 'sudo', /* no tokens */ 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['model', 'session', 'thinking', 'sudo', /* no tokens */ 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
           ['gitBranch', 'keybindings'],
         ];
         return undefined;
@@ -267,6 +267,31 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
     );
     expect(lastFrame()).not.toContain('Tokens:');
     expect(lastFrame()).not.toContain('9999');
+  });
+
+  it('hides provider:model when model segment removed from rows', async () => {
+    const { useConfig } = await import('@/contexts/ConfigContext.js');
+    vi.mocked(useConfig).mockReturnValueOnce({
+      get: vi.fn().mockImplementation((key: string) => {
+        if (key === 'thinking') return 'OFF';
+        if (key === 'activeProvider') return 'anthropic';
+        if (key === 'model') return 'claude-3-5-sonnet';
+        if (key === 'ui.statusline.rows') return [
+          [/* no model */ 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['gitBranch', 'keybindings'],
+        ];
+        return undefined;
+      }),
+      getCurrentProfile: vi.fn().mockReturnValue('default'),
+    });
+
+    const { lastFrame } = render(<Footer {...baseProps} />);
+    expect(lastFrame()).not.toContain('anthropic:claude-3-5-sonnet');
+  });
+
+  it('shows provider:model when model segment is present (default)', () => {
+    const { lastFrame } = render(<Footer {...baseProps} />);
+    expect(lastFrame()).toContain('anthropic:claude-3-5-sonnet');
   });
 
   it('shows all segments from DEFAULT_STATUSLINE_ROWS with full metrics', () => {

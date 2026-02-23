@@ -14,6 +14,7 @@ import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/
 // ---------------------------------------------------------------------------
 
 const ALL_SEGMENTS: StatuslineSegment[] = [
+  'model',
   'session',
   'thinking',
   'sudo',
@@ -29,6 +30,7 @@ const ALL_SEGMENTS: StatuslineSegment[] = [
 ];
 
 const SEGMENT_LABELS: Record<StatuslineSegment, string> = {
+  model: 'Provider:Model',
   session: 'Session ID',
   thinking: 'Thinking',
   sudo: 'SUDO',

@@ -6,6 +6,7 @@ import type { StatuslineSegment } from '../source/config/types.js';
 // Inline helper matching the private implementation in Footer.tsx
 // ---------------------------------------------------------------------------
 const ALL_SEGMENTS = [
+  'model',
   'session', 'thinking', 'sudo',
   'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp',
   'gitBranch', 'keybindings',
@@ -18,11 +19,11 @@ const getHidden = (rows: [StatuslineSegment[], StatuslineSegment[]]): Statusline
 // Group 1: DEFAULT_STATUSLINE_ROWS structure
 // ---------------------------------------------------------------------------
 describe('DEFAULT_STATUSLINE_ROWS', () => {
-  it('contains exactly 12 unique segments across both rows', () => {
+  it('contains exactly 13 unique segments across both rows', () => {
     const all = [...DEFAULT_STATUSLINE_ROWS[0], ...DEFAULT_STATUSLINE_ROWS[1]];
     const unique = new Set(all);
-    expect(all).toHaveLength(12);
-    expect(unique.size).toBe(12);
+    expect(all).toHaveLength(13);
+    expect(unique.size).toBe(13);
   });
 
   it('has no segment appearing in both rows', () => {
@@ -31,8 +32,8 @@ describe('DEFAULT_STATUSLINE_ROWS', () => {
     expect(overlap).toHaveLength(0);
   });
 
-  it('row 0 has exactly 10 segments', () => {
-    expect(DEFAULT_STATUSLINE_ROWS[0]).toHaveLength(10);
+  it('row 0 has exactly 11 segments', () => {
+    expect(DEFAULT_STATUSLINE_ROWS[0]).toHaveLength(11);
   });
 
   it('row 1 has exactly 2 segments', () => {
@@ -42,6 +43,7 @@ describe('DEFAULT_STATUSLINE_ROWS', () => {
   it('row 0 contains the expected metric and status segments', () => {
     const row0 = DEFAULT_STATUSLINE_ROWS[0];
     const expected: StatuslineSegment[] = [
+      'model',
       'session', 'thinking', 'sudo',
       'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp',
     ];
@@ -54,9 +56,9 @@ describe('DEFAULT_STATUSLINE_ROWS', () => {
     expect([...row1].sort()).toEqual([...expected].sort());
   });
 
-  it('row 0 segments appear in the correct order (session first, lsp last)', () => {
+  it('row 0 segments appear in the correct order (model first, lsp last)', () => {
     const row0 = DEFAULT_STATUSLINE_ROWS[0];
-    expect(row0[0]).toBe<StatuslineSegment>('session');
+    expect(row0[0]).toBe<StatuslineSegment>('model');
     expect(row0[row0.length - 1]).toBe<StatuslineSegment>('lsp');
   });
 });
@@ -69,15 +71,15 @@ describe('getHidden', () => {
     expect(getHidden(DEFAULT_STATUSLINE_ROWS)).toEqual([]);
   });
 
-  it('returns all 12 segments when both rows are empty', () => {
+  it('returns all 13 segments when both rows are empty', () => {
     const hidden = getHidden([[], []]);
-    expect(hidden).toHaveLength(12);
+    expect(hidden).toHaveLength(13);
     expect([...hidden].sort()).toEqual([...ALL_SEGMENTS].sort());
   });
 
-  it('returns 11 segments not including tokens when only tokens is in row 0', () => {
+  it('returns 12 segments not including tokens when only tokens is in row 0', () => {
     const hidden = getHidden([['tokens'], []]);
-    expect(hidden).toHaveLength(11);
+    expect(hidden).toHaveLength(12);
     expect(hidden).not.toContain('tokens');
   });
 

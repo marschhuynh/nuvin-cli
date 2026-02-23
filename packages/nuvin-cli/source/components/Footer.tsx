@@ -22,11 +22,11 @@ type FooterProps = {
   sessionId?: string;
 };
 
-const LEFT_ALIGNED = new Set<StatuslineSegment>(['session', 'thinking', 'sudo', 'gitBranch']);
+const LEFT_ALIGNED = new Set<StatuslineSegment>(['model', 'session', 'thinking', 'sudo', 'gitBranch']);
 const RIGHT_ALIGNED = new Set<StatuslineSegment>(['tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp', 'keybindings']);
 
 export const DEFAULT_STATUSLINE_ROWS: [StatuslineSegment[], StatuslineSegment[]] = [
-  ['session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+  ['model', 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
   ['gitBranch', 'keybindings'],
 ];
 
@@ -93,12 +93,12 @@ const FooterComponent: React.FC<FooterProps> = ({
 
   // Build the status string for the left side
   const hasStatusSegments = (leftSegs: StatuslineSegment[]) =>
-    leftSegs.some((s) => s === 'session' || s === 'thinking' || s === 'sudo');
+    leftSegs.some((s) => s === 'model' || s === 'session' || s === 'thinking' || s === 'sudo');
 
   const renderStatusString = (leftSegs: StatuslineSegment[]) => {
     const parts: (string | null)[] = [
       currentProfile && currentProfile !== 'default' ? currentProfile : null,
-      `${provider}:${model}`,
+      leftSegs.includes('model') ? `${provider}:${model}` : null,
       leftSegs.includes('session') && sessionId ? `Session: ${sessionId}` : null,
       leftSegs.includes('thinking') && thinking && thinking !== THINKING_LEVELS.OFF ? `Thinking: ${thinking}` : null,
       leftSegs.includes('sudo') && !toolApprovalMode ? 'SUDO' : null,

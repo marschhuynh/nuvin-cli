@@ -109,6 +109,7 @@ export interface UIThemeSettings {
 }
 
 export type StatuslineSegment =
+  | 'model'
   | 'session'
   | 'thinking'
   | 'sudo'
