@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DEFAULT_STATUSLINE_ROWS } from '../source/components/Footer.js';
-import type { StatuslineSegment } from '../source/config/types.js';
+import type { StatuslineSegment, StatuslineRow } from '../source/config/types.js';
 
 // ---------------------------------------------------------------------------
 // Inline helper matching the private implementation in Footer.tsx
@@ -12,54 +12,74 @@ const ALL_SEGMENTS = [
   'gitBranch', 'keybindings',
 ] as const satisfies readonly StatuslineSegment[];
 
-const getHidden = (rows: [StatuslineSegment[], StatuslineSegment[]]): StatuslineSegment[] =>
-  ALL_SEGMENTS.filter(s => !rows[0].includes(s) && !rows[1].includes(s));
+const onlySegments = (row: StatuslineRow): StatuslineSegment[] =>
+  row.filter((s): s is StatuslineSegment => s !== '|');
+
+const getHidden = (rows: [StatuslineRow, StatuslineRow]): StatuslineSegment[] =>
+  ALL_SEGMENTS.filter((s) => !rows[0].includes(s) && !rows[1].includes(s));
 
 // ---------------------------------------------------------------------------
 // Group 1: DEFAULT_STATUSLINE_ROWS structure
 // ---------------------------------------------------------------------------
 describe('DEFAULT_STATUSLINE_ROWS', () => {
-  it('contains exactly 13 unique segments across both rows', () => {
-    const all = [...DEFAULT_STATUSLINE_ROWS[0], ...DEFAULT_STATUSLINE_ROWS[1]];
-    const unique = new Set(all);
-    expect(all).toHaveLength(13);
+  it('contains exactly 13 unique segments across both rows (excluding | separators)', () => {
+    const allSegs = [...onlySegments(DEFAULT_STATUSLINE_ROWS[0]), ...onlySegments(DEFAULT_STATUSLINE_ROWS[1])];
+    const unique = new Set(allSegs);
+    expect(allSegs).toHaveLength(13);
     expect(unique.size).toBe(13);
   });
 
   it('has no segment appearing in both rows', () => {
-    const row0Set = new Set(DEFAULT_STATUSLINE_ROWS[0]);
-    const overlap = DEFAULT_STATUSLINE_ROWS[1].filter(s => row0Set.has(s));
+    const row0Set = new Set(onlySegments(DEFAULT_STATUSLINE_ROWS[0]));
+    const overlap = onlySegments(DEFAULT_STATUSLINE_ROWS[1]).filter((s) => row0Set.has(s));
     expect(overlap).toHaveLength(0);
   });
 
-  it('row 0 has exactly 11 segments', () => {
-    expect(DEFAULT_STATUSLINE_ROWS[0]).toHaveLength(11);
+  it('row 0 contains exactly one | separator', () => {
+    const seps = DEFAULT_STATUSLINE_ROWS[0].filter((s) => s === '|');
+    expect(seps).toHaveLength(1);
   });
 
-  it('row 1 has exactly 2 segments', () => {
-    expect(DEFAULT_STATUSLINE_ROWS[1]).toHaveLength(2);
+  it('row 1 contains exactly one | separator', () => {
+    const seps = DEFAULT_STATUSLINE_ROWS[1].filter((s) => s === '|');
+    expect(seps).toHaveLength(1);
+  });
+
+  it('row 0 has exactly 11 segments (excluding |)', () => {
+    expect(onlySegments(DEFAULT_STATUSLINE_ROWS[0])).toHaveLength(11);
+  });
+
+  it('row 1 has exactly 2 segments (excluding |)', () => {
+    expect(onlySegments(DEFAULT_STATUSLINE_ROWS[1])).toHaveLength(2);
   });
 
   it('row 0 contains the expected metric and status segments', () => {
-    const row0 = DEFAULT_STATUSLINE_ROWS[0];
+    const row0Segs = onlySegments(DEFAULT_STATUSLINE_ROWS[0]);
     const expected: StatuslineSegment[] = [
-      'model',
-      'session', 'thinking', 'sudo',
+      'model', 'session', 'thinking', 'sudo',
       'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp',
     ];
-    expect([...row0].sort()).toEqual([...expected].sort());
+    expect([...row0Segs].sort()).toEqual([...expected].sort());
   });
 
   it('row 1 contains gitBranch and keybindings', () => {
-    const row1 = DEFAULT_STATUSLINE_ROWS[1];
+    const row1Segs = onlySegments(DEFAULT_STATUSLINE_ROWS[1]);
     const expected: StatuslineSegment[] = ['gitBranch', 'keybindings'];
-    expect([...row1].sort()).toEqual([...expected].sort());
+    expect([...row1Segs].sort()).toEqual([...expected].sort());
   });
 
-  it('row 0 segments appear in the correct order (model first, lsp last)', () => {
+  it('| separator appears after sudo (left group) and before tokens (right group) in row 0', () => {
     const row0 = DEFAULT_STATUSLINE_ROWS[0];
-    expect(row0[0]).toBe<StatuslineSegment>('model');
-    expect(row0[row0.length - 1]).toBe<StatuslineSegment>('lsp');
+    const sepIdx = row0.indexOf('|');
+    expect(sepIdx).toBeGreaterThan(0);
+    expect(row0[sepIdx - 1]).toBe<string>('sudo');
+    expect(row0[sepIdx + 1]).toBe<string>('tokens');
+  });
+
+  it('row 0 first segment is model, last segment is lsp', () => {
+    const row0 = DEFAULT_STATUSLINE_ROWS[0];
+    expect(row0[0]).toBe<string>('model');
+    expect(row0[row0.length - 1]).toBe<string>('lsp');
   });
 });
 
@@ -83,22 +103,27 @@ describe('getHidden', () => {
     expect(hidden).not.toContain('tokens');
   });
 
+  it('| separator is not counted as a segment in getHidden', () => {
+    const hidden = getHidden([['|'], ['|']]);
+    expect(hidden).toHaveLength(13); // all 13 segments still hidden
+    expect(hidden).not.toContain('|');
+  });
+
   it('moving a segment from row 0 to row 1 does not change the hidden count', () => {
-    // Build a full layout then move 'lsp' from row 0 to row 1
-    const row0: StatuslineSegment[] = DEFAULT_STATUSLINE_ROWS[0].filter(s => s !== 'lsp');
-    const row1: StatuslineSegment[] = [...DEFAULT_STATUSLINE_ROWS[1], 'lsp'];
+    const row0 = DEFAULT_STATUSLINE_ROWS[0].filter((s) => s !== 'lsp') as StatuslineRow;
+    const row1: StatuslineRow = [...DEFAULT_STATUSLINE_ROWS[1], 'lsp'];
     const hiddenBefore = getHidden(DEFAULT_STATUSLINE_ROWS).length;
     const hiddenAfter = getHidden([row0, row1]).length;
     expect(hiddenAfter).toBe(hiddenBefore);
   });
 
-  it('hidden + row0 + row1 covers ALL_SEGMENTS with no orphans and no duplicates', () => {
-    const rows: [StatuslineSegment[], StatuslineSegment[]] = [
-      ['session', 'thinking', 'tokens'],
+  it('hidden + row0 segs + row1 segs covers ALL_SEGMENTS with no orphans and no duplicates', () => {
+    const rows: [StatuslineRow, StatuslineRow] = [
+      ['session', 'thinking', 'tokens', '|'],
       ['gitBranch'],
     ];
     const hidden = getHidden(rows);
-    const combined = [...hidden, ...rows[0], ...rows[1]];
+    const combined = [...hidden, ...onlySegments(rows[0]), ...onlySegments(rows[1])];
     expect(combined).toHaveLength(ALL_SEGMENTS.length);
     expect(new Set(combined).size).toBe(ALL_SEGMENTS.length);
     expect([...combined].sort()).toEqual([...ALL_SEGMENTS].sort());
@@ -106,15 +131,21 @@ describe('getHidden', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Group 3: StatuslineConfig type shape (compile-time assignability check)
+// Group 3: StatuslineConfig type shape
 // ---------------------------------------------------------------------------
 describe('StatuslineConfig type shape', () => {
-  it('DEFAULT_STATUSLINE_ROWS is assignable to [StatuslineSegment[], StatuslineSegment[]]', () => {
-    // If this compiles, the type contract is satisfied. We also do a runtime sanity check.
-    const rows: [StatuslineSegment[], StatuslineSegment[]] = DEFAULT_STATUSLINE_ROWS;
+  it('DEFAULT_STATUSLINE_ROWS is assignable to [StatuslineRow, StatuslineRow]', () => {
+    const rows: [StatuslineRow, StatuslineRow] = DEFAULT_STATUSLINE_ROWS;
     expect(Array.isArray(rows)).toBe(true);
     expect(rows).toHaveLength(2);
     expect(Array.isArray(rows[0])).toBe(true);
     expect(Array.isArray(rows[1])).toBe(true);
+  });
+
+  it('each row can contain | alongside segments', () => {
+    const row: StatuslineRow = ['model', '|', 'tokens'];
+    expect(row).toContain('|');
+    expect(row).toContain('model');
+    expect(row).toContain('tokens');
   });
 });

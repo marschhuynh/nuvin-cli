@@ -123,11 +123,13 @@ export type StatuslineSegment =
   | 'gitBranch'
   | 'keybindings';
 
+/** A row of statusline items. '|' is a separator dividing left-aligned from right-aligned segments. */
+export type StatuslineRow = (StatuslineSegment | '|')[];
+
 export interface StatuslineConfig {
-  /** Two rows of segments. Each row is an ordered list of segment keys.
-   * Segments not listed in either row are hidden.
-   * Default: all segments in visual order across 2 rows. */
-  rows?: [StatuslineSegment[], StatuslineSegment[]];
+  /** Two rows of statusline items. '|' separates left from right within each row.
+   * Segments not listed in either row are hidden. */
+  rows?: [StatuslineRow, StatuslineRow];
 }
 
 export interface CLIConfig {

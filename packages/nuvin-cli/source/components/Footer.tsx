@@ -5,7 +5,7 @@ import type { ProviderKey } from '@/const.js';
 import type { LspStatusInfo, LspServerStatus } from '@/services/EventBus.js';
 import { useNotification } from '@/hooks/useNotification.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import type { StatuslineSegment } from '@/config/types.js';
+import type { StatuslineSegment, StatuslineRow } from '@/config/types.js';
 import { THINKING_LEVELS } from '@/config/types.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useConfig } from '@/contexts/ConfigContext.js';
@@ -22,12 +22,9 @@ type FooterProps = {
   sessionId?: string;
 };
 
-const LEFT_ALIGNED = new Set<StatuslineSegment>(['model', 'session', 'thinking', 'sudo', 'gitBranch']);
-const RIGHT_ALIGNED = new Set<StatuslineSegment>(['tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp', 'keybindings']);
-
-export const DEFAULT_STATUSLINE_ROWS: [StatuslineSegment[], StatuslineSegment[]] = [
-  ['model', 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
-  ['gitBranch', 'keybindings'],
+export const DEFAULT_STATUSLINE_ROWS: [StatuslineRow, StatuslineRow] = [
+  ['model', 'session', 'thinking', 'sudo', '|', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+  ['gitBranch', '|', 'keybindings'],
 ];
 
 const FooterComponent: React.FC<FooterProps> = ({
@@ -84,12 +81,19 @@ const FooterComponent: React.FC<FooterProps> = ({
   const model = get<string>('model');
   const currentProfile = getCurrentProfile?.();
 
-  const rows = get<[StatuslineSegment[], StatuslineSegment[]]>('ui.statusline.rows') ?? DEFAULT_STATUSLINE_ROWS;
+  const rows = get<[StatuslineRow, StatuslineRow]>('ui.statusline.rows') ?? DEFAULT_STATUSLINE_ROWS;
 
-  const partitionRow = (row: StatuslineSegment[]) => ({
-    left: row.filter((s) => LEFT_ALIGNED.has(s)),
-    right: row.filter((s) => RIGHT_ALIGNED.has(s)),
-  });
+  const partitionRow = (row: StatuslineRow) => {
+    const sepIdx = row.indexOf('|');
+    if (sepIdx === -1) {
+      // No separator — all segments are left-aligned
+      return { left: row.filter((s): s is StatuslineSegment => s !== '|'), right: [] as StatuslineSegment[] };
+    }
+    return {
+      left: row.slice(0, sepIdx).filter((s): s is StatuslineSegment => s !== '|'),
+      right: row.slice(sepIdx + 1).filter((s): s is StatuslineSegment => s !== '|'),
+    };
+  };
 
   // Build the status string for the left side
   const hasStatusSegments = (leftSegs: StatuslineSegment[]) =>

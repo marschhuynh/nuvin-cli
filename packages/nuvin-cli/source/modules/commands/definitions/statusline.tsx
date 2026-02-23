@@ -5,7 +5,7 @@ import { AppModal } from '@/components/AppModal.js';
 import { HelpText } from '@/components/HelpText.js';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import type { StatuslineSegment } from '@/config/types.js';
+import type { StatuslineSegment, StatuslineRow } from '@/config/types.js';
 import { DEFAULT_STATUSLINE_ROWS } from '@/components/Footer.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 
@@ -49,7 +49,7 @@ const SEGMENT_LABELS: Record<StatuslineSegment, string> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-type Rows = [StatuslineSegment[], StatuslineSegment[]];
+type Rows = [StatuslineRow, StatuslineRow];
 
 const getHidden = (rows: Rows): StatuslineSegment[] =>
   ALL_SEGMENTS.filter((s) => !rows[0].includes(s) && !rows[1].includes(s));
@@ -86,31 +86,41 @@ interface EditorState {
 
 interface RowEditorProps {
   label: string;
-  segments: StatuslineSegment[];
+  row: StatuslineRow;
   isFocused: boolean;
   activeIndex: number;
   accentColor: string;
   dimColor: string;
 }
 
-const RowEditor: React.FC<RowEditorProps> = ({
-  label,
-  segments,
-  isFocused,
-  activeIndex,
-  accentColor,
-  dimColor,
-}) => {
+const RowEditor: React.FC<RowEditorProps> = ({ label, row, isFocused, activeIndex, accentColor, dimColor }) => {
   return (
     <Box flexDirection="row" flexWrap="wrap">
       <Text color={dimColor}>{label}: </Text>
-      {segments.length === 0 ? (
+      {row.length === 0 ? (
         <Text dimColor italic>
           {'(empty)'}
         </Text>
       ) : (
-        segments.map((seg, idx) => {
+        row.map((item, idx) => {
           const isSelected = isFocused && idx === activeIndex;
+          const isSep = item === '|';
+
+          if (isSep) {
+            return (
+              <Box key={`sep-${idx}`} marginRight={1}>
+                {isSelected ? (
+                  <Text color={accentColor} bold>
+                    {'[|]'}
+                  </Text>
+                ) : (
+                  <Text dimColor>{'|'}</Text>
+                )}
+              </Box>
+            );
+          }
+
+          const seg = item as StatuslineSegment;
           return (
             <Box key={seg} marginRight={1}>
               {isSelected ? (
@@ -138,13 +148,7 @@ interface HiddenListProps {
   dimColor: string;
 }
 
-const HiddenList: React.FC<HiddenListProps> = ({
-  segments,
-  isFocused,
-  focusIndex,
-  accentColor,
-  dimColor,
-}) => {
+const HiddenList: React.FC<HiddenListProps> = ({ segments, isFocused, focusIndex, accentColor, dimColor }) => {
   if (segments.length === 0) {
     return (
       <Box flexDirection="row">
@@ -174,9 +178,7 @@ const HiddenList: React.FC<HiddenListProps> = ({
         );
       })}
       {isFocused && (
-        <Text dimColor>
-          {'  '}1: add→row1  2: add→row2  ←→: navigate  Tab: back
-        </Text>
+        <Text dimColor>{'  '}1: add→row1  2: add→row2  ←→: navigate  Tab: back</Text>
       )}
     </Box>
   );
@@ -195,14 +197,14 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
     const saved = context.config.get<Rows>('ui.statusline.rows');
     if (!saved) {
       return [
-        [...DEFAULT_STATUSLINE_ROWS[0]] as StatuslineSegment[],
-        [...DEFAULT_STATUSLINE_ROWS[1]] as StatuslineSegment[],
+        [...DEFAULT_STATUSLINE_ROWS[0]],
+        [...DEFAULT_STATUSLINE_ROWS[1]],
       ];
     }
-    // Strip any obsolete segments that no longer exist in ALL_SEGMENTS
+    // Strip any obsolete segment keys (keep '|' separators)
     return [
-      saved[0].filter((s) => ALL_SEGMENTS.includes(s)),
-      saved[1].filter((s) => ALL_SEGMENTS.includes(s)),
+      saved[0].filter((s) => s === '|' || ALL_SEGMENTS.includes(s as StatuslineSegment)),
+      saved[1].filter((s) => s === '|' || ALL_SEGMENTS.includes(s as StatuslineSegment)),
     ];
   }, [context.config]);
 
@@ -275,7 +277,7 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             };
           }
 
-          // Reorder: move focused segment left ('u')
+          // Reorder: move focused item left ('u')
           if (input === 'u') {
             if (row.length === 0 || activeIndex === 0) return prev;
             const newRow = swapAt(row, activeIndex, activeIndex - 1);
@@ -284,7 +286,7 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             return { ...prev, rows: newRows, activeIndex: activeIndex - 1 };
           }
 
-          // Reorder: move focused segment right ('d')
+          // Reorder: move focused item right ('d')
           if (input === 'd') {
             if (row.length === 0 || activeIndex >= row.length - 1) return prev;
             const newRow = swapAt(row, activeIndex, activeIndex + 1);
@@ -293,9 +295,11 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             return { ...prev, rows: newRows, activeIndex: activeIndex + 1 };
           }
 
-          // Remove focused segment from its row ('x')
+          // Remove focused item ('x') — separator '|' cannot be removed
           if (input === 'x') {
             if (row.length === 0) return prev;
+            const focused = row[activeIndex];
+            if (focused === '|') return prev; // separator is structural, not removeable
             const newRow = row.filter((_, i) => i !== activeIndex);
             const newRows: Rows = [...rows] as Rows;
             newRows[activeRow] = newRow;
@@ -316,26 +320,15 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
           if (input === 'r') {
             return {
               ...prev,
-              rows: [
-                [...DEFAULT_STATUSLINE_ROWS[0]] as StatuslineSegment[],
-                [...DEFAULT_STATUSLINE_ROWS[1]] as StatuslineSegment[],
-              ],
+              rows: [[...DEFAULT_STATUSLINE_ROWS[0]], [...DEFAULT_STATUSLINE_ROWS[1]]],
               activeRow: 0,
               activeIndex: 0,
               mode: 'rows',
             };
           }
 
-          // Enter: save (handled outside setState via async call)
-          if (key.return) {
-            // Trigger async save; the actual work happens below
-            return prev;
-          }
-
-          // Escape: cancel
-          if (key.escape) {
-            return prev; // handled below
-          }
+          if (key.return) return prev; // handled below
+          if (key.escape) return prev; // handled below
 
           return prev;
         }
@@ -357,17 +350,13 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             return { ...prev, hiddenIndex: next };
           }
 
-          // '1': append focused hidden segment to row 0
+          // '1': append focused hidden segment before the separator in row 0 (or at end)
           if (input === '1') {
             if (hidden.length === 0) return prev;
             const seg = hidden[hiddenIndex];
             const newRows: Rows = [[...rows[0], seg], [...rows[1]]];
             const newHidden = getHidden(newRows);
-            return {
-              ...prev,
-              rows: newRows,
-              hiddenIndex: clamp(hiddenIndex, newHidden.length),
-            };
+            return { ...prev, rows: newRows, hiddenIndex: clamp(hiddenIndex, newHidden.length) };
           }
 
           // '2': append focused hidden segment to row 1
@@ -376,11 +365,7 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             const seg = hidden[hiddenIndex];
             const newRows: Rows = [[...rows[0]], [...rows[1], seg]];
             const newHidden = getHidden(newRows);
-            return {
-              ...prev,
-              rows: newRows,
-              hiddenIndex: clamp(hiddenIndex, newHidden.length),
-            };
+            return { ...prev, rows: newRows, hiddenIndex: clamp(hiddenIndex, newHidden.length) };
           }
 
           // Tab or Escape: switch back to rows mode
@@ -467,10 +452,9 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
       footer={footer}
     >
       <Box flexDirection="column" gap={1}>
-        {/* Row editors */}
         <RowEditor
           label="Row 1"
-          segments={state.rows[0]}
+          row={state.rows[0]}
           isFocused={state.mode === 'rows' && state.activeRow === 0}
           activeIndex={state.activeIndex}
           accentColor={accentColor}
@@ -478,14 +462,12 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
         />
         <RowEditor
           label="Row 2"
-          segments={state.rows[1]}
+          row={state.rows[1]}
           isFocused={state.mode === 'rows' && state.activeRow === 1}
           activeIndex={state.activeIndex}
           accentColor={accentColor}
           dimColor={dimColor}
         />
-
-        {/* Hidden segments */}
         <Box marginTop={1}>
           <HiddenList
             segments={hidden}
@@ -515,9 +497,7 @@ export function registerStatuslineCommand(registry: CommandRegistry) {
     createState({ config }) {
       const saved = config.get<Rows>('ui.statusline.rows');
       return {
-        rows:
-          saved ??
-          (DEFAULT_STATUSLINE_ROWS.map((r) => [...r]) as Rows),
+        rows: saved ?? [[...DEFAULT_STATUSLINE_ROWS[0]], [...DEFAULT_STATUSLINE_ROWS[1]]],
       };
     },
   });

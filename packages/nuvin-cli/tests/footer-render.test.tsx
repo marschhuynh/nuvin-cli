@@ -234,8 +234,8 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          ['model', 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', /* no cost */ 'lsp'],
-          ['gitBranch', 'keybindings'],
+          ['model', 'session', 'thinking', 'sudo', '|', 'tokens', 'context', 'cached', 'requests', 'tools', /* no cost */ 'lsp'],
+          ['gitBranch', '|', 'keybindings'],
         ];
         return undefined;
       }),
@@ -257,7 +257,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          ['model', 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['model', 'session', 'thinking', 'sudo', '|', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
           ['gitBranch' /* no keybindings */],
         ];
         return undefined;
@@ -278,8 +278,8 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          ['model', 'session', 'thinking', 'sudo', /* no tokens */ 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
-          ['gitBranch', 'keybindings'],
+          ['model', 'session', 'thinking', 'sudo', '|', /* no tokens */ 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['gitBranch', '|', 'keybindings'],
         ];
         return undefined;
       }),
@@ -301,8 +301,8 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
         if (key === 'activeProvider') return 'anthropic';
         if (key === 'model') return 'claude-3-5-sonnet';
         if (key === 'ui.statusline.rows') return [
-          [/* no model */ 'session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
-          ['gitBranch', 'keybindings'],
+          [/* no model */ 'session', 'thinking', 'sudo', '|', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+          ['gitBranch', '|', 'keybindings'],
         ];
         return undefined;
       }),
