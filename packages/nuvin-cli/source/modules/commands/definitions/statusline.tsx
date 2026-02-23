@@ -253,6 +253,24 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
         if (mode === 'rows') {
           const row = rows[activeRow];
 
+          // Reorder: shift+← move focused item left
+          if (key.leftArrow && key.shift) {
+            if (row.length === 0 || activeIndex === 0) return prev;
+            const newRow = swapAt(row, activeIndex, activeIndex - 1);
+            const newRows: Rows = [...rows] as Rows;
+            newRows[activeRow] = newRow;
+            return { ...prev, rows: newRows, activeIndex: activeIndex - 1 };
+          }
+
+          // Reorder: shift+→ move focused item right
+          if (key.rightArrow && key.shift) {
+            if (row.length === 0 || activeIndex >= row.length - 1) return prev;
+            const newRow = swapAt(row, activeIndex, activeIndex + 1);
+            const newRows: Rows = [...rows] as Rows;
+            newRows[activeRow] = newRow;
+            return { ...prev, rows: newRows, activeIndex: activeIndex + 1 };
+          }
+
           // Navigate left within row (←)
           if (key.leftArrow) {
             if (row.length === 0) return prev;
@@ -275,24 +293,6 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
               activeRow: nextRow,
               activeIndex: clamp(activeIndex, rows[nextRow].length),
             };
-          }
-
-          // Reorder: move focused item left ('u')
-          if (input === 'u') {
-            if (row.length === 0 || activeIndex === 0) return prev;
-            const newRow = swapAt(row, activeIndex, activeIndex - 1);
-            const newRows: Rows = [...rows] as Rows;
-            newRows[activeRow] = newRow;
-            return { ...prev, rows: newRows, activeIndex: activeIndex - 1 };
-          }
-
-          // Reorder: move focused item right ('d')
-          if (input === 'd') {
-            if (row.length === 0 || activeIndex >= row.length - 1) return prev;
-            const newRow = swapAt(row, activeIndex, activeIndex + 1);
-            const newRows: Rows = [...rows] as Rows;
-            newRows[activeRow] = newRow;
-            return { ...prev, rows: newRows, activeIndex: activeIndex + 1 };
           }
 
           // Remove focused item ('x') — separator '|' cannot be removed
@@ -411,7 +411,7 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             { text: ' navigate  ' },
             { text: '↑↓', highlight: true },
             { text: ' switch row  ' },
-            { text: 'u/d', highlight: true },
+            { text: 'S+←→', highlight: true },
             { text: ' reorder  ' },
             { text: 'x', highlight: true },
             { text: ' hide  ' },
