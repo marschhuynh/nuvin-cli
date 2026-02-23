@@ -108,7 +108,8 @@ const RowEditor: React.FC<RowEditorProps> = ({ label, row, isFocused, activeInde
 
           if (isSep) {
             return (
-              <Box key={`sep-${idx}`} marginRight={1}>
+              // biome-ignore lint/suspicious/noArrayIndexKey: separator '|' has no stable id; position is its identity
+              <Box key={`sep-at-${idx}`} marginRight={1}>
                 {isSelected ? (
                   <Text color={accentColor} bold>
                     {'[|]'}

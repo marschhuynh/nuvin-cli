@@ -73,6 +73,7 @@ function WindowedScrollbar({ totalItems, visibleCount, scrollOffset }: WindowedS
       {Array.from({ length: trackHeight }, (_, i) => {
         const isThumb = i >= thumbPos && i < thumbPos + thumbHeight;
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: scrollbar cells are positional — index is the correct key
           <Text key={i} color={isThumb ? theme.colors.accent : theme.colors.muted} dimColor={!isThumb}>
             {isThumb ? '┃' : '│'}
           </Text>

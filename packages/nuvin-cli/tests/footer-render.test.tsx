@@ -71,7 +71,7 @@ vi.mock('@/utils/formatters.js', () => ({
 // ---------------------------------------------------------------------------
 
 import { render } from 'ink-testing-library';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Footer, DEFAULT_STATUSLINE_ROWS } from '../source/components/Footer.js';
 import type { MetricsSnapshot } from '../source/services/SessionMetricsService.js';
 
@@ -213,11 +213,11 @@ describe('Footer — default layout (snapshot)', () => {
     vi.mocked(useNotification).mockReturnValueOnce({ notification: 'Saving...' });
 
     const { lastFrame } = render(<Footer {...baseProps} />);
-    const frame = lastFrame()!;
+    const frame = lastFrame() ?? '';
     // Notification appears
     expect(frame).toContain('Saving...');
     // Row 0 status items replaced — provider:model should not appear alongside notification
-    const notifLine = frame.split('\n').find(l => l.includes('Saving...'))!;
+    const notifLine = frame.split('\n').find(l => l.includes('Saving...')) ?? '';
     expect(notifLine).not.toContain('anthropic:claude-3-5-sonnet');
     // Row 1 (dir + keybindings) still renders
     expect(frame).toContain('projects/myapp');
@@ -335,7 +335,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
     });
 
     const { lastFrame } = render(<Footer {...baseProps} />);
-    const frame = lastFrame()!;
+    const frame = lastFrame() ?? '';
     // gitBranch and keybindings should both render
     expect(frame).toContain('projects/myapp');
     expect(frame).toContain('/ command');
@@ -357,7 +357,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
       />,
     );
 
-    const frame = lastFrame()!;
+    const frame = lastFrame() ?? '';
     expect(frame).toContain('Tokens:');
     expect(frame).toContain('Cached:');
     expect(frame).toContain('Req: 2');
@@ -378,7 +378,7 @@ describe('Footer — DEFAULT_STATUSLINE_ROWS produces same output as config', ()
 
     // Render again with explicit DEFAULT_STATUSLINE_ROWS
     // (would require separate mock — just assert the default contains expected segments)
-    const frame = defaultFrame()!;
+    const frame = defaultFrame() ?? '';
     expect(frame).toContain('Tokens:');
     expect(frame).toContain('Req: 1');
     expect(frame).toContain('projects/myapp');

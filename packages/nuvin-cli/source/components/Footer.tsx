@@ -134,12 +134,12 @@ const FooterComponent: React.FC<FooterProps> = ({
             </Text>
             <Text color={theme.footer.model} bold>
               {' '}
-              {formatTokens(metrics!.currentTokens)}
+              {formatTokens(metrics?.currentTokens)}
             </Text>
-            {metrics!.totalTokens > 0 && (
+            {(metrics?.totalTokens ?? 0) > 0 && (
               <Text color={theme.footer.model} dimColor>
                 {' '}
-                / {formatTokens(metrics!.totalTokens)}
+                / {formatTokens(metrics?.totalTokens)}
               </Text>
             )}
           </React.Fragment>
@@ -263,7 +263,8 @@ const FooterComponent: React.FC<FooterProps> = ({
         const { left, right } = partitionRow(row);
 
         return (
-          <Box key={rowIdx} justifyContent="space-between" flexWrap="wrap">
+          // biome-ignore lint/suspicious/noArrayIndexKey: statusline rows are fixed-position (always 2 rows)
+          <Box key={`row-${rowIdx}`} justifyContent="space-between" flexWrap="wrap">
             {/* Left side */}
             <Box>
               {renderGroup(left, rowIdx === 0)}
