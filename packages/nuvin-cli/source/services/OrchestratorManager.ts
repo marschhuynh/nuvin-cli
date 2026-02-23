@@ -1358,9 +1358,19 @@ export class OrchestratorManager {
     await this.conversationStore.updateTopic(conversationId, topic);
   }
 
-  async analyzeAndUpdateTopic(userMessage: string, conversationId?: string): Promise<string> {
+  async analyzeAndUpdateTopic(
+    userMessage: string,
+    conversationId?: string,
+    options: { waitFor?: Promise<unknown> } = {},
+  ): Promise<string> {
     const actualConversationId = conversationId ?? this.conversationContext.getActiveConversationId();
-    const topic = await this.analyzeTopic(userMessage);
+    const topicPromise = this.analyzeTopic(userMessage, actualConversationId);
+
+    if (options.waitFor) {
+      await options.waitFor;
+    }
+
+    const topic = await topicPromise;
     await this.updateConversationTopic(actualConversationId, topic);
     return topic;
   }

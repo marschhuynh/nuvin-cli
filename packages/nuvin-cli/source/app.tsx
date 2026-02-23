@@ -275,20 +275,23 @@ export default function App({
 
       try {
         if (!send) throw new Error('Agent not initialized');
-        await send(submission, {
-          conversationId: 'default',
+        const conversationId = 'default';
+        const sendPromise = send(submission, {
+          conversationId,
           stream: true,
           signal: controller.signal,
         });
 
         if (displayContent) {
           orchestratorManager
-            .analyzeAndUpdateTopic(displayContent)
+            .analyzeAndUpdateTopic(displayContent, conversationId)
             .then((topic) => {
               process.stdout.write(`\x1b]0;Nuvin | ${topic}\x07`);
             })
             .catch(() => {});
         }
+
+        await sendPromise;
       } catch (err: unknown) {
         const e = err as Error & { name?: string; message?: unknown };
         const msgText: string = typeof e?.message === 'string' ? e.message : String(e);

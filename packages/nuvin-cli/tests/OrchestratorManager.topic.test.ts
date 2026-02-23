@@ -177,6 +177,27 @@ describe('OrchestratorManager - Topic Analysis', () => {
       expect(typeof topic).toBe('string');
       expect(topic.trim()).toBe(topic);
     });
+
+    it('should start topic analysis in parallel and defer metadata update until waitFor resolves', async () => {
+      let releaseWaitFor: (() => void) | null = null;
+      const waitFor = new Promise<void>((resolve) => {
+        releaseWaitFor = resolve;
+      });
+
+      const analyzeSpy = vi.spyOn(manager, 'analyzeTopic').mockResolvedValue('Parallel Topic');
+      const updateSpy = vi.spyOn(manager, 'updateConversationTopic').mockResolvedValue(undefined);
+
+      const topicPromise = manager.analyzeAndUpdateTopic('Run tests in parallel', 'default', { waitFor });
+
+      expect(analyzeSpy).toHaveBeenCalledWith('Run tests in parallel', 'default');
+      expect(updateSpy).not.toHaveBeenCalled();
+
+      releaseWaitFor?.();
+      const topic = await topicPromise;
+
+      expect(topic).toBe('Parallel Topic');
+      expect(updateSpy).toHaveBeenCalledWith('default', 'Parallel Topic');
+    });
   });
 
   describe('getConversationMetadata', () => {
