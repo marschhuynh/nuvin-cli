@@ -12,6 +12,17 @@ vi.mock('@/contexts/ThemeContext.js', () => ({
       status: { success: 'green', error: 'red', idle: 'yellow', warning: 'yellow' },
       colors: { warning: 'yellow', muted: 'gray', textDim: 'gray' },
       tokens: { gray: 'gray', red: 'red' },
+      diff: {
+        lineNumber: 'gray',
+        prefix: { add: 'green', remove: 'red', context: 'gray' },
+        background: { add: 'green', remove: 'red', addHighlight: 'greenBright', removeHighlight: 'redBright' },
+        text: 'black',
+        contextText: 'gray',
+        blockSeparator: 'magenta',
+        noChanges: 'gray',
+        noBlocks: 'red',
+        pathLabel: 'cyan',
+      },
     },
   }),
 }));

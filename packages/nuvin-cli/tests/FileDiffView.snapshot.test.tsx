@@ -9,6 +9,24 @@ vi.mock('../source/hooks/useStdoutDimensions.ts', () => {
   };
 });
 
+vi.mock('@/contexts/ThemeContext.js', () => ({
+  useTheme: vi.fn().mockReturnValue({
+    theme: {
+      diff: {
+        lineNumber: 'gray',
+        prefix: { add: 'green', remove: 'red', context: 'gray' },
+        background: { add: 'green', remove: 'red', addHighlight: 'greenBright', removeHighlight: 'redBright' },
+        text: 'black',
+        contextText: 'gray',
+        blockSeparator: 'magenta',
+        noChanges: 'gray',
+        noBlocks: 'red',
+        pathLabel: 'cyan',
+      },
+    },
+  }),
+}));
+
 describe('FileDiffView - Snapshot Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
