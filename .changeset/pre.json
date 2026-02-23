@@ -12,6 +12,7 @@
     "green-squids-sing",
     "lint-fixes",
     "optional-temperature-breaking",
+    "parallel-topic-update",
     "rc-to-stable-update-fix",
     "skill-awareness-system-prompt",
     "tool-approval-input-max-lines",
