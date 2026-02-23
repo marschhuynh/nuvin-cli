@@ -339,14 +339,14 @@ export const MCPModal: React.FC<MCPModalProps> = ({
               </Box>
             ) : selectedServer.status === 'failed' ? (
               <Box flexDirection="column">
-                <Text color="red">Server failed to initialize</Text>
+                <Text color={theme.colors.error}>Server failed to initialize</Text>
                 <Text color={theme.history.help} dimColor>
                   Error: {selectedServer.error || 'Unknown error'}
                 </Text>
               </Box>
             ) : selectedServer.status === 'pending' ? (
               <Box flexDirection="column">
-                <Text color="yellow">Server not initialized</Text>
+                <Text color={theme.colors.warning}>Server not initialized</Text>
                 <Text color={theme.history.help} dimColor>
                   Server will connect on next session start
                 </Text>

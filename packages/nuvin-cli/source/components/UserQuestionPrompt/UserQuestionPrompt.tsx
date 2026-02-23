@@ -5,8 +5,8 @@ import { useUserQuestion } from '@/contexts/UserQuestionContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import { HelpText } from '@/components/HelpText.js';
 import { FocusProvider, useFocus, useFocusCycle } from '@/contexts/InputContext/FocusContext.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import TextInput from '@/components/TextInput/index.js';
-import { theme } from '@/theme.js';
 import { TextWrapper } from '../TextWrapper';
 import { Button } from '@/components/Button.js';
 
@@ -53,6 +53,7 @@ interface OptionItemProps {
 }
 
 function OptionItem({ option, idx, isSelected, isMultiSelect }: OptionItemProps) {
+  const { theme } = useTheme();
   const containerRef = useRef(null);
   const { isFocused } = useFocus({ active: true, id: FOCUS_ID.OPTION(idx) });
 
@@ -102,6 +103,7 @@ function OtherOption({
   cycleNext,
   cycleBack,
 }: OtherOptionProps) {
+  const { theme } = useTheme();
   const { isFocused } = useFocus({ active: true, id: FOCUS_ID.OTHER });
 
   const getIcon = () => {

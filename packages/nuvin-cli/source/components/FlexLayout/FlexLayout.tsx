@@ -3,7 +3,7 @@ import { useRef, useMemo, type ReactNode } from 'react';
 import { Box, type BoxRef } from 'ink';
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import type { SessionInfo } from '@/types.js';
-import { theme } from '@/theme.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import { MessageLine } from '../MessageLine.js';
 import { WelcomeLogo } from '../RecentSessions.js';
 import { mergeToolCallsWithResultsCached, type MergeCache } from '../ChatDisplay.js';
@@ -32,6 +32,7 @@ export function FlexLayout({
   sessions,
   headerKey = 0,
 }: FlexLayoutProps): React.ReactElement {
+  const { theme } = useTheme();
   const bottomRef = useRef<BoxRef>(null);
   const { height: bottomHeight } = useMeasureHeight(bottomRef);
   const mergeCacheRef = useRef<MergeCache>(new Map());

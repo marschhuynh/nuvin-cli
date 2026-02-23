@@ -51,7 +51,7 @@ export function SkillToolContent({ call }: { call: ToolCall }) {
   if (!args) {
     return (
       <Box marginTop={1}>
-        <Text color="red">Invalid arguments</Text>
+        <Text color={theme.colors.error}>Invalid arguments</Text>
       </Box>
     );
   }

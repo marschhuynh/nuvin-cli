@@ -5,7 +5,7 @@ import { useInput } from '@/contexts/InputContext/index.js';
 import { FocusProvider } from '@/contexts/InputContext/FocusContext.js';
 import { AppModal } from '@/components/AppModal.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
-import { theme } from '@/theme.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import { getToolDisplayName } from '@/components/ToolCallViewer/registry.js';
 import { ToolParameters } from './ToolParameters.js';
 import { ToolProgressInfo } from './ToolProgressInfo.js';
@@ -20,6 +20,7 @@ type Props = {
 
 function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
   const { addSessionApprovedTool, handleSingleToolApproval, pendingApprovalBatchTotal } = useToolApproval();
+  const { theme } = useTheme();
   const editInputRef = useRef<ToolEditInputHandle>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -79,7 +80,7 @@ function ToolApprovalPromptContent({ toolCalls }: { toolCalls: ToolCall[] }) {
     }
 
     return displayName;
-  }, [currentTool]);
+  }, [currentTool, theme.modal.subtitle, theme.modal.title]);
 
   const handleEditSubmit = (value: string) => {
     if (value.trim().length === 0 || !currentTool?.approvalId) return;

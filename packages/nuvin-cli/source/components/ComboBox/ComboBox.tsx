@@ -2,7 +2,6 @@ import type React from 'react';
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Box, Text, measureElement, type BoxRef } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
-import chalk from 'chalk';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
 import { AutoScrollBox, type AutoScrollBoxHandle } from '@/components/AutoScrollBox.js';
@@ -267,11 +266,22 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   const renderedInput = input ? (
     <>
       <Text>{input}</Text>
-      <Text color={theme.model?.input || 'white'}>█</Text>
+      <Text color={theme.model?.input || theme.colors.text}>█</Text>
     </>
   ) : (
     <Text>
-      {placeholder.length > 0 ? chalk.inverse(placeholder[0]) + chalk.grey(placeholder.slice(1)) : chalk.inverse(' ')}
+      {placeholder.length > 0 ? (
+        <>
+          <Text backgroundColor={theme.footer.infoBg} color={theme.model?.input || theme.colors.text}>
+            {placeholder[0]}
+          </Text>
+          <Text color={theme.colors.muted}>{placeholder.slice(1)}</Text>
+        </>
+      ) : (
+        <Text backgroundColor={theme.footer.infoBg} color={theme.model?.input || theme.colors.text}>
+          {' '}
+        </Text>
+      )}
     </Text>
   );
 
@@ -279,14 +289,14 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
     <Box flexDirection="column" flexGrow={1} overflow="hidden">
       {showSearchInput && (
         <Box marginBottom={1} flexShrink={0}>
-          <Text color={theme.model?.label || 'cyan'}>Search: </Text>
+          <Text color={theme.model?.label || theme.colors.info}>Search: </Text>
           {renderedInput}
         </Box>
       )}
 
       {filteredItems.length === 0 ? (
         <Box>
-          <Text color="yellow">No matches found</Text>
+          <Text color={theme.colors.warning}>No matches found</Text>
         </Box>
       ) : (
         <Box flexDirection="column" flexGrow={1} overflow="hidden">
@@ -357,7 +367,7 @@ const ComboBoxListItem = memo<ComboBoxListItemProps>(
         <Box overflow="hidden" flexShrink={0}>
           <Text>{isSelected ? '❯ ' : '  '}</Text>
           <Text
-            color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
+            color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || theme.colors.text}
             bold={isSelected}
           >
             {listItem.item.label}

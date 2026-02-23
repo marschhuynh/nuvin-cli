@@ -2,7 +2,6 @@ import type { ReactNode, FC } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext';
-import { theme } from '@/theme';
 
 export type AppModalType = 'info' | 'error' | 'warning' | 'success' | 'default';
 
@@ -62,7 +61,7 @@ export const AppModal: FC<AppModalProps> = ({
   if (!visible) return null;
 
   return (
-    <Box height={height} flexDirection="column" width="100%" backgroundColor={theme.modal.background} flexGrow={1}>
+    <Box height={height} flexDirection="column" width="100%" backgroundColor={globalTheme.modal.background} flexGrow={1}>
       <Box
         flexWrap="wrap"
         justifyContent="space-between"
@@ -101,11 +100,11 @@ export const AppModal: FC<AppModalProps> = ({
         </Box>
       </Box>
       {footer ? (
-        <Box flexShrink={0} backgroundColor={theme.modal.footerBackground} zIndex={20}>
+        <Box flexShrink={0} backgroundColor={globalTheme.modal.footerBackground} zIndex={20}>
           {footer}
         </Box>
       ) : (
-        <Box flexShrink={0} zIndex={20} height={1} backgroundColor={theme.modal.footerBackground}></Box>
+        <Box flexShrink={0} zIndex={20} height={1} backgroundColor={globalTheme.modal.footerBackground}></Box>
       )}
     </Box>
   );

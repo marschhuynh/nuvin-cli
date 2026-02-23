@@ -42,7 +42,7 @@ export const AgentDescriptionInput: React.FC<AgentDescriptionInputProps> = ({ de
         </Text>
 
         <Box marginY={1}>
-          <Text color="yellow" dimColor>
+          <Text color={theme.colors.warning} dimColor>
             Example: "A security specialist that audits code for vulnerabilities and provides remediation steps"
           </Text>
         </Box>

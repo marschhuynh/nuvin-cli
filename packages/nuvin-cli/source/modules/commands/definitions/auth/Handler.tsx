@@ -14,7 +14,7 @@ import { useOAuth } from '@/hooks/useOAuth.js';
 import { useAuthStorage } from '@/hooks/useAuthStorage.js';
 import { useNotification } from '@/hooks/useNotification.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
-import { theme } from '@/theme.js';
+import type { Theme } from '@/theme.js';
 
 type Stage = 'provider' | 'method' | 'tokenEntry' | 'deviceFlow' | 'oauthMax' | 'oauthConsole';
 
@@ -24,7 +24,7 @@ type StatusMessage = {
   close?: boolean;
 } | null;
 
-const getColorForStatus = (status: StatusMessage) => {
+const getColorForStatus = (status: StatusMessage, theme: Theme) => {
   if (!status) return theme.tokens.white;
   return status.type === 'error'
     ? theme.tokens.red
@@ -390,7 +390,7 @@ export const AuthCommandComponent = ({ context, deactivate }: CommandComponentPr
 
       {status ? (
         <Box marginTop={1}>
-          <Text color={getColorForStatus(status)}>{status.message}</Text>
+          <Text color={getColorForStatus(status, theme)}>{status.message}</Text>
         </Box>
       ) : null}
     </AppModal>

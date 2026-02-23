@@ -1,6 +1,6 @@
 # Small Model for Topic Generation — Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **For Nuvin:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add a per-provider `smallModel` config field with sensible defaults, and use it for conversation topic generation instead of the main (expensive) model.
 

@@ -426,7 +426,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
         <Box flexDirection="column" alignItems="center" marginTop={1}>
           {providerOptions.length === 0 ? (
             <Box>
-              <Text color="yellow">⚠ No providers are currently available.</Text>
+              <Text color={theme.colors.warning}>⚠ No providers are currently available.</Text>
             </Box>
           ) : (
             <SelectInput
@@ -533,10 +533,10 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
               onOpenBrowser={openDeviceFlow}
               showCode={true}
               theme={{
-                waiting: 'cyan',
-                link: 'blue',
-                code: 'yellow',
-                error: 'red',
+                waiting: theme.auth.waiting,
+                link: theme.auth.link,
+                code: theme.auth.code,
+                error: theme.auth.error,
               }}
             />
           </Box>
@@ -566,9 +566,9 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
               onSubmit={handleOAuthCodeSubmit}
               onOpenBrowser={openOAuthBrowser}
               theme={{
-                waiting: 'cyan',
-                link: 'blue',
-                error: 'red',
+                waiting: theme.auth.waiting,
+                link: theme.auth.link,
+                error: theme.auth.error,
                 subtitle: theme.welcome.subtitle,
               }}
             />
@@ -586,7 +586,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
 
       {step === 'loading-models' && (
         <Box flexDirection="column" alignItems="center" marginTop={2}>
-          <Text color="cyan">Loading models...</Text>
+          <Text color={theme.colors.info}>Loading models...</Text>
         </Box>
       )}
 
@@ -597,7 +597,7 @@ export function InitialConfigSetup({ onComplete, llmFactory }: Props) {
               {providerOption?.label}
             </Text>
             {fetchError && (
-              <Text color="yellow" dimColor>
+              <Text color={theme.colors.warning} dimColor>
                 {fetchError}
               </Text>
             )}

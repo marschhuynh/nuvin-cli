@@ -99,6 +99,15 @@ export interface SkillsSettings {
   permissions?: Record<string, 'allow' | 'ask' | 'deny'>;
 }
 
+export interface UIThemeSettings {
+  /** Theme mode selection */
+  mode?: 'auto' | 'dark' | 'light';
+  /** Terminal color level strategy */
+  colorLevel?: 'auto' | 'none' | 'ansi16' | 'ansi256' | 'truecolor';
+  /** Background coloring strategy */
+  backgrounds?: 'auto' | 'on' | 'off';
+}
+
 export interface CLIConfig {
   /** Currently active provider */
   activeProvider?: ProviderKey;
@@ -128,6 +137,10 @@ export interface CLIConfig {
   streamingChunks?: boolean;
   /** Enabled specialist agents (agentId -> enabled) */
   agentsEnabled?: Record<string, boolean>;
+  /** UI customization options */
+  ui?: {
+    theme?: UIThemeSettings;
+  };
   /** Allow additional custom keys */
   [key: string]: unknown;
 }

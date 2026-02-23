@@ -4,7 +4,6 @@ import { Box, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { processPasteChunk, createPasteState, type PasteState } from '@/utils/pasteHandler.js';
 import { useTheme } from '@/contexts/ThemeContext';
-import { theme } from '@/theme';
 
 export type SelectInputItem<T = unknown> = {
   key?: string;
@@ -42,11 +41,14 @@ const DefaultItemComponent = ({ isSelected, label }: { isSelected?: boolean; lab
   return <Text color={isSelected ? theme.colors.accent : undefined}>{label}</Text>;
 };
 
-const DefaultIndicatorComponent = ({ isSelected }: { isSelected?: boolean }) => (
-  <Box>
-    <Text color={theme.colors.accent}>{isSelected ? '❯ ' : '  '}</Text>
-  </Box>
-);
+const DefaultIndicatorComponent = ({ isSelected }: { isSelected?: boolean }) => {
+  const { theme } = useTheme();
+  return (
+    <Box>
+      <Text color={theme.colors.accent}>{isSelected ? '❯ ' : '  '}</Text>
+    </Box>
+  );
+};
 
 export const SelectInput = forwardRef<SelectInputHandle, SelectInputProps<unknown>>(function SelectInput<T = unknown>(
   {

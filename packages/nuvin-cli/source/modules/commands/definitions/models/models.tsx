@@ -211,7 +211,7 @@ const ModelsV2CommandComponent = ({ context, deactivate, isActive }: CommandComp
     return (
       <AppModal visible={true} title="Select Model" onClose={deactivate} closeOnEscape={true} height={8}>
         <Box flexDirection="column">
-          <Text color="yellow">No providers configured.</Text>
+          <Text color={theme.colors.warning}>No providers configured.</Text>
           <Text color={theme.colors.muted} dimColor>
             Run /auth to configure a provider first.
           </Text>
@@ -232,7 +232,7 @@ const ModelsV2CommandComponent = ({ context, deactivate, isActive }: CommandComp
       <Box flexDirection="column" flexGrow={1} overflow="hidden">
         {error && (
           <Box marginBottom={1}>
-            <Text color="red">{error}</Text>
+            <Text color={theme.colors.error}>{error}</Text>
           </Box>
         )}
 

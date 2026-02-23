@@ -107,7 +107,7 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
                 label="Name:"
                 value={editedName}
                 onChange={(value) => onFieldChange('name', value)}
-                autoFocus
+                // autoFocus
                 tabIndex="0"
               />
             </Box>

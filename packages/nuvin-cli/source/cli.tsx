@@ -21,6 +21,7 @@ import { InputProvider, defaultMiddleware } from './contexts/InputContext/index.
 import { getVersionInfo } from './utils/version.js';
 import { runConfigMigration } from './utils/config-migration.js';
 import { ConfigManager, type CLIConfig, type ProviderKey } from './config/index.js';
+import { resolveAndApplyThemeRuntime, type ThemeRuntimeOptions } from './theme.js';
 import { ConfigCliHandler } from './config/cli-handler.js';
 import { orchestratorManager } from './services/OrchestratorManager.js';
 import ansiEscapes from 'ansi-escapes';
@@ -401,6 +402,12 @@ const cli = meow(
   const thinkingSetting = mergedConfig.thinking;
   const finalMemPersist = mergedConfig.session?.memPersist ?? true;
   const finalRequireToolApproval = mergedConfig.requireToolApproval ?? true;
+  const themeOptions: ThemeRuntimeOptions = {
+    mode: (mergedConfig.ui?.theme?.mode as ThemeRuntimeOptions['mode'] | undefined) ?? 'auto',
+    backgrounds: (mergedConfig.ui?.theme?.backgrounds as ThemeRuntimeOptions['backgrounds'] | undefined) ?? 'auto',
+    colorLevel: (mergedConfig.ui?.theme?.colorLevel as ThemeRuntimeOptions['colorLevel'] | undefined) ?? 'auto',
+  };
+  resolveAndApplyThemeRuntime(themeOptions);
 
   // Pre-load sessions before rendering to avoid re-renders
   const { scanAvailableSessions, getSessionDir } = await import('./hooks/useSessionManagement.js');
@@ -442,7 +449,7 @@ const cli = meow(
   const App = cli.flags.alt ? AppVirtualized : AppLegacy;
 
   const { waitUntilExit } = render(
-    <ThemeProvider>
+    <ThemeProvider options={themeOptions}>
       <AltModeProvider altMode={cli.flags.alt}>
         <StdoutDimensionsProvider>
           <InputProvider middleware={defaultMiddleware}>

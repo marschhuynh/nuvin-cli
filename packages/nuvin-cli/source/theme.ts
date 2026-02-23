@@ -1,10 +1,33 @@
 /**
- * Centralized theme configuration for Nuvin CLI
- * Contains all color values used across the application
+ * Centralized theme configuration for Nuvin CLI.
+ * Theme values are resolved once per startup/config change and reused across renders.
  */
 
+export type ThemeMode = 'dark' | 'light';
+export type ThemeModePreference = ThemeMode | 'auto';
+
+export type ThemeColorLevel = 'none' | 'ansi16' | 'ansi256' | 'truecolor';
+export type ThemeColorLevelPreference = ThemeColorLevel | 'auto';
+
+export type ThemeBackgroundPreference = 'auto' | 'on' | 'off';
+
+export interface ThemeRuntimeOptions {
+  mode?: ThemeModePreference;
+  colorLevel?: ThemeColorLevelPreference;
+  backgrounds?: ThemeBackgroundPreference;
+  env?: NodeJS.ProcessEnv;
+  stdout?: Pick<NodeJS.WriteStream, 'getColorDepth'>;
+}
+
+export interface ThemeRuntime {
+  theme: Theme;
+  mode: ThemeMode;
+  colorLevel: ThemeColorLevel;
+  useBackgrounds: boolean;
+}
+
 export function lightenColor(hex: string, percent: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
+  const num = Number.parseInt(hex.replace('#', ''), 16);
   const rf = Math.min(255, (num >> 16) + (255 - (num >> 16)) * percent);
   const gf = Math.min(255, ((num >> 8) & 0x00ff) + (255 - ((num >> 8) & 0x00ff)) * percent);
   const bf = Math.min(255, (num & 0x0000ff) + (255 - (num & 0x0000ff)) * percent);
@@ -15,7 +38,7 @@ export function lightenColor(hex: string, percent: number): string {
 }
 
 export function darkenColor(hex: string, percent: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
+  const num = Number.parseInt(hex.replace('#', ''), 16);
   const rf = Math.max(0, ((num >> 16) - 255 * percent) / (1 - percent));
   const gf = Math.max(0, (((num >> 8) & 0x00ff) - 255 * percent) / (1 - percent));
   const bf = Math.max(0, ((num & 0x0000ff) - 255 * percent) / (1 - percent));
@@ -25,15 +48,14 @@ export function darkenColor(hex: string, percent: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
-// 253,88,91
-export const COLOR_TOKENS = {
+const DARK_TOKENS = {
   green: '#4bac78',
   greenBright: '#5bd393',
   cyan: '#00d9ff',
   red: '#c5564c',
   redBright: lightenColor('#c5564c', 0.3),
   orange: '#de935f',
-  yellow: '#FFC371',
+  yellow: '#ffc371',
   dimYellow: '#a28152',
   blue: '#81a2be',
   magenta: '#ff79c6',
@@ -44,243 +66,417 @@ export const COLOR_TOKENS = {
   transparent: 'transparent',
 };
 
-const COLORS = {
-  // Status colors
-  success: COLOR_TOKENS.green,
-  error: COLOR_TOKENS.red,
-  warning: COLOR_TOKENS.yellow,
-  info: COLOR_TOKENS.cyan,
-
-  // UI element colors
-  primary: COLOR_TOKENS.green,
-  secondary: COLOR_TOKENS.magenta,
-  accent: COLOR_TOKENS.orange,
-  muted: COLOR_TOKENS.gray,
-
-  // Message type colors
-  user: COLOR_TOKENS.cyan,
-  assistant: COLOR_TOKENS.green,
-  system: COLOR_TOKENS.gray,
-  thinking: COLOR_TOKENS.yellow,
-
-  // Tool-related colors
-  tool: COLOR_TOKENS.green,
-  toolResult: COLOR_TOKENS.green,
-  toolSuccess: COLOR_TOKENS.green,
-  toolError: COLOR_TOKENS.red,
-  toolDuration: COLOR_TOKENS.gray,
-
-  // Interactive elements
-  selected: COLOR_TOKENS.green,
-  unselected: COLOR_TOKENS.transparent,
-  highlight: COLOR_TOKENS.green,
-
-  // Text variants
-  text: COLOR_TOKENS.white,
-  textDim: COLOR_TOKENS.gray,
-  textBold: COLOR_TOKENS.white,
-
-  // Backgrounds and borders
-  // background: COLOR_TOKENS.black,
-  // background: '#171a1b',
-  background: '#1e2123',
-
-  border: COLOR_TOKENS.gray,
-
-  // Badge and status indicators
-  badge: {
-    info: COLOR_TOKENS.cyan,
-    success: COLOR_TOKENS.green,
-    warning: COLOR_TOKENS.yellow,
-    error: COLOR_TOKENS.red,
-  },
+const LIGHT_TOKENS = {
+  green: '#2f8f5d',
+  greenBright: '#51a978',
+  cyan: '#0b7e9a',
+  red: '#b74a41',
+  redBright: lightenColor('#b74a41', 0.25),
+  orange: '#b96b36',
+  yellow: '#9a7a2a',
+  dimYellow: '#b5a170',
+  blue: '#3b6e90',
+  magenta: '#a25286',
+  white: '#1f2328',
+  gray: '#6b7280',
+  black: '#f2f4f7',
+  dim: '#d8dde3',
+  transparent: 'transparent',
 };
 
-export const theme = {
-  tokens: COLOR_TOKENS,
+function buildTokens(mode: ThemeMode) {
+  return mode === 'light' ? LIGHT_TOKENS : DARK_TOKENS;
+}
 
-  // Primary colors (using COLOR_TOKENS)
-  colors: COLORS,
+function buildTheme(mode: ThemeMode, useBackgrounds: boolean) {
+  const tokens = buildTokens(mode);
+  const isLight = mode === 'light';
 
-  // Status mappings for tool results and execution states
-  status: {
-    success: COLOR_TOKENS.green,
-    warning: COLOR_TOKENS.yellow,
-    error: COLOR_TOKENS.red,
-    pending: COLOR_TOKENS.yellow,
-    running: COLOR_TOKENS.cyan,
-    idle: COLOR_TOKENS.gray,
-  },
+  const colors = {
+    success: tokens.green,
+    error: tokens.red,
+    warning: tokens.yellow,
+    info: tokens.cyan,
 
-  // Message line type colors
-  messageTypes: {
-    user: COLOR_TOKENS.cyan,
-    // assistant: COLOR_TOKENS.green,
-    assistant: COLOR_TOKENS.yellow,
-    tool: COLOR_TOKENS.green,
-    tool_result: COLOR_TOKENS.green,
-    system: COLOR_TOKENS.gray,
-    warning: COLOR_TOKENS.yellow,
-    error: COLOR_TOKENS.red,
-    info: COLOR_TOKENS.cyan,
-    thinking: COLOR_TOKENS.gray,
-  },
+    primary: tokens.green,
+    secondary: tokens.magenta,
+    accent: tokens.orange,
+    muted: tokens.gray,
 
-  // Command and help colors
-  modal: {
-    title: COLOR_TOKENS.black,
-    subtitle: COLOR_TOKENS.black,
-    titleBackground: COLORS.accent,
-    sectionHeader: COLOR_TOKENS.yellow,
-    keyBinding: COLOR_TOKENS.green,
-    description: COLOR_TOKENS.gray,
-    help: COLOR_TOKENS.gray,
-    background: COLOR_TOKENS.black,
-    footerBackground: COLOR_TOKENS.gray,
-    footerDimText: COLOR_TOKENS.gray,
-    footerText: COLOR_TOKENS.black,
-  },
+    user: tokens.cyan,
+    assistant: tokens.green,
+    system: tokens.gray,
+    thinking: tokens.yellow,
 
-  // Command and help colors
-  help: {
-    title: COLOR_TOKENS.cyan,
-    subtitle: COLOR_TOKENS.gray,
-    sectionHeader: COLOR_TOKENS.yellow,
-    keyBinding: COLOR_TOKENS.green,
-    description: COLOR_TOKENS.gray,
-  },
+    tool: tokens.green,
+    toolResult: tokens.green,
+    toolSuccess: tokens.green,
+    toolError: tokens.red,
+    toolDuration: tokens.gray,
 
-  // Authentication flow colors
-  auth: {
-    provider: COLOR_TOKENS.green,
-    waiting: COLOR_TOKENS.gray,
-    code: COLOR_TOKENS.yellow,
-    link: COLOR_TOKENS.cyan,
-    success: COLOR_TOKENS.green,
-    error: COLOR_TOKENS.red,
-  },
+    selected: tokens.green,
+    unselected: tokens.transparent,
+    highlight: tokens.green,
 
-  // Footer and status bar colors
-  footer: {
-    provider: COLOR_TOKENS.yellow,
-    model: COLOR_TOKENS.gray,
-    status: COLOR_TOKENS.gray,
-    thinking: COLOR_TOKENS.gray,
-    infoBg: COLOR_TOKENS.dim,
-    currentDir: COLOR_TOKENS.blue,
-    gitBranch: COLOR_TOKENS.white,
-  },
+    text: tokens.white,
+    textDim: tokens.gray,
+    textBold: tokens.white,
 
-  // Input area colors
-  input: {
-    prompt: COLOR_TOKENS.green,
-    placeholder: COLOR_TOKENS.gray,
-    text: COLOR_TOKENS.white,
-  },
+    background: useBackgrounds ? (isLight ? '#eef2f5' : '#1e2123') : tokens.transparent,
 
-  // History selection colors
-  history: {
-    selected: COLOR_TOKENS.white,
-    unselected: COLOR_TOKENS.gray,
-    badge: COLOR_TOKENS.gray,
-    timestamp: COLOR_TOKENS.gray,
-    title: COLOR_TOKENS.cyan,
-    help: COLOR_TOKENS.gray,
-    keybind: COLOR_TOKENS.yellow,
-  },
+    border: tokens.gray,
 
-  // Tool approval prompt colors
-  toolApproval: {
-    title: COLOR_TOKENS.yellow,
-    toolName: COLOR_TOKENS.white,
-    description: COLOR_TOKENS.gray,
-    paramKey: COLOR_TOKENS.cyan,
-    paramValue: COLOR_TOKENS.white,
-    statusText: COLOR_TOKENS.black,
-    approved: COLOR_TOKENS.green,
-    denied: COLOR_TOKENS.red,
-    actionSelected: COLOR_TOKENS.green,
-    actionApprove: COLOR_TOKENS.green,
-    actionDeny: COLOR_TOKENS.red,
-    actionReview: COLOR_TOKENS.blue,
-  },
-
-  // Model selection colors
-  model: {
-    title: COLOR_TOKENS.cyan,
-    subtitle: COLOR_TOKENS.gray,
-    label: COLOR_TOKENS.green,
-    help: COLOR_TOKENS.gray,
-    input: COLOR_TOKENS.white,
-    item: COLOR_TOKENS.white,
-    selectedItem: COLORS.accent,
-  },
-
-  // Thinking mode colors
-  thinking: {
-    title: COLOR_TOKENS.cyan,
-    subtitle: COLOR_TOKENS.gray,
-  },
-
-  // Welcome message colors
-  welcome: {
-    title: COLOR_TOKENS.orange,
-    subtitle: COLOR_TOKENS.gray,
-    hint: COLOR_TOKENS.dim,
-  },
-
-  // File edit preview colors
-  fileEdit: {
-    title: COLOR_TOKENS.yellow,
-    label: COLOR_TOKENS.cyan,
-    value: COLOR_TOKENS.white,
-    content: COLOR_TOKENS.gray,
-    searchHeader: COLOR_TOKENS.green,
-    replaceHeader: COLOR_TOKENS.red,
-    error: COLOR_TOKENS.red,
-  },
-
-  // Diff view colors
-  diff: {
-    lineNumber: COLOR_TOKENS.gray,
-    prefix: {
-      add: COLOR_TOKENS.green,
-      remove: COLOR_TOKENS.red,
-      context: COLOR_TOKENS.gray,
+    badge: {
+      info: tokens.cyan,
+      success: tokens.green,
+      warning: tokens.yellow,
+      error: tokens.red,
     },
-    background: {
-      add: COLOR_TOKENS.green,
-      remove: COLOR_TOKENS.red,
-      addHighlight: COLOR_TOKENS.greenBright,
-      removeHighlight: COLOR_TOKENS.redBright,
+  };
+
+  return {
+    tokens,
+    colors,
+
+    status: {
+      success: tokens.green,
+      warning: tokens.yellow,
+      error: tokens.red,
+      pending: tokens.yellow,
+      running: tokens.cyan,
+      idle: tokens.gray,
     },
-    text: COLOR_TOKENS.black,
-    contextText: COLOR_TOKENS.gray,
-    blockSeparator: COLOR_TOKENS.magenta,
-    noChanges: COLOR_TOKENS.gray,
-    noBlocks: COLOR_TOKENS.red,
-    pathLabel: COLOR_TOKENS.cyan,
-  },
-} as const;
 
-// Type exports for TypeScript support
-export type Theme = typeof theme;
-export type ColorToken = keyof typeof theme.tokens;
-export type ColorKey = keyof typeof theme.colors;
-export type StatusColor = keyof typeof theme.status;
-export type MessageTypeColor = keyof typeof theme.messageTypes;
+    messageTypes: {
+      user: tokens.cyan,
+      assistant: tokens.yellow,
+      tool: tokens.green,
+      tool_result: tokens.green,
+      system: tokens.gray,
+      warning: tokens.yellow,
+      error: tokens.red,
+      info: tokens.cyan,
+      thinking: tokens.gray,
+    },
 
-// Helper function for status colors
+    modal: {
+      title: '#1f2328',
+      subtitle: '#1f2328',
+      titleBackground: colors.accent,
+      sectionHeader: tokens.yellow,
+      keyBinding: tokens.green,
+      description: tokens.gray,
+      help: tokens.gray,
+      background: useBackgrounds ? (isLight ? '#f7f8fa' : '#1d1e1f') : tokens.transparent,
+      footerBackground: useBackgrounds ? (isLight ? '#d8dde3' : tokens.gray) : tokens.transparent,
+      footerDimText: tokens.gray,
+      footerText: '#1f2328',
+    },
+
+    help: {
+      title: tokens.cyan,
+      subtitle: tokens.gray,
+      sectionHeader: tokens.yellow,
+      keyBinding: tokens.green,
+      description: tokens.gray,
+    },
+
+    auth: {
+      provider: tokens.green,
+      waiting: tokens.gray,
+      code: tokens.yellow,
+      link: tokens.cyan,
+      success: tokens.green,
+      error: tokens.red,
+    },
+
+    footer: {
+      provider: tokens.yellow,
+      model: tokens.gray,
+      status: tokens.gray,
+      thinking: tokens.gray,
+      infoBg: useBackgrounds ? tokens.dim : tokens.transparent,
+      currentDir: tokens.blue,
+      gitBranch: tokens.white,
+    },
+
+    input: {
+      prompt: tokens.green,
+      placeholder: tokens.gray,
+      text: tokens.white,
+    },
+
+    history: {
+      selected: tokens.white,
+      unselected: tokens.gray,
+      badge: tokens.gray,
+      timestamp: tokens.gray,
+      title: tokens.cyan,
+      help: tokens.gray,
+      keybind: tokens.yellow,
+    },
+
+    toolApproval: {
+      title: tokens.yellow,
+      toolName: tokens.white,
+      description: tokens.gray,
+      paramKey: tokens.cyan,
+      paramValue: tokens.white,
+      statusText: '#1f2328',
+      approved: tokens.green,
+      denied: tokens.red,
+      actionSelected: tokens.green,
+      actionApprove: tokens.green,
+      actionDeny: tokens.red,
+      actionReview: tokens.blue,
+    },
+
+    model: {
+      title: tokens.cyan,
+      subtitle: tokens.gray,
+      label: tokens.green,
+      help: tokens.gray,
+      input: tokens.white,
+      item: tokens.white,
+      selectedItem: colors.accent,
+    },
+
+    thinking: {
+      title: tokens.cyan,
+      subtitle: tokens.gray,
+    },
+
+    welcome: {
+      title: tokens.orange,
+      subtitle: tokens.gray,
+      hint: tokens.dim,
+    },
+
+    fileEdit: {
+      title: tokens.yellow,
+      label: tokens.cyan,
+      value: tokens.white,
+      content: tokens.gray,
+      searchHeader: tokens.green,
+      replaceHeader: tokens.red,
+      error: tokens.red,
+    },
+
+    diff: {
+      lineNumber: tokens.gray,
+      prefix: {
+        add: tokens.green,
+        remove: tokens.red,
+        context: tokens.gray,
+      },
+      background: {
+        add: useBackgrounds ? (isLight ? '#d9f3e1' : tokens.green) : tokens.transparent,
+        remove: useBackgrounds ? (isLight ? '#f6dede' : tokens.red) : tokens.transparent,
+        addHighlight: useBackgrounds ? (isLight ? '#b8e7c8' : tokens.greenBright) : tokens.transparent,
+        removeHighlight: useBackgrounds ? (isLight ? '#edbcbc' : tokens.redBright) : tokens.transparent,
+      },
+      text: useBackgrounds ? '#1f2328' : tokens.white,
+      contextText: tokens.gray,
+      blockSeparator: tokens.magenta,
+      noChanges: tokens.gray,
+      noBlocks: tokens.red,
+      pathLabel: tokens.cyan,
+    },
+  };
+}
+
+export type Theme = ReturnType<typeof buildTheme>;
+
+function parseForcedColorLevel(forceColor: string | undefined): ThemeColorLevel | undefined {
+  if (!forceColor) return undefined;
+
+  if (forceColor === '0') return 'none';
+  if (forceColor === '1' || forceColor.toLowerCase() === 'true') return 'ansi16';
+  if (forceColor === '2') return 'ansi256';
+  if (forceColor === '3') return 'truecolor';
+
+  const numericForce = Number.parseInt(forceColor, 10);
+  if (Number.isNaN(numericForce)) {
+    return undefined;
+  }
+
+  if (numericForce <= 0) return 'none';
+  if (numericForce === 1) return 'ansi16';
+  if (numericForce === 2) return 'ansi256';
+  return 'truecolor';
+}
+
+export function detectTerminalColorLevel(
+  stdout: Pick<NodeJS.WriteStream, 'getColorDepth'> | undefined = process.stdout,
+  env: NodeJS.ProcessEnv = process.env,
+): ThemeColorLevel {
+  if (env.NO_COLOR !== undefined || env.NODE_DISABLE_COLORS === '1') {
+    return 'none';
+  }
+
+  const forced = parseForcedColorLevel(env.FORCE_COLOR);
+  if (forced) {
+    return forced;
+  }
+
+  const depth = stdout?.getColorDepth?.(env) ?? 1;
+
+  if (depth >= 24) {
+    return 'truecolor';
+  }
+  if (depth >= 8) {
+    return 'ansi256';
+  }
+  if (depth >= 4) {
+    return 'ansi16';
+  }
+
+  return 'none';
+}
+
+function detectModeFromColorFGBG(value: string | undefined): ThemeMode | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parts = value.split(';');
+  const bgValue = parts[parts.length - 1];
+  const bg = Number.parseInt(bgValue || '', 10);
+
+  if (Number.isNaN(bg)) {
+    return undefined;
+  }
+
+  return bg >= 7 ? 'light' : 'dark';
+}
+
+function resolveThemeMode(modePreference: ThemeModePreference | undefined, env: NodeJS.ProcessEnv): ThemeMode {
+  if (modePreference === 'dark' || modePreference === 'light') {
+    return modePreference;
+  }
+
+  const envMode = env.NUVIN_THEME_MODE?.trim().toLowerCase();
+  if (envMode === 'dark' || envMode === 'light') {
+    return envMode;
+  }
+
+  const detected = detectModeFromColorFGBG(env.COLORFGBG);
+  if (detected) {
+    return detected;
+  }
+
+  return 'dark';
+}
+
+function resolveBackgroundPreference(
+  backgroundPreference: ThemeBackgroundPreference | undefined,
+  env: NodeJS.ProcessEnv,
+): ThemeBackgroundPreference {
+  if (backgroundPreference) {
+    return backgroundPreference;
+  }
+
+  const envPref = env.NUVIN_THEME_BACKGROUNDS?.trim().toLowerCase();
+  if (envPref === 'on' || envPref === 'off' || envPref === 'auto') {
+    return envPref;
+  }
+
+  return 'auto';
+}
+
+function resolveColorLevel(
+  colorPreference: ThemeColorLevelPreference | undefined,
+  stdout: Pick<NodeJS.WriteStream, 'getColorDepth'> | undefined,
+  env: NodeJS.ProcessEnv,
+): ThemeColorLevel {
+  if (colorPreference && colorPreference !== 'auto') {
+    return colorPreference;
+  }
+
+  return detectTerminalColorLevel(stdout, env);
+}
+
+function shouldUseBackgrounds(
+  preference: ThemeBackgroundPreference,
+  mode: ThemeMode,
+  colorLevel: ThemeColorLevel,
+): boolean {
+  if (preference === 'off') {
+    return false;
+  }
+
+  if (preference === 'on') {
+    return colorLevel !== 'none';
+  }
+
+  if (mode === 'light') {
+    return false;
+  }
+
+  return colorLevel === 'ansi256' || colorLevel === 'truecolor';
+}
+
+export function resolveThemeRuntime(options: ThemeRuntimeOptions = {}): ThemeRuntime {
+  const env = options.env ?? process.env;
+  const stdout = options.stdout ?? process.stdout;
+
+  const mode = resolveThemeMode(options.mode, env);
+  const colorLevel = resolveColorLevel(options.colorLevel, stdout, env);
+  const backgroundPreference = resolveBackgroundPreference(options.backgrounds, env);
+  const useBackgrounds = shouldUseBackgrounds(backgroundPreference, mode, colorLevel);
+
+  return {
+    mode,
+    colorLevel,
+    useBackgrounds,
+    theme: buildTheme(mode, useBackgrounds),
+  };
+}
+
+export const theme: Theme = buildTheme('dark', true);
+
+export function applyThemeRuntime(runtime: ThemeRuntime): Theme {
+  const nextTheme = runtime.theme;
+
+  theme.tokens = nextTheme.tokens;
+  theme.colors = nextTheme.colors;
+  theme.status = nextTheme.status;
+  theme.messageTypes = nextTheme.messageTypes;
+  theme.modal = nextTheme.modal;
+  theme.help = nextTheme.help;
+  theme.auth = nextTheme.auth;
+  theme.footer = nextTheme.footer;
+  theme.input = nextTheme.input;
+  theme.history = nextTheme.history;
+  theme.toolApproval = nextTheme.toolApproval;
+  theme.model = nextTheme.model;
+  theme.thinking = nextTheme.thinking;
+  theme.welcome = nextTheme.welcome;
+  theme.fileEdit = nextTheme.fileEdit;
+  theme.diff = nextTheme.diff;
+
+  return theme;
+}
+
+export function resolveAndApplyThemeRuntime(options: ThemeRuntimeOptions = {}): ThemeRuntime {
+  const runtime = resolveThemeRuntime(options);
+  applyThemeRuntime(runtime);
+  return runtime;
+}
+
+export type ColorToken = keyof Theme['tokens'];
+export type ColorKey = keyof Theme['colors'];
+export type StatusColor = keyof Theme['status'];
+export type MessageTypeColor = keyof Theme['messageTypes'];
+
 export function getStatusColor(status: 'success' | 'error' | 'pending' | 'running' | 'idle'): string {
   return theme.status[status];
 }
 
-// Helper function for message type colors
-export function getMessageTypeColor(type: keyof typeof theme.messageTypes): string {
+export function getMessageTypeColor(type: keyof Theme['messageTypes']): string {
   return theme.messageTypes[type] || theme.colors.text;
 }
 
-// Helper function to get hex token value
 export function getColorToken(token: ColorToken): string {
   return theme.tokens[token];
 }

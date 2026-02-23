@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Box, Text } from 'ink';
 import type { ToolCall } from '@nuvin/nuvin-core';
 import { FileDiffView, type LineNumbers } from '@/components/FileDiffView.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import type { EnrichedToolCall } from '@/utils/enrichToolCalls.js';
 
 type FileEditArgs = {
@@ -26,13 +27,14 @@ function parseArgs(call: ToolCall): FileEditArgs | null {
 }
 
 export function FileEditToolContent({ call }: { call: ToolCall }) {
+  const { theme } = useTheme();
   const args = useMemo(() => parseArgs(call), [call]);
   const lineNumbers = (call as EnrichedToolCall).metadata?.lineNumbers as LineNumbers | undefined;
 
   if (!args)
     return (
       <Box marginTop={1}>
-        <Text color="red">Invalid arguments</Text>
+        <Text color={theme.colors.error}>Invalid arguments</Text>
       </Box>
     );
 

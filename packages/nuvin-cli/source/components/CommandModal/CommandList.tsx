@@ -64,7 +64,7 @@ export const CommandList: React.FC<CommandListProps> = ({
         <Box flexDirection="column" marginBottom={1}>
           <Box>
             <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
-            <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
+            <Text color={isSelected ? accentColor : theme.colors.text} bold={isSelected}>
               /{command.id}
             </Text>
             <Text> </Text>
@@ -74,7 +74,7 @@ export const CommandList: React.FC<CommandListProps> = ({
             {shadowedCommands.length > 0 && (
               <>
                 <Text> </Text>
-                <Text color="yellow">
+                <Text color={theme.colors.warning}>
                   ⚠ shadows {shadowedCommands.map((c) => SOURCE_NAMES[c.source].toLowerCase()).join(', ')}
                 </Text>
               </>

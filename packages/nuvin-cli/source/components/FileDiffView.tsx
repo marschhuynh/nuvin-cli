@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
-import { theme } from '@/theme';
+import type { Theme } from '@/theme';
+import { useTheme } from '@/contexts/ThemeContext.js';
 import { VirtualizedList } from './VirtualizedList.js';
 
 const VIRTUALIZATION_THRESHOLD = 50;
@@ -249,10 +250,11 @@ function buildDiffFromLCS(
 
 type DiffLineViewProps = {
   line: DiffLine;
+  theme: Theme;
   lineNumWidth?: number;
 };
 
-function DiffLineViewInner({ line, lineNumWidth = 3 }: DiffLineViewProps) {
+function DiffLineViewInner({ line, theme, lineNumWidth = 3 }: DiffLineViewProps) {
   const { cols } = useStdoutDimensions();
   const lineNum = line.oldLineNum || line.newLineNum || 0;
   const lineNumStr = `${String(lineNum).padStart(lineNumWidth, ' ')}│ `;
@@ -333,6 +335,8 @@ type FileDiffViewProps = {
 };
 
 export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }: FileDiffViewProps) {
+  const { theme } = useTheme();
+
   // Memoize all diff calculations
   const blockData = useMemo(() => {
     return blocks.map((b, idx) => {
@@ -410,7 +414,7 @@ export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }
                 </Text>
               );
             }
-            return <DiffLineView line={line} lineNumWidth={line.lineNumWidth} />;
+            return <DiffLineView line={line} theme={theme} lineNumWidth={line.lineNumWidth} />;
           }}
           keyExtractor={(line, i) => `line-${i}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`}
           overscan={10}
@@ -440,7 +444,7 @@ export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }
             <Box flexDirection="column">
               {block.diff.map((line, ldx) => {
                 const lineKey = `line-${block.blockIndex}-${ldx}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`;
-                return <DiffLineView key={lineKey} line={line} lineNumWidth={globalLineNumWidth} />;
+                return <DiffLineView key={lineKey} line={line} theme={theme} lineNumWidth={globalLineNumWidth} />;
               })}
             </Box>
           ) : (

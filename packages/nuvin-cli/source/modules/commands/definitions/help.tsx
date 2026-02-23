@@ -52,12 +52,12 @@ const HelpModal = ({ deactivate }: CommandComponentProps) => {
         focus={true}
       >
         <Box flexDirection="column">
-          <Text color="gray" dimColor>
+          <Text color={theme.help.subtitle} dimColor>
             {`@nuvin/cli v${version}${commit ? ` (${commit})` : ''}`}
           </Text>
 
           <Box marginTop={1} flexDirection="column">
-            <Text color="yellow" bold>
+            <Text color={theme.help.sectionHeader} bold>
               Keybindings
             </Text>
             <Text>
@@ -78,7 +78,7 @@ const HelpModal = ({ deactivate }: CommandComponentProps) => {
           </Box>
 
           <Box marginTop={1} marginBottom={1} flexDirection="column">
-            <Text color="yellow" bold>
+            <Text color={theme.help.sectionHeader} bold>
               Commands
             </Text>
             {commandRegistry.list({ includeHidden: false }).map((cmd) => (

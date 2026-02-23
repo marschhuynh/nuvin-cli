@@ -62,51 +62,51 @@ export const SkillList: React.FC<SkillListProps> = ({
 
       if (extendedSkill.license) {
         params.push(
-          <Text key="license">
-            <Text dimColor>license: </Text>
-            <Text color="white">{extendedSkill.license}</Text>
-          </Text>,
-        );
+            <Text key="license">
+              <Text dimColor>license: </Text>
+              <Text color={theme.colors.text}>{extendedSkill.license}</Text>
+            </Text>,
+          );
       }
       if (extendedSkill.compatibility) {
         params.push(
-          <Text key="compatibility">
-            <Text dimColor>compatibility: </Text>
-            <Text color="white">{extendedSkill.compatibility}</Text>
-          </Text>,
-        );
+            <Text key="compatibility">
+              <Text dimColor>compatibility: </Text>
+              <Text color={theme.colors.text}>{extendedSkill.compatibility}</Text>
+            </Text>,
+          );
       }
       if (extendedSkill.allowedTools && extendedSkill.allowedTools.length > 0) {
         params.push(
-          <Text key="allowed_tools">
-            <Text dimColor>allowed_tools: </Text>
-            <Text color="white">{extendedSkill.allowedTools.join(', ')}</Text>
-          </Text>,
-        );
+            <Text key="allowed_tools">
+              <Text dimColor>allowed_tools: </Text>
+              <Text color={theme.colors.text}>{extendedSkill.allowedTools.join(', ')}</Text>
+            </Text>,
+          );
       }
       if (extendedSkill.hasScripts) {
         params.push(
-          <Text key="has_scripts">
-            <Text dimColor>has_scripts: </Text>
-            <Text color="white">true</Text>
-          </Text>,
-        );
+            <Text key="has_scripts">
+              <Text dimColor>has_scripts: </Text>
+              <Text color={theme.colors.text}>true</Text>
+            </Text>,
+          );
       }
       if (extendedSkill.hasReferences) {
         params.push(
-          <Text key="has_references">
-            <Text dimColor>has_references: </Text>
-            <Text color="white">true</Text>
-          </Text>,
-        );
+            <Text key="has_references">
+              <Text dimColor>has_references: </Text>
+              <Text color={theme.colors.text}>true</Text>
+            </Text>,
+          );
       }
       if (extendedSkill.hasAssets) {
         params.push(
-          <Text key="has_assets">
-            <Text dimColor>has_assets: </Text>
-            <Text color="white">true</Text>
-          </Text>,
-        );
+            <Text key="has_assets">
+              <Text dimColor>has_assets: </Text>
+              <Text color={theme.colors.text}>true</Text>
+            </Text>,
+          );
       }
 
       return (
@@ -117,7 +117,7 @@ export const SkillList: React.FC<SkillListProps> = ({
             </Text>
             <Text> </Text>
             <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
-            <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
+            <Text color={isSelected ? accentColor : theme.colors.text} bold={isSelected}>
               {skill.name}
             </Text>
             <Text dimColor> </Text>

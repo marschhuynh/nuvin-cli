@@ -52,6 +52,11 @@ session:
 
 requireToolApproval: false
 thinking: MEDIUM
+ui:
+  theme:
+    mode: auto          # auto | dark | light
+    backgrounds: auto   # auto | on | off
+    colorLevel: auto    # auto | none | ansi16 | ansi256 | truecolor
 
 mcp:
   servers:
@@ -77,9 +82,19 @@ MINIMAX_API_KEY=your_minimax_key
 # Optional Tool Configuration
 GOOGLE_CSE_KEY=your_google_cse_key      # For web_search tool
 GOOGLE_CSE_CX=your_search_engine_id     # For web_search tool
+
+# Optional Theme Overrides
+NUVIN_THEME_MODE=auto                   # auto | dark | light
+NUVIN_THEME_BACKGROUNDS=auto            # auto | on | off
 ```
 
 **Note:** Environment variables are processed centrally at startup in `cli.tsx` and injected into the configuration system as the 'env' scope. This ensures consistent handling across all providers.
+
+### Theme Adaptation Notes
+
+- `mode: auto` uses terminal hints (`COLORFGBG`) when available and falls back to `dark`.
+- `backgrounds: auto` prefers no background fills in light terminals to avoid contrast conflicts.
+- Color capability is automatically detected from terminal color depth and respects `NO_COLOR` / `FORCE_COLOR`.
 
 ## CLI Options
 

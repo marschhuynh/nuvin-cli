@@ -55,39 +55,36 @@ export const AgentList: React.FC<AgentListProps> = ({
       const isBuiltin = agent.isDefault;
       const location = agent.location || (isBuiltin ? 'built-in' : 'local');
       const isMainAgent = agent.name === 'nuvin';
-      
+
       // Determine location badge color
-      const locationColor = location === 'built-in' 
-        ? theme.tokens.blue 
-        : location === 'global' 
-          ? theme.tokens.yellow 
-          : theme.tokens.cyan;
+      const locationColor =
+        location === 'built-in' ? theme.tokens.blue : location === 'global' ? theme.tokens.yellow : theme.tokens.cyan;
 
       const params: React.ReactNode[] = [];
 
       if (agent.max_tokens) {
         params.push(
-          <Text key="max_tokens">
-            <Text dimColor>max_tokens: </Text>
-            <Text color="white">{agent.max_tokens}</Text>
-          </Text>,
-        );
+            <Text key="max_tokens">
+              <Text dimColor>max_tokens: </Text>
+              <Text color={theme.colors.text}>{agent.max_tokens}</Text>
+            </Text>,
+          );
       }
       if (agent.temperature !== undefined) {
         params.push(
-          <Text key="temperature">
-            <Text dimColor>temperature: </Text>
-            <Text color="white">{agent.temperature}</Text>
-          </Text>,
-        );
+            <Text key="temperature">
+              <Text dimColor>temperature: </Text>
+              <Text color={theme.colors.text}>{agent.temperature}</Text>
+            </Text>,
+          );
       }
       if (agent.top_p !== undefined) {
         params.push(
-          <Text key="top_p">
-            <Text dimColor>top_p: </Text>
-            <Text color="white">{agent.top_p}</Text>
-          </Text>,
-        );
+            <Text key="top_p">
+              <Text dimColor>top_p: </Text>
+              <Text color={theme.colors.text}>{agent.top_p}</Text>
+            </Text>,
+          );
       }
 
       return (
@@ -98,7 +95,7 @@ export const AgentList: React.FC<AgentListProps> = ({
             </Text>
             <Text> </Text>
             <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
-            <Text color={isSelected ? accentColor : 'white'} bold={isSelected}>
+            <Text color={isSelected ? accentColor : theme.colors.text} bold={isSelected}>
               {agent.name}
             </Text>
             <Text dimColor> </Text>
