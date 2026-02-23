@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.3
+
+### Patch Changes
+
+- [#178](https://github.com/marschhuynh/nuvin-cli/pull/178) [`09fceca`](https://github.com/marschhuynh/nuvin-space/commit/09fceca0e83333278a730985c816d7396c877fc5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix all biome lint issues: remove non-null assertions, add explicit types, fix React keys, resolve dependency arrays, suppress conflicting regex rules
+
 ## 1.37.0-rc.2
 
 ### Minor Changes
