@@ -175,7 +175,7 @@ const HiddenList: React.FC<HiddenListProps> = ({
       })}
       {isFocused && (
         <Text dimColor>
-          {'  '}1: add→row1  2: add→row2  Tab: back
+          {'  '}1: add→row1  2: add→row2  ←→: navigate  Tab: back
         </Text>
       )}
     </Box>
@@ -193,12 +193,16 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
 
   const initialRows = useCallback((): Rows => {
     const saved = context.config.get<Rows>('ui.statusline.rows');
-    if (saved) {
-      return [saved[0].filter((s) => ALL_SEGMENTS.includes(s)), saved[1].filter((s) => ALL_SEGMENTS.includes(s))];
+    if (!saved) {
+      return [
+        [...DEFAULT_STATUSLINE_ROWS[0]] as StatuslineSegment[],
+        [...DEFAULT_STATUSLINE_ROWS[1]] as StatuslineSegment[],
+      ];
     }
+    // Strip any obsolete segments that no longer exist in ALL_SEGMENTS
     return [
-      [...DEFAULT_STATUSLINE_ROWS[0]] as StatuslineSegment[],
-      [...DEFAULT_STATUSLINE_ROWS[1]] as StatuslineSegment[],
+      saved[0].filter((s) => ALL_SEGMENTS.includes(s)),
+      saved[1].filter((s) => ALL_SEGMENTS.includes(s)),
     ];
   }, [context.config]);
 
@@ -308,6 +312,20 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             return prev;
           }
 
+          // 'r': reset to defaults
+          if (input === 'r') {
+            return {
+              ...prev,
+              rows: [
+                [...DEFAULT_STATUSLINE_ROWS[0]] as StatuslineSegment[],
+                [...DEFAULT_STATUSLINE_ROWS[1]] as StatuslineSegment[],
+              ],
+              activeRow: 0,
+              activeIndex: 0,
+              mode: 'rows',
+            };
+          }
+
           // Enter: save (handled outside setState via async call)
           if (key.return) {
             // Trigger async save; the actual work happens below
@@ -326,14 +344,14 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
         if (mode === 'hidden') {
           const hidden = getHidden(rows);
 
-          // Navigate up/down through hidden list
-          if (key.upArrow) {
+          // Navigate left/right through hidden list
+          if (key.leftArrow) {
             if (hidden.length === 0) return prev;
             const next = hiddenIndex === 0 ? hidden.length - 1 : hiddenIndex - 1;
             return { ...prev, hiddenIndex: next };
           }
 
-          if (key.downArrow) {
+          if (key.rightArrow) {
             if (hidden.length === 0) return prev;
             const next = hiddenIndex >= hidden.length - 1 ? 0 : hiddenIndex + 1;
             return { ...prev, hiddenIndex: next };
@@ -414,6 +432,8 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
             { text: ' hide  ' },
             { text: 'Tab', highlight: true },
             { text: ' hidden  ' },
+            { text: 'r', highlight: true },
+            { text: ' reset  ' },
             { text: 'Enter', highlight: true },
             { text: ' save  ' },
             { text: 'Esc', highlight: true },
@@ -423,7 +443,7 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
       ) : (
         <HelpText
           segments={[
-            { text: '↑↓', highlight: true },
+            { text: '←→', highlight: true },
             { text: ' navigate  ' },
             { text: '1', highlight: true },
             { text: ' add→row1  ' },
