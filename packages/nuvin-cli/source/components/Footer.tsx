@@ -5,6 +5,7 @@ import type { ProviderKey } from '@/const.js';
 import type { LspStatusInfo, LspServerStatus } from '@/services/EventBus.js';
 import { useNotification } from '@/hooks/useNotification.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
+import type { StatuslineSegment } from '@/config/types.js';
 import { THINKING_LEVELS } from '@/config/types.js';
 import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useConfig } from '@/contexts/ConfigContext.js';
@@ -20,6 +21,11 @@ type FooterProps = {
   workingDirectory?: string;
   sessionId?: string;
 };
+
+export const DEFAULT_STATUSLINE_ROWS: [StatuslineSegment[], StatuslineSegment[]] = [
+  ['session', 'thinking', 'sudo', 'tokens', 'context', 'cached', 'requests', 'tools', 'cost', 'lsp'],
+  ['gitBranch', 'keybindings'],
+];
 
 const FooterComponent: React.FC<FooterProps> = ({
   status: _status,
