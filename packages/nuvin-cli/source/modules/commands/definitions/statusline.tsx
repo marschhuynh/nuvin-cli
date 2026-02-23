@@ -245,22 +245,22 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
         if (mode === 'rows') {
           const row = rows[activeRow];
 
-          // Navigate left within row (↑)
-          if (key.upArrow) {
+          // Navigate left within row (←)
+          if (key.leftArrow) {
             if (row.length === 0) return prev;
             const next = activeIndex === 0 ? row.length - 1 : activeIndex - 1;
             return { ...prev, activeIndex: next };
           }
 
-          // Navigate right within row (↓)
-          if (key.downArrow) {
+          // Navigate right within row (→)
+          if (key.rightArrow) {
             if (row.length === 0) return prev;
             const next = activeIndex >= row.length - 1 ? 0 : activeIndex + 1;
             return { ...prev, activeIndex: next };
           }
 
-          // Switch active row (← / →)
-          if (key.leftArrow || key.rightArrow) {
+          // Switch active row (↑ / ↓)
+          if (key.upArrow || key.downArrow) {
             const nextRow: 0 | 1 = activeRow === 0 ? 1 : 0;
             return {
               ...prev,
@@ -402,9 +402,9 @@ const StatuslineCommandComponent = ({ context, deactivate }: CommandComponentPro
       {state.mode === 'rows' ? (
         <HelpText
           segments={[
-            { text: '↑↓', highlight: true },
-            { text: ' navigate  ' },
             { text: '←→', highlight: true },
+            { text: ' navigate  ' },
+            { text: '↑↓', highlight: true },
             { text: ' switch row  ' },
             { text: 'u/d', highlight: true },
             { text: ' reorder  ' },
