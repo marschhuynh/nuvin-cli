@@ -259,7 +259,7 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
   },
 
   skill: {
-    displayName: 'Load skill',
+    displayName: 'Using skill',
     statusText: {
       success: 'Completed',
       error: 'Failed',

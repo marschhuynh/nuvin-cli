@@ -112,7 +112,7 @@ export function formatToolCallTitle(
     }
     case "skill": {
       const name = getString(input, "name");
-      return name ? `Load skill: ${name}` : "Load skill";
+      return name ? `Using skill: ${name}` : "Using skill";
     }
     case "lsp": {
       const operation = getString(input, "operation");

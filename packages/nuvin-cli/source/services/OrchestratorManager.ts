@@ -1262,6 +1262,7 @@ export class OrchestratorManager {
     model: string,
   ): Promise<void> {
     if (!this.memoryService || !this.conversationStore) return;
+    if (!process.env.NUVIN_MEMORY_EXTRACTION) return;
     const config = this.getCurrentConfig();
     if (config.config.memory?.backgroundExtraction === false) return;
 
