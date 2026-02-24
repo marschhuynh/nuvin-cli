@@ -1,5 +1,15 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.2
+
+### Minor Changes
+
+- [`c0b2b87`](https://github.com/marschhuynh/nuvin-space/commit/c0b2b875ad78deb1794c9939e46a51919df962c1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add long-term memory system with JSON file store, semantic ranking, and background extraction; add `memory_save` tool.
+
+### Patch Changes
+
+- [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix JSON.parse crash when tool call arguments is empty string.
+
 ## 2.0.0-rc.1
 
 ### Minor Changes
