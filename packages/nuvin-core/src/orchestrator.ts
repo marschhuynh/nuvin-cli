@@ -484,7 +484,7 @@ export class AgentOrchestrator {
           cwd: process.cwd(),
           toolName: toolCall.function.name,
           toolInput: typeof toolCall.function.arguments === 'string'
-            ? JSON.parse(toolCall.function.arguments)
+            ? JSON.parse(toolCall.function.arguments || '{}')
             : toolCall.function.arguments as Record<string, unknown>,
           toolUseId: toolCall.id,
         };
@@ -872,7 +872,7 @@ export class AgentOrchestrator {
             cwd: process.cwd(),
             toolName: tc.function.name,
             toolInput: typeof tc.function.arguments === 'string'
-              ? JSON.parse(tc.function.arguments)
+              ? JSON.parse(tc.function.arguments || '{}')
               : tc.function.arguments as Record<string, unknown>,
             toolUseId: tc.approvalId,
             permissionType: 'tool_approval',

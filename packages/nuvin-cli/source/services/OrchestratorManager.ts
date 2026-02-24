@@ -1265,6 +1265,15 @@ export class OrchestratorManager {
     const config = this.getCurrentConfig();
     if (config.config.memory?.backgroundExtraction === false) return;
 
+    const extractionProvider = (config.config.memory?.provider || provider) as ProviderKey;
+    const extractionModel =
+      config.config.memory?.model ||
+      (config.config.memory?.provider
+        ? config.config.providers?.[config.config.memory.provider]?.smallModel ||
+          defaultSmallModels[extractionProvider] ||
+          model
+        : model);
+
     try {
       const conversation = await this.conversationStore.getConversation(conversationId);
       if (!conversation || conversation.messages.length < 2) return;
@@ -1276,11 +1285,11 @@ export class OrchestratorManager {
       const prompt = extractor.buildExtractionPrompt(recentMessages);
       if (!prompt) return;
 
-      const llm = this.llmFactory.createLLM(provider as ProviderKey);
+      const llm = this.llmFactory.createLLM(extractionProvider);
 
       const response = await llm.generateCompletion({
         messages: [{ role: 'user', content: prompt }],
-        model,
+        model: extractionModel,
       });
 
       const responseText = typeof response.content === 'string' ? response.content : JSON.stringify(response.content);

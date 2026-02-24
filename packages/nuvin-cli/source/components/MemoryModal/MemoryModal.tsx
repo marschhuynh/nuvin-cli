@@ -64,18 +64,16 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({
     [onDelete],
   );
 
-  // Handle delete key at list view level (ComboBox doesn't have onDelete)
   useInput(
     (_input, key) => {
-      if (activeView === 'detail' && key.escape) {
-        handleBackToList();
-        return;
-      }
-      // 'd' key for delete on currently highlighted memory
-      if (activeView === 'list' && _input === 'd') {
-        const currentMemory = state.memories[state.selectedIndex];
-        if (currentMemory) {
-          handleDelete(currentMemory.id);
+      if (activeView === 'detail') {
+        if (key.escape) {
+          handleBackToList();
+          return;
+        }
+        if (_input === 'd' && viewingMemory) {
+          handleDelete(viewingMemory.id);
+          handleBackToList();
         }
       }
     },
@@ -102,6 +100,8 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({
               segments={[
                 { text: 'j/k', highlight: true },
                 { text: ' scroll • ' },
+                { text: 'd', highlight: true },
+                { text: ' delete • ' },
                 { text: 'ESC', highlight: true },
                 { text: ' back' },
               ]}
@@ -110,7 +110,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({
         }
         height="100%"
       >
-        <Box flexDirection="column" flexGrow={1}>
+        <Box flexDirection="column" flexGrow={1} marginBottom={1}>
           <Box marginBottom={1} flexDirection="column">
             <Text>{viewingMemory.content}</Text>
           </Box>
@@ -183,8 +183,6 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({
           { text: ' navigate • ' },
           { text: 'Enter', highlight: true },
           { text: ' view • ' },
-          { text: 'd', highlight: true },
-          { text: ' delete • ' },
           { text: 'ESC', highlight: true },
           { text: ' exit' },
         ]}

@@ -141,6 +141,10 @@ export interface MemorySettings {
   backgroundExtraction?: boolean;
   /** Enable the memory_save tool for explicit agent memory creation (default: true) */
   saveTool?: boolean;
+  /** Model to use for background memory extraction (defaults to provider smallModel) */
+  model?: string;
+  /** Provider to use for background memory extraction (defaults to active provider) */
+  provider?: string;
 }
 
 export interface CLIConfig {

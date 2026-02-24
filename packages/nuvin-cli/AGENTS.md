@@ -7,6 +7,7 @@ This file provides guidance to Nuvin cli when working with code in this reposito
 ### Prerequisites
 - **Node.js 18+** required (see `package.json` engines field)
 - **ESM-only package** - Uses `"type": "module"`, all imports must use `.js` extensions
+- **React Compiler enabled** - Uses `babel-plugin-react-compiler` for automatic React optimizations
 
 ### Build and Development
 ```bash
@@ -33,6 +34,13 @@ cd ../.. && pnpm build           # Build both nuvin-core and nuvin-cli
 pnpm build:cli                   # Build only CLI
 pnpm build:core                  # Build only core
 ```
+
+**Build Process Details:**
+1. **Type check** - `tsc --noEmit` (skippable via `SKIP_TYPE_CHECK=1`)
+2. **Compile** - `tsup` bundles to `dist/` (ESM, Node 18 target, minified)
+3. **Obfuscate** - JavaScript obfuscator applied to all `.js` files (code protection)
+4. **Version** - Generate version info
+5. **Copy README** - Include documentation in dist
 
 ### Testing
 ```bash
