@@ -4,10 +4,11 @@ import { AppModal } from '@/components/AppModal.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { orchestratorManager } from '@/services/OrchestratorManager.js';
-import { MemoryModal } from '@/components/MemoryModal/index.js';
+import { MemoryModal, MemoryConfigModal } from '@/components/MemoryModal/index.js';
 import type { MemoryEntry } from '@nuvin/nuvin-core';
 
-const MemoryCommandComponent = ({ deactivate }: CommandComponentProps) => {
+const MemoryCommandComponent = ({ context, deactivate, isActive }: CommandComponentProps) => {
+  const subcommand = context.rawInput.trim().split(/\s+/)[1]?.toLowerCase();
   const { theme } = useTheme();
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,10 @@ const MemoryCommandComponent = ({ deactivate }: CommandComponentProps) => {
     }
   }, []);
 
+  if (subcommand === 'config') {
+    return <MemoryConfigModal context={context} deactivate={deactivate} isActive={isActive} />;
+  }
+
   if (loading) {
     return (
       <AppModal visible={true} title="Memories" onClose={deactivate} closeOnEscape={true}>
@@ -83,9 +88,9 @@ export function registerMemoryCommand(registry: CommandRegistry): void {
   registry.register({
     id: '/memory',
     type: 'component',
-    description: 'Manage long-term agent memories',
+    description: 'Manage long-term agent memories. Use /memory config to set extraction model.',
     category: 'session',
-    keywords: ['memory', 'memories', 'remember', 'forget'],
+    keywords: ['memory', 'memories', 'remember', 'forget', 'config'],
     component: MemoryCommandComponent,
   });
 }
