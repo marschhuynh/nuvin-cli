@@ -1,5 +1,23 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.6
+
+### Minor Changes
+
+- [`c0b2b87`](https://github.com/marschhuynh/nuvin-space/commit/c0b2b875ad78deb1794c9939e46a51919df962c1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `/memory` command with TUI modal, `MemoryService` integration, and config options for long-term memory.
+
+- [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `memory.model` and `memory.provider` config options for background extraction.
+
+### Patch Changes
+
+- [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Move delete key from list view to detail view in MemoryModal; add marginBottom to detail content.
+
+- [`a505747`](https://github.com/marschhuynh/nuvin-space/commit/a50574735d14a662e332c5c8c921c9c1f92b8534) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Format tool call titles and add small helpers.
+  Update ToolCallViewer registry and renderers.
+  Add memory_save to enabled tools and refine orchestrator defaults.
+- Updated dependencies [[`c0b2b87`](https://github.com/marschhuynh/nuvin-space/commit/c0b2b875ad78deb1794c9939e46a51919df962c1), [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea)]:
+  - @nuvin/nuvin-core@2.0.0-rc.2
+
 ## 1.37.0-rc.5
 
 ### Minor Changes
