@@ -42,6 +42,7 @@ import { NoopReminders } from './reminders.js';
 import { SimpleContextBuilder } from './context.js';
 import { NoopEventPort } from './events.js';
 import { convertToolCallsWithErrorHandling } from './tools/tool-call-converter.js';
+import { safeParseToolArguments } from './tools/tool-call-parser.js';
 import { extractBase64Images, toMessageContentParts } from './utils/base64-image-detector.js';
 
 type AssistantChunkEvent = Extract<AgentEvent, { type: typeof AgentEventTypes.AssistantChunk }>;
@@ -484,7 +485,7 @@ export class AgentOrchestrator {
           cwd: process.cwd(),
           toolName: toolCall.function.name,
           toolInput: typeof toolCall.function.arguments === 'string'
-            ? JSON.parse(toolCall.function.arguments || '{}')
+            ? safeParseToolArguments(toolCall.function.arguments)
             : toolCall.function.arguments as Record<string, unknown>,
           toolUseId: toolCall.id,
         };
@@ -872,7 +873,7 @@ export class AgentOrchestrator {
             cwd: process.cwd(),
             toolName: tc.function.name,
             toolInput: typeof tc.function.arguments === 'string'
-              ? JSON.parse(tc.function.arguments || '{}')
+              ? safeParseToolArguments(tc.function.arguments)
               : tc.function.arguments as Record<string, unknown>,
             toolUseId: tc.approvalId,
             permissionType: 'tool_approval',

@@ -107,6 +107,17 @@ export type AskUserArgs = {
   answers?: Record<string, string | string[]>;
 };
 
+export type ComputerUseArgs = {
+  action: string;
+  ref?: number;
+  app?: string;
+  text?: string;
+  key?: string;
+  direction?: string;
+  amount?: number;
+  duration?: number;
+};
+
 export type ToolArguments =
   | BashToolArgs
   | FileReadArgs
@@ -119,7 +130,8 @@ export type ToolArguments =
   | WebFetchArgs
   | TodoWriteArgs
   | AssignTaskArgs
-  | AskUserArgs;
+  | AskUserArgs
+  | ComputerUseArgs;
 
 /**
  * Type guard to safely parse tool arguments
@@ -192,6 +204,10 @@ export function isLsArgs(args: ToolArguments): args is LsArgs {
   );
 }
 
+export function isComputerUseArgs(args: ToolArguments): args is ComputerUseArgs {
+  return 'action' in args && typeof args.action === 'string';
+}
+
 export type ToolParameterMap = {
   bash_tool: BashToolArgs;
   file_read: FileReadArgs;
@@ -204,6 +220,7 @@ export type ToolParameterMap = {
   web_fetch: WebFetchArgs;
   todo_write: TodoWriteArgs;
   assign_task: AssignTaskArgs;
+  computer: ComputerUseArgs;
 };
 
 export type ToolName = keyof ToolParameterMap;

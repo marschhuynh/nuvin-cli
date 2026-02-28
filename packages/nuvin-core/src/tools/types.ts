@@ -1,4 +1,4 @@
-import type { ToolDefinition, EventPort, ErrorReason } from '../ports.js';
+import type { ToolDefinition, EventPort, ErrorReason, TextContentPart, ImageContentPart } from '../ports.js';
 
 export type ExecResultSuccess =
   | {
@@ -11,6 +11,12 @@ export type ExecResultSuccess =
       status: 'success';
       type: 'json';
       result: Record<string, unknown> | unknown[];
+      metadata?: Record<string, unknown>;
+    }
+  | {
+      status: 'success';
+      type: 'mixed';
+      result: Array<TextContentPart | ImageContentPart>;
       metadata?: Record<string, unknown>;
     };
 

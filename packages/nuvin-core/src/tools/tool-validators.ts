@@ -118,6 +118,17 @@ export const grepToolSchema = z.object({
   description: z.string().optional(),
 });
 
+export const computerToolSchema = z.object({
+  action: z.enum(['snapshot', 'press', 'set_value', 'type', 'key', 'scroll', 'screenshot', 'wait', 'list_apps', 'annotated_screenshot']),
+  ref: z.number().int().optional(),
+  app: z.string().optional(),
+  text: z.string().optional(),
+  key: z.string().optional(),
+  direction: z.enum(['up', 'down', 'left', 'right']).optional(),
+  amount: z.number().int().min(1).optional(),
+  duration: z.number().int().min(0).optional(),
+});
+
 export const toolSchemas = {
   bash_tool: bashToolSchema,
   file_read: fileReadSchema,
@@ -130,6 +141,7 @@ export const toolSchemas = {
   assign_task: assignTaskSchema,
   glob_tool: globToolSchema,
   grep_tool: grepToolSchema,
+  computer: computerToolSchema,
 } as const;
 
 export function validateToolParams<T extends ToolName>(
@@ -163,4 +175,5 @@ export const toolValidators = {
   assign_task: (params: Record<string, unknown>) => validateToolParams('assign_task', params),
   glob_tool: (params: Record<string, unknown>) => validateToolParams('glob_tool', params),
   grep_tool: (params: Record<string, unknown>) => validateToolParams('grep_tool', params),
+  computer: (params: Record<string, unknown>) => validateToolParams('computer', params),
 };

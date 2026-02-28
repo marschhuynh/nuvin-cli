@@ -9,6 +9,7 @@ import {
   DEFAULT_RETRYABLE_STATUS_CODES,
 } from '../transports/index.js';
 import { LLMError } from './base-llm.js';
+import { sanitizeToolArguments } from '../tools/tool-call-parser.js';
 import { normalizeModelInfo, deduplicateModels, type ModelInfo } from './model-limits.js';
 import {
   buildResponsesRequestBody,
@@ -194,7 +195,7 @@ export class GenericOpenAIResponsesLLM implements LLMPort {
               (argEvt.output_index !== undefined ? outputIndexToCallId.get(argEvt.output_index) : undefined);
             if (callId && argEvt.delta) {
               const currentArgs = toolCallArgsMap.get(callId) ?? '';
-              const newArgs = currentArgs + argEvt.delta;
+              const newArgs = currentArgs + sanitizeToolArguments(argEvt.delta);
               toolCallArgsMap.set(callId, newArgs);
 
               const tc = toolCalls.find((t) => t.id === callId);
@@ -214,7 +215,7 @@ export class GenericOpenAIResponsesLLM implements LLMPort {
             if (callId && doneEvt.arguments) {
               const tc = toolCalls.find((t) => t.id === callId);
               if (tc) {
-                tc.function.arguments = doneEvt.arguments;
+                tc.function.arguments = sanitizeToolArguments(doneEvt.arguments);
                 await handlers.onToolCallDelta?.(tc);
               }
             }

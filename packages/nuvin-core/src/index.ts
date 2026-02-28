@@ -69,6 +69,8 @@ export type {
   ToolExecutionContext,
 } from './tools/types.js';
 export type { BashResult, BashSuccessResult, BashErrorResult, BashParams } from './tools/BashTool.js';
+export { ComputerUseTool } from './tools/ComputerUseTool.js';
+export type { ComputerUseParams } from './tools/ComputerUseTool.js';
 
 // Tool parameters (for parsing and type guards)
 export type {
@@ -84,6 +86,7 @@ export type {
   TodoWriteArgs,
   AssignTaskArgs,
   ToolArguments,
+  ComputerUseArgs,
 } from './tools/tool-params.js';
 export {
   parseToolArguments,
@@ -98,6 +101,7 @@ export {
   isWebFetchArgs,
   isTodoWriteArgs,
   isAssignTaskArgs,
+  isComputerUseArgs,
 } from './tools/tool-params.js';
 export type { ToolParameterMap, ToolName, TypedToolInvocation } from './tools/tool-params.js';
 export type { ParseResult } from './tools/tool-call-parser.js';
@@ -118,6 +122,7 @@ export {
   assignTaskSchema,
   globToolSchema,
   grepToolSchema,
+  computerToolSchema,
 } from './tools/tool-validators.js';
 export type { ToolCallValidation, ValidationError, ToolCallConversionResult } from './tools/tool-call-converter.js';
 export { convertToolCall, convertToolCalls, convertToolCallsWithErrorHandling } from './tools/tool-call-converter.js';
@@ -135,6 +140,7 @@ export type {
   AssignTaskMetadata,
   ToolErrorMetadata,
   ToolMetadataMap,
+  ComputerUseMetadata,
 } from './tools/tool-result-metadata.js';
 export type {
   FileReadResult,
@@ -156,6 +162,7 @@ export type {
 export type { WebFetchResult, WebFetchSuccessResult, WebFetchParams } from './tools/WebFetchTool.js';
 export type { TodoWriteResult, TodoWriteSuccessResult } from './tools/TodoWriteTool.js';
 export type { AssignResult, AssignSuccessResult, AssignErrorResult } from './tools/AssignTool.js';
+export type { ComputerAction, ComputerBackend, ComputerUseResult, AXElement, AXSnapshotResult, AXPressResult, AXSetValueResult, AnnotateResult } from './tools/computer/types.js';
 export { AskUserTool } from './tools/AskUserTool.js';
 export type { AskUserArgs } from './tools/tool-params.js';
 export type { AskUserMetadata } from './tools/tool-result-metadata.js';
@@ -213,6 +220,8 @@ export {
   isTodoWriteSuccess,
   isAssignResult,
   isAssignSuccess,
+  isComputerResult,
+  isComputerSuccess,
 } from './tools/tool-type-guards.js';
 export { okText, okJson, err } from './tools/result-helpers.js';
 

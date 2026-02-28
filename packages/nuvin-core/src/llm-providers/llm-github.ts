@@ -1,5 +1,6 @@
 import type { LLMPort, UsageData, CompletionParams, CompletionResult, ToolCall } from '../ports.js';
 import { BaseLLM, LLMError } from './base-llm.js';
+import { sanitizeToolArguments } from '../tools/tool-call-parser.js';
 import {
   FetchTransport,
   GithubAuthTransport,
@@ -273,7 +274,7 @@ export class GithubLLM extends BaseLLM implements LLMPort {
               (argEvt.output_index !== undefined ? outputIndexToCallId.get(argEvt.output_index) : undefined);
             if (callId && argEvt.delta) {
               const currentArgs = toolCallArgsMap.get(callId) ?? '';
-              const newArgs = currentArgs + argEvt.delta;
+              const newArgs = currentArgs + sanitizeToolArguments(argEvt.delta);
               toolCallArgsMap.set(callId, newArgs);
 
               const tc = toolCalls.find((t) => t.id === callId);
@@ -293,7 +294,7 @@ export class GithubLLM extends BaseLLM implements LLMPort {
             if (callId && doneEvt.arguments) {
               const tc = toolCalls.find((t) => t.id === callId);
               if (tc) {
-                tc.function.arguments = doneEvt.arguments;
+                tc.function.arguments = sanitizeToolArguments(doneEvt.arguments);
                 await handlers.onToolCallDelta?.(tc);
               }
             }

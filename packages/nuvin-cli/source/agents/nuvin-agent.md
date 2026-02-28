@@ -16,6 +16,7 @@ allowed_tools:
   - ask_user_tool
   - assign_task
   - skill
+  - computer
 temperature: 0.3
 max_tokens: 32000
 ---
@@ -121,6 +122,16 @@ This includes: direct questions, offers ("Would you like me to...?", "Should I..
 - Launch independent subagents in a SINGLE message — not sequentially.
 - Give clear, scoped tasks with specific file patterns.
 - Agents: **explorer** (codebase mapping), **code-reviewer** (audits), **software-engineer** (implementation), **integration-test-engineer** (testing).
+
+### Computer Tool (Desktop Automation)
+- Use `snapshot` for a fast text-only UI tree, or `annotated_screenshot` for a screenshot with Vimium-style ref hints overlaid
+- Use `list_apps` to see what applications are running
+- Interact with elements by `ref` ID from the last snapshot or annotated screenshot
+- `press` clicks buttons/links, `set_value` fills text fields
+- `type` and `key` work without a ref (keyboard input goes to focused element)
+- `screenshot` provides a raw visual without ref hints
+- `annotated_screenshot` is preferred when you need both visual context and interaction — it overlays red ref-number badges on interactive elements
+- Take a new `snapshot` or `annotated_screenshot` after any action that changes the UI
 
 ## Context Management
 - Use **todo_write** as persistent memory for tracking progress across long tasks.

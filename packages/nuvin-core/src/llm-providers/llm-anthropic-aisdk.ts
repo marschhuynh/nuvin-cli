@@ -12,6 +12,7 @@ import {
   type FilePart,
 } from 'ai';
 import { LLMError } from './base-llm.js';
+import { safeParseToolArguments } from '../tools/tool-call-parser.js';
 import { normalizeModelInfo, deduplicateModels, type ModelInfo } from './model-limits.js';
 import {
   FetchTransport,
@@ -247,7 +248,7 @@ export class AnthropicAISDKLLM {
                 type: 'tool-call',
                 toolCallId: toolCall.id,
                 toolName: toolCall.function.name,
-                input: JSON.parse(toolCall.function.arguments || '{}'),
+                input: safeParseToolArguments(toolCall.function.arguments),
               });
             }
           }

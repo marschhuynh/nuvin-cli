@@ -118,3 +118,11 @@ export function isAssignResult(result: ToolExecutionResult): result is ToolExecu
 export function isAssignSuccess(result: ToolExecutionResult): result is AssignSuccessResult {
   return result.name === 'assign_task' && result.status === 'success' && result.type === 'text';
 }
+
+export function isComputerResult(result: ToolExecutionResult): result is ToolExecutionResult {
+  return result.name === 'computer';
+}
+
+export function isComputerSuccess(result: ToolExecutionResult): result is ToolExecutionResult {
+  return result.name === 'computer' && result.status === 'success';
+}

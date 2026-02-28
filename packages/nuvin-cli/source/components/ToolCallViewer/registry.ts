@@ -258,6 +258,27 @@ const TOOL_REGISTRY: Record<string, ToolConfig> = {
     excludeParams: ['filePath', 'line', 'character', 'operation', 'query'],
   },
 
+  computer: {
+    displayName: (ctx) => {
+      const action = ctx.args?.action as string | undefined;
+      switch (action) {
+        case 'snapshot': return ctx.args?.app ? `Snapshot: ${ctx.args.app}` : 'AX Snapshot';
+        case 'press': return `Press ref:${ctx.args?.ref}`;
+        case 'set_value': return `Set value ref:${ctx.args?.ref}`;
+        case 'screenshot': return 'Screenshot';
+        case 'type': return 'Type text';
+        case 'key': return `Key: ${ctx.args?.key}`;
+        case 'scroll': return `Scroll ${ctx.args?.direction}`;
+        case 'wait': return `Wait ${(ctx.args?.duration as number | undefined) ?? 1000}ms`;
+        case 'list_apps': return 'List apps';
+        case 'annotated_screenshot': return ctx.args?.app ? `Annotated: ${ctx.args.app}` : 'Annotated Screenshot';
+        default: return 'Computer';
+      }
+    },
+    renderResult: null,
+    collapsedByDefault: true,
+  },
+
   skill: {
     displayName: 'Using skill',
     statusText: {

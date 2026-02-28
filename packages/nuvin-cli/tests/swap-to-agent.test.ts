@@ -66,9 +66,11 @@ vi.mock('node:os', () => ({
   default: {
     homedir: () => '/mock-home',
     tmpdir: () => '/mock-tmp',
+    platform: () => 'darwin',
   },
   homedir: () => '/mock-home',
   tmpdir: () => '/mock-tmp',
+  platform: () => 'darwin',
 }));
 
 // Mock LSP to avoid initialization issues

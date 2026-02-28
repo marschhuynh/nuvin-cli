@@ -98,6 +98,7 @@ const baseEnabledTools: string[] = [
   'skill',
   'ask_user_tool',
   'memory_save',
+  'computer',
 ];
 
 function getEnabledTools(): string[] {
@@ -168,6 +169,7 @@ export class OrchestratorManager {
   private sessionInitialized: boolean = false;
   private toolRegistry: ToolRegistry | null = null;
   private activeAgentId: string = 'main';
+  private enableSkills: boolean = true;
   private previousOrchestrator: AgentOrchestrator | null = null;
   private memoryService: MemoryService | null = null;
 
@@ -359,6 +361,7 @@ export class OrchestratorManager {
 
       const skillsConfig = currentConfig.config.skills;
       const enableSkills = skillsConfig?.enabled !== false;
+      this.enableSkills = enableSkills;
 
       // Get git and shell context information (before creating ToolRegistry)
       const gitContextInfo = await getGitContextInfo();
@@ -1673,7 +1676,9 @@ Rules:
     const { shell, gitBranch, gitRepo, recentCommits } = await getGitContextInfo();
 
     // Build injected system context with git info
-    const availableSkillsForSwap = skillsService.list().map((s) => ({ name: s.name, description: s.description }));
+    const availableSkillsForSwap = this.enableSkills
+      ? skillsService.list().map((s) => ({ name: s.name, description: s.description }))
+      : [];
 
     const injectedSystem = buildInjectedSystem(
       {
@@ -1809,7 +1814,9 @@ Rules:
         gitBranch,
         gitRepo,
         recentCommits,
-        availableSkills: skillsService.list().map((s) => ({ name: s.name, description: s.description })),
+        availableSkills: this.enableSkills
+          ? skillsService.list().map((s) => ({ name: s.name, description: s.description }))
+          : [],
       },
       { withSubAgent: true },
     );

@@ -2,6 +2,7 @@ import type { CompletionParams, CompletionResult, LLMPort, UsageData, ToolCall }
 import type { HttpTransport, RetryConfig } from '../transports/index.js';
 import { isRetryableStatusCode, DEFAULT_RETRYABLE_STATUS_CODES } from '../transports/index.js';
 import { mergeChoices } from './llm-utils.js';
+import { sanitizeToolArguments } from '../tools/tool-call-parser.js';
 
 export interface BaseLLMOptions {
   enablePromptCaching?: boolean;
@@ -429,7 +430,7 @@ export abstract class BaseLLM implements LLMPort {
               toolCall.function.name = td.function.name;
             }
             if (typeof td.function?.arguments === 'string' && td.function.arguments) {
-              toolCall.function.arguments += td.function.arguments;
+              toolCall.function.arguments += sanitizeToolArguments(td.function.arguments);
             }
             await handlers?.onToolCallDelta?.(toolCall);
           }

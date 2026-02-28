@@ -9,6 +9,7 @@ import {
   DEFAULT_RETRYABLE_STATUS_CODES,
 } from '../transports/index.js';
 import { LLMError } from './base-llm.js';
+import { safeParseToolArguments, sanitizeToolArguments } from '../tools/tool-call-parser.js';
 import { normalizeModelInfo, deduplicateModels, type ModelInfo } from './model-limits.js';
 
 type ModelConfig = false | true | string | string[] | Array<{ id: string; name?: string; [key: string]: unknown }>;
@@ -268,7 +269,7 @@ export class GenericAnthropicLLM implements LLMPort {
               type: 'tool_use',
               id: tc.id,
               name: tc.function.name,
-              input: JSON.parse(tc.function.arguments || '{}'),
+              input: safeParseToolArguments(tc.function.arguments),
             });
           }
         }
@@ -563,7 +564,7 @@ export class GenericAnthropicLLM implements LLMPort {
               }
             } else if (evt.delta.type === 'input_json_delta') {
               const currentArgs = toolCallArgs.get(evt.index) ?? '';
-              const newArgs = currentArgs + evt.delta.partial_json;
+              const newArgs = currentArgs + sanitizeToolArguments(evt.delta.partial_json);
               toolCallArgs.set(evt.index, newArgs);
 
               const tcIndex = toolCalls.length - 1;

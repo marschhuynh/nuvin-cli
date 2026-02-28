@@ -110,6 +110,12 @@ export type AskUserMetadata = {
   answers: Record<string, string | string[]>;
 };
 
+export type ComputerUseMetadata = {
+  action?: string;
+  width?: number;
+  height?: number;
+};
+
 export type ToolErrorMetadata = {
   errorReason?: ErrorReason;
   editInstruction?: string;
@@ -133,6 +139,7 @@ export type ToolMetadataMap = {
   todo_write: TodoWriteMetadata;
   assign_task: AssignTaskMetadata;
   ask_user_tool: AskUserMetadata;
+  computer: ComputerUseMetadata;
 };
 
 export type ToolName = keyof ToolMetadataMap;

@@ -31,6 +31,7 @@ import { LspTool, type LspService } from './tools/LspTool.js';
 import { AgentManagerCommandRunner, DelegationServiceFactory } from './delegation/index.js';
 import { AskUserTool } from './tools/AskUserTool.js';
 import { memorySaveToolDefinition, type MemorySaveToolInput } from './tools/memory-save-tool.js';
+import { ComputerUseTool } from './tools/ComputerUseTool.js';
 
 export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorAwareToolPort {
   private tools = new Map<string, FunctionTool<unknown, unknown>>();
@@ -74,6 +75,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       new GlobTool({ allowAbsolute: true }),
       new GrepTool({ allowAbsolute: true }),
       new AskUserTool(),
+      ...(process.platform === 'darwin' && process.env.NUVIN_COMPUTER_USE === '1' ? [new ComputerUseTool()] : []),
     ];
 
     for (const tool of toolInstances) {
