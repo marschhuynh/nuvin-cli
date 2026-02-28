@@ -6,6 +6,8 @@ import { MacOSBackend } from './computer/macos-backend.js';
 
 // ─── Parameter types ───────────────────────────────────────────────────────
 
+import type { HintMode } from './computer/types.js';
+
 export type ComputerUseParams = {
   action: 'snapshot' | 'press' | 'set_value' | 'type' | 'key' | 'scroll' | 'screenshot' | 'wait' | 'list_apps' | 'annotated_screenshot';
   ref?: number;
@@ -15,6 +17,9 @@ export type ComputerUseParams = {
   direction?: 'up' | 'down' | 'left' | 'right';
   amount?: number;
   duration?: number;
+  maxDepth?: number;
+  maxElements?: number;
+  hintMode?: HintMode;
 };
 
 // ─── JSON Schema parameters ────────────────────────────────────────────────
@@ -57,6 +62,21 @@ const PARAMETERS = {
       type: 'integer',
       minimum: 0,
       description: 'Milliseconds to wait (for wait action). Defaults to 1000.',
+    },
+    maxDepth: {
+      type: 'integer',
+      minimum: 1,
+      description: 'Maximum depth for AX tree traversal (for snapshot, annotated_screenshot). Defaults to 8.',
+    },
+    maxElements: {
+      type: 'integer',
+      minimum: 1,
+      description: 'Maximum number of actionable elements to capture (for snapshot, annotated_screenshot). Defaults to 500.',
+    },
+    hintMode: {
+      type: 'string',
+      enum: ['full', 'leafOnly', 'leafCompact'],
+      description: 'Hint mode for AX snapshot (for snapshot, annotated_screenshot). "full" = all elements get refs, "leafOnly" = only leaf-actionable elements get refs, "leafCompact" = prune non-actionable structure. Defaults to "leafCompact".',
     },
   },
   required: ['action'],
@@ -177,6 +197,7 @@ export class ComputerUseTool
         'Interact with the computer desktop via the accessibility tree. ' +
         'Use `snapshot` for a text-only UI tree, or `annotated_screenshot` to see a screenshot with ref hints overlaid (Vimium-style). ' +
         'Pass `app` to target a specific application (e.g. app="Safari"); omit to use the frontmost app. ' +
+        'Optional: `maxDepth` (default 8), `maxElements` (default 500), `hintMode` (default "leafCompact") control snapshot behavior. ' +
         'Then use `press` or `set_value` to interact by element ref. ' +
         'Use `type` and `key` for keyboard input, `scroll` to scroll an element into view by ref (or at screen center if no ref given). ' +
         'Use `screenshot` only when you need a raw visual without hints. ' +
@@ -204,7 +225,12 @@ export class ComputerUseTool
   private async dispatch(params: ComputerUseParams): Promise<ComputerUseResult> {
     switch (params.action) {
       case 'snapshot': {
-        const snapshot = await this.backend.axSnapshot(params.app, undefined, undefined, 'leafCompact');
+        const snapshot = await this.backend.axSnapshot(
+          params.app,
+          params.maxDepth,
+          params.maxElements,
+          params.hintMode ?? 'leafCompact',
+        );
         this.lastSnapshotId = snapshot.snapshotId;
         this.lastApp = snapshot.app;
         const formatted = formatAXTree(snapshot);
@@ -296,7 +322,12 @@ export class ComputerUseTool
 
       case 'annotated_screenshot': {
         // 1. Take AX snapshot
-        const snapshot = await this.backend.axSnapshot(params.app, undefined, undefined, 'leafCompact');
+        const snapshot = await this.backend.axSnapshot(
+          params.app,
+          params.maxDepth,
+          params.maxElements,
+          params.hintMode ?? 'leafCompact',
+        );
         this.lastSnapshotId = snapshot.snapshotId;
         this.lastApp = snapshot.app;
 

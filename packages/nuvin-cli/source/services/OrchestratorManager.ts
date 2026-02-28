@@ -845,6 +845,10 @@ export class OrchestratorManager {
     const currentConfig = this.getCurrentConfig();
     const persistEventLog = currentConfig.config.session?.persistEventLog ?? false;
 
+    // Capture any messages that were loaded into in-memory storage (e.g. via --history flag)
+    // before migrating to persisted storage so they are not lost.
+    const preloadedMessages = this.memory ? await this.memory.get(this.conversationContext.getActiveConversationId()) : [];
+
     const newMemory = this.createMemory(sessionDir, 'cli');
     const newEventAdapter = this.createEventAdapter(sessionDir, this.handlers, persistEventLog, this.streamingChunks);
 
@@ -866,6 +870,12 @@ export class OrchestratorManager {
     this.sessionInitialized = true;
 
     await this.initializeDefaultConversation();
+
+    // Restore preloaded messages (e.g. from --history) into the new persistent memory.
+    // Must run after initializeDefaultConversation to avoid being overwritten by it.
+    if (preloadedMessages.length > 0) {
+      await this.memory.set(this.conversationContext.getActiveConversationId(), preloadedMessages);
+    }
 
     // eventBus.emit('ui:header:refresh');
   }
