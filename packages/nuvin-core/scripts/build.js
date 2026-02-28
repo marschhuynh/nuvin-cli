@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,6 +23,20 @@ try {
   console.log('✓ TypeScript compilation completed');
 } catch (error) {
   console.error('✗ TypeScript compilation failed');
+  process.exit(1);
+}
+
+// Copy Swift source files into dist so they're available in published package
+try {
+  const axHelperDistDir = join(distDir, 'tools', 'computer', 'ax-helper');
+  if (!existsSync(axHelperDistDir)) {
+    mkdirSync(axHelperDistDir, { recursive: true });
+  }
+  const axHelperSrc = join(__dirname, '..', 'src', 'tools', 'computer', 'ax-helper', 'main.swift');
+  copyFileSync(axHelperSrc, join(axHelperDistDir, 'main.swift'));
+  console.log('✓ Copied ax-helper/main.swift to dist');
+} catch (error) {
+  console.error('✗ Failed to copy ax-helper source:', error.message);
   process.exit(1);
 }
 

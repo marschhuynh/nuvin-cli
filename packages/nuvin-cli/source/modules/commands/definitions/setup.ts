@@ -58,7 +58,7 @@ async function runComputerUseSetup(rawInput: string): Promise<void> {
   // Resolve ax-helper source from nuvin-core package location
   const nuvinCoreEntry = fileURLToPath(import.meta.resolve('@nuvin/nuvin-core'));
   const nuvinCorePkg = path.resolve(path.dirname(nuvinCoreEntry), '..');
-  const axHelperSrc = path.join(nuvinCorePkg, 'src', 'tools', 'computer', 'ax-helper', 'main.swift');
+  const axHelperSrc = path.join(nuvinCorePkg, 'dist', 'tools', 'computer', 'ax-helper', 'main.swift');
 
   // Check if we need to rebuild (binary doesn't exist, source is newer, or --force flag)
   const args = rawInput.trim().split(/\s+/);
