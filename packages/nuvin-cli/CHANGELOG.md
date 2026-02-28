@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.7
+
+### Minor Changes
+
+- [`340f343`](https://github.com/marschhuynh/nuvin-space/commit/340f34357001894a25ef93e96e73c78a8093e895) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add /setup command for computer use tool dependencies, update ToolCallViewer registry for computer tool display formatting
+
+### Patch Changes
+
+- Updated dependencies [[`340f343`](https://github.com/marschhuynh/nuvin-space/commit/340f34357001894a25ef93e96e73c78a8093e895)]:
+  - @nuvin/nuvin-core@2.0.0-rc.3
+
 ## 1.37.0-rc.6
 
 ### Minor Changes
