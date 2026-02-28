@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.9
+
+### Patch Changes
+
+- [`58c7987`](https://github.com/marschhuynh/nuvin-space/commit/58c79873085e6d43b13a041d6019dfb1e4b6d960) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove virtualization logic from FileDiffView, simplify to always render non-virtualized
+
+- [`aab1a6a`](https://github.com/marschhuynh/nuvin-space/commit/aab1a6aebae5398407235b6615b1a2046df2a26e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix preloaded messages lost when migrating to persisted storage; add snapshot control params to ComputerUseTool
+
+- Updated dependencies [[`aab1a6a`](https://github.com/marschhuynh/nuvin-space/commit/aab1a6aebae5398407235b6615b1a2046df2a26e)]:
+  - @nuvin/nuvin-core@2.0.0-rc.5
+
 ## 1.37.0-rc.8
 
 ### Patch Changes
