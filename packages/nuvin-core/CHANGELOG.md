@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.3
+
+### Minor Changes
+
+- [`340f343`](https://github.com/marschhuynh/nuvin-space/commit/340f34357001894a25ef93e96e73c78a8093e895) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add ComputerUseTool for macOS automation via AX tree, add safe tool call argument parsing with sanitization, add mixed content result type for text+image outputs
+
 ## 2.0.0-rc.2
 
 ### Minor Changes
