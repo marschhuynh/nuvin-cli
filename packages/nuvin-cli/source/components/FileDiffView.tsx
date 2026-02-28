@@ -3,9 +3,6 @@ import { Box, Text } from 'ink';
 import { useStdoutDimensions } from '@/hooks';
 import type { Theme } from '@/theme';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { VirtualizedList } from './VirtualizedList.js';
-
-const VIRTUALIZATION_THRESHOLD = 50;
 
 export type DiffSegment = {
   text: string;
@@ -355,76 +352,12 @@ export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }
     });
   }, [blocks, lineNumbers]);
 
-  // Flatten all lines with their metadata for virtualization
-  const allLines = useMemo(() => {
-    const lines: Array<DiffLine & { blockIndex: number; lineNumWidth: number; showBlockHeader: boolean }> = [];
-
-    for (const block of blockData) {
-      if (block.totalBlocks > 1) {
-        // Add a marker line for block header (we'll render this specially)
-        lines.push({
-          type: 'context',
-          content: `__BLOCK_HEADER__${block.blockIndex + 1}/${block.totalBlocks}`,
-          oldLineNum: 0,
-          newLineNum: 0,
-          blockIndex: block.blockIndex,
-          lineNumWidth: block.lineNumWidth,
-          showBlockHeader: true,
-        });
-      }
-
-      for (const line of block.diff) {
-        lines.push({
-          ...line,
-          blockIndex: block.blockIndex,
-          lineNumWidth: block.lineNumWidth,
-          showBlockHeader: false,
-        });
-      }
-    }
-
-    return lines;
-  }, [blockData]);
-
-  const shouldVirtualize = allLines.length > VIRTUALIZATION_THRESHOLD;
-
   // Calculate max lineNumWidth across all blocks for consistency
   const globalLineNumWidth = useMemo(() => {
     if (blockData.length === 0) return 3;
     return Math.max(...blockData.map((b) => b.lineNumWidth));
   }, [blockData]);
 
-  if (shouldVirtualize) {
-    return (
-      <Box flexDirection="column">
-        {showPath && filePath && (
-          <Box marginLeft={2}>
-            <Text color={theme.diff.pathLabel}>path: </Text>
-            <Text>{filePath}</Text>
-          </Box>
-        )}
-        <VirtualizedList
-          items={allLines}
-          renderItem={(line) => {
-            if (line.showBlockHeader && line.content.startsWith('__BLOCK_HEADER__')) {
-              const [, nums] = line.content.split('__BLOCK_HEADER__');
-              return (
-                <Text color={theme.diff.blockSeparator} dimColor>
-                  ─── Block {nums} ───
-                </Text>
-              );
-            }
-            return <DiffLineView line={line} theme={theme} lineNumWidth={line.lineNumWidth} />;
-          }}
-          keyExtractor={(line, i) => `line-${i}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`}
-          overscan={10}
-          flexGrow={1}
-        />
-      </Box>
-    );
-  }
-
-  // Non-virtualized rendering for small diffs
   return (
     <Box flexDirection="column">
       {showPath && filePath && (
