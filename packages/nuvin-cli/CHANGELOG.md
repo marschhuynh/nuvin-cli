@@ -1,5 +1,14 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.8
+
+### Patch Changes
+
+- [`dd64099`](https://github.com/marschhuynh/nuvin-space/commit/dd64099576e818850c53cbd60349f52e1eff119f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Copy ax-helper Swift source to dist during build, fix setup command to read from dist location
+
+- Updated dependencies [[`dd64099`](https://github.com/marschhuynh/nuvin-space/commit/dd64099576e818850c53cbd60349f52e1eff119f)]:
+  - @nuvin/nuvin-core@2.0.0-rc.4
+
 ## 1.37.0-rc.7
 
 ### Minor Changes

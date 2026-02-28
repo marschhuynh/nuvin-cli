@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.4
+
+### Patch Changes
+
+- [`dd64099`](https://github.com/marschhuynh/nuvin-space/commit/dd64099576e818850c53cbd60349f52e1eff119f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Copy ax-helper Swift source to dist during build, fix setup command to read from dist location
+
 ## 2.0.0-rc.3
 
 ### Minor Changes
