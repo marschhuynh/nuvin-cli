@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.5
+
+### Minor Changes
+
+- [`aab1a6a`](https://github.com/marschhuynh/nuvin-space/commit/aab1a6aebae5398407235b6615b1a2046df2a26e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix preloaded messages lost when migrating to persisted storage; add snapshot control params to ComputerUseTool
+
 ## 2.0.0-rc.4
 
 ### Patch Changes
