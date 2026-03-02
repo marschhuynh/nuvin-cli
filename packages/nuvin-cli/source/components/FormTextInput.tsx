@@ -12,6 +12,7 @@ interface FormTextInputProps {
   hint?: string;
   placeHolder?: string;
   tabIndex?: number | string;
+  maxLines?: number;
 }
 
 export const FormTextInput: React.FC<FormTextInputProps> = ({
@@ -22,16 +23,17 @@ export const FormTextInput: React.FC<FormTextInputProps> = ({
   hint,
   placeHolder,
   tabIndex,
+  maxLines,
 }) => {
   const { theme } = useTheme();
   return (
     <Focusable autoFocus={autoFocus} tabIndex={tabIndex}>
       {({ isFocused }) => (
-        <Box flexDirection="column">
+        <Box flexDirection="column" width={maxLines !== undefined ? '100%' : undefined}>
           <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
             {label}
           </Text>
-          <TextInput value={value} onChange={onChange} focus={isFocused} placeholder={placeHolder} />
+          <TextInput value={value} onChange={onChange} focus={isFocused} placeholder={placeHolder} maxLines={maxLines} showScrollbar={maxLines !== undefined} />
           {hint && (
             <Text color={theme.history.help} dimColor>
               {hint}

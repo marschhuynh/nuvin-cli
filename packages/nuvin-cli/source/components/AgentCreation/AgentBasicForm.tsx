@@ -151,12 +151,13 @@ const AgentBasicFormContent: React.FC<AgentBasicFormProps> = ({
             />
           </Box>
 
-          <Box marginBottom={1}>
+          <Box marginBottom={1} width="100%">
             <FormTextInput
               label="Description:"
               value={editedDescription}
               onChange={(value) => onFieldChange('description', value)}
               tabIndex="0"
+              maxLines={15}
             />
           </Box>
         </Box>
