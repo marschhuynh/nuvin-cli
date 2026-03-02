@@ -1,5 +1,21 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.6
+
+### Minor Changes
+
+- [`9ea61e9`](https://github.com/marschhuynh/nuvin-space/commit/9ea61e972bcb2d86c4d4d320c67df8a89a0d34f3) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): replace JSON store with BM25 topic-based markdown storage
+
+  - Rewrite MemoryService with frontmatter-topic-md format (one file per topic)
+  - Add BM25 retrieval engine with recency/frequency/type-weight scoring
+  - Add query-scoped memory injection per message instead of full dump
+  - Migrate legacy memories.json entries on startup
+  - Add `topic`, `title`, `keywords`, `updateMode` fields to memory_save tool
+  - Add `upsertTopicMemory` for merge/replace semantics
+  - Wire workspaceId for project-scoped memory isolation
+  - Add retrieval/storage/index config options to MemorySettings
+  - Export `MemoryEntryInput` type from nuvin-core
+
 ## 2.0.0-rc.5
 
 ### Minor Changes
