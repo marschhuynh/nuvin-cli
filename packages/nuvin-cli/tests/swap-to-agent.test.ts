@@ -12,6 +12,7 @@ const { mockConfigManager } = vi.hoisted(() => {
       mcp: undefined,
       agentsEnabled: {},
       session: {},
+      memory: { enabled: false },
       skills: { enabled: false }, // Disable skills to avoid SkillTool.setProvider call
     })),
     get: vi.fn(() => ({})),

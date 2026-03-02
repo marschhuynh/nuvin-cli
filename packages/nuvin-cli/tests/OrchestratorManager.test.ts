@@ -29,6 +29,7 @@ const { mockConfigManager } = vi.hoisted(() => {
       requireToolApproval: false,
       thinking: 'OFF',
       streamingChunks: false,
+      memory: { enabled: false },
       mcp: undefined,
     })),
     get: vi.fn(() => undefined),

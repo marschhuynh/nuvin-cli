@@ -133,6 +133,20 @@ export interface StatuslineConfig {
 }
 
 export interface MemorySettings {
+  /** Storage format for long-term memory records (default: frontmatter-topic-md) */
+  storage?: {
+    format?: 'frontmatter-topic-md';
+  };
+  /** Retrieval settings for long-term memory injection/search. */
+  retrieval?: {
+    engine?: 'bm25';
+    candidateLimit?: number;
+    injectTokenBudget?: number;
+  };
+  /** Index settings for retrieval sidecar files. */
+  index?: {
+    persisted?: boolean;
+  };
   /** Enable/disable long-term memory (default: true) */
   enabled?: boolean;
   /** Maximum tokens to inject from memory into system prompt (default: 2000) */

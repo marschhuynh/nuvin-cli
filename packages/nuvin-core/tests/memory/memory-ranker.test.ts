@@ -8,6 +8,8 @@ function makeEntry(overrides: Partial<MemoryEntry> = {}): MemoryEntry {
   const now = new Date().toISOString();
   return {
     id: 'mem_test',
+    topic: 'default-topic',
+    keywords: ['default'],
     content: 'Default memory content',
     type: 'semantic',
     scope: 'global',

@@ -15,7 +15,15 @@ export type { FolderTreeOptions } from './folder-tree-utils.js';
 export { InMemoryMemory, PersistedMemory, JsonFileMemoryPersistence } from './persistent/index.js';
 export { JsonFileMemoryStore } from './memory/memory-store.js';
 export { rankMemories, formatMemoriesForPrompt } from './memory/memory-ranker.js';
-export type { MemoryEntry, MemoryType, MemoryScope, MemorySource, MemorySearchOptions, MemoryStorePort } from './memory/types.js';
+export type {
+  MemoryEntry,
+  MemoryEntryInput,
+  MemoryType,
+  MemoryScope,
+  MemorySource,
+  MemorySearchOptions,
+  MemoryStorePort,
+} from './memory/types.js';
 export { MemoryExtractor } from './memory/memory-extractor.js';
 export type { MemoryCandidate } from './memory/memory-extractor.js';
 export { InMemoryMetadata, MemoryPortMetadataAdapter } from './persistent/metadata-memory.js';

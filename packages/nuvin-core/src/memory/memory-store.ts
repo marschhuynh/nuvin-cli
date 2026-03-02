@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { MemoryEntry, MemoryScope, MemorySearchOptions, MemoryStorePort } from './types.js';
+import type { MemoryEntry, MemoryEntryInput, MemoryScope, MemorySearchOptions, MemoryStorePort } from './types.js';
 
 /**
  * JSON file-backed implementation of MemoryStorePort.
@@ -64,13 +64,15 @@ export class JsonFileMemoryStore implements MemoryStorePort {
 
   // ── MemoryStorePort ────────────────────────────────────────────────────────
 
-  async add(
-    input: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt' | 'accessCount' | 'lastAccessedAt'>,
-  ): Promise<MemoryEntry> {
+  async add(input: MemoryEntryInput): Promise<MemoryEntry> {
     await this.ensureInitialized();
     const timestamp = this.now();
+    const topic = input.topic?.trim() || 'general-memory';
+    const keywords = Array.isArray(input.keywords) ? input.keywords : input.tags;
     const entry: MemoryEntry = {
       ...input,
+      topic,
+      keywords: Array.isArray(keywords) ? keywords : [],
       id: this.generateId(),
       createdAt: timestamp,
       updatedAt: timestamp,

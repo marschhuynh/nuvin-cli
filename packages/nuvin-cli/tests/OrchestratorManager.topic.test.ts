@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { OrchestratorManager } from '../source/services/OrchestratorManager.js';
 import type { ConfigManager } from '../source/config/manager.js';
 import type { UIHandlers } from '../source/services/OrchestratorManager.js';
@@ -19,6 +19,14 @@ vi.mock('../source/services/LLMFactory.js', () => {
     })),
   };
 });
+
+var injectedConfigManager: ConfigManager | null = null;
+
+vi.mock('../source/config/manager.js', () => ({
+  ConfigManager: {
+    getInstance: vi.fn(() => injectedConfigManager),
+  },
+}));
 
 describe('OrchestratorManager - Topic Analysis', () => {
   let manager: OrchestratorManager;
@@ -41,6 +49,9 @@ describe('OrchestratorManager - Topic Analysis', () => {
         requireToolApproval: false,
         thinking: 'OFF',
         streamingChunks: false,
+        memory: {
+          enabled: false,
+        },
         mcp: undefined,
         providers: {
           openrouter: {
@@ -53,7 +64,8 @@ describe('OrchestratorManager - Topic Analysis', () => {
       // biome-ignore lint/suspicious/noExplicitAny: test mock
     } as any;
 
-    manager = new OrchestratorManager(mockConfigManager);
+    injectedConfigManager = mockConfigManager;
+    manager = new OrchestratorManager();
 
     await manager.init(
       {
@@ -63,6 +75,10 @@ describe('OrchestratorManager - Topic Analysis', () => {
       },
       mockHandlers,
     );
+  });
+
+  afterEach(async () => {
+    await manager.cleanup();
   });
 
   describe('analyzeTopic', () => {
@@ -131,7 +147,7 @@ describe('OrchestratorManager - Topic Analysis', () => {
     });
 
     it('should throw error if conversation store not initialized', async () => {
-      const uninitializedManager = new OrchestratorManager(mockConfigManager);
+      const uninitializedManager = new OrchestratorManager();
 
       await expect(uninitializedManager.updateConversationTopic('test', 'Topic')).rejects.toThrow(
         'ConversationStore not initialized',
@@ -231,7 +247,7 @@ describe('OrchestratorManager - Topic Analysis', () => {
     });
 
     it('should throw error if conversation store not initialized', async () => {
-      const uninitializedManager = new OrchestratorManager(mockConfigManager);
+      const uninitializedManager = new OrchestratorManager();
 
       await expect(uninitializedManager.getConversationMetadata('test')).rejects.toThrow(
         'ConversationStore not initialized',
@@ -261,12 +277,13 @@ describe('OrchestratorManager - Topic Analysis', () => {
     });
 
     it('should return empty array when no conversations exist', async () => {
-      const freshManager = new OrchestratorManager(mockConfigManager);
+      const freshManager = new OrchestratorManager();
       await freshManager.init({ memPersist: false, mcpConfigPath: '/non/existent/path/mcp-config.json' }, mockHandlers);
 
       const conversations = await freshManager.listConversations();
 
       expect(Array.isArray(conversations)).toBe(true);
+      await freshManager.cleanup();
     });
 
     it('should include conversations without topics', async () => {
@@ -279,7 +296,7 @@ describe('OrchestratorManager - Topic Analysis', () => {
     });
 
     it('should throw error if conversation store not initialized', async () => {
-      const uninitializedManager = new OrchestratorManager(mockConfigManager);
+      const uninitializedManager = new OrchestratorManager();
 
       await expect(uninitializedManager.listConversations()).rejects.toThrow('ConversationStore not initialized');
     });
@@ -295,7 +312,7 @@ describe('OrchestratorManager - Topic Analysis', () => {
     });
 
     it('should return null if not initialized', () => {
-      const uninitializedManager = new OrchestratorManager(mockConfigManager);
+      const uninitializedManager = new OrchestratorManager();
       const store = uninitializedManager.getConversationStore();
 
       expect(store).toBeNull();

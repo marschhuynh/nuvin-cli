@@ -60,6 +60,9 @@ import { LSP } from './lsp/index.js';
 import { skillsService } from './SkillsService.js';
 import { getGitContextInfo } from '@/utils/git-context.js';
 import { MemoryService } from './MemoryService.js';
+import { getWorkspaceContext, type WorkspaceContext } from './WorkspaceContextService.js';
+import { buildSystemPromptWithMemory, stripInjectedMemorySection } from './memory-prompt-builder.js';
+import type { MemorySettings } from '@/config/types.js';
 
 // Directory paths will be resolved dynamically based on active profile
 const defaultModels: Record<ProviderKey, string> = {
@@ -101,9 +104,17 @@ const baseEnabledTools: string[] = [
   'computer',
 ];
 
-function getEnabledTools(): string[] {
+function getEnabledTools(memoryConfig?: MemorySettings): string[] {
   const tools = [...baseEnabledTools];
+  if (memoryConfig?.enabled === false || memoryConfig?.saveTool === false) {
+    return tools.filter((tool) => tool !== 'memory_save');
+  }
   return tools;
+}
+
+function getQueryTextFromPayload(content: UserMessagePayload): string {
+  if (typeof content === 'string') return content;
+  return content.text ?? '';
 }
 
 class SessionBoundMetricsPort implements MetricsPort {
@@ -172,6 +183,7 @@ export class OrchestratorManager {
   private enableSkills: boolean = true;
   private previousOrchestrator: AgentOrchestrator | null = null;
   private memoryService: MemoryService | null = null;
+  private workspaceContext: WorkspaceContext = getWorkspaceContext();
 
   private static readonly WARNING_THRESHOLD = 0.85;
   private static readonly AUTO_SUMMARY_THRESHOLD = 0.95;
@@ -508,7 +520,7 @@ export class OrchestratorManager {
         ...(mainAgentTemplate?.top_p !== undefined && { topP: mainAgentTemplate.top_p }),
         maxTokens: mainAgentTemplate?.max_tokens,
         model: currentConfig.model,
-        enabledTools: getEnabledTools(),
+        enabledTools: getEnabledTools(currentConfig.config.memory),
         maxToolConcurrency: 10,
         requireToolApproval: currentConfig.requireToolApproval,
         reasoningEffort: currentConfig.reasoningEffort,
@@ -568,14 +580,19 @@ export class OrchestratorManager {
       // Wire memory_save tool handler
       toolRegistry.setMemoryHandler(async (input) => {
         if (!this.memoryService) return 'Memory system is not enabled.';
-        const entry = await this.memoryService.addMemory({
+        const entry = await this.memoryService.upsertTopicMemory({
           content: input.content,
           type: input.type,
           scope: input.scope,
+          topic: input.topic,
+          title: input.title,
           tags: input.tags ?? [],
+          keywords: input.keywords ?? input.tags ?? [],
+          updateMode: input.updateMode ?? 'merge',
           source: 'explicit',
+          workspaceId: input.scope === 'project' ? this.workspaceContext.workspaceId : undefined,
         });
-        return `Memory saved: "${entry.content}" [${entry.type}/${entry.scope}]`;
+        return `Memory saved: "${entry.topic}" [${entry.type}/${entry.scope}]`;
       });
 
       // Set initial LLM - will be refreshed on each send() call
@@ -624,6 +641,7 @@ export class OrchestratorManager {
     const currentConfig = this.getCurrentConfig();
     const memoryConfig = currentConfig.config.memory;
     if (memoryConfig?.enabled === false) return;
+    this.workspaceContext = getWorkspaceContext();
 
     const currentProfile =
       typeof this.configManager.getCurrentProfile === 'function' ? this.configManager.getCurrentProfile() : undefined;
@@ -631,12 +649,15 @@ export class OrchestratorManager {
     const profileSuffix = isDefaultProfile ? '' : `-${currentProfile}`;
 
     const globalDir = path.join(os.homedir(), `.nuvin${profileSuffix}`, 'memory');
-    const projectDir = path.join(process.cwd(), '.nuvin', 'memory');
+    const projectDir = path.join(this.workspaceContext.workspaceRoot, '.nuvin', 'memory');
 
     this.memoryService = new MemoryService({
       globalDir,
       projectDir,
-      maxInjectionTokens: memoryConfig?.maxInjectionTokens,
+      workspaceId: this.workspaceContext.workspaceId,
+      maxInjectionTokens: memoryConfig?.retrieval?.injectTokenBudget ?? memoryConfig?.maxInjectionTokens,
+      candidateLimit: memoryConfig?.retrieval?.candidateLimit,
+      indexPersisted: memoryConfig?.index?.persisted,
     });
   }
 
@@ -718,7 +739,7 @@ export class OrchestratorManager {
       }
 
       // Update orchestrator's enabled tools list
-      const nonMcpTools = getEnabledTools(); // Base tools from initialization
+      const nonMcpTools = getEnabledTools(this.getCurrentConfig().config.memory); // Base tools from initialization
       const updatedEnabledTools = [...nonMcpTools, ...mcpEnabledTools];
 
       this.orchestrator.updateConfig({
@@ -740,7 +761,7 @@ export class OrchestratorManager {
         mcpEnabledTools.push(...server.allowedTools);
       }
 
-      const nonMcpTools = getEnabledTools();
+      const nonMcpTools = getEnabledTools(this.getCurrentConfig().config.memory);
       const updatedEnabledTools = [...nonMcpTools, ...mcpEnabledTools];
 
       this.orchestrator.updateConfig({
@@ -764,7 +785,7 @@ export class OrchestratorManager {
         mcpEnabledTools.push(...server.allowedTools);
       }
 
-      const nonMcpTools = getEnabledTools();
+      const nonMcpTools = getEnabledTools(this.getCurrentConfig().config.memory);
       const updatedEnabledTools = [...nonMcpTools, ...mcpEnabledTools];
 
       this.orchestrator.updateConfig({
@@ -807,7 +828,7 @@ export class OrchestratorManager {
           // Update the orchestrator's tools and enabled tools list
           this.orchestrator.setTools(compositeTools);
 
-          const updatedEnabledTools = [...getEnabledTools(), ...mcpEnabledTools];
+          const updatedEnabledTools = [...getEnabledTools(this.getCurrentConfig().config.memory), ...mcpEnabledTools];
           this.orchestrator.updateConfig({
             enabledTools: updatedEnabledTools,
           });
@@ -1206,10 +1227,18 @@ export class OrchestratorManager {
       ...agentConfigOverrides,
     };
 
-    // Inject long-term memories into system prompt
+    // Inject long-term memories into system prompt (scoped retrieval + idempotent markers)
     if (this.memoryService) {
-      const memoryBlock = await this.memoryService.getMemoryPromptInjection();
+      const userQuery = getQueryTextFromPayload(content);
+      const memoryBlock = await this.memoryService.buildMemoryInjection({
+        query: userQuery,
+        workspaceId: this.workspaceContext.workspaceId,
+        injectTokenBudget:
+          currentConfig.config.memory?.retrieval?.injectTokenBudget ?? currentConfig.config.memory?.maxInjectionTokens,
+        candidateLimit: currentConfig.config.memory?.retrieval?.candidateLimit,
+      });
       const currentSystemPrompt = this.orchestrator.getConfig().systemPrompt ?? '';
+      const cleanSystemPrompt = stripInjectedMemorySection(currentSystemPrompt);
       const memorySection = [
         '## Long-Term Memory',
         '',
@@ -1225,7 +1254,7 @@ export class OrchestratorManager {
       if (memoryBlock) {
         memorySection.push('', 'Remembered from previous sessions:', '', memoryBlock);
       }
-      agentConfig.systemPrompt = `${currentSystemPrompt}\n\n${memorySection.join('\n')}`;
+      agentConfig.systemPrompt = buildSystemPromptWithMemory(cleanSystemPrompt, memorySection.join('\n'));
     }
 
     if (Object.keys(agentConfig).length > 0) {
@@ -1275,7 +1304,7 @@ export class OrchestratorManager {
     model: string,
   ): Promise<void> {
     if (!this.memoryService || !this.conversationStore) return;
-    if (!process.env.NUVIN_MEMORY_EXTRACTION) return;
+    if (process.env.NUVIN_MEMORY_EXTRACTION !== '1') return;
     const config = this.getCurrentConfig();
     if (config.config.memory?.backgroundExtraction === false) return;
 
@@ -1310,13 +1339,18 @@ export class OrchestratorManager {
 
       const candidates = extractor.parseExtractionResponse(responseText);
 
+      const extractionScope = 'project' as const;
       for (const candidate of candidates) {
-        await this.memoryService.addMemory({
+        await this.memoryService.upsertTopicMemory({
           content: candidate.content,
           type: candidate.type,
-          scope: 'global',
+          scope: extractionScope,
+          topic: candidate.tags.length > 0 ? candidate.tags.slice(0, 3).join('-') : undefined,
+          keywords: candidate.tags,
           tags: candidate.tags,
           source: 'extracted',
+          updateMode: 'merge',
+          workspaceId: extractionScope === 'project' ? this.workspaceContext.workspaceId : undefined,
         });
       }
     } catch {
@@ -1846,7 +1880,7 @@ Rules:
       ...(mainAgentTemplate?.top_p !== undefined && { topP: mainAgentTemplate?.top_p }),
       maxTokens: mainAgentTemplate?.max_tokens,
       model: currentConfig.model,
-      enabledTools: getEnabledTools(),
+      enabledTools: getEnabledTools(currentConfig.config.memory),
       maxToolConcurrency: 10,
       requireToolApproval: currentConfig.requireToolApproval,
       reasoningEffort: currentConfig.reasoningEffort,

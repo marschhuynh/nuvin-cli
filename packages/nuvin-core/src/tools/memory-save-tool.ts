@@ -10,6 +10,12 @@ export const memorySaveToolDefinition = {
         type: 'string',
         description: 'The information to remember. Should be a clear, concise statement.',
       },
+      topic: {
+        type: 'string',
+        description:
+          'Topic key for this memory (e.g. "typescript-formatting"). ' +
+          'If omitted, the system will infer one from content.',
+      },
       type: {
         type: 'string',
         enum: ['semantic', 'episodic', 'procedural'],
@@ -25,14 +31,32 @@ export const memorySaveToolDefinition = {
         items: { type: 'string' },
         description: 'Optional categorization tags.',
       },
+      keywords: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Optional keywords for retrieval ranking.',
+      },
+      title: {
+        type: 'string',
+        description: 'Optional human-readable topic title.',
+      },
+      updateMode: {
+        type: 'string',
+        enum: ['merge', 'replace'],
+        description: 'How to update existing topic memory: merge (default) or replace.',
+      },
     },
-    required: ['content', 'type', 'scope'],
+    required: ['content', 'type', 'scope', 'topic'],
   },
 };
 
 export interface MemorySaveToolInput {
   content: string;
+  topic?: string;
+  title?: string;
   type: 'semantic' | 'episodic' | 'procedural';
   scope: 'global' | 'project';
   tags?: string[];
+  keywords?: string[];
+  updateMode?: 'merge' | 'replace';
 }

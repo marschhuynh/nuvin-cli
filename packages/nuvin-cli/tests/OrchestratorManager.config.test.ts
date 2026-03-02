@@ -44,7 +44,10 @@ const { mockConfigManager } = vi.hoisted(() => {
     getProfileManager: vi.fn(() => undefined),
     getCurrentProfile: vi.fn(() => 'default'),
     setMockConfig: (config: CLIConfig) => {
-      currentConfig = config;
+      currentConfig = {
+        memory: { enabled: false },
+        ...config,
+      };
     },
   };
 
@@ -262,6 +265,28 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
 
     const mcpManager = manager.getMcpManager();
     expect(mcpManager).toBeTruthy();
+
+    await manager.cleanup();
+  });
+
+  it('disables memory_save tool when memory.saveTool is false', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+        saveTool: false,
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+
+    await manager.init({}, handlers);
+
+    const orchestrator = manager.getOrchestrator();
+    const config = orchestrator?.getConfig();
+    expect(config?.enabledTools?.includes('memory_save')).toBe(false);
 
     await manager.cleanup();
   });
