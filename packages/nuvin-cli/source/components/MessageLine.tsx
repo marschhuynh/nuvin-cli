@@ -112,6 +112,10 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 }
                 // Get the result for this tool call (if available)
                 const toolResultMsg = toolResultsByCallId?.get(toolCall.id);
+                const streamingOutputKey = `streamingOutput_${toolCall.id}` as `streamingOutput_${string}`;
+                const streamingTotalLinesKey = `streamingTotalLines_${toolCall.id}` as `streamingTotalLines_${string}`;
+                const streamingOutput = message.metadata?.[streamingOutputKey] as string | undefined;
+                const streamingTotalLines = message.metadata?.[streamingTotalLinesKey] as number | undefined;
 
                 // Check if this is an assign_task with sub-agent state
                 if (toolCall.function.name === 'assign_task') {
@@ -141,6 +145,8 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                         toolResultMsg?.metadata?.toolResult as ToolExecutionResult | undefined,
                       )}
                       messageId={message.id}
+                      streamingOutput={streamingOutput}
+                      streamingTotalLines={streamingTotalLines}
                     />
                   </Box>
                 );

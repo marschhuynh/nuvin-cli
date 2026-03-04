@@ -187,6 +187,53 @@ export function processAgentEvent(
         color,
       });
 
+      // Clean up streaming metadata and tool call mappings only when entries exist
+      const hasToolCallMapping = state.toolCallToMessageMap.has(tool.id);
+      const hasRecentToolCall = state.recentToolCalls.has(tool.id);
+
+      if (!hasToolCallMapping && !hasRecentToolCall) {
+        return state;
+      }
+
+      if (hasToolCallMapping && callbacks.streamingEnabled) {
+        const toolCallMessageId = state.toolCallToMessageMap.get(tool.id)!;
+        const outputKey = `streamingOutput_${tool.id}` as `streamingOutput_${string}`;
+        const totalLinesKey = `streamingTotalLines_${tool.id}` as `streamingTotalLines_${string}`;
+        callbacks.updateLineMetadata?.(toolCallMessageId, {
+          [outputKey]: undefined,
+          [totalLinesKey]: undefined,
+        } as Partial<LineMetadata>);
+      }
+
+      const nextRecentToolCalls = new Map(state.recentToolCalls);
+      nextRecentToolCalls.delete(tool.id);
+      const nextToolCallToMessageMap = new Map(state.toolCallToMessageMap);
+      nextToolCallToMessageMap.delete(tool.id);
+
+      return {
+        ...state,
+        recentToolCalls: nextRecentToolCalls,
+        toolCallToMessageMap: nextToolCallToMessageMap,
+      };
+    }
+
+    case AgentEventTypes.ToolOutputChunk: {
+      if (!callbacks.streamingEnabled) {
+        return state;
+      }
+
+      const toolCallMsgId = state.toolCallToMessageMap.get(event.toolCallId);
+      if (!toolCallMsgId) return state;
+
+      const outputKey = `streamingOutput_${event.toolCallId}` as `streamingOutput_${string}`;
+      const totalLinesKey = `streamingTotalLines_${event.toolCallId}` as `streamingTotalLines_${string}`;
+      const metadata = {
+        [outputKey]: event.content,
+        [totalLinesKey]: event.totalLines,
+      } as Partial<LineMetadata>;
+
+      callbacks.updateLineMetadata?.(toolCallMsgId, metadata);
+
       return state;
     }
 

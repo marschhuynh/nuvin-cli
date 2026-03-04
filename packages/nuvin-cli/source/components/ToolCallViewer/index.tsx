@@ -7,7 +7,9 @@ import { useToolApproval } from '@/contexts/ToolApprovalContext.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { ToolTimer } from '@/components/ToolTimer.js';
 import { getToolConfig, getRenderFn } from '@/components/ToolCallViewer/registry.js';
+import { AutoScrollBox } from '@/components/AutoScrollBox.js';
 import { getStateColor } from './computeToolState.js';
+import { buildStreamingViewportLines } from './streamingViewport.js';
 import type { ComputedToolState, ToolRenderContext } from './types.js';
 
 type ToolCallViewerProps = {
@@ -15,6 +17,8 @@ type ToolCallViewerProps = {
   toolResult?: MessageLineType;
   toolState: ComputedToolState;
   messageId: string;
+  streamingOutput?: string;
+  streamingTotalLines?: number;
 };
 
 export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
@@ -22,6 +26,8 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
   toolResult,
   toolState,
   messageId: _messageId,
+  streamingOutput,
+  streamingTotalLines,
 }) => {
   const { theme } = useTheme();
   const { pendingApprovalTools } = useToolApproval();
@@ -87,6 +93,7 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
 
   // When renderStatus is explicitly null, don't render any status lines
   const shouldRenderStatus = config.renderStatus !== null;
+  const streamingViewportLines = streamingOutput ? buildStreamingViewportLines(streamingOutput, 5) : [];
 
   return (
     <Box flexDirection="column" width={cols - 2} overflow="hidden">
@@ -98,15 +105,49 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
 
       {/* Running indicator */}
       {shouldRenderStatus && isRunning && toolName !== 'ask_user_tool' && (
-        <Box flexDirection="row" marginLeft={2}>
-          <Text dimColor color={color}>
-            └─{' '}
-          </Text>
-          <Text>Running ...</Text>
-          <Box marginLeft={1}>
-            <ToolTimer hasResult={false} finalDuration={finalDuration} />
+        streamingOutput ? (
+          <Box flexDirection="column" marginLeft={2}>
+            <Box flexDirection="row">
+              <Text dimColor color={color}>
+                {'└─ '}
+              </Text>
+              <Text>Running ({streamingTotalLines ?? 0} lines) ...</Text>
+              <Box marginLeft={1}>
+                <ToolTimer hasResult={false} finalDuration={finalDuration} />
+              </Box>
+            </Box>
+            <Box
+              marginLeft={3}
+              borderStyle="single"
+              borderDimColor
+              borderColor={color}
+              borderBottom={false}
+              borderRight={false}
+              borderTop={false}
+              paddingLeft={2}
+            >
+              <AutoScrollBox maxHeight={5} showScrollbar={false}>
+                <Box flexDirection="column">
+                  {streamingViewportLines.map((line, i) => (
+                    <Text key={i} dimColor wrap="truncate">
+                      {line}
+                    </Text>
+                  ))}
+                </Box>
+              </AutoScrollBox>
+            </Box>
           </Box>
-        </Box>
+        ) : (
+          <Box flexDirection="row" marginLeft={2}>
+            <Text dimColor color={color}>
+              └─{' '}
+            </Text>
+            <Text>Running ...</Text>
+            <Box marginLeft={1}>
+              <ToolTimer hasResult={false} finalDuration={finalDuration} />
+            </Box>
+          </Box>
+        )
       )}
 
       {/* Denied state */}

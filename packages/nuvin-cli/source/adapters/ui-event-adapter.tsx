@@ -1,4 +1,5 @@
 import {
+  AgentEventTypes,
   PersistingConsoleEventPort,
   InMemoryMemory,
   type AgentEvent,
@@ -40,7 +41,12 @@ export type LineMetadata = {
   isStreaming?: boolean;
   isTransient?: boolean;
   subAgentState?: SubAgentState;
-} & Partial<Record<`subAgentState_${string}`, SubAgentState>>;
+} & Partial<
+  Record<
+    `subAgentState_${string}` | `streamingOutput_${string}` | `streamingTotalLines_${string}`,
+    SubAgentState | string | number
+  >
+>;
 
 export type MessageLine = {
   id: string;
@@ -76,9 +82,14 @@ export class UIEventAdapter extends PersistingConsoleEventPort {
 
   async emit(event: AgentEvent): Promise<void> {
     try {
-      await super.emit(event);
+      const shouldPersist = event.type !== AgentEventTypes.ToolOutputChunk;
+      if (shouldPersist) {
+        await super.emit(event);
+      }
       this.state = await this.processEventSafely(event);
-      eventBus.emit('agent:event', event);
+      if (shouldPersist) {
+        eventBus.emit('agent:event', event);
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       eventBus.emit('ui:error', `[EventAdapter] Failed to process ${event.type}: ${errorMsg}`);

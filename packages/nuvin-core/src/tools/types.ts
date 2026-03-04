@@ -38,6 +38,7 @@ export type ToolExecutionContext = {
   workspaceDir?: string;
   delegationDepth?: number;
   messageId?: string;
+  toolCallId?: string;
   eventPort?: EventPort;
   signal?: AbortSignal;
   waitForUserQuestion?: (

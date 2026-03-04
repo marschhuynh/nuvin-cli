@@ -6,6 +6,7 @@ import { ErrorReason } from '../ports.js';
 import type { FunctionTool, ToolExecutionContext, ExecResultError } from './types.js';
 import { okText, err } from './result-helpers.js';
 import { stripAnsiAndControls } from '../string-utils.js';
+import { StreamingThrottleBuffer } from './StreamingThrottleBuffer.js';
 import type { BashToolMetadata } from './tool-result-metadata.js';
 
 export type BashParams = {
@@ -86,7 +87,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
    */
   async execute(p: BashParams, ctx?: ToolExecutionContext): Promise<BashResult> {
     try {
-      return await this.execOnce(p, ctx?.signal);
+      return await this.execOnce(p, ctx);
     } catch (e: unknown) {
       if (e instanceof Error && e.name === 'AbortError') {
         return err('Command execution aborted by user', undefined, ErrorReason.Aborted);
@@ -96,7 +97,8 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
     }
   }
 
-  private async execOnce(p: BashParams, signal?: AbortSignal): Promise<BashResult> {
+  private async execOnce(p: BashParams, ctx?: ToolExecutionContext): Promise<BashResult> {
+    const signal = ctx?.signal;
     if (signal?.aborted) {
       return err('Command execution aborted by user', undefined, ErrorReason.Aborted);
     }
@@ -180,6 +182,17 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
     const stderr: Buffer[] = [];
     let total = 0;
 
+    // Streaming output buffer — only when stdio is piped and eventPort available
+    const streamingBuffer =
+      !ignoreOutput && ctx?.eventPort && ctx?.conversationId && ctx?.messageId && ctx?.toolCallId
+        ? new StreamingThrottleBuffer({
+            eventPort: ctx.eventPort,
+            conversationId: ctx.conversationId,
+            messageId: ctx.messageId,
+            toolCallId: ctx.toolCallId,
+          })
+        : null;
+
     const stdoutHandler = (chunk: Buffer) => {
       if (truncated) return;
       total += chunk.length;
@@ -190,6 +203,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
         return;
       }
       stdout.push(chunk);
+      streamingBuffer?.push(chunk);
     };
 
     const stderrHandler = (chunk: Buffer) => {
@@ -202,6 +216,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
         return;
       }
       stderr.push(chunk);
+      streamingBuffer?.push(chunk);
     };
 
     if (child.stdout) {
@@ -211,7 +226,8 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       child.stderr.on('data', stderrHandler);
     }
 
-    const cleanup = () => {
+    const cleanup = async () => {
+      await streamingBuffer?.dispose();
       if (timer) {
         clearTimeout(timer);
         timer = null;
@@ -298,7 +314,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
 
       return err(message, { cwd }, ErrorReason.Unknown);
     } finally {
-      cleanup();
+      await cleanup();
     }
   }
 

@@ -525,6 +525,7 @@ export const AgentEventTypes = {
   SubAgentMetrics: 'sub_agent_metrics',
   UserQuestionRequired: 'user_question_required',
   UserQuestionResponse: 'user_question_response',
+  ToolOutputChunk: 'tool_output_chunk',
 } as const;
 
 export type ToolApprovalDecision = 'approve' | 'deny' | 'approve_all' | 'edit';
@@ -682,6 +683,14 @@ export type AgentEvent =
       messageId: string;
       questionId: string;
       answers: Record<string, string | string[]>;
+    }
+  | {
+      type: typeof AgentEventTypes.ToolOutputChunk;
+      conversationId: string;
+      messageId: string;
+      toolCallId: string;
+      content: string;
+      totalLines: number;
     };
 
 export interface EventPort {

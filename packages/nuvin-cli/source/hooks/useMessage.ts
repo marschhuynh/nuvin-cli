@@ -44,9 +44,18 @@ const useMessages = () => {
       if (index === -1) return prev;
 
       const updated = [...prev];
+      const nextMetadata: Record<string, unknown> = { ...(updated[index].metadata ?? {}) };
+      for (const [key, value] of Object.entries(metadata)) {
+        if (value === undefined) {
+          delete nextMetadata[key];
+          continue;
+        }
+        nextMetadata[key] = value;
+      }
+
       updated[index] = {
         ...updated[index],
-        metadata: { ...updated[index].metadata, ...metadata },
+        metadata: Object.keys(nextMetadata).length > 0 ? (nextMetadata as LineMetadata) : undefined,
       };
       return updated;
     });
