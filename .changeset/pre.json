@@ -8,6 +8,7 @@
   "changesets": [
     "acp-server-implementation",
     "acp-session-list",
+    "agent-description-multiline",
     "agent-memory-system",
     "auto-summary-continuation",
     "ax-helper-dist-fix",
@@ -22,6 +23,7 @@
     "memory-extraction-config",
     "memory-modal-ux",
     "memory-workspace-context-prompt-builder",
+    "metadata-cleanup",
     "nuvin-cli-update",
     "optional-temperature-breaking",
     "parallel-topic-update",
@@ -29,6 +31,7 @@
     "setup-command",
     "skill-awareness-system-prompt",
     "statusline-footer-combobox",
+    "streaming-tool-output",
     "tool-approval-input-max-lines",
     "tool-call-arguments-fix",
     "update-checker-rc-fix",

@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.7
+
+### Minor Changes
+
+- [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add ToolOutputChunk event for real-time bash output streaming. BashTool emits throttled chunks during execution; ToolCallViewer shows rolling preview window (last 5 lines) while command runs
+
 ## 2.0.0-rc.6
 
 ### Minor Changes

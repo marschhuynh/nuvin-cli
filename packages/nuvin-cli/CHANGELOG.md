@@ -1,5 +1,20 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.11
+
+### Minor Changes
+
+- [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add ToolOutputChunk event for real-time bash output streaming. BashTool emits throttled chunks during execution; ToolCallViewer shows rolling preview window (last 5 lines) while command runs
+
+### Patch Changes
+
+- [`346c26a`](https://github.com/marschhuynh/nuvin-space/commit/346c26a6b3019bb55840cc36f51c908bf61f5bc8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add maxLines support to FormTextInput for multi-line agent description input
+
+- [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - updateLineMetadata now removes keys set to undefined instead of preserving them
+
+- Updated dependencies [[`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7)]:
+  - @nuvin/nuvin-core@2.0.0-rc.7
+
 ## 1.37.0-rc.10
 
 ### Minor Changes
