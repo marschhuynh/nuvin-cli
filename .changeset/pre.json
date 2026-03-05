@@ -38,6 +38,7 @@
     "tool-approval-input-max-lines",
     "tool-call-arguments-fix",
     "update-checker-rc-fix",
+    "vietnamese-ime-support",
     "windowed-combobox"
   ]
 }
