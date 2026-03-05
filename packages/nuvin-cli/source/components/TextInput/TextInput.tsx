@@ -464,6 +464,20 @@ function TextInput({
           setValueRef.current(nextState.value, nextState.cursorOffset);
         }
         return true;
+      } else if (input.includes('\x7f')) {
+        // IME pattern: backspace(s) + replacement character(s) arrived as a single chunk.
+        // Apply backspaces first, then insert the replacement text.
+        const backspaceCount = (input.match(/\x7f/g) || []).length;
+        const replacement = input.replace(/\x7f/g, '');
+        const deleteCount = Math.min(backspaceCount, currentCursorOffset);
+        const afterDelete = currentCursorOffset - deleteCount;
+        const nextValue =
+          currentValue.slice(0, afterDelete) +
+          replacement +
+          currentValue.slice(currentCursorOffset);
+        const nextCursorOffset = afterDelete + replacement.length;
+        setValueRef.current(nextValue, nextCursorOffset, replacement.length > 1 ? replacement.length : 0);
+        return true;
       } else {
         const nextValue =
           currentValue.slice(0, currentCursorOffset) +

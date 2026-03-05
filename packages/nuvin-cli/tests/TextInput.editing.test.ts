@@ -100,3 +100,86 @@ describe('Input key parsing for delete/backspace', () => {
     expect(state).toEqual({ value: '', cursorOffset: 0 });
   });
 });
+
+describe('IME sequence handling', () => {
+  it('keeps backspace + printable chars as a single chunk', () => {
+    // Vietnamese IME: type "a" then accent key → \x7f + replacement char
+    const chunks = splitInputChunks('\x7f\u0103');
+    expect(chunks).toEqual(['\x7f\u0103']);
+  });
+
+  it('keeps multiple backspaces + printable chars as a single chunk', () => {
+    const chunks = splitInputChunks('\x7f\x7f\u00e2');
+    expect(chunks).toEqual(['\x7f\x7f\u00e2']);
+  });
+
+  it('still splits pure backspace sequences', () => {
+    const chunks = splitInputChunks('\x7f\x7f\x7f');
+    expect(chunks).toEqual(['\x7f', '\x7f', '\x7f']);
+  });
+
+  it('parses IME chunk as plain input with no special keys', () => {
+    const result = parseKeypress('\x7f\u0103');
+    expect(result.key.backspace).toBe(false);
+    expect(result.input).toBe('\x7f\u0103');
+  });
+
+  it('processes IME sequence correctly in full editing flow', () => {
+    // Simulate: user typed "a", then IME sends \x7f + "ă" to replace it
+    const initialValue = 'a';
+    const chunks = splitInputChunks('\x7f\u0103');
+    expect(chunks).toHaveLength(1);
+
+    const chunk = chunks[0]!;
+    const { input, key } = parseKeypress(chunk);
+
+    // Should NOT be parsed as backspace
+    expect(key.backspace).toBe(false);
+
+    // The raw input contains backspace + replacement — TextInput handles this
+    const backspaceCount = (input.match(/\x7f/g) || []).length;
+    const replacement = input.replace(/\x7f/g, '');
+    const cursorOffset = initialValue.length;
+    const deleteCount = Math.min(backspaceCount, cursorOffset);
+    const afterDelete = cursorOffset - deleteCount;
+    const nextValue =
+      initialValue.slice(0, afterDelete) +
+      replacement +
+      initialValue.slice(cursorOffset);
+
+    expect(nextValue).toBe('\u0103');
+  });
+
+  it('handles multi-backspace IME replacement', () => {
+    // Simulate: "ao" → IME replaces both chars with "ô"
+    const initialValue = 'ao';
+    const input = '\x7f\x7f\u00f4';
+    const backspaceCount = 2;
+    const replacement = '\u00f4';
+    const cursorOffset = 2;
+    const deleteCount = Math.min(backspaceCount, cursorOffset);
+    const afterDelete = cursorOffset - deleteCount;
+    const nextValue =
+      initialValue.slice(0, afterDelete) +
+      replacement +
+      initialValue.slice(cursorOffset);
+
+    expect(nextValue).toBe('\u00f4');
+  });
+
+  it('preserves text after cursor during IME replacement', () => {
+    // Cursor is at position 1 in "a world", IME replaces "a" → "ă"
+    const initialValue = 'a world';
+    const cursorOffset = 1;
+    const backspaceCount = 1;
+    const replacement = '\u0103';
+    const deleteCount = Math.min(backspaceCount, cursorOffset);
+    const afterDelete = cursorOffset - deleteCount;
+    const nextValue =
+      initialValue.slice(0, afterDelete) +
+      replacement +
+      initialValue.slice(cursorOffset);
+
+    expect(nextValue).toBe('\u0103 world');
+  });
+});

@@ -311,6 +311,22 @@ export function splitInputChunks(data: string): string[] {
     }
     if (!hasControl) return [data];
 
+    // IME pattern: backspace(s) followed by replacement character(s).
+    // IMEs (e.g. Vietnamese Telex/VNI) send \x7f + replacement chars in a single
+    // chunk. Keep it atomic so TextInput can process it as one operation.
+    const stripped = data.replace(/\x7f/g, '');
+    if (stripped.length > 0 && !stripped.includes('\x00')) {
+      let onlyBackspaceAndPrintable = true;
+      for (let i = 0; i < stripped.length; i++) {
+        const code = stripped.charCodeAt(i);
+        if (code < 0x20) {
+          onlyBackspaceAndPrintable = false;
+          break;
+        }
+      }
+      if (onlyBackspaceAndPrintable) return [data];
+    }
+
     // Split: each character becomes its own chunk
     const results: string[] = [];
     for (const ch of data) {
