@@ -118,6 +118,14 @@ export type ComputerUseArgs = {
   duration?: number;
 };
 
+export type MemoryQueryArgs = {
+  query: string;
+  key?: string;
+  scope?: 'global' | 'project' | 'both';
+  topK?: number;
+  minScore?: number;
+};
+
 export type ToolArguments =
   | BashToolArgs
   | FileReadArgs
@@ -131,7 +139,8 @@ export type ToolArguments =
   | TodoWriteArgs
   | AssignTaskArgs
   | AskUserArgs
-  | ComputerUseArgs;
+  | ComputerUseArgs
+  | MemoryQueryArgs;
 
 /**
  * Type guard to safely parse tool arguments
@@ -208,6 +217,10 @@ export function isComputerUseArgs(args: ToolArguments): args is ComputerUseArgs 
   return 'action' in args && typeof args.action === 'string';
 }
 
+export function isMemoryQueryArgs(args: ToolArguments): args is MemoryQueryArgs {
+  return 'query' in args && typeof args.query === 'string' && !('count' in args);
+}
+
 export type ToolParameterMap = {
   bash_tool: BashToolArgs;
   file_read: FileReadArgs;
@@ -221,6 +234,7 @@ export type ToolParameterMap = {
   todo_write: TodoWriteArgs;
   assign_task: AssignTaskArgs;
   computer: ComputerUseArgs;
+  memory_query: MemoryQueryArgs;
 };
 
 export type ToolName = keyof ToolParameterMap;

@@ -33,6 +33,7 @@ import {
   type MetricsSnapshot,
   type UsageData,
   type UserMessagePayload,
+  type MemoryScope,
   type SendMessageOptions,
   type ConversationMetadata,
   type AgentAwareToolPort,
@@ -85,6 +86,34 @@ const defaultSmallModels: Record<ProviderKey, string> = {
 export type { ProviderKey } from '@/config/providers.js';
 export { OrchestratorStatus } from '@/types/orchestrator.js';
 
+export type ResolvedMemoryExtractionConfig = {
+  enabled: boolean;
+  provider?: string;
+  model?: string;
+  sensitiveFilter: boolean;
+};
+
+export function resolveMemoryExtractionConfig(memoryConfig?: MemorySettings): ResolvedMemoryExtractionConfig {
+  const enabledFromConfig = memoryConfig?.extraction?.enabled ?? memoryConfig?.backgroundExtraction;
+  return {
+    enabled: memoryConfig?.enabled !== false && enabledFromConfig !== false,
+    provider: memoryConfig?.extraction?.provider ?? memoryConfig?.provider,
+    model: memoryConfig?.extraction?.model ?? memoryConfig?.model,
+    sensitiveFilter: memoryConfig?.extraction?.sensitiveFilter !== false,
+  };
+}
+
+function isSensitiveMemoryCandidate(content: string): boolean {
+  if (!content || content.trim().length === 0) return true;
+  const patterns = [
+    /\\b(api[_-]?key|password|secret|token)\\b\\s*[:=]/i,
+    /\\b(aws_access_key_id|aws_secret_access_key)\\b/i,
+    /\\b(sk|ghp|xoxb)-[a-z0-9]{12,}/i,
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----/i,
+  ];
+  return patterns.some((pattern) => pattern.test(content));
+}
+
 const baseEnabledTools: string[] = [
   'bash_tool',
   'ls_tool',
@@ -101,20 +130,23 @@ const baseEnabledTools: string[] = [
   'skill',
   'ask_user_tool',
   'memory_save',
+  'memory_query',
   'computer',
 ];
 
 function getEnabledTools(memoryConfig?: MemorySettings): string[] {
   const tools = [...baseEnabledTools];
-  if (memoryConfig?.enabled === false || memoryConfig?.saveTool === false) {
+  if (memoryConfig?.enabled === false) {
+    return tools.filter((tool) => tool !== 'memory_save' && tool !== 'memory_query');
+  }
+  if (memoryConfig?.saveTool === false) {
     return tools.filter((tool) => tool !== 'memory_save');
   }
-  return tools;
-}
+  if (memoryConfig?.retrieval?.activeEnabled === false) {
+    return tools.filter((tool) => tool !== 'memory_query');
+  }
 
-function getQueryTextFromPayload(content: UserMessagePayload): string {
-  if (typeof content === 'string') return content;
-  return content.text ?? '';
+  return tools;
 }
 
 class SessionBoundMetricsPort implements MetricsPort {
@@ -184,6 +216,7 @@ export class OrchestratorManager {
   private previousOrchestrator: AgentOrchestrator | null = null;
   private memoryService: MemoryService | null = null;
   private workspaceContext: WorkspaceContext = getWorkspaceContext();
+  private memoryQueryCountsByTurn = new Map<string, number>();
 
   private static readonly WARNING_THRESHOLD = 0.85;
   private static readonly AUTO_SUMMARY_THRESHOLD = 0.95;
@@ -580,19 +613,54 @@ export class OrchestratorManager {
       // Wire memory_save tool handler
       toolRegistry.setMemoryHandler(async (input) => {
         if (!this.memoryService) return 'Memory system is not enabled.';
+        const scope = input.scope ?? 'project';
         const entry = await this.memoryService.upsertTopicMemory({
           content: input.content,
           type: input.type,
-          scope: input.scope,
+          scope,
           topic: input.topic,
+          key: input.key,
           title: input.title,
+          confidence: input.confidence,
+          evidence: input.evidence,
           tags: input.tags ?? [],
           keywords: input.keywords ?? input.tags ?? [],
           updateMode: input.updateMode ?? 'merge',
           source: 'explicit',
-          workspaceId: input.scope === 'project' ? this.workspaceContext.workspaceId : undefined,
+          workspaceId: scope === 'project' ? this.workspaceContext.workspaceId : undefined,
         });
         return `Memory saved: "${entry.topic}" [${entry.type}/${entry.scope}]`;
+      });
+
+      toolRegistry.setMemoryQueryHandler(async (input, context) => {
+        if (!this.memoryService) {
+          throw new Error('Memory system is not enabled.');
+        }
+
+        const memoryConfig = this.getCurrentConfig().config.memory;
+        const maxQueriesPerTurn = memoryConfig?.retrieval?.maxQueriesPerTurn ?? 2;
+        this.enforceMemoryQueryTurnLimit(context?.messageId, maxQueriesPerTurn);
+
+        const scope = input.scope ?? 'both';
+        const scopes: MemoryScope[] =
+          scope === 'both' ? ['global', 'project'] : scope === 'global' ? ['global'] : ['project'];
+
+        const hits = await this.memoryService.queryStatements({
+          query: input.query,
+          key: input.key,
+          scopes,
+          workspaceId: this.workspaceContext.workspaceId,
+          candidateLimit: input.topK ?? memoryConfig?.retrieval?.activeCandidateLimit ?? 12,
+          minScore: input.minScore,
+        });
+
+        return {
+          query: input.query,
+          key: input.key,
+          scope,
+          totalHits: hits.length,
+          hits,
+        };
       });
 
       // Set initial LLM - will be refreshed on each send() call
@@ -637,6 +705,22 @@ export class OrchestratorManager {
     return this.memoryService;
   }
 
+  private enforceMemoryQueryTurnLimit(messageId: string | undefined, maxQueriesPerTurn: number): void {
+    const turnKey = messageId ?? 'unknown-turn';
+    const current = this.memoryQueryCountsByTurn.get(turnKey) ?? 0;
+    if (current >= maxQueriesPerTurn) {
+      throw new Error(`memory_query limit reached for this turn (${maxQueriesPerTurn}).`);
+    }
+    this.memoryQueryCountsByTurn.set(turnKey, current + 1);
+
+    if (this.memoryQueryCountsByTurn.size > 512) {
+      const oldestKey = this.memoryQueryCountsByTurn.keys().next().value;
+      if (typeof oldestKey === 'string') {
+        this.memoryQueryCountsByTurn.delete(oldestKey);
+      }
+    }
+  }
+
   private initializeMemoryService(): void {
     const currentConfig = this.getCurrentConfig();
     const memoryConfig = currentConfig.config.memory;
@@ -649,15 +733,20 @@ export class OrchestratorManager {
     const profileSuffix = isDefaultProfile ? '' : `-${currentProfile}`;
 
     const globalDir = path.join(os.homedir(), `.nuvin${profileSuffix}`, 'memory');
-    const projectDir = path.join(this.workspaceContext.workspaceRoot, '.nuvin', 'memory');
+    const projectDir = path.join(globalDir, 'workspace', this.workspaceContext.workspaceId);
 
     this.memoryService = new MemoryService({
       globalDir,
       projectDir,
       workspaceId: this.workspaceContext.workspaceId,
       maxInjectionTokens: memoryConfig?.retrieval?.injectTokenBudget ?? memoryConfig?.maxInjectionTokens,
+      coreInjectionTokens: memoryConfig?.retrieval?.coreInjectTokenBudget,
       candidateLimit: memoryConfig?.retrieval?.candidateLimit,
+      activeCandidateLimit: memoryConfig?.retrieval?.activeCandidateLimit,
       indexPersisted: memoryConfig?.index?.persisted,
+      minScore: memoryConfig?.retrieval?.minScore,
+      freshnessHalfLifeDays: memoryConfig?.retrieval?.freshnessHalfLifeDays,
+      indexFlushIntervalMs: memoryConfig?.index?.flushIntervalMs,
     });
   }
 
@@ -809,6 +898,7 @@ export class OrchestratorManager {
   }
 
   async cleanup() {
+    this.memoryQueryCountsByTurn.clear();
     await this.mcpManager?.disconnectAllServers?.();
     await LSP.shutdown();
   }
@@ -1227,15 +1317,17 @@ export class OrchestratorManager {
       ...agentConfigOverrides,
     };
 
-    // Inject long-term memories into system prompt (scoped retrieval + idempotent markers)
+    // Inject compact long-term memory into system prompt (idempotent markers)
     if (this.memoryService) {
-      const userQuery = getQueryTextFromPayload(content);
-      const memoryBlock = await this.memoryService.buildMemoryInjection({
-        query: userQuery,
+      const memoryBlock = await this.memoryService.buildCoreMemoryInjection({
         workspaceId: this.workspaceContext.workspaceId,
         injectTokenBudget:
-          currentConfig.config.memory?.retrieval?.injectTokenBudget ?? currentConfig.config.memory?.maxInjectionTokens,
-        candidateLimit: currentConfig.config.memory?.retrieval?.candidateLimit,
+          currentConfig.config.memory?.retrieval?.coreInjectTokenBudget ??
+          currentConfig.config.memory?.retrieval?.injectTokenBudget ??
+          currentConfig.config.memory?.maxInjectionTokens,
+        candidateLimit:
+          currentConfig.config.memory?.retrieval?.activeCandidateLimit ??
+          currentConfig.config.memory?.retrieval?.candidateLimit,
       });
       const currentSystemPrompt = this.orchestrator.getConfig().systemPrompt ?? '';
       const cleanSystemPrompt = stripInjectedMemorySection(currentSystemPrompt);
@@ -1243,11 +1335,17 @@ export class OrchestratorManager {
         '## Long-Term Memory',
         '',
         'You have a long-term memory system that persists across sessions.',
+        'Use the `memory_query` tool for targeted recall when needed:',
+        '- Before answering preference/convention/history questions',
+        '- When uncertain and prior user/project memory could disambiguate choices',
+        '- After tool results that may change project facts or conventions',
+        '',
         'Use the `memory_save` tool to explicitly save important information:',
         '- User preferences (coding style, tool choices, naming conventions)',
         '- Project facts (tech stack, architecture decisions, team conventions)',
         '- Lessons learned (debugging approaches that worked, common pitfalls)',
         '',
+        'Prefer memory_query for retrieval and memory_save for persistence.',
         'Save when the user states a preference, when you discover a project pattern, or when the user corrects your behavior.',
         'Do NOT save transient task details, information already in project docs, or duplicate facts.',
       ];
@@ -1304,15 +1402,15 @@ export class OrchestratorManager {
     model: string,
   ): Promise<void> {
     if (!this.memoryService || !this.conversationStore) return;
-    if (process.env.NUVIN_MEMORY_EXTRACTION !== '1') return;
     const config = this.getCurrentConfig();
-    if (config.config.memory?.backgroundExtraction === false) return;
+    const extractionSettings = resolveMemoryExtractionConfig(config.config.memory);
+    if (!extractionSettings.enabled) return;
 
-    const extractionProvider = (config.config.memory?.provider || provider) as ProviderKey;
+    const extractionProvider = (extractionSettings.provider || provider) as ProviderKey;
     const extractionModel =
-      config.config.memory?.model ||
-      (config.config.memory?.provider
-        ? config.config.providers?.[config.config.memory.provider]?.smallModel ||
+      extractionSettings.model ||
+      (extractionSettings.provider
+        ? config.config.providers?.[extractionSettings.provider]?.smallModel ||
           defaultSmallModels[extractionProvider] ||
           model
         : model);
@@ -1341,6 +1439,9 @@ export class OrchestratorManager {
 
       const extractionScope = 'project' as const;
       for (const candidate of candidates) {
+        if (extractionSettings.sensitiveFilter && isSensitiveMemoryCandidate(candidate.content)) {
+          continue;
+        }
         await this.memoryService.upsertTopicMemory({
           content: candidate.content,
           type: candidate.type,
@@ -1366,6 +1467,7 @@ export class OrchestratorManager {
     this.sessionId = null;
     this.sessionDir = null;
     this.sessionInitialized = false;
+    this.memoryQueryCountsByTurn.clear();
   }
 
   /**

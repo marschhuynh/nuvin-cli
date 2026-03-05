@@ -88,7 +88,7 @@ export function registerMemoryCommand(registry: CommandRegistry): void {
   registry.register({
     id: '/memory',
     type: 'component',
-    description: 'Manage long-term agent memories. Use /memory config to set extraction model.',
+    description: 'Manage long-term memory (saved + active recall). Use /memory config to set extraction model.',
     category: 'session',
     keywords: ['memory', 'memories', 'remember', 'forget', 'config'],
     component: MemoryCommandComponent,

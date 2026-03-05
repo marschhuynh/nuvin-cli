@@ -75,8 +75,13 @@ export const MemoryConfigModal: React.FC<MemoryConfigModalProps> = ({
     [providersConfig],
   );
 
-  const currentProvider = context.config.get<string>('memory.provider');
-  const currentModel = context.config.get<string>('memory.model');
+  const currentProvider =
+    context.config.get<string>('memory.extraction.provider') || context.config.get<string>('memory.provider');
+  const currentModel =
+    context.config.get<string>('memory.extraction.model') || context.config.get<string>('memory.model');
+  const currentActiveRecall = context.config.get<boolean>('memory.retrieval.activeEnabled') !== false;
+  const currentMaxQueries = context.config.get<number>('memory.retrieval.maxQueriesPerTurn') ?? 2;
+  const currentCoreBudget = context.config.get<number>('memory.retrieval.coreInjectTokenBudget') ?? 250;
 
   const [providerModels, setProviderModels] = useState<Record<string, string[]>>({});
   const [loadingProviders, setLoadingProviders] = useState<Record<string, boolean>>({});
@@ -129,6 +134,47 @@ export const MemoryConfigModal: React.FC<MemoryConfigModalProps> = ({
     const items: ComboBoxItem[] = [];
 
     items.push({
+      label: 'Enable active recall',
+      value: '__active_recall_on__',
+      group: 'Active Recall',
+    });
+    items.push({
+      label: 'Disable active recall',
+      value: '__active_recall_off__',
+      group: 'Active Recall',
+    });
+    items.push({
+      label: 'Max queries/turn: 1',
+      value: '__max_queries_1__',
+      group: 'Active Recall',
+    });
+    items.push({
+      label: 'Max queries/turn: 2',
+      value: '__max_queries_2__',
+      group: 'Active Recall',
+    });
+    items.push({
+      label: 'Max queries/turn: 3',
+      value: '__max_queries_3__',
+      group: 'Active Recall',
+    });
+    items.push({
+      label: 'Core memory budget: 150',
+      value: '__core_budget_150__',
+      group: 'Core Injection',
+    });
+    items.push({
+      label: 'Core memory budget: 250',
+      value: '__core_budget_250__',
+      group: 'Core Injection',
+    });
+    items.push({
+      label: 'Core memory budget: 400',
+      value: '__core_budget_400__',
+      group: 'Core Injection',
+    });
+
+    items.push({
       label: 'Use default (smallModel)',
       value: '__default__',
       group: 'Reset',
@@ -163,14 +209,35 @@ export const MemoryConfigModal: React.FC<MemoryConfigModalProps> = ({
     if (item.value.startsWith('__loading__::')) return;
 
     try {
-      if (item.value === '__default__') {
+      if (item.value === '__active_recall_on__') {
+        await context.config.set('memory.retrieval.activeEnabled', true, 'global');
+      } else if (item.value === '__active_recall_off__') {
+        await context.config.set('memory.retrieval.activeEnabled', false, 'global');
+      } else if (item.value === '__max_queries_1__') {
+        await context.config.set('memory.retrieval.maxQueriesPerTurn', 1, 'global');
+      } else if (item.value === '__max_queries_2__') {
+        await context.config.set('memory.retrieval.maxQueriesPerTurn', 2, 'global');
+      } else if (item.value === '__max_queries_3__') {
+        await context.config.set('memory.retrieval.maxQueriesPerTurn', 3, 'global');
+      } else if (item.value === '__core_budget_150__') {
+        await context.config.set('memory.retrieval.coreInjectTokenBudget', 150, 'global');
+      } else if (item.value === '__core_budget_250__') {
+        await context.config.set('memory.retrieval.coreInjectTokenBudget', 250, 'global');
+      } else if (item.value === '__core_budget_400__') {
+        await context.config.set('memory.retrieval.coreInjectTokenBudget', 400, 'global');
+      } else if (item.value === '__default__') {
+        await context.config.delete('memory.extraction.provider', 'global');
+        await context.config.delete('memory.extraction.model', 'global');
         await context.config.delete('memory.provider', 'global');
         await context.config.delete('memory.model', 'global');
+        await context.config.delete('memory.retrieval.activeEnabled', 'global');
+        await context.config.delete('memory.retrieval.maxQueriesPerTurn', 'global');
+        await context.config.delete('memory.retrieval.coreInjectTokenBudget', 'global');
       } else {
         const [provider, model] = item.value.split('::');
         if (!provider || !model) return;
-        await context.config.set('memory.provider', provider, 'global');
-        await context.config.set('memory.model', model, 'global');
+        await context.config.set('memory.extraction.provider', provider, 'global');
+        await context.config.set('memory.extraction.model', model, 'global');
       }
       deactivate();
     } catch (e) {
@@ -184,8 +251,9 @@ export const MemoryConfigModal: React.FC<MemoryConfigModalProps> = ({
     currentProvider && currentModel
       ? `${currentProvider} / ${currentModel}`
       : 'default (smallModel)';
+  const statusLabel = `recall:${currentActiveRecall ? 'on' : 'off'} q:${currentMaxQueries} core:${currentCoreBudget}`;
 
-  const titleRight = <Text dimColor>{currentLabel}</Text>;
+  const titleRight = <Text dimColor>{`${currentLabel} • ${statusLabel}`}</Text>;
 
   if (authenticatedProviders.length === 0) {
     return (

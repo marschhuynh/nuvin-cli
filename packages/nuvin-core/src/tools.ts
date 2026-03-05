@@ -31,7 +31,19 @@ import { LspTool, type LspService } from './tools/LspTool.js';
 import { AgentManagerCommandRunner, DelegationServiceFactory } from './delegation/index.js';
 import { AskUserTool } from './tools/AskUserTool.js';
 import { memorySaveToolDefinition, type MemorySaveToolInput } from './tools/memory-save-tool.js';
+import {
+  memoryQueryToolDefinition,
+  type MemoryQueryToolInput,
+  type MemoryQueryToolResult,
+} from './tools/memory-query-tool.js';
 import { ComputerUseTool } from './tools/ComputerUseTool.js';
+
+type MemoryToolExecutionContext = {
+  conversationId?: string;
+  messageId?: string;
+  toolCallId?: string;
+  agentId?: string;
+};
 
 export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorAwareToolPort {
   private tools = new Map<string, FunctionTool<unknown, unknown>>();
@@ -43,6 +55,9 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
   private skillTool?: SkillTool;
   private enabledAgentsConfig: Record<string, boolean> = {};
   private memoryHandler: ((input: MemorySaveToolInput) => Promise<string>) | null = null;
+  private memoryQueryHandler:
+    | ((input: MemoryQueryToolInput, context?: MemoryToolExecutionContext) => Promise<MemoryQueryToolResult>)
+    | null = null;
 
   // Stored for re-initialization when memory changes (lazy session init)
   private orchestratorConfig?: AgentConfig;
@@ -119,6 +134,16 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     this.memoryHandler = handler;
   }
 
+  /**
+   * Wire the memory_query tool handler from the CLI layer.
+   * Called after the MemoryService is available (in OrchestratorManager.init).
+   */
+  setMemoryQueryHandler(
+    handler: (input: MemoryQueryToolInput, context?: MemoryToolExecutionContext) => Promise<MemoryQueryToolResult>,
+  ): void {
+    this.memoryQueryHandler = handler;
+  }
+
   private async persistToolNames() {
     try {
       const names = Array.from(this.tools.keys());
@@ -138,6 +163,12 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       if (name === 'memory_save') {
         if (this.memoryHandler) {
           list.push({ type: 'function', function: memorySaveToolDefinition });
+        }
+        continue;
+      }
+      if (name === 'memory_query') {
+        if (this.memoryQueryHandler) {
+          list.push({ type: 'function', function: memoryQueryToolDefinition });
         }
         continue;
       }
@@ -311,6 +342,49 @@ DO NOT mention this explicitly to the user.
                 status: 'error' as const,
                 type: 'text' as const,
                 result: `Failed to save memory: ${error instanceof Error ? error.message : String(error)}`,
+                metadata: { errorReason: ErrorReason.Unknown },
+                durationMs,
+              };
+            }
+          }
+
+          if (c.name === 'memory_query') {
+            if (!this.memoryQueryHandler) {
+              const durationMs = Math.round(performance.now() - startTime);
+              return {
+                id: c.id,
+                name: c.name,
+                status: 'error' as const,
+                type: 'text' as const,
+                result: 'Memory query system is not enabled.',
+                metadata: { errorReason: ErrorReason.ToolNotFound },
+                durationMs,
+              };
+            }
+            try {
+              const result = await this.memoryQueryHandler(c.parameters as unknown as MemoryQueryToolInput, {
+                conversationId: typeof context?.['conversationId'] === 'string' ? (context['conversationId'] as string) : undefined,
+                messageId: typeof context?.['messageId'] === 'string' ? (context['messageId'] as string) : undefined,
+                toolCallId: c.id,
+                agentId: typeof context?.['agentId'] === 'string' ? (context['agentId'] as string) : undefined,
+              });
+              const durationMs = Math.round(performance.now() - startTime);
+              return {
+                id: c.id,
+                name: c.name,
+                status: 'success' as const,
+                type: 'json' as const,
+                result,
+                durationMs,
+              };
+            } catch (error) {
+              const durationMs = Math.round(performance.now() - startTime);
+              return {
+                id: c.id,
+                name: c.name,
+                status: 'error' as const,
+                type: 'text' as const,
+                result: `Failed to query memory: ${error instanceof Error ? error.message : String(error)}`,
                 metadata: { errorReason: ErrorReason.Unknown },
                 durationMs,
               };

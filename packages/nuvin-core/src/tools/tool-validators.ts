@@ -129,6 +129,14 @@ export const computerToolSchema = z.object({
   duration: z.number().int().min(0).optional(),
 });
 
+export const memoryQuerySchema = z.object({
+  query: requiredString('query'),
+  key: z.string().optional(),
+  scope: z.enum(['global', 'project', 'both']).optional(),
+  topK: z.number().int().min(1).max(50).optional(),
+  minScore: z.number().optional(),
+});
+
 export const toolSchemas = {
   bash_tool: bashToolSchema,
   file_read: fileReadSchema,
@@ -142,6 +150,7 @@ export const toolSchemas = {
   glob_tool: globToolSchema,
   grep_tool: grepToolSchema,
   computer: computerToolSchema,
+  memory_query: memoryQuerySchema,
 } as const;
 
 export function validateToolParams<T extends ToolName>(
@@ -176,4 +185,5 @@ export const toolValidators = {
   glob_tool: (params: Record<string, unknown>) => validateToolParams('glob_tool', params),
   grep_tool: (params: Record<string, unknown>) => validateToolParams('grep_tool', params),
   computer: (params: Record<string, unknown>) => validateToolParams('computer', params),
+  memory_query: (params: Record<string, unknown>) => validateToolParams('memory_query', params),
 };

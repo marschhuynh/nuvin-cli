@@ -260,4 +260,153 @@ describe('MemoryService (frontmatter + bm25)', () => {
     const backups = (await fs.promises.readdir(globalDir)).filter((file) => file.startsWith('memories.json.bak.'));
     expect(backups.length).toBeGreaterThan(0);
   });
+
+  it('writes v2 statement metadata and renders active statements into markdown body', async () => {
+    await service.upsertTopicMemory({
+      topic: 'team-style',
+      content: 'Prefer pnpm for scripts',
+      type: 'procedural',
+      scope: 'project',
+      source: 'explicit',
+      key: 'tooling.package-manager',
+      confidence: 0.9,
+      evidence: ['User instruction in planning session'],
+      keywords: ['pnpm', 'scripts'],
+      workspaceId: 'ws_current',
+    });
+
+    const file = path.join(projectDir, 'project', 'topics', 'team-style.md');
+    const text = await fs.promises.readFile(file, 'utf-8');
+
+    expect(text).toContain('version: 2');
+    expect(text).toContain('statements:');
+    expect(text).toContain('tooling.package-manager');
+    expect(text).toContain('- Prefer pnpm for scripts');
+  });
+
+  it('suppresses superseded statements during injection and keeps only newest active key', async () => {
+    await service.upsertTopicMemory({
+      topic: 'style',
+      content: 'Use double quotes',
+      type: 'procedural',
+      scope: 'project',
+      source: 'explicit',
+      key: 'style.quotes',
+      confidence: 0.4,
+      workspaceId: 'ws_current',
+    });
+
+    await service.upsertTopicMemory({
+      topic: 'style',
+      content: 'Use single quotes',
+      type: 'procedural',
+      scope: 'project',
+      source: 'explicit',
+      key: 'style.quotes',
+      confidence: 0.9,
+      workspaceId: 'ws_current',
+    });
+
+    const injection = await service.buildMemoryInjection({
+      query: 'quotes style',
+      workspaceId: 'ws_current',
+      injectTokenBudget: 200,
+      candidateLimit: 10,
+    });
+
+    expect(injection).toContain('single quotes');
+    expect(injection).not.toContain('double quotes');
+  });
+
+  it('returns structured statement hits from queryStatements with score metadata', async () => {
+    await service.upsertTopicMemory({
+      topic: 'style-global',
+      content: 'Use double quotes',
+      type: 'procedural',
+      scope: 'global',
+      source: 'explicit',
+      key: 'style.quotes',
+    });
+
+    await service.upsertTopicMemory({
+      topic: 'style-project',
+      content: 'Use single quotes',
+      type: 'procedural',
+      scope: 'project',
+      source: 'explicit',
+      key: 'style.quotes',
+      workspaceId: 'ws_current',
+    });
+
+    const hits = await service.queryStatements({
+      query: 'quotes style',
+      workspaceId: 'ws_current',
+      candidateLimit: 5,
+    });
+
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits[0]?.scope).toBe('project');
+    expect(hits[0]?.statementId).toBeDefined();
+    expect(typeof hits[0]?.score).toBe('number');
+  });
+
+  it('builds compact core memory injection independent from user query', async () => {
+    await service.upsertTopicMemory({
+      topic: 'pkg-manager',
+      content: 'Use pnpm for scripts',
+      type: 'procedural',
+      scope: 'project',
+      source: 'explicit',
+      key: 'tooling.package-manager',
+      workspaceId: 'ws_current',
+    });
+
+    await service.upsertTopicMemory({
+      topic: 'incident',
+      content: 'We once hit a flaky CI timeout',
+      type: 'episodic',
+      scope: 'project',
+      source: 'explicit',
+      workspaceId: 'ws_current',
+    });
+
+    const core = await service.buildCoreMemoryInjection({
+      workspaceId: 'ws_current',
+      injectTokenBudget: 120,
+      candidateLimit: 6,
+    });
+
+    expect(core).toContain('## Behavioral Notes');
+    expect(core).toContain('Use pnpm for scripts');
+    expect(core).not.toContain('flaky CI timeout');
+  });
+
+  it('migrates v1 topic files to v2 and creates backups', async () => {
+    const topicsDir = path.join(globalDir, 'global', 'topics');
+    await fs.promises.mkdir(topicsDir, { recursive: true });
+    const legacyTopicPath = path.join(topicsDir, 'legacy-topic.md');
+    const now = new Date().toISOString();
+    await fs.promises.writeFile(
+      legacyTopicPath,
+      `---\nid: mem_legacy\ntopic: legacy-topic\nscope: global\ntype: semantic\nkeywords: [legacy]\ntags: [legacy]\ncreatedAt: ${now}\nupdatedAt: ${now}\naccessCount: 0\nlastAccessedAt: ${now}\nsource: imported\nversion: 1\n---\n\n- Legacy memory line\n`,
+      'utf-8',
+    );
+
+    const migrationResult = await service.migrateV1ToV2();
+    expect(migrationResult.migratedCount).toBeGreaterThanOrEqual(0);
+    expect(migrationResult.backupsCreated).toBeGreaterThanOrEqual(0);
+
+    const migratedText = await fs.promises.readFile(legacyTopicPath, 'utf-8');
+    expect(migratedText).toContain('version: 2');
+    expect(migratedText).toContain('statements:');
+
+    const files = await fs.promises.readdir(topicsDir);
+    expect(files.some((file) => file.includes('.v1.bak.'))).toBe(true);
+  });
+
+  it('returns migration status for memory ui/reporting', async () => {
+    const status = await service.getMigrationStatus();
+    expect(status.currentVersion).toBe(2);
+    expect(typeof status.lastRunAt).toBe('string');
+  });
 });

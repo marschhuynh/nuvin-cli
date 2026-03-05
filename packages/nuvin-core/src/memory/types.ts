@@ -1,12 +1,31 @@
 export type MemoryType = 'semantic' | 'episodic' | 'procedural';
 export type MemoryScope = 'global' | 'project';
 export type MemorySource = 'extracted' | 'explicit' | 'imported';
+export type MemoryStatus = 'active' | 'superseded' | 'deprecated';
+
+export interface MemoryStatement {
+  id: string;
+  content: string;
+  signature: string;
+  key?: string;
+  status: MemoryStatus;
+  supersedes?: string[];
+  contradicts?: string[];
+  confidence?: number;
+  evidence?: string[];
+  createdAt: string;
+  updatedAt: string;
+  accessCount: number;
+  lastAccessedAt: string;
+}
 
 export interface MemoryEntry {
   id: string;
   topic: string;
   title?: string;
   content: string;
+  version?: number;
+  statements?: MemoryStatement[];
   type: MemoryType;
   scope: MemoryScope;
   tags: string[];

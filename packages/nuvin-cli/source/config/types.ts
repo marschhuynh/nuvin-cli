@@ -133,32 +133,44 @@ export interface StatuslineConfig {
 }
 
 export interface MemorySettings {
-  /** Storage format for long-term memory records (default: frontmatter-topic-md) */
-  storage?: {
-    format?: 'frontmatter-topic-md';
-  };
+  /** Memory subsystem version (v2 clean-break model). */
+  version?: 2;
   /** Retrieval settings for long-term memory injection/search. */
   retrieval?: {
     engine?: 'bm25';
     candidateLimit?: number;
+    activeCandidateLimit?: number;
+    activeEnabled?: boolean;
+    maxQueriesPerTurn?: number;
+    coreInjectTokenBudget?: number;
     injectTokenBudget?: number;
+    minScore?: number;
+    freshnessHalfLifeDays?: number;
+  };
+  /** Background extraction settings. */
+  extraction?: {
+    enabled?: boolean;
+    provider?: string;
+    model?: string;
+    sensitiveFilter?: boolean;
   };
   /** Index settings for retrieval sidecar files. */
   index?: {
     persisted?: boolean;
+    flushIntervalMs?: number;
   };
   /** Enable/disable long-term memory (default: true) */
   enabled?: boolean;
-  /** Maximum tokens to inject from memory into system prompt (default: 2000) */
-  maxInjectionTokens?: number;
-  /** Enable background memory extraction after each turn (default: true) */
-  backgroundExtraction?: boolean;
   /** Enable the memory_save tool for explicit agent memory creation (default: true) */
   saveTool?: boolean;
-  /** Model to use for background memory extraction (defaults to provider smallModel) */
+  /** @deprecated use memory.extraction.model */
   model?: string;
-  /** Provider to use for background memory extraction (defaults to active provider) */
+  /** @deprecated use memory.extraction.provider */
   provider?: string;
+  /** @deprecated use memory.retrieval.injectTokenBudget */
+  maxInjectionTokens?: number;
+  /** @deprecated use memory.extraction.enabled */
+  backgroundExtraction?: boolean;
 }
 
 export interface CLIConfig {

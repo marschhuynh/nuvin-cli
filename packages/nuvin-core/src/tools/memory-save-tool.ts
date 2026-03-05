@@ -14,7 +14,11 @@ export const memorySaveToolDefinition = {
         type: 'string',
         description:
           'Topic key for this memory (e.g. "typescript-formatting"). ' +
-          'If omitted, the system will infer one from content.',
+          'If omitted, the system will infer one deterministically from key/content.',
+      },
+      key: {
+        type: 'string',
+        description: 'Optional stable semantic key (e.g. "style.quotes", "tooling.package-manager").',
       },
       type: {
         type: 'string',
@@ -40,22 +44,34 @@ export const memorySaveToolDefinition = {
         type: 'string',
         description: 'Optional human-readable topic title.',
       },
+      confidence: {
+        type: 'number',
+        description: 'Optional confidence score in [0, 1]. Higher confidence can supersede lower-confidence memories.',
+      },
+      evidence: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Optional supporting evidence snippets for auditability.',
+      },
       updateMode: {
         type: 'string',
         enum: ['merge', 'replace'],
         description: 'How to update existing topic memory: merge (default) or replace.',
       },
     },
-    required: ['content', 'type', 'scope', 'topic'],
+    required: ['content', 'type', 'scope'],
   },
 };
 
 export interface MemorySaveToolInput {
   content: string;
   topic?: string;
+  key?: string;
   title?: string;
   type: 'semantic' | 'episodic' | 'procedural';
   scope: 'global' | 'project';
+  confidence?: number;
+  evidence?: string[];
   tags?: string[];
   keywords?: string[];
   updateMode?: 'merge' | 'replace';

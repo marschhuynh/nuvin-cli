@@ -215,7 +215,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({
             • memory_save tool usage
           </Text>
           <Text color={theme.colors.muted} dimColor>
-            • /memory add {'<content>'} command
+            • memory_query tool retrieval + /memory config
           </Text>
         </Box>
       ) : (

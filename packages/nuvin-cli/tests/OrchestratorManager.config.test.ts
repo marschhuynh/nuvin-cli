@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MessageLine } from '../source/adapters/index.js';
 import type { CLIConfig } from '../source/config/types.js';
+import * as path from 'node:path';
+import { getWorkspaceContext } from '../source/services/WorkspaceContextService.js';
 
 const createMockHandlers = () => {
   const messages: MessageLine[] = [];
@@ -287,6 +289,107 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
     const orchestrator = manager.getOrchestrator();
     const config = orchestrator?.getConfig();
     expect(config?.enabledTools?.includes('memory_save')).toBe(false);
+
+    await manager.cleanup();
+  });
+
+  it('enables memory_query tool by default when memory is enabled', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+
+    await manager.init({}, handlers);
+
+    const orchestrator = manager.getOrchestrator();
+    const config = orchestrator?.getConfig();
+    expect(config?.enabledTools?.includes('memory_query')).toBe(true);
+
+    await manager.cleanup();
+  });
+
+  it('disables memory_query tool when active retrieval is disabled', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+        retrieval: {
+          activeEnabled: false,
+        },
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+
+    await manager.init({}, handlers);
+
+    const orchestrator = manager.getOrchestrator();
+    const config = orchestrator?.getConfig();
+    expect(config?.enabledTools?.includes('memory_query')).toBe(false);
+
+    await manager.cleanup();
+  });
+
+  it('enforces memory_query per-turn cap deterministically', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+        retrieval: {
+          maxQueriesPerTurn: 1,
+        },
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+
+    await manager.init({}, handlers);
+
+    const tools = manager.getTools();
+    expect(tools).toBeTruthy();
+
+    const first = await tools?.executeToolCalls(
+      [{ id: 'q1', name: 'memory_query', parameters: { query: 'style', scope: 'project' } }],
+      { conversationId: 'conv', messageId: 'turn_1' },
+    );
+    expect(first?.[0]?.status).toBe('success');
+
+    const second = await tools?.executeToolCalls(
+      [{ id: 'q2', name: 'memory_query', parameters: { query: 'style', scope: 'project' } }],
+      { conversationId: 'conv', messageId: 'turn_1' },
+    );
+    expect(second?.[0]?.status).toBe('error');
+    expect(second?.[0]?.result).toContain('limit reached');
+
+    await manager.cleanup();
+  });
+
+  it('stores workspace memory under ~/.nuvin/memory/workspace/<workspace_id>', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+    await manager.init({}, handlers);
+
+    const workspaceId = getWorkspaceContext().workspaceId;
+    const memoryService = manager.getMemoryService() as unknown as { projectDir?: string };
+    expect(memoryService.projectDir).toContain(path.join('memory', 'workspace', workspaceId, 'project'));
 
     await manager.cleanup();
   });

@@ -18,6 +18,8 @@ export { rankMemories, formatMemoriesForPrompt } from './memory/memory-ranker.js
 export type {
   MemoryEntry,
   MemoryEntryInput,
+  MemoryStatement,
+  MemoryStatus,
   MemoryType,
   MemoryScope,
   MemorySource,
@@ -95,6 +97,7 @@ export type {
   AssignTaskArgs,
   ToolArguments,
   ComputerUseArgs,
+  MemoryQueryArgs,
 } from './tools/tool-params.js';
 export {
   parseToolArguments,
@@ -110,6 +113,7 @@ export {
   isTodoWriteArgs,
   isAssignTaskArgs,
   isComputerUseArgs,
+  isMemoryQueryArgs,
 } from './tools/tool-params.js';
 export type { ToolParameterMap, ToolName, TypedToolInvocation } from './tools/tool-params.js';
 export type { ParseResult } from './tools/tool-call-parser.js';
@@ -131,6 +135,7 @@ export {
   globToolSchema,
   grepToolSchema,
   computerToolSchema,
+  memoryQuerySchema,
 } from './tools/tool-validators.js';
 export type { ToolCallValidation, ValidationError, ToolCallConversionResult } from './tools/tool-call-converter.js';
 export { convertToolCall, convertToolCalls, convertToolCallsWithErrorHandling } from './tools/tool-call-converter.js';
@@ -176,6 +181,8 @@ export type { AskUserArgs } from './tools/tool-params.js';
 export type { AskUserMetadata } from './tools/tool-result-metadata.js';
 export { memorySaveToolDefinition } from './tools/memory-save-tool.js';
 export type { MemorySaveToolInput } from './tools/memory-save-tool.js';
+export { memoryQueryToolDefinition } from './tools/memory-query-tool.js';
+export type { MemoryQueryToolInput, MemoryQueryToolResult, MemoryQueryToolHit } from './tools/memory-query-tool.js';
 export { SkillTool, type SkillProvider, type SkillInfo as SkillToolInfo } from './tools/SkillTool.js';
 export type {
   SkillParams,
