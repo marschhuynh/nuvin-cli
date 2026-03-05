@@ -1,5 +1,30 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.8
+
+### Minor Changes
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(tools): add memory_query tool for targeted memory retrieval
+
+  - Add memory_query tool with query, key, scope, topK, and minScore parameters
+  - Add per-turn query limit enforcement (maxQueriesPerTurn config)
+  - Add MemoryQueryToolResult with structured hits including statementId, score, confidence
+  - Wire memory_query handler in OrchestratorManager with turn tracking
+  - Add memory_query to baseEnabledTools and getEnabledTools logic
+  - Update system prompt to prefer memory_query for retrieval over memory_save
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): upgrade to v2 with statement-level metadata and active recall
+
+  - Add MemoryStatement type with status, confidence, evidence, and key-based deduplication
+  - Add buildCoreMemoryInjection for compact system prompt injection (semantic/procedural only)
+  - Add queryStatements for structured hits with score metadata
+  - Add migrateV1ToV2 with automatic backup creation
+  - Add access buffer with flush interval for batched access count updates
+  - Add per-statement access tracking and signature-based deduplication
+  - Add supersedes/contradicts relationships for conflict resolution
+  - Add minScore, freshnessHalfLifeDays, activeCandidateLimit config options
+  - Move project memory to ~/.nuvin/memory/workspace/<workspace_id>
+
 ## 2.0.0-rc.7
 
 ### Minor Changes
