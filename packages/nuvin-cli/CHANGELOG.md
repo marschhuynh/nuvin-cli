@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.13
+
+### Minor Changes
+
+- [`c6de844`](https://github.com/marschhuynh/nuvin-space/commit/c6de844d2777eba28eaf76bbd9a26f7486e7ae84) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add IME support for Vietnamese Telex/VNI input methods with atomic backspace+replacement handling
+
 ## 1.37.0-rc.12
 
 ### Minor Changes
