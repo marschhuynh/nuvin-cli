@@ -338,6 +338,51 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
     await manager.cleanup();
   });
 
+  it('enables memory_extract tool by default when memory extraction is enabled', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+
+    await manager.init({}, handlers);
+
+    const orchestrator = manager.getOrchestrator();
+    const config = orchestrator?.getConfig();
+    expect(config?.enabledTools?.includes('memory_extract')).toBe(true);
+
+    await manager.cleanup();
+  });
+
+  it('disables memory_extract tool when extraction is disabled', async () => {
+    mockConfigManager.setMockConfig({
+      activeProvider: 'openrouter',
+      model: 'openai/gpt-4',
+      memory: {
+        enabled: true,
+        extraction: {
+          enabled: false,
+        },
+      },
+    });
+
+    const manager = new OrchestratorManager();
+    const handlers = createMockHandlers();
+
+    await manager.init({}, handlers);
+
+    const orchestrator = manager.getOrchestrator();
+    const config = orchestrator?.getConfig();
+    expect(config?.enabledTools?.includes('memory_extract')).toBe(false);
+
+    await manager.cleanup();
+  });
+
   it('enforces memory_query per-turn cap deterministically', async () => {
     mockConfigManager.setMockConfig({
       activeProvider: 'openrouter',
@@ -389,7 +434,7 @@ describe('OrchestratorManager - ConfigManager Integration', () => {
 
     const workspaceId = getWorkspaceContext().workspaceId;
     const memoryService = manager.getMemoryService() as unknown as { projectDir?: string };
-    expect(memoryService.projectDir).toContain(path.join('memory', 'workspace', workspaceId, 'project'));
+    expect(memoryService.projectDir).toContain(path.join('memory', 'workspace', workspaceId));
 
     await manager.cleanup();
   });

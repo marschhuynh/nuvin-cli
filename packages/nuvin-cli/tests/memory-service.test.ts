@@ -48,7 +48,7 @@ describe('MemoryService (frontmatter + bm25)', () => {
     expect(entry.topic).toBe('typescript-formatting');
     expect(entry.keywords).toContain('typescript');
 
-    const file = path.join(projectDir, 'project', 'topics', 'typescript-formatting.md');
+    const file = path.join(projectDir, 'topics', 'typescript-formatting.md');
     expect(fs.existsSync(file)).toBe(true);
     const text = await fs.promises.readFile(file, 'utf-8');
     expect(text.startsWith('---\n')).toBe(true);
@@ -224,42 +224,6 @@ describe('MemoryService (frontmatter + bm25)', () => {
     expect(lineCount).toBeLessThanOrEqual(1);
   });
 
-  it('migrates legacy memories.json into topic markdown files', async () => {
-    const legacyFile = path.join(globalDir, 'memories.json');
-    const now = new Date().toISOString();
-    await fs.promises.writeFile(
-      legacyFile,
-      JSON.stringify(
-        [
-          {
-            id: 'mem_old_1',
-            content: 'User prefers TypeScript strict mode',
-            type: 'semantic',
-            scope: 'global',
-            tags: ['typescript', 'strict'],
-            createdAt: now,
-            updatedAt: now,
-            accessCount: 0,
-            lastAccessedAt: now,
-            source: 'imported',
-          },
-        ],
-        null,
-        2,
-      ),
-      'utf-8',
-    );
-
-    const migratedService = new MemoryService({ globalDir, workspaceId: 'ws_current' });
-    const all = await migratedService.getAllMemories();
-
-    expect(all).toHaveLength(1);
-    expect(all[0]?.topic).toBe('typescript-strict');
-    const topicFile = path.join(globalDir, 'global', 'topics', 'typescript-strict.md');
-    expect(fs.existsSync(topicFile)).toBe(true);
-    const backups = (await fs.promises.readdir(globalDir)).filter((file) => file.startsWith('memories.json.bak.'));
-    expect(backups.length).toBeGreaterThan(0);
-  });
 
   it('writes v2 statement metadata and renders active statements into markdown body', async () => {
     await service.upsertTopicMemory({
@@ -275,7 +239,7 @@ describe('MemoryService (frontmatter + bm25)', () => {
       workspaceId: 'ws_current',
     });
 
-    const file = path.join(projectDir, 'project', 'topics', 'team-style.md');
+    const file = path.join(projectDir, 'topics', 'team-style.md');
     const text = await fs.promises.readFile(file, 'utf-8');
 
     expect(text).toContain('version: 2');
@@ -381,32 +345,4 @@ describe('MemoryService (frontmatter + bm25)', () => {
     expect(core).not.toContain('flaky CI timeout');
   });
 
-  it('migrates v1 topic files to v2 and creates backups', async () => {
-    const topicsDir = path.join(globalDir, 'global', 'topics');
-    await fs.promises.mkdir(topicsDir, { recursive: true });
-    const legacyTopicPath = path.join(topicsDir, 'legacy-topic.md');
-    const now = new Date().toISOString();
-    await fs.promises.writeFile(
-      legacyTopicPath,
-      `---\nid: mem_legacy\ntopic: legacy-topic\nscope: global\ntype: semantic\nkeywords: [legacy]\ntags: [legacy]\ncreatedAt: ${now}\nupdatedAt: ${now}\naccessCount: 0\nlastAccessedAt: ${now}\nsource: imported\nversion: 1\n---\n\n- Legacy memory line\n`,
-      'utf-8',
-    );
-
-    const migrationResult = await service.migrateV1ToV2();
-    expect(migrationResult.migratedCount).toBeGreaterThanOrEqual(0);
-    expect(migrationResult.backupsCreated).toBeGreaterThanOrEqual(0);
-
-    const migratedText = await fs.promises.readFile(legacyTopicPath, 'utf-8');
-    expect(migratedText).toContain('version: 2');
-    expect(migratedText).toContain('statements:');
-
-    const files = await fs.promises.readdir(topicsDir);
-    expect(files.some((file) => file.includes('.v1.bak.'))).toBe(true);
-  });
-
-  it('returns migration status for memory ui/reporting', async () => {
-    const status = await service.getMigrationStatus();
-    expect(status.currentVersion).toBe(2);
-    expect(typeof status.lastRunAt).toBe('string');
-  });
 });

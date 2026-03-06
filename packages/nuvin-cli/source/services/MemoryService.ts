@@ -129,14 +129,7 @@ type ScopeIndex = {
   updatedAt: string;
 };
 
-type MigrationStatus = {
-  currentVersion: 2;
-  lastRunAt: string;
-  migratedCount: number;
-  backupsCreated: number;
-  skippedCount: number;
-  warnings: string[];
-};
+
 
 type AccessBufferItem = {
   scope: MemoryScope;
@@ -411,18 +404,10 @@ export class MemoryService {
   private flushTimer: NodeJS.Timeout | null = null;
   private flushInProgress = false;
 
-  private migrationStatus: MigrationStatus = {
-    currentVersion: 2,
-    lastRunAt: nowIso(),
-    migratedCount: 0,
-    backupsCreated: 0,
-    skippedCount: 0,
-    warnings: [],
-  };
 
   constructor(config: MemoryServiceConfig) {
     this.globalDir = path.join(config.globalDir, 'global');
-    this.projectDir = config.projectDir ? path.join(config.projectDir, 'project') : null;
+    this.projectDir = config.projectDir ?? null;
     this.maxInjectionTokens = config.maxInjectionTokens ?? DEFAULT_INJECT_TOKENS;
     this.coreInjectionTokens = config.coreInjectionTokens ?? DEFAULT_CORE_INJECT_TOKENS;
     this.candidateLimit = config.candidateLimit ?? DEFAULT_CANDIDATE_LIMIT;
@@ -446,7 +431,6 @@ export class MemoryService {
       await this.ensureScopeDirs('project');
     }
 
-    await this.migrateV1ToV2(true);
     await this.rebuildIndexInternal('global', this.workspaceId, true);
     if (this.projectDir) {
       await this.rebuildIndexInternal('project', this.workspaceId, true);
@@ -767,164 +751,6 @@ export class MemoryService {
       docs: {},
       updatedAt: nowIso(),
     };
-  }
-
-  private async migrateLegacyJson(scope: MemoryScope): Promise<{ migrated: number; backups: number; skipped: number }> {
-    const baseDir = this.getScopeBaseDir(scope);
-    if (!baseDir) return { migrated: 0, backups: 0, skipped: 0 };
-
-    const legacyFile = path.join(path.dirname(baseDir), 'memories.json');
-    const topicFiles = await this.listTopicFiles(scope);
-    if (topicFiles.length > 0) {
-      return { migrated: 0, backups: 0, skipped: 0 };
-    }
-
-    let migrated = 0;
-    let skipped = 0;
-    let backups = 0;
-
-    try {
-      const text = await fs.readFile(legacyFile, 'utf-8');
-      const parsed = JSON.parse(text) as unknown;
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        return { migrated, backups, skipped };
-      }
-
-      for (const item of parsed) {
-        if (!item || typeof item !== 'object') {
-          skipped += 1;
-          continue;
-        }
-
-        const data = item as Partial<MemoryEntry>;
-        if (typeof data.content !== 'string' || typeof data.type !== 'string') {
-          skipped += 1;
-          continue;
-        }
-
-        const topic = typeof data.topic === 'string' ? data.topic : deriveTopic(data.content, data.tags ?? []);
-
-        await this.upsertTopicMemoryInternal(
-          {
-            content: data.content,
-            type: data.type as MemoryType,
-            scope,
-            source: (data.source as MemorySource) ?? 'imported',
-            topic,
-            keywords: data.keywords ?? data.tags ?? [],
-            tags: data.tags ?? [],
-            workspaceId: data.workspaceId,
-            updateMode: 'merge',
-          },
-          { skipEnsureReady: true, skipReindex: true },
-        );
-        migrated += 1;
-      }
-
-      const backupFile = `${legacyFile}.bak.${Date.now()}`;
-      await fs.copyFile(legacyFile, backupFile);
-      backups += 1;
-    } catch {
-      // best effort
-    }
-
-    return { migrated, backups, skipped };
-  }
-
-  private async migrateTopicFilesToV2(scope: MemoryScope): Promise<{ migrated: number; backups: number; skipped: number }> {
-    const files = await this.listTopicFiles(scope);
-    let migrated = 0;
-    let backups = 0;
-    let skipped = 0;
-
-    for (const filePath of files) {
-      try {
-        const raw = await fs.readFile(filePath, 'utf-8');
-        const parsed = splitFrontmatter(raw);
-        if (!parsed) {
-          skipped += 1;
-          continue;
-        }
-
-        const frontmatter = parseYaml(parsed.frontmatter) as Record<string, unknown>;
-        const version = Number(frontmatter['version'] ?? 1);
-        const hasStatements = Array.isArray(frontmatter['statements']);
-        if (version >= 2 && hasStatements) {
-          continue;
-        }
-
-        const backupPath = `${filePath}.v1.bak.${Date.now()}`;
-        await fs.copyFile(filePath, backupPath);
-        backups += 1;
-
-        const entry = await this.readTopicFile(filePath);
-        if (!entry) {
-          skipped += 1;
-          continue;
-        }
-
-        const upgraded = normalizeEntry({
-          ...entry,
-          version: 2,
-          statements:
-            entry.statements && entry.statements.length > 0
-              ? entry.statements
-              : parseStatementsFromBody(entry.content, { now: nowIso() }),
-        });
-
-        await this.writeTopicFile(scope, upgraded);
-        migrated += 1;
-      } catch {
-        skipped += 1;
-      }
-    }
-
-    return { migrated, backups, skipped };
-  }
-
-  async migrateV1ToV2(skipEnsureReady = false): Promise<MigrationStatus> {
-    if (!skipEnsureReady) {
-      await this.ensureReady();
-    }
-
-    const warnings: string[] = [];
-    let migratedCount = 0;
-    let backupsCreated = 0;
-    let skippedCount = 0;
-
-    const scopes: MemoryScope[] = this.projectDir ? ['global', 'project'] : ['global'];
-
-    for (const scope of scopes) {
-      const legacy = await this.migrateLegacyJson(scope);
-      migratedCount += legacy.migrated;
-      backupsCreated += legacy.backups;
-      skippedCount += legacy.skipped;
-
-      const files = await this.migrateTopicFilesToV2(scope);
-      migratedCount += files.migrated;
-      backupsCreated += files.backups;
-      skippedCount += files.skipped;
-    }
-
-    if (skippedCount > 0) {
-      warnings.push(`Skipped ${skippedCount} malformed memory records during migration.`);
-    }
-
-    this.migrationStatus = {
-      currentVersion: 2,
-      lastRunAt: nowIso(),
-      migratedCount,
-      backupsCreated,
-      skippedCount,
-      warnings,
-    };
-
-    return { ...this.migrationStatus };
-  }
-
-  async getMigrationStatus(): Promise<MigrationStatus> {
-    await this.ensureReady();
-    return { ...this.migrationStatus };
   }
 
   private inferTopic(input: TopicMemoryInput): string {

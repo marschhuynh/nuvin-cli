@@ -147,7 +147,7 @@ export interface MemorySettings {
     minScore?: number;
     freshnessHalfLifeDays?: number;
   };
-  /** Background extraction settings. */
+  /** Explicit memory extraction tool settings. */
   extraction?: {
     enabled?: boolean;
     provider?: string;
@@ -169,7 +169,7 @@ export interface MemorySettings {
   provider?: string;
   /** @deprecated use memory.retrieval.injectTokenBudget */
   maxInjectionTokens?: number;
-  /** @deprecated use memory.extraction.enabled */
+  /** @deprecated use memory.extraction.enabled (controls memory_extract tool availability) */
   backgroundExtraction?: boolean;
 }
 

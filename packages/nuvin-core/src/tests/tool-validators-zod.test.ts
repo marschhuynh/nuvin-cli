@@ -6,6 +6,7 @@ import {
   fileReadSchema,
   globToolSchema,
   grepToolSchema,
+  memoryExtractSchema,
 } from '../tools/tool-validators.js';
 import type { ToolName } from '../tools/tool-params.js';
 
@@ -99,6 +100,24 @@ describe('Tool Validators - Zod Schemas', () => {
       }
     });
   });
+
+  describe('memoryExtractSchema', () => {
+    it('should validate valid memory extract params', () => {
+      const result = memoryExtractSchema.safeParse({
+        scope: 'project',
+        maxMessages: 12,
+        minSimilarityScore: 0.35,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid maxMessages', () => {
+      const result = memoryExtractSchema.safeParse({
+        maxMessages: 0,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
 });
 
 describe('validateToolParams', () => {
@@ -131,6 +150,14 @@ describe('validateToolParams', () => {
     expect(result.valid).toBe(true);
     if (result.valid) {
       expect(result.data.pattern).toBe('test');
+    }
+  });
+
+  it('should validate memory_extract params', () => {
+    const result = validateToolParams('memory_extract', { scope: 'project', maxMessages: 10 });
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.data.scope).toBe('project');
     }
   });
 

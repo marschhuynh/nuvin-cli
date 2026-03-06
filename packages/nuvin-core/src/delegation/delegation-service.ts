@@ -77,6 +77,7 @@ export class DefaultDelegationService implements DelegationService {
     return this.catalog.list().filter((agent) => {
       if (!agent.name) return true;
       if (agent.name === 'nuvin') return false;
+      if (agent.user_invocable === false) return false;
       return this.enabledAgents[agent.name] !== false;
     });
   }
@@ -86,6 +87,7 @@ export class DefaultDelegationService implements DelegationService {
     if (!template) {
       const availableAgents = this.catalog
         .list()
+        .filter((a) => a.user_invocable !== false)
         .map((a) => a.name)
         .filter(Boolean)
         .join(', ');

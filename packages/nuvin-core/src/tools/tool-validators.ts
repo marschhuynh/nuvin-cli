@@ -137,6 +137,12 @@ export const memoryQuerySchema = z.object({
   minScore: z.number().optional(),
 });
 
+export const memoryExtractSchema = z.object({
+  scope: z.enum(['project', 'global']).optional(),
+  maxMessages: z.number().int().min(1).max(100).optional(),
+  minSimilarityScore: z.number().min(0).max(10).optional(),
+});
+
 export const toolSchemas = {
   bash_tool: bashToolSchema,
   file_read: fileReadSchema,
@@ -151,6 +157,7 @@ export const toolSchemas = {
   grep_tool: grepToolSchema,
   computer: computerToolSchema,
   memory_query: memoryQuerySchema,
+  memory_extract: memoryExtractSchema,
 } as const;
 
 export function validateToolParams<T extends ToolName>(
@@ -186,4 +193,5 @@ export const toolValidators = {
   grep_tool: (params: Record<string, unknown>) => validateToolParams('grep_tool', params),
   computer: (params: Record<string, unknown>) => validateToolParams('computer', params),
   memory_query: (params: Record<string, unknown>) => validateToolParams('memory_query', params),
+  memory_extract: (params: Record<string, unknown>) => validateToolParams('memory_extract', params),
 };

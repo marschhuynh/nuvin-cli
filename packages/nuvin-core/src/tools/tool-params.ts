@@ -126,6 +126,12 @@ export type MemoryQueryArgs = {
   minScore?: number;
 };
 
+export type MemoryExtractArgs = {
+  scope?: 'project' | 'global';
+  maxMessages?: number;
+  minSimilarityScore?: number;
+};
+
 export type ToolArguments =
   | BashToolArgs
   | FileReadArgs
@@ -140,7 +146,8 @@ export type ToolArguments =
   | AssignTaskArgs
   | AskUserArgs
   | ComputerUseArgs
-  | MemoryQueryArgs;
+  | MemoryQueryArgs
+  | MemoryExtractArgs;
 
 /**
  * Type guard to safely parse tool arguments
@@ -221,6 +228,10 @@ export function isMemoryQueryArgs(args: ToolArguments): args is MemoryQueryArgs 
   return 'query' in args && typeof args.query === 'string' && !('count' in args);
 }
 
+export function isMemoryExtractArgs(args: ToolArguments): args is MemoryExtractArgs {
+  return 'scope' in args || 'maxMessages' in args || 'minSimilarityScore' in args;
+}
+
 export type ToolParameterMap = {
   bash_tool: BashToolArgs;
   file_read: FileReadArgs;
@@ -235,6 +246,7 @@ export type ToolParameterMap = {
   assign_task: AssignTaskArgs;
   computer: ComputerUseArgs;
   memory_query: MemoryQueryArgs;
+  memory_extract: MemoryExtractArgs;
 };
 
 export type ToolName = keyof ToolParameterMap;

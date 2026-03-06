@@ -256,6 +256,79 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
       expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', false);
     });
+
+    it('should require approval for memory_extract even when global approval is off', async () => {
+      mockTools = {
+        getToolDefinitions: vi.fn().mockReturnValue([
+          { type: 'function', function: { name: 'memory_extract', description: 'Extract memory', parameters: {} } },
+        ] as ToolDefinition[]),
+        executeToolCalls: vi.fn(async (invocations: ToolInvocation[]) => {
+          return invocations.map((inv) => {
+            toolExecutions.push(inv.name);
+            return {
+              id: inv.id,
+              name: inv.name,
+              status: 'success' as const,
+              type: 'json' as const,
+              result: { ok: true },
+              durationMs: 100,
+            };
+          });
+        }),
+      };
+
+      orchestrator = new AgentOrchestrator(
+        {
+          id: 'test-agent',
+          model: 'test-model',
+          enabledTools: ['memory_extract'],
+          systemPrompt: 'test',
+          requireToolApproval: false,
+          topP: 1,
+          temperature: 1,
+        },
+        {
+          memory: mockMemory,
+          llm: mockLLM,
+          tools: mockTools,
+          context: mockContext,
+          ids: mockIds,
+          clock: mockClock,
+          cost: mockCost,
+          reminders: mockReminders,
+          events: mockEvents,
+        },
+      );
+
+      const toolCallResponse: CompletionResult = {
+        content: '',
+        tool_calls: [
+          { id: 'tc-1', type: 'function', function: { name: 'memory_extract', arguments: '{}' } },
+        ],
+      };
+      const finalResponse: CompletionResult = {
+        content: 'done',
+      };
+
+      let callCount = 0;
+      mockLLM.generateCompletion = vi.fn(async () => {
+        callCount++;
+        return callCount === 1 ? toolCallResponse : finalResponse;
+      });
+
+      const sendPromise = orchestrator.send('extract memory', { stream: false });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(toolExecutions).toHaveLength(0);
+      const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
+      expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', true);
+
+      const approvalId = toolCallsEvent?.toolCalls[0].approvalId;
+      orchestrator.handleToolApproval(approvalId!, 'approve');
+      await sendPromise;
+
+      expect(toolExecutions).toContain('memory_extract');
+    });
   });
 
   describe('Mixed approval scenarios', () => {

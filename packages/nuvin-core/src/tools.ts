@@ -36,6 +36,10 @@ import {
   type MemoryQueryToolInput,
   type MemoryQueryToolResult,
 } from './tools/memory-query-tool.js';
+import {
+  MemoryExtractionTool,
+  type MemoryExtractionTaskBuilder,
+} from './tools/MemoryExtractionTool.js';
 import { ComputerUseTool } from './tools/ComputerUseTool.js';
 
 type MemoryToolExecutionContext = {
@@ -43,7 +47,12 @@ type MemoryToolExecutionContext = {
   messageId?: string;
   toolCallId?: string;
   agentId?: string;
-};
+  eventPort?: unknown;
+  signal?: AbortSignal;
+  delegationDepth?: number;
+  workspaceRoot?: string;
+  cwd?: string;
+} & Record<string, unknown>;
 
 export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorAwareToolPort {
   private tools = new Map<string, FunctionTool<unknown, unknown>>();
@@ -58,6 +67,8 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
   private memoryQueryHandler:
     | ((input: MemoryQueryToolInput, context?: MemoryToolExecutionContext) => Promise<MemoryQueryToolResult>)
     | null = null;
+  private memoryExtractionTaskBuilder: MemoryExtractionTaskBuilder | null = null;
+  private memoryExtractionAgentName = '__memory_extractor_internal';
 
   // Stored for re-initialization when memory changes (lazy session init)
   private orchestratorConfig?: AgentConfig;
@@ -144,6 +155,41 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
     this.memoryQueryHandler = handler;
   }
 
+  setMemoryExtractionTaskBuilder(
+    builder: MemoryExtractionTaskBuilder | null,
+    options?: { hiddenAgentName?: string },
+  ): void {
+    this.memoryExtractionTaskBuilder = builder;
+    if (options?.hiddenAgentName) {
+      this.memoryExtractionAgentName = options.hiddenAgentName;
+    }
+    this.updateMemoryExtractionToolRegistration();
+  }
+
+  private updateMemoryExtractionToolRegistration(): void {
+    if (!this.memoryExtractionTaskBuilder) {
+      this.tools.delete('memory_extract');
+      void this.persistToolNames();
+      return;
+    }
+
+    const builderWrapper: MemoryExtractionTaskBuilder = async (input, context) => {
+      const taskBuilder = this.memoryExtractionTaskBuilder;
+      if (!taskBuilder) {
+        throw new Error('Memory extraction task builder is not configured.');
+      }
+      return taskBuilder(input, context);
+    };
+
+    const extractionTool = new MemoryExtractionTool(
+      () => this.assignTool,
+      builderWrapper,
+      this.memoryExtractionAgentName,
+    );
+    this.tools.set(extractionTool.name, extractionTool as FunctionTool<unknown, unknown>);
+    void this.persistToolNames();
+  }
+
   private async persistToolNames() {
     try {
       const names = Array.from(this.tools.keys());
@@ -202,7 +248,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
       commandRunner,
       agentListProvider: () =>
         this.agentRegistry.list()
-          .filter((agent) => agent.name !== 'nuvin')
+          .filter((agent) => agent.name !== 'nuvin' && agent.user_invocable !== false)
           .map((agent) => ({
             id: agent.name,
             name: agent.name,
@@ -215,6 +261,7 @@ export class ToolRegistry implements ToolPort, AgentAwareToolPort, OrchestratorA
 
     this.assignTool = new AssignTool(delegationService);
     this.tools.set('assign_task', this.assignTool);
+    this.updateMemoryExtractionToolRegistration();
 
     void this.persistToolNames();
   }
@@ -362,11 +409,25 @@ DO NOT mention this explicitly to the user.
               };
             }
             try {
-              const result = await this.memoryQueryHandler(c.parameters as unknown as MemoryQueryToolInput, {
-                conversationId: typeof context?.['conversationId'] === 'string' ? (context['conversationId'] as string) : undefined,
+              const memoryContext: MemoryToolExecutionContext = {
+                ...(context ?? {}),
+                conversationId:
+                  typeof context?.['conversationId'] === 'string' ? (context['conversationId'] as string) : undefined,
                 messageId: typeof context?.['messageId'] === 'string' ? (context['messageId'] as string) : undefined,
                 toolCallId: c.id,
                 agentId: typeof context?.['agentId'] === 'string' ? (context['agentId'] as string) : undefined,
+                eventPort: context?.['eventPort'],
+                delegationDepth:
+                  typeof context?.['delegationDepth'] === 'number'
+                    ? (context['delegationDepth'] as number)
+                    : undefined,
+                workspaceRoot:
+                  typeof context?.['workspaceRoot'] === 'string' ? (context['workspaceRoot'] as string) : undefined,
+                cwd: typeof context?.['cwd'] === 'string' ? (context['cwd'] as string) : undefined,
+                signal,
+              };
+              const result = await this.memoryQueryHandler(c.parameters as unknown as MemoryQueryToolInput, {
+                ...memoryContext,
               });
               const durationMs = Math.round(performance.now() - startTime);
               return {

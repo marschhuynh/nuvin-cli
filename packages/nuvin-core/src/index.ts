@@ -98,6 +98,7 @@ export type {
   ToolArguments,
   ComputerUseArgs,
   MemoryQueryArgs,
+  MemoryExtractArgs,
 } from './tools/tool-params.js';
 export {
   parseToolArguments,
@@ -114,6 +115,7 @@ export {
   isAssignTaskArgs,
   isComputerUseArgs,
   isMemoryQueryArgs,
+  isMemoryExtractArgs,
 } from './tools/tool-params.js';
 export type { ToolParameterMap, ToolName, TypedToolInvocation } from './tools/tool-params.js';
 export type { ParseResult } from './tools/tool-call-parser.js';
@@ -136,6 +138,7 @@ export {
   grepToolSchema,
   computerToolSchema,
   memoryQuerySchema,
+  memoryExtractSchema,
 } from './tools/tool-validators.js';
 export type { ToolCallValidation, ValidationError, ToolCallConversionResult } from './tools/tool-call-converter.js';
 export { convertToolCall, convertToolCalls, convertToolCallsWithErrorHandling } from './tools/tool-call-converter.js';
@@ -183,6 +186,10 @@ export { memorySaveToolDefinition } from './tools/memory-save-tool.js';
 export type { MemorySaveToolInput } from './tools/memory-save-tool.js';
 export { memoryQueryToolDefinition } from './tools/memory-query-tool.js';
 export type { MemoryQueryToolInput, MemoryQueryToolResult, MemoryQueryToolHit } from './tools/memory-query-tool.js';
+export { AssignAliasTool } from './tools/AssignAliasTool.js';
+export type { AssignAliasTask, AssignAliasHiddenAgentResolver, AssignAliasToolOptions } from './tools/AssignAliasTool.js';
+export { MemoryExtractionTool } from './tools/MemoryExtractionTool.js';
+export type { MemoryExtractToolInput, MemoryExtractToolResult, MemoryExtractionTaskBuilder } from './tools/MemoryExtractionTool.js';
 export { SkillTool, type SkillProvider, type SkillInfo as SkillToolInfo } from './tools/SkillTool.js';
 export type {
   SkillParams,

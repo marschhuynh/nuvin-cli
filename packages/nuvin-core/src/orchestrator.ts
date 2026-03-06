@@ -349,6 +349,13 @@ export class AgentOrchestrator {
     return readOnlyTools.includes(toolName) || todoTools.includes(toolName) || interactiveTools.includes(toolName);
   }
 
+  /**
+   * Tools in this list always require explicit approval, even if global approval mode is off.
+   */
+  private shouldAlwaysRequireApproval(toolName: string): boolean {
+    return toolName === 'memory_extract';
+  }
+
 
   /**
    * Process tool approval with per-tool granularity.
@@ -823,8 +830,9 @@ export class AgentOrchestrator {
 
       // 1. Enrich tool calls with per-tool approval info
       const enrichedToolCalls = result.tool_calls.map((tc) => {
-        const requiresApproval = this.cfg.requireToolApproval !== false &&
-                                  !this.shouldBypassApproval(tc.function.name);
+        const requiresApproval =
+          this.shouldAlwaysRequireApproval(tc.function.name) ||
+          (this.cfg.requireToolApproval !== false && !this.shouldBypassApproval(tc.function.name));
         return {
           ...tc,
           requiresApproval,

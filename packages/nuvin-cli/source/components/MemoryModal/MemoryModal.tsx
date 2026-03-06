@@ -206,10 +206,10 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({
         <Box marginX={1} flexDirection="column">
           <Text color={theme.history.help}>No memories stored yet.</Text>
           <Text color={theme.colors.muted} dimColor>
-            {'\n'}Memories are stored from:
+            {'\n'}Memory workflows:
           </Text>
           <Text color={theme.colors.muted} dimColor>
-            • Background extraction after each turn
+            • memory_extract tool (explicit extraction + consolidation)
           </Text>
           <Text color={theme.colors.muted} dimColor>
             • memory_save tool usage
