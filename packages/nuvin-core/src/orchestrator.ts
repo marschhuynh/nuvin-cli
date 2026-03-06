@@ -352,8 +352,8 @@ export class AgentOrchestrator {
   /**
    * Tools in this list always require explicit approval, even if global approval mode is off.
    */
-  private shouldAlwaysRequireApproval(toolName: string): boolean {
-    return toolName === 'memory_extract';
+  private shouldAlwaysRequireApproval(_toolName: string): boolean {
+    return false;
   }
 
 

@@ -257,7 +257,7 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', false);
     });
 
-    it('should require approval for memory_extract even when global approval is off', async () => {
+    it('should not require approval for memory_extract when global approval is off', async () => {
       mockTools = {
         getToolDefinitions: vi.fn().mockReturnValue([
           { type: 'function', function: { name: 'memory_extract', description: 'Extract memory', parameters: {} } },
@@ -317,17 +317,16 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       });
 
       const sendPromise = orchestrator.send('extract memory', { stream: false });
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(toolExecutions).toHaveLength(0);
-      const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
-      expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', true);
-
-      const approvalId = toolCallsEvent?.toolCalls[0].approvalId;
-      orchestrator.handleToolApproval(approvalId!, 'approve');
       await sendPromise;
 
+      // Tool should execute immediately without approval
+      expect(toolExecutions).toHaveLength(1);
       expect(toolExecutions).toContain('memory_extract');
+
+      // ToolCalls event is emitted but with requiresApproval=false
+      const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
+      expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', false);
+      expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('approvalId', undefined);
     });
   });
 

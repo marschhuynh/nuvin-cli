@@ -485,7 +485,7 @@ export class OrchestratorManager {
         instructions: INTERNAL_MEMORY_EXTRACTOR_INSTRUCTIONS,
         allowed_tools: ['memory_query', 'memory_save'],
         user_invocable: false,
-        temperature: 0.2,
+        temperature: 0.4,
         top_p: 0.1,
         provider: extractionSettings.provider,
         model: extractionSettings.model,

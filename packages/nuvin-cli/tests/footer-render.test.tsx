@@ -134,7 +134,7 @@ describe('Footer — default layout (snapshot)', () => {
     const { lastFrame } = render(
       <Footer {...baseProps} metrics={emptyMetrics()} />,
     );
-    expect(lastFrame()).not.toContain('Tokens:');
+    expect(lastFrame()).not.toContain('Toks:');
     expect(lastFrame()).not.toContain('Req:');
   });
 
@@ -142,7 +142,7 @@ describe('Footer — default layout (snapshot)', () => {
     const { lastFrame } = render(
       <Footer {...baseProps} metrics={metrics({ currentTokens: 1234 })} />,
     );
-    expect(lastFrame()).toContain('Tokens:');
+    expect(lastFrame()).toContain('Toks:');
     expect(lastFrame()).toContain('1234');
   });
 
@@ -245,7 +245,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
     const { lastFrame } = render(
       <Footer {...baseProps} metrics={metrics({ currentTokens: 100, totalCost: 0.05 })} />,
     );
-    expect(lastFrame()).toContain('Tokens:');
+    expect(lastFrame()).toContain('Toks:');
     expect(lastFrame()).not.toContain('$');
   });
 
@@ -289,7 +289,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
     const { lastFrame } = render(
       <Footer {...baseProps} metrics={metrics({ currentTokens: 9999 })} />,
     );
-    expect(lastFrame()).not.toContain('Tokens:');
+    expect(lastFrame()).not.toContain('Toks:');
     expect(lastFrame()).not.toContain('9999');
   });
 
@@ -358,7 +358,7 @@ describe('Footer — segment visibility via ui.statusline.rows config', () => {
     );
 
     const frame = lastFrame() ?? '';
-    expect(frame).toContain('Tokens:');
+    expect(frame).toContain('Toks:');
     expect(frame).toContain('Cached:');
     expect(frame).toContain('Req: 2');
     expect(frame).toContain('Tools: 4');
@@ -379,7 +379,7 @@ describe('Footer — DEFAULT_STATUSLINE_ROWS produces same output as config', ()
     // Render again with explicit DEFAULT_STATUSLINE_ROWS
     // (would require separate mock — just assert the default contains expected segments)
     const frame = defaultFrame() ?? '';
-    expect(frame).toContain('Tokens:');
+    expect(frame).toContain('Toks:');
     expect(frame).toContain('Req: 1');
     expect(frame).toContain('projects/myapp');
     expect(frame).toContain('/ command');
