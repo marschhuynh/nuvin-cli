@@ -1,5 +1,20 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.14
+
+### Minor Changes
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `user_invocable` flag to agent registry. Internal agents (e.g., memory extractor) are now hidden from agent lists and UI.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `memory_extract` tool for explicit memory extraction and consolidation. Replaces background extraction with approval-required delegation to internal specialist agent.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove v1-to-v2 migration logic and legacy JSON support. Memory system now assumes v2 topic files with statements.
+
+### Patch Changes
+
+- Updated dependencies [[`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1)]:
+  - @nuvin/nuvin-core@2.0.0-rc.9
+
 ## 1.37.0-rc.13
 
 ### Minor Changes
