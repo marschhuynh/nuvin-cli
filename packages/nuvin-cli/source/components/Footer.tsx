@@ -130,7 +130,7 @@ const FooterComponent: React.FC<FooterProps> = ({
         return (
           <React.Fragment key="tokens">
             <Text color={theme.footer.model} dimColor bold>
-              Tokens:
+              Toks:
             </Text>
             <Text color={theme.footer.model} bold>
               {' '}
@@ -148,7 +148,7 @@ const FooterComponent: React.FC<FooterProps> = ({
         if (!metrics?.contextWindowLimit || metrics.contextWindowUsage === undefined) return null;
         return (
           <Text key="context" color={getUsageColor(metrics.contextWindowUsage, theme)} dimColor>
-            ({Math.round(metrics.contextWindowUsage * 100)}%)
+            {Math.round(metrics.contextWindowUsage * 100)}%
           </Text>
         );
       case 'cached':
