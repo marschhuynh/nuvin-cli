@@ -1,5 +1,17 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.9
+
+### Minor Changes
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `user_invocable` flag to agent registry. Internal agents (e.g., memory extractor) are now hidden from agent lists and UI.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `AssignAliasTool` base class for tools that delegate through `assign_task` with hidden agents.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `memory_extract` tool for explicit memory extraction and consolidation. Replaces background extraction with approval-required delegation to internal specialist agent.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Make `memory_extract` always require approval, regardless of global tool approval setting.
+
 ## 2.0.0-rc.8
 
 ### Minor Changes
