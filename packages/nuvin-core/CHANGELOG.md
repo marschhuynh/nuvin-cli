@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.10
+
+### Minor Changes
+
+- [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove approval requirement for `memory_extract` tool, allowing automatic execution
+
 ## 2.0.0-rc.9
 
 ### Minor Changes
