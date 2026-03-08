@@ -28,4 +28,10 @@ export default defineConfig({
   loader: {
     '.cjs': 'copy',
   },
+  esbuildOptions(options) {
+    options.define = {
+      ...options.define,
+      'process.env.NODE_ENV': '"production"',
+    };
+  },
 });
