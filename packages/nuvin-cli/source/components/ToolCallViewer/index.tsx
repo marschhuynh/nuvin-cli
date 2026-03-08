@@ -117,13 +117,7 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
               </Box>
             </Box>
             <Box
-              marginLeft={3}
-              borderStyle="single"
-              borderDimColor
-              borderColor={color}
-              borderBottom={false}
-              borderRight={false}
-              borderTop={false}
+              marginLeft={1}
               paddingLeft={2}
             >
               <AutoScrollBox maxHeight={5} showScrollbar={false}>
