@@ -53,7 +53,8 @@ export const CommandModal: React.FC<CommandModalProps> = ({
 
   if (!visible) return null;
 
-  const modalHeight = rows - 4;
+  const MODAL_HEIGHT = 30;
+  const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
 
   const title =
     activeProfile && activeProfile !== 'default' ? `Custom Commands (Profile: ${activeProfile})` : 'Custom Commands';

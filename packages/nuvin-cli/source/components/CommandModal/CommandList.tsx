@@ -30,6 +30,12 @@ const SOURCE_NAMES: Record<CommandSource, string> = {
   local: 'Local',
 };
 
+const SOURCE_COLORS: Record<CommandSource, string> = {
+  global: 'yellow',
+  profile: 'cyan',
+  local: 'cyan',
+};
+
 export const CommandList: React.FC<CommandListProps> = ({
   commands,
   onCommandSelect,
@@ -58,17 +64,18 @@ export const CommandList: React.FC<CommandListProps> = ({
 
       const accentColor = theme.colors.accent;
       const sourceLabel = SOURCE_LABELS[command.source];
+      const sourceColor = SOURCE_COLORS[command.source];
       const shadowedCommands = getShadowedCommands(command.id);
 
       return (
-        <Box flexDirection="column" marginBottom={1}>
+        <Box flexDirection="column">
           <Box>
             <Text color={isSelected ? accentColor : undefined}>{isSelected ? '› ' : '  '}</Text>
             <Text color={isSelected ? accentColor : theme.colors.text} bold={isSelected}>
               /{command.id}
             </Text>
             <Text> </Text>
-            <Text color={theme.history.help} dimColor>
+            <Text color={sourceColor} dimColor>
               [{sourceLabel}]
             </Text>
             {shadowedCommands.length > 0 && (
