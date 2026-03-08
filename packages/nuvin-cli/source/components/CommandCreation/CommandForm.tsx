@@ -12,8 +12,6 @@ import TextInput from '@/components/TextInput/index.js';
 import { Focusable } from '@/components/Focusable/index.js';
 import type { CommandSource, CustomCommandTemplate } from '@nuvin/nuvin-core';
 
-const MODAL_HEIGHT = 30;
-
 interface CommandFormProps {
   mode: 'create' | 'edit';
   command: Partial<CustomCommandTemplate>;
@@ -117,11 +115,15 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
     </Box>
   );
 
-  const promptMaxLines = Math.max(3, rows - 22);
+  const MODAL_HEIGHT = 30;
+  const modalHeight = Math.min(MODAL_HEIGHT, rows - 4);
+  // Derive from modal height, not terminal rows, so content fits within the modal
+  // Fixed chrome inside modal: title(1) + margin(1) + preview(2) + name(3) + desc(3) + scope(4) + label(1) + hint(2) + delete(~3) + footer(1) ≈ 21
+  const promptMaxLines = Math.max(3, modalHeight - 21);
 
   return (
-    <AppModal visible={true} title={title} footer={footerContent} height={Math.min(MODAL_HEIGHT, rows - 4)}>
-      <Box flexDirection="column">
+    <AppModal visible={true} title={title} footer={footerContent} height={modalHeight}>
+      <Box flexDirection="column" flexGrow={1} overflow="hidden">
         {error && (
           <Box marginBottom={1}>
             <Text color={theme.colors.error}>{error}</Text>
@@ -163,10 +165,10 @@ const CommandFormContent: React.FC<CommandFormProps> = ({
           />
         </Box>
 
-        <Box flexDirection="column" marginBottom={1}>
+        <Box flexDirection="column" marginBottom={1} flexGrow={1}>
           <Focusable tabIndex="0">
             {({ isFocused }) => (
-              <Box flexDirection="column">
+              <Box flexDirection="column" flexGrow={1}>
                 <Text color={isFocused ? theme.colors.accent : theme.modal.help} bold={isFocused} dimColor={!isFocused}>
                   Prompt Template:
                 </Text>
