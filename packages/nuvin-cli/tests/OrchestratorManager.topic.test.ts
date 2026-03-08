@@ -200,8 +200,10 @@ describe('OrchestratorManager - Topic Analysis', () => {
         releaseWaitFor = resolve;
       });
 
-      const analyzeSpy = vi.spyOn(manager, 'analyzeTopic').mockResolvedValue('Parallel Topic');
-      const updateSpy = vi.spyOn(manager, 'updateConversationTopic').mockResolvedValue(undefined);
+      // Spy on the internal topicAnalyzer since OrchestratorManager delegates to it
+      const topicAnalyzer = (manager as unknown as { topicAnalyzer: { analyzeTopic: (...args: unknown[]) => Promise<string>; updateConversationTopic: (...args: unknown[]) => Promise<void> } }).topicAnalyzer;
+      const analyzeSpy = vi.spyOn(topicAnalyzer, 'analyzeTopic').mockResolvedValue('Parallel Topic');
+      const updateSpy = vi.spyOn(topicAnalyzer, 'updateConversationTopic').mockResolvedValue(undefined);
 
       const topicPromise = manager.analyzeAndUpdateTopic('Run tests in parallel', 'default', { waitFor });
 

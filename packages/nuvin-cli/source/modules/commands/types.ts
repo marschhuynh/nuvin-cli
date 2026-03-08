@@ -1,6 +1,6 @@
 import type { TypedEventBus } from '@/services/EventBus.js';
 import type { ConfigScope } from '@/config/types.js';
-import type { OrchestratorManager } from '@/services/OrchestratorManager.js';
+import type { IOrchestratorManager } from '@/services/IOrchestratorManager.js';
 
 export type CommandId = string;
 
@@ -41,7 +41,7 @@ export interface CommandContext {
     set: (key: string, value: unknown, scope?: ConfigScope) => Promise<void>;
     delete: (key: string, scope?: ConfigScope) => Promise<void>;
   };
-  orchestratorManager: OrchestratorManager | null;
+  orchestratorManager: IOrchestratorManager | null;
 }
 
 export interface CommandComponentProps {

@@ -1,5 +1,5 @@
 import { commandRegistry } from '@/modules/commands/registry.js';
-import type { OrchestratorManager } from '@/services/OrchestratorManager.js';
+import type { IOrchestratorManager } from '@/services/IOrchestratorManager.js';
 import { loadAndRegisterCustomCommands } from '@/services/CustomCommandLoader.js';
 
 import { registerExitCommand } from './exit.js';
@@ -24,7 +24,7 @@ import { registerStatuslineCommand } from './statusline.js';
 import { registerMemoryCommand } from './memory.js';
 import { registerSetupCommand } from './setup.js';
 
-export async function registerCommands(orchestratorManager: OrchestratorManager) {
+export async function registerCommands(orchestratorManager: IOrchestratorManager) {
   commandRegistry.setOrchestrator(orchestratorManager);
   registerExitCommand(commandRegistry);
   registerHelpCommand(commandRegistry);

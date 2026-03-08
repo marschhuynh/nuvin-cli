@@ -5,6 +5,7 @@ import { InMemoryMemory } from '@nuvin/nuvin-core';
 import type { Message, MemoryPort } from '@nuvin/nuvin-core';
 import { eventBus } from '../source/services/EventBus.js';
 import { modelLimitsCache } from '../source/services/ModelLimitsCache.js';
+import { OrchestratorRuntimeStore, type OrchestratorRuntime } from '../source/services/OrchestratorRuntime.js';
 
 const TEST_SESSION_ID = 'test-session';
 
@@ -15,24 +16,22 @@ interface MockOrchestrator {
   setMetrics: ReturnType<typeof vi.fn>;
 }
 
-interface MockConversationStore {
-  updateMetadata: ReturnType<typeof vi.fn>;
-}
-
 interface TestableOrchestratorManager {
-  sessionId: string;
-  memory: MemoryPort<Message> | null;
-  orchestrator: MockOrchestrator | null;
-  conversationStore: MockConversationStore | null;
+  runtimeStore: OrchestratorRuntimeStore;
   handlers: unknown;
-  memPersist: boolean;
+  sessionManager: {
+    setSessionState: (state: { sessionId: string | null; sessionDir: string | null; sessionInitialized: boolean }) => void;
+    setMemPersist: (value: boolean) => void;
+  };
   send: ReturnType<typeof vi.fn>;
-  summarize: ReturnType<typeof vi.fn>;
-  checkContextWindowUsage: (
-    provider: string,
-    model: string,
-    options: { conversationId: string; signal?: AbortSignal },
-  ) => Promise<void>;
+  contextWindowManager: {
+    checkContextWindowUsage: (
+      provider: string,
+      model: string,
+      options?: { conversationId: string; signal?: AbortSignal },
+    ) => Promise<void>;
+    summarize: ReturnType<typeof vi.fn>;
+  };
   createNewConversation: ReturnType<typeof vi.fn>;
 }
 
@@ -43,6 +42,28 @@ interface EmittedEvent {
     type?: string;
     memPersist?: boolean;
   };
+}
+
+/** Helper to set up the runtime store with the given overrides */
+function setRuntime(
+  testableManager: TestableOrchestratorManager,
+  overrides: Partial<OrchestratorRuntime>,
+): void {
+  const current = testableManager.runtimeStore.get();
+  if (current) {
+    testableManager.runtimeStore.set({ ...current, ...overrides });
+  } else {
+    testableManager.runtimeStore.set({
+      orchestrator: null as any,
+      memory: null as any,
+      conversationStore: null as any,
+      toolRegistry: null as any,
+      sessionId: TEST_SESSION_ID,
+      sessionDir: null,
+      activeAgentId: 'main',
+      ...overrides,
+    });
+  }
 }
 
 describe('Context Window Auto-Summary', () => {
@@ -59,7 +80,7 @@ describe('Context Window Auto-Summary', () => {
 
     manager = new OrchestratorManager();
     testableManager = manager as unknown as TestableOrchestratorManager;
-    testableManager.sessionId = TEST_SESSION_ID;
+    testableManager.sessionManager.setSessionState({ sessionId: TEST_SESSION_ID, sessionDir: null, sessionInitialized: false });
 
     originalEmit = eventBus.emit.bind(eventBus);
     eventBus.emit = vi.fn((event, payload?) => {
@@ -76,9 +97,9 @@ describe('Context Window Auto-Summary', () => {
 
   it('should calculate context window usage from prompt tokens', async () => {
     const memory = new InMemoryMemory<Message>();
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -90,7 +111,7 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 45200,
@@ -101,7 +122,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const snapshot = sessionMetricsService.getSnapshot(TEST_SESSION_ID);
     expect(snapshot.contextWindowLimit).toBe(128000);
@@ -110,9 +131,9 @@ describe('Context Window Auto-Summary', () => {
 
   it('should emit warning when usage is 85-95%', async () => {
     const memory = new InMemoryMemory<Message>();
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -124,7 +145,7 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 88000,
@@ -135,7 +156,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const warningEvent = eventEmitted.find(
       (e: EmittedEvent) =>
@@ -157,11 +178,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -173,13 +194,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -201,7 +222,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const autoSummaryEvent = eventEmitted.find(
       (e: EmittedEvent) => e.event === 'ui:line' && e.payload?.content?.includes('Running auto-summary'),
@@ -228,11 +249,11 @@ describe('Context Window Auto-Summary', () => {
       },
     ];
     await memory.set('default', testMessages);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -244,13 +265,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -272,7 +293,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     expect(testableManager.createNewConversation).toHaveBeenCalledWith({
       memPersist: true,
@@ -288,11 +309,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -304,14 +325,14 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
     const mockUpdateMetadata = vi.fn().mockResolvedValue(undefined);
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: mockUpdateMetadata,
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -333,7 +354,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     expect(mockUpdateMetadata).toHaveBeenCalledWith('default', {
       summarizedFrom: TEST_SESSION_ID,
@@ -350,11 +371,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -366,13 +387,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -394,7 +415,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const conversationCreatedEvent = eventEmitted.find((e: EmittedEvent) => e.event === 'conversation:created');
 
@@ -411,11 +432,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -427,13 +448,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -449,7 +470,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const clearEvent = eventEmitted.find((e: EmittedEvent) => e.event === 'ui:lines:clear');
     const refreshEvent = eventEmitted.find((e: EmittedEvent) => e.event === 'ui:header:refresh');
@@ -460,9 +481,9 @@ describe('Context Window Auto-Summary', () => {
 
   it('should not trigger auto-summary when usage < 85%', async () => {
     const memory = new InMemoryMemory<Message>();
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -474,10 +495,10 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
     const summarizeSpy = vi.fn().mockResolvedValue('Summary of conversation');
-    testableManager.summarize = summarizeSpy;
+    testableManager.contextWindowManager.summarize = summarizeSpy;
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 50000,
@@ -488,7 +509,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const warningEvent = eventEmitted.find(
       (e: EmittedEvent) => e.event === 'ui:line' && e.payload?.content?.includes('⚠️'),
@@ -500,16 +521,16 @@ describe('Context Window Auto-Summary', () => {
 
   it('should use fallback limits when model limits are not available from API', async () => {
     const memory = new InMemoryMemory<Message>();
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([]),
       }),
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 45200,
@@ -520,7 +541,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model);
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const snapshot = sessionMetricsService.getSnapshot(TEST_SESSION_ID);
     expect(snapshot.contextWindowLimit).toBe(128000);
@@ -535,11 +556,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -551,13 +572,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('This is a test summary');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('This is a test summary');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -579,7 +600,7 @@ describe('Context Window Auto-Summary', () => {
     const provider = 'openrouter';
     const model = 'openai/gpt-4o';
 
-    await testableManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage(provider, model, { conversationId: 'default' });
 
     const summaryDisplayEvent = eventEmitted.find(
       (e: EmittedEvent) =>
@@ -601,11 +622,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -617,13 +638,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -644,7 +665,7 @@ describe('Context Window Auto-Summary', () => {
       total_tokens: 97000,
     });
 
-    await testableManager.checkContextWindowUsage('openrouter', 'openai/gpt-4o', { conversationId: 'default' });
+    await testableManager.contextWindowManager.checkContextWindowUsage('openrouter', 'openai/gpt-4o', { conversationId: 'default' });
 
     expect(sendSpy).toHaveBeenCalledTimes(1);
     expect(sendSpy).toHaveBeenCalledWith(
@@ -667,11 +688,11 @@ describe('Context Window Auto-Summary', () => {
       timestamp: new Date().toISOString(),
     };
     await memory.set('default', [testMessage]);
-    testableManager.memory = memory;
+    setRuntime(testableManager, { memory: memory });
     testableManager.handlers = {};
-    testableManager.memPersist = true;
+    testableManager.sessionManager.setMemPersist(true);
 
-    testableManager.orchestrator = {
+    setRuntime(testableManager, { orchestrator: {
       getLLM: vi.fn().mockReturnValue({
         getModels: vi.fn().mockResolvedValue([
           {
@@ -683,13 +704,13 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as MockOrchestrator;
+    } as any });
 
-    testableManager.conversationStore = {
+    setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    };
+    } as any });
 
-    testableManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
+    testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
       sessionId: 'new-session-id',
       sessionDir: '/tmp/new-session',
@@ -704,7 +725,7 @@ describe('Context Window Auto-Summary', () => {
     });
 
     await expect(
-      testableManager.checkContextWindowUsage('openrouter', 'openai/gpt-4o', { conversationId: 'default' }),
+      testableManager.contextWindowManager.checkContextWindowUsage('openrouter', 'openai/gpt-4o', { conversationId: 'default' }),
     ).resolves.not.toThrow();
 
     const continuationErrorEvent = eventEmitted.find(
@@ -720,7 +741,7 @@ describe('Context Window Auto-Summary', () => {
 
   it('should skip auto-summary check for continuation send when internal flag is set', async () => {
     const checkSpy = vi.spyOn(
-      manager as unknown as { checkContextWindowUsage: (...args: unknown[]) => Promise<void> },
+      testableManager.contextWindowManager as unknown as { checkContextWindowUsage: (...args: unknown[]) => Promise<void> },
       'checkContextWindowUsage',
     );
 
@@ -740,39 +761,32 @@ describe('Context Window Auto-Summary', () => {
     const updateConfig = vi.fn();
 
     const liveManager = manager as unknown as {
-      orchestrator: {
-        setLLM: (...args: unknown[]) => void;
-        updateConfig: (...args: unknown[]) => void;
-        send: (...args: unknown[]) => Promise<unknown>;
-        getLLM?: () => unknown;
+      runtimeStore: OrchestratorRuntimeStore;
+      sessionManager: {
+        setSessionState: (state: { sessionId: string | null; sessionDir: string | null; sessionInitialized: boolean }) => void;
+        setMemPersist: (value: boolean) => void;
       };
-      conversationStore: {
-        updateMetadata: (...args: unknown[]) => Promise<void>;
-        recordRequestMetrics: (...args: unknown[]) => Promise<void>;
-      };
-      memory: MemoryPort<Message>;
-      sessionId: string;
-      sessionInitialized: boolean;
-      memPersist: boolean;
     };
 
-    liveManager.sessionId = TEST_SESSION_ID;
-    liveManager.memPersist = true;
-    liveManager.sessionInitialized = true;
-    liveManager.memory = new InMemoryMemory<Message>();
-    liveManager.orchestrator = {
-      setLLM,
-      updateConfig,
-      send: orchestratorSend,
-      getLLM: vi.fn().mockReturnValue(undefined),
-    };
-    liveManager.conversationStore = {
-      updateMetadata: vi.fn().mockResolvedValue(undefined),
-      recordRequestMetrics: vi.fn().mockResolvedValue(undefined),
-    } as unknown as {
-      updateMetadata: (...args: unknown[]) => Promise<void>;
-      recordRequestMetrics: (...args: unknown[]) => Promise<void>;
-    };
+    liveManager.sessionManager.setSessionState({ sessionId: TEST_SESSION_ID, sessionDir: null, sessionInitialized: true });
+    liveManager.sessionManager.setMemPersist(true);
+    liveManager.runtimeStore.set({
+      orchestrator: {
+        setLLM,
+        updateConfig,
+        send: orchestratorSend,
+        getLLM: vi.fn().mockReturnValue(undefined),
+      } as any,
+      memory: new InMemoryMemory<Message>(),
+      conversationStore: {
+        updateMetadata: vi.fn().mockResolvedValue(undefined),
+        recordRequestMetrics: vi.fn().mockResolvedValue(undefined),
+      } as any,
+      toolRegistry: null as any,
+      sessionId: TEST_SESSION_ID,
+      sessionDir: null,
+      activeAgentId: 'main',
+    });
 
     (manager as unknown as { createLLM: (...args: unknown[]) => unknown }).createLLM = vi.fn().mockReturnValue({
       getModels: vi.fn().mockResolvedValue([]),

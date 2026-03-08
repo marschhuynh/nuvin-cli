@@ -39,14 +39,13 @@ describe('OrchestratorManager State', () => {
 
   it('should initialize activeAgentId to "main"', () => {
     const manager = new OrchestratorManager();
-    // Access the private property via type casting
-    expect((manager as unknown as { activeAgentId: string }).activeAgentId).toBe('main');
+    expect(manager.getActiveAgentId()).toBe('main');
   });
 
   it('should initialize previousOrchestrator to null', () => {
     const manager = new OrchestratorManager();
-    // Access the private property via type casting
-    expect((manager as unknown as { previousOrchestrator: unknown }).previousOrchestrator).toBeNull();
+    const agentSwapManager = (manager as unknown as { agentSwapManager: { getPreviousOrchestrator: () => unknown } }).agentSwapManager;
+    expect(agentSwapManager.getPreviousOrchestrator()).toBeNull();
   });
 
   it('should return "main" by default from getActiveAgentId()', () => {

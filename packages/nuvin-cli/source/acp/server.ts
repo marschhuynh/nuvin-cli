@@ -9,7 +9,7 @@ import { commandRegistry } from "../modules/commands/registry.js";
 import type { CommandDefinition } from "../modules/commands/types.js";
 import type { TypedEventBus } from "../services/EventBus.js";
 import { eventBus } from "../services/EventBus.js";
-import type { OrchestratorManager } from "../services/OrchestratorManager.js";
+import type { IOrchestratorManager } from "../services/IOrchestratorManager.js";
 import { getVersion } from "../utils/version.js";
 import {
   toUserMessagePayload,
@@ -189,7 +189,7 @@ export class AcpServer {
   constructor(
     private deps: {
       transport: AcpTransport;
-      orchestratorManager: OrchestratorManager;
+      orchestratorManager: IOrchestratorManager;
       eventBus?: TypedEventBus;
       configManager?: ConfigManager;
     }

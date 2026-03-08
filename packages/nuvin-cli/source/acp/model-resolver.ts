@@ -7,7 +7,7 @@ import { getProviderDefaultModels } from "@nuvin/nuvin-core";
 import { PROVIDER_MODELS } from "../const.js";
 import type { ConfigManager } from "../config/manager.js";
 import type { ProviderKey } from "../config/providers.js";
-import type { OrchestratorManager } from "../services/OrchestratorManager.js";
+import type { IOrchestratorManager } from "../services/IOrchestratorManager.js";
 
 export type ModelsState = {
   availableModels: Array<{
@@ -25,7 +25,7 @@ export type SelectOptions = {
 
 export class AcpModelResolver {
   constructor(
-    private orchestratorManager: OrchestratorManager,
+    private orchestratorManager: IOrchestratorManager,
     private configManager: ConfigManager
   ) {}
 

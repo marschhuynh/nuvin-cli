@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import type { OrchestratorManager } from '@/services/OrchestratorManager';
+import type { IOrchestratorManager } from '@/services/IOrchestratorManager';
 import type { AgentEvent } from '@nuvin/nuvin-core';
 import { eventBus } from '@/services/EventBus.js';
 
@@ -28,7 +28,7 @@ export function UserQuestionProvider({
   orchestratorManager,
   children,
 }: {
-  orchestratorManager: OrchestratorManager | null;
+  orchestratorManager: IOrchestratorManager | null;
   children: ReactNode;
 }) {
   const [pendingQuestion, setPendingQuestion] = useState<QuestionData | null>(null);
@@ -36,7 +36,7 @@ export function UserQuestionProvider({
 
   const handleQuestionResponse = useCallback(
     (answers: Record<string, string | string[]>) => {
-      if (!pendingQuestion || !orchestratorManager?.getOrchestrator()) {
+      if (!pendingQuestion || !orchestratorManager) {
         return;
       }
 
@@ -45,7 +45,7 @@ export function UserQuestionProvider({
       }
 
       submittedRef.current.add(pendingQuestion.questionId);
-      orchestratorManager.getOrchestrator()?.handleUserQuestionResponse(pendingQuestion.questionId, answers);
+      orchestratorManager.handleUserQuestionResponse(pendingQuestion.questionId, answers);
       setPendingQuestion(null);
     },
     [pendingQuestion, orchestratorManager],

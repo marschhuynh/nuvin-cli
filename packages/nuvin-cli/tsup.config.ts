@@ -10,6 +10,10 @@ export default defineConfig({
   outDir: 'dist',
   // noExternal: ['ink'],
   esbuildOptions(options) {
+    options.define = {
+      ...options.define,
+      'process.env.NODE_ENV': '"production"',
+    };
     options.jsx = 'automatic';
     options.jsxImportSource = 'react';
     options.alias = {

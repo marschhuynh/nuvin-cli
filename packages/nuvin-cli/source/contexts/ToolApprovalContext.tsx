@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, us
 import type { ToolCall, ToolApprovalDecision } from '@nuvin/nuvin-core';
 import { eventBus } from '@/services/EventBus.js';
 import { enrichToolCallsWithLineNumbers } from '@/utils/enrichToolCalls.js';
-import type { OrchestratorManager } from '@/services/OrchestratorManager';
+import type { IOrchestratorManager } from '@/services/IOrchestratorManager';
 
 interface ToolApprovalState {
   toolApprovalMode: boolean;
@@ -24,7 +24,7 @@ export function ToolApprovalProvider({
   children,
   orchestratorManager,
 }: {
-  orchestratorManager: OrchestratorManager | null;
+  orchestratorManager: IOrchestratorManager | null;
   requireToolApproval: boolean;
   onError: (message: string) => void;
   children: React.ReactNode;
@@ -46,12 +46,12 @@ export function ToolApprovalProvider({
 
   const handleSingleToolApproval = useCallback(
     (approvalId: string, decision: ToolApprovalDecision, editInstruction?: string) => {
-      if (!orchestratorManager?.getOrchestrator()) {
+      if (!orchestratorManager) {
         return;
       }
 
       try {
-        orchestratorManager.getOrchestrator()?.handleToolApproval(approvalId, decision, editInstruction);
+        orchestratorManager.handleToolApproval(approvalId, decision, editInstruction);
         setPendingApprovalTools((prev) => prev.filter((tc) => tc.approvalId !== approvalId));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -78,7 +78,7 @@ export function ToolApprovalProvider({
           if (tool.requiresApproval && tool.approvalId) {
             if (sessionApprovedToolsRef.current.has(tool.function.name)) {
               try {
-                orchestratorManager?.getOrchestrator()?.handleToolApproval(tool.approvalId, 'approve');
+                orchestratorManager?.handleToolApproval(tool.approvalId, 'approve');
               } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
                 onErrorRef.current(`Failed to auto-approve session tool: ${message}`);

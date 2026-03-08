@@ -3,7 +3,6 @@ import { Text } from 'ink';
 import { AppModal } from '@/components/AppModal.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { orchestratorManager } from '@/services/OrchestratorManager.js';
 import { MemoryModal, MemoryConfigModal } from '@/components/MemoryModal/index.js';
 import type { MemoryEntry } from '@nuvin/nuvin-core';
 
@@ -18,7 +17,7 @@ const MemoryCommandComponent = ({ context, deactivate, isActive }: CommandCompon
     try {
       setLoading(true);
       setError(null);
-      const memoryService = orchestratorManager.getMemoryService();
+      const memoryService = context.orchestratorManager?.getMemoryService();
       if (!memoryService) {
         setError('Memory is not enabled. Set memory.enabled = true in your config.');
         return;
@@ -31,21 +30,21 @@ const MemoryCommandComponent = ({ context, deactivate, isActive }: CommandCompon
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [context.orchestratorManager]);
 
   useEffect(() => {
     void loadMemories();
   }, [loadMemories]);
 
   const handleDelete = useCallback(async (id: string) => {
-    const memoryService = orchestratorManager.getMemoryService();
+    const memoryService = context.orchestratorManager?.getMemoryService();
     if (!memoryService) return;
 
     const deleted = await memoryService.deleteMemory(id);
     if (deleted) {
       setMemories((prev) => prev.filter((m) => m.id !== id));
     }
-  }, []);
+  }, [context.orchestratorManager]);
 
   if (subcommand === 'config') {
     return <MemoryConfigModal context={context} deactivate={deactivate} isActive={isActive} />;
