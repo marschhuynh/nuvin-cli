@@ -5,7 +5,7 @@ import { AppModal } from '@/components/AppModal.js';
 import type { CommandRegistry, CommandComponentProps } from '@/modules/commands/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { skillsService } from '@/services/SkillsService.js';
-import type { SkillInfo, Skill, SkillDiscoveryError } from '@/types/skills.js';
+import type { SkillInfo, Skill } from '@/types/skills.js';
 import { SkillConfigurationModal } from '@/components/SkillModal/SkillModal.js';
 import { AutoScrollBox } from '@/components/AutoScrollBox.js';
 import { HelpText } from '@/components/HelpText.js';
@@ -18,7 +18,6 @@ const SkillsCommandComponent = ({ context, deactivate }: CommandComponentProps) 
   const { rows } = useStdoutDimensions();
   const [skills, setSkills] = useState<SkillInfo[]>([]);
   const [enabledSkills, setEnabledSkills] = useState<Record<string, boolean>>({});
-  const [errors, setErrors] = useState<SkillDiscoveryError[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +32,6 @@ const SkillsCommandComponent = ({ context, deactivate }: CommandComponentProps) 
       skillsService.reset();
       const result = await skillsService.discover(process.cwd());
       setSkills(Object.values(result.skills));
-      setErrors(result.errors);
       if (result.errors.length > 0) {
         console.warn(`Skill discovery had ${result.errors.length} errors`);
       }
