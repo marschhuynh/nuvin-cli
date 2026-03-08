@@ -113,6 +113,28 @@ export function VirtualizedList<T>({
     }
   }, []);
 
+  // Evict stale entries from caches when items change
+  useEffect(() => {
+    const currentKeys = new Set(items.map((item, i) => keyExtractor(item, i)));
+    let hasEvictions = false;
+
+    for (const key of heightCacheRef.current.keys()) {
+      if (!currentKeys.has(key)) {
+        heightCacheRef.current.delete(key);
+        hasEvictions = true;
+      }
+    }
+    for (const key of itemRefsMap.current.keys()) {
+      if (!currentKeys.has(key)) {
+        itemRefsMap.current.delete(key);
+      }
+    }
+
+    if (hasEvictions) {
+      setHeightCacheVersion((v) => v + 1);
+    }
+  }, [items, keyExtractor]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: heightCacheVersion is needed
   const { itemOffsets, totalContentHeight } = useMemo(() => {
     const offsets: number[] = [];
@@ -165,18 +187,23 @@ export function VirtualizedList<T>({
     [itemOffsets, items.length],
   );
 
+  // Compute effective scroll position once — when auto-scrolling, derive from totalContentHeight
+  // synchronously to avoid a one-frame lag where scrollY state hasn't caught up yet.
+  const effectiveScrollY = useMemo(() => {
+    const maxScroll = Math.max(0, totalContentHeight - containerHeight);
+    if (shouldAutoScrollRef.current) return maxScroll;
+    return Math.max(0, Math.min(scrollY, maxScroll));
+  }, [scrollY, totalContentHeight, containerHeight]);
+
   const visibleRange = useMemo(() => {
     if (items.length === 0) return { start: 0, end: -1 };
     if (containerHeight <= 0) return { start: 0, end: Math.min(overscan, items.length - 1) };
 
-    const maxScrollY = Math.max(0, totalContentHeight - containerHeight);
-    const effectiveScrollY = shouldAutoScrollRef.current ? maxScrollY : scrollY;
-    const clampedScrollY = Math.max(0, Math.min(effectiveScrollY, maxScrollY));
-    const startIndex = Math.max(0, findStartIndex(clampedScrollY) - overscan);
+    const startIndex = Math.max(0, findStartIndex(effectiveScrollY) - overscan);
 
     let endIndex = startIndex;
     let accHeight = itemOffsets[startIndex] || 0;
-    const viewportEnd = clampedScrollY + containerHeight;
+    const viewportEnd = effectiveScrollY + containerHeight;
 
     while (endIndex < items.length && accHeight < viewportEnd) {
       const key = keyExtractor(items[endIndex], endIndex);
@@ -188,13 +215,14 @@ export function VirtualizedList<T>({
     endIndex = Math.min(items.length - 1, endIndex + overscan);
 
     return { start: startIndex, end: endIndex };
-  }, [items, scrollY, containerHeight, overscan, findStartIndex, itemOffsets, keyExtractor, totalContentHeight]);
+  }, [items, effectiveScrollY, containerHeight, overscan, findStartIndex, itemOffsets, keyExtractor]);
 
-  // Measure visible items after they've been determined - run when visible range changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length intentionally triggers remeasurement
+  // Measure visible items after render — items reference changes when content updates (e.g. streaming),
+  // which triggers remeasurement of heights for items that grew or shrank.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items triggers remeasurement on content changes
   useLayoutEffect(() => {
     measureVisibleItems();
-  }, [measureVisibleItems, items.length]);
+  }, [measureVisibleItems, items]);
 
   const scrollTo = useCallback(
     (newY: number) => {
@@ -290,7 +318,8 @@ export function VirtualizedList<T>({
     }
   }, [items.length, containerHeight]);
 
-  useEffect(() => {
+  // Sync scrollY state to match effective position — useLayoutEffect to avoid flicker
+  useLayoutEffect(() => {
     if (containerHeight <= 0) return;
     const maxScroll = Math.max(0, totalContentHeight - containerHeight);
 
@@ -306,7 +335,7 @@ export function VirtualizedList<T>({
   const visibleItems = items.slice(visibleRange.start, visibleRange.end + 1);
 
   const scrollInfo: ScrollInfo = {
-    scrollY,
+    scrollY: effectiveScrollY,
     containerHeight,
     contentHeight: totalContentHeight,
   };
@@ -319,11 +348,8 @@ export function VirtualizedList<T>({
     }
   }, []);
 
-  const maxScrollY = Math.max(0, totalContentHeight - containerHeight);
-  const effectiveScrollY = shouldAutoScrollRef.current ? maxScrollY : scrollY;
-  const clampedScrollY = Math.max(0, Math.min(effectiveScrollY, maxScrollY));
   const skippedItemsHeight = topOffset;
-  const marginTopValue = -clampedScrollY + skippedItemsHeight;
+  const marginTopValue = -effectiveScrollY + skippedItemsHeight;
 
   return (
     <Box flexDirection="row" overflow="hidden" {...boxProps}>
