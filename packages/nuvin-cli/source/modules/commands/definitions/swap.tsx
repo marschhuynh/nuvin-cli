@@ -37,7 +37,7 @@ const SwapCommandComponent = ({ context, deactivate }: CommandComponentProps) =>
         return;
       }
 
-      const allAgents = agentRegistry.list();
+      const allAgents = agentRegistry.list().filter((agent) => agent.user_invocable !== false);
       const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
         ...agent,
         isDefault: agentRegistry.isDefault(agent.name),

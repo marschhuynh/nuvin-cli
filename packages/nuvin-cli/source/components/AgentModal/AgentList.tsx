@@ -111,20 +111,24 @@ export const AgentList: React.FC<AgentListProps> = ({
           </Box>
           {isSelected && (
             <Box flexDirection="column">
-              <Box
-                marginLeft={4}
-                borderStyle={'single'}
-                borderTop={false}
-                borderBottom={false}
-                borderRight={false}
-                borderLeft
-                borderDimColor
-                paddingX={1}
-              >
-                <Text dimColor wrap="wrap">
-                  {agent.description}
-                </Text>
-              </Box>
+              {agent.description && (
+                <Box
+                  marginLeft={4}
+                  borderStyle={'single'}
+                  borderTop={false}
+                  borderBottom={false}
+                  borderRight={false}
+                  borderLeft
+                  borderDimColor
+                  paddingX={1}
+                  height={2}
+                  overflow="hidden"
+                >
+                  <Text dimColor wrap="wrap">
+                    {agent.description}
+                  </Text>
+                </Box>
+              )}
               <Box marginLeft={4}>
                 <Text dimColor wrap="wrap">
                   └─{' '}

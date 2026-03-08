@@ -107,7 +107,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         return;
       }
 
-      const allAgents = agentRegistry.list();
+      const allAgents = agentRegistry.list().filter((agent) => agent.user_invocable !== false);
       const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
         ...agent,
         isDefault: agentRegistry.isDefault(agent.name),
@@ -291,7 +291,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
         }
 
         // Update state synchronously from registry (matching commands pattern — no race conditions)
-        const allAgents = agentRegistry.list();
+        const allAgents = agentRegistry.list().filter((a) => a.user_invocable !== false);
         const agentInfos: AgentInfo[] = allAgents.map((a) => ({
           ...a,
           isDefault: agentRegistry.isDefault(a.name),
@@ -452,7 +452,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
             }
 
             // Get updated agent list synchronously from registry (already updated above)
-            const allAgents = agentRegistry.list();
+            const allAgents = agentRegistry.list().filter((agent) => agent.user_invocable !== false);
             const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
               ...agent,
               isDefault: agentRegistry.isDefault(agent.name),
@@ -546,7 +546,7 @@ const AgentCommandComponent = ({ context, deactivate }: CommandComponentProps) =
             orchestratorAwareTools.setEnabledAgents(updatedConfig);
           }
 
-          const allAgents = agentRegistry.list();
+          const allAgents = agentRegistry.list().filter((agent) => agent.user_invocable !== false);
           const agentInfos: AgentInfo[] = allAgents.map((agent) => ({
             ...agent,
             isDefault: agentRegistry.isDefault(agent.name),
