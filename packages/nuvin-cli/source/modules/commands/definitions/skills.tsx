@@ -34,6 +34,9 @@ const SkillsCommandComponent = ({ context, deactivate }: CommandComponentProps) 
       const result = await skillsService.discover(process.cwd());
       setSkills(Object.values(result.skills));
       setErrors(result.errors);
+      if (result.errors.length > 0) {
+        console.warn(`Skill discovery had ${result.errors.length} errors`);
+      }
 
       const enabledConfig = (context.config.get('skillsEnabled') as Record<string, boolean>) || {};
       setEnabledSkills({ ...enabledConfig });
@@ -115,10 +118,6 @@ const SkillsCommandComponent = ({ context, deactivate }: CommandComponentProps) 
         <Text color={theme.colors.error}>{error}</Text>
       </AppModal>
     );
-  }
-
-  if (errors.length > 0) {
-    console.warn(`Skill discovery had ${errors.length} errors`);
   }
 
   if (activeView === 'content' && viewingSkill) {

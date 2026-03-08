@@ -245,23 +245,23 @@ description: Skill with directories
     });
   });
 
-  describe('getPermission', () => {
-    it('should return allow by default', () => {
-      const permission = skillsService.getPermission('any-skill');
-      expect(permission).toBe('allow');
+  describe('isEnabled', () => {
+    it('should return true by default', () => {
+      const enabled = skillsService.isEnabled('any-skill');
+      expect(enabled).toBe(true);
     });
 
-    it('should return configured permission', () => {
+    it('should return configured enabled state', () => {
       skillsService.setConfig({
-        permissions: {
-          'restricted-skill': 'ask',
-          'blocked-skill': 'deny',
+        enabledSkills: {
+          'disabled-skill': false,
+          'enabled-skill': true,
         },
       });
 
-      expect(skillsService.getPermission('restricted-skill')).toBe('ask');
-      expect(skillsService.getPermission('blocked-skill')).toBe('deny');
-      expect(skillsService.getPermission('other-skill')).toBe('allow');
+      expect(skillsService.isEnabled('disabled-skill')).toBe(false);
+      expect(skillsService.isEnabled('enabled-skill')).toBe(true);
+      expect(skillsService.isEnabled('other-skill')).toBe(true);
     });
   });
 

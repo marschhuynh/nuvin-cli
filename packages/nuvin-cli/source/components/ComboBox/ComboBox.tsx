@@ -211,7 +211,18 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
         if (key.downArrow) { navigate('down'); return; }
       }
 
-      if (inputChar === ' ' && onSpace) {
+      if (inputChar === ' ' && onSpace && !showSearchInput) {
+        if (selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
+          const listIndex = selectableIndices[selectedIndex];
+          const listItem = listItems[listIndex];
+          if (listItem?.type === 'item') {
+            onSpace(listItem.item);
+          }
+        }
+        return;
+      }
+
+      if (key.ctrl && inputChar === 'e' && onSpace) {
         if (selectableIndices.length > 0 && selectedIndex < selectableIndices.length) {
           const listIndex = selectableIndices[selectedIndex];
           const listItem = listItems[listIndex];

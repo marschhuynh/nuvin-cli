@@ -213,6 +213,7 @@ export class OrchestratorBuilder {
     enableSkills: boolean,
     skillsConfig: SkillsSettings | undefined,
     delegationServiceFactory: DelegationServiceFactory,
+    skillsEnabled?: Record<string, boolean>,
   ): Promise<ToolRegistry> {
     const toolRegistry = new ToolRegistry({
       agentRegistry,
@@ -228,7 +229,7 @@ export class OrchestratorBuilder {
         enabled: skillsConfig?.enabled,
         directories: skillsConfig?.directories,
         exclude: skillsConfig?.exclude,
-        permissions: skillsConfig?.permissions,
+        enabledSkills: skillsEnabled ?? {},
       });
       await skillsService.discover(process.cwd());
       toolRegistry.setSkillProvider(skillsService);
@@ -506,11 +507,13 @@ export class OrchestratorBuilder {
     // Phase 3+4: Git context, delegation factory, and tool registry
     const gitContext = await getGitContextInfo();
     const delegationFactory = this.buildDelegationFactory(gitContext, enableSkills);
+    const skillsEnabled = (currentConfig.config.skillsEnabled as Record<string, boolean>) || {};
     const toolRegistry = await this.buildToolRegistry(
       agentRegistry,
       enableSkills,
       skillsConfig,
       delegationFactory,
+      skillsEnabled,
     );
     const agentTools: ToolPort = toolRegistry;
 

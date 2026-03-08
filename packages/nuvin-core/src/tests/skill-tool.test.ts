@@ -3,12 +3,10 @@ import { SkillTool, type SkillProvider, type SkillInfo } from '../tools/SkillToo
 
 class MockSkillProvider implements SkillProvider {
   private skills: Record<string, SkillInfo> = {};
-  private permissions: Record<string, 'allow' | 'ask' | 'deny'> = {};
   private fileContents: Record<string, string> = {};
 
-  addSkill(skill: SkillInfo, content: string, permission: 'allow' | 'ask' | 'deny' = 'allow') {
+  addSkill(skill: SkillInfo, content: string) {
     this.skills[skill.name] = skill;
-    this.permissions[skill.name] = permission;
     this.fileContents[skill.location] = content;
   }
 
@@ -35,10 +33,6 @@ class MockSkillProvider implements SkillProvider {
     }
 
     return lines.join('\n');
-  }
-
-  getPermission(name: string): 'allow' | 'ask' | 'deny' {
-    return this.permissions[name] ?? 'allow';
   }
 
   getFileContent(location: string): string | undefined {
@@ -102,22 +96,6 @@ describe('SkillTool', () => {
       if (result.status === 'error') {
         expect(result.result).toContain('not found');
         expect(result.result).toContain('Available skills: none');
-      }
-    });
-
-    it('should return error for denied skill', async () => {
-      mockProvider.addSkill(
-        { name: 'blocked-skill', description: 'Blocked', location: '/path/SKILL.md' },
-        '---\nname: blocked-skill\ndescription: Blocked\n---\n\n# Blocked',
-        'deny',
-      );
-      skillTool.setProvider(mockProvider);
-
-      const result = await skillTool.execute({ name: 'blocked-skill' });
-
-      expect(result.status).toBe('error');
-      if (result.status === 'error') {
-        expect(result.result).toContain('not permitted');
       }
     });
 

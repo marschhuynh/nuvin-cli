@@ -40,7 +40,6 @@ export interface SkillProvider {
   get(name: string): Promise<SkillInfo | null>;
   getAll(): Promise<Record<string, SkillInfo>>;
   buildToolDescription(): string;
-  getPermission(name: string): 'allow' | 'ask' | 'deny';
 }
 
 function parseFrontmatter(content: string): { data: Record<string, unknown>; content: string } | null {
@@ -119,11 +118,6 @@ export class SkillTool implements FunctionTool<SkillParams, ToolExecutionContext
         { name: params.name },
         ErrorReason.NotFound,
       );
-    }
-
-    const permission = this.provider.getPermission(params.name);
-    if (permission === 'deny') {
-      return err(`Skill "${params.name}" is not permitted`, { name: params.name }, ErrorReason.PermissionDenied);
     }
 
     try {

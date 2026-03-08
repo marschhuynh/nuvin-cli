@@ -95,8 +95,6 @@ export interface SkillsSettings {
   directories?: string[];
   /** Skill names to exclude */
   exclude?: string[];
-  /** Per-skill permission: 'allow' | 'ask' | 'deny' */
-  permissions?: Record<string, 'allow' | 'ask' | 'deny'>;
 }
 
 export interface UIThemeSettings {

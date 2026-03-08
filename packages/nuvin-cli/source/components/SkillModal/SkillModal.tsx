@@ -61,7 +61,7 @@ export const SkillConfigurationModal: React.FC<SkillModalProps> = ({
         segments={[
           { text: '↑↓', highlight: true },
           { text: ' navigate • ' },
-          { text: 'Space', highlight: true },
+          { text: 'Ctrl+E', highlight: true },
           { text: ' toggle • ' },
           { text: 'Enter', highlight: true },
           { text: ' view • ' },

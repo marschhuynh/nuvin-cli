@@ -105,7 +105,7 @@ Follow these instructions carefully.
       expect(results[0].result).toContain('not found');
     });
 
-    it('should respect skill permissions', async () => {
+    it('should respect skill enabled state', async () => {
       const skillDir = path.join(tempDir, '.nuvin', 'skills', 'denied-skill');
       await fs.mkdir(skillDir, { recursive: true });
       await fs.writeFile(
@@ -119,7 +119,7 @@ Secret content
 `,
       );
 
-      skillsService.setConfig({ permissions: { 'denied-skill': 'deny' } });
+      skillsService.setConfig({ enabledSkills: { 'denied-skill': false } });
       await skillsService.discover(tempDir);
 
       const toolRegistry = new ToolRegistry({ enableSkills: true });
@@ -135,7 +135,135 @@ Secret content
 
       expect(results).toHaveLength(1);
       expect(results[0].status).toBe('error');
-      expect(results[0].result).toContain('not permitted');
+      expect(results[0].result).toContain('not found');
+    });
+
+    it('should not include disabled skills in list()', async () => {
+      const allowedDir = path.join(tempDir, '.nuvin', 'skills', 'allowed-skill');
+      const deniedDir = path.join(tempDir, '.nuvin', 'skills', 'denied-skill');
+      await fs.mkdir(allowedDir, { recursive: true });
+      await fs.mkdir(deniedDir, { recursive: true });
+
+      await fs.writeFile(
+        path.join(allowedDir, 'SKILL.md'),
+        `---
+name: allowed-skill
+description: An allowed skill
+---
+
+Content
+`,
+      );
+      await fs.writeFile(
+        path.join(deniedDir, 'SKILL.md'),
+        `---
+name: denied-skill
+description: A denied skill
+---
+
+Secret content
+`,
+      );
+
+      skillsService.setConfig({ enabledSkills: { 'denied-skill': false } });
+      await skillsService.discover(tempDir);
+
+      const listed = skillsService.list();
+      expect(listed).toHaveLength(1);
+      expect(listed[0].name).toBe('allowed-skill');
+    });
+
+    it('should not include disabled skills in getAll()', async () => {
+      const deniedDir = path.join(tempDir, '.nuvin', 'skills', 'denied-skill');
+      await fs.mkdir(deniedDir, { recursive: true });
+
+      await fs.writeFile(
+        path.join(deniedDir, 'SKILL.md'),
+        `---
+name: denied-skill
+description: A denied skill
+---
+
+Secret content
+`,
+      );
+
+      skillsService.setConfig({ enabledSkills: { 'denied-skill': false } });
+      await skillsService.discover(tempDir);
+
+      const all = await skillsService.getAll();
+      expect(Object.keys(all)).toHaveLength(0);
+    });
+
+    it('should not include disabled skills in tool description', async () => {
+      const allowedDir = path.join(tempDir, '.nuvin', 'skills', 'allowed-skill');
+      const deniedDir = path.join(tempDir, '.nuvin', 'skills', 'denied-skill');
+      await fs.mkdir(allowedDir, { recursive: true });
+      await fs.mkdir(deniedDir, { recursive: true });
+
+      await fs.writeFile(
+        path.join(allowedDir, 'SKILL.md'),
+        `---
+name: allowed-skill
+description: An allowed skill
+---
+
+Content
+`,
+      );
+      await fs.writeFile(
+        path.join(deniedDir, 'SKILL.md'),
+        `---
+name: denied-skill
+description: A denied skill
+---
+
+Secret content
+`,
+      );
+
+      skillsService.setConfig({ enabledSkills: { 'denied-skill': false } });
+      await skillsService.discover(tempDir);
+
+      const description = skillsService.buildToolDescription();
+      expect(description).toContain('allowed-skill');
+      expect(description).not.toContain('denied-skill');
+    });
+
+    it('should not include disabled skills in system prompt availableSkills', async () => {
+      const allowedDir = path.join(tempDir, '.nuvin', 'skills', 'allowed-skill');
+      const deniedDir = path.join(tempDir, '.nuvin', 'skills', 'denied-skill');
+      await fs.mkdir(allowedDir, { recursive: true });
+      await fs.mkdir(deniedDir, { recursive: true });
+
+      await fs.writeFile(
+        path.join(allowedDir, 'SKILL.md'),
+        `---
+name: allowed-skill
+description: An allowed skill
+---
+
+Content
+`,
+      );
+      await fs.writeFile(
+        path.join(deniedDir, 'SKILL.md'),
+        `---
+name: denied-skill
+description: A denied skill
+---
+
+Secret content
+`,
+      );
+
+      skillsService.setConfig({ enabledSkills: { 'denied-skill': false } });
+      await skillsService.discover(tempDir);
+
+      // This is the same path used in OrchestratorBuilder/AgentSwapManager
+      const availableSkills = skillsService.list().map((s) => ({ name: s.name, description: s.description }));
+      expect(availableSkills).toHaveLength(1);
+      expect(availableSkills[0].name).toBe('allowed-skill');
     });
 
     it('should update tool description when skills change', async () => {

@@ -7,6 +7,7 @@ export const SkillFrontmatterSchema = z.object({
     .max(64)
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Must be lowercase alphanumeric with hyphens'),
   description: z.string().min(1).max(1024),
+  disabled: z.boolean().optional(),
   license: z.string().optional(),
   compatibility: z.string().max(500).optional(),
   metadata: z.record(z.string(), z.string()).optional(),
@@ -36,7 +37,7 @@ export interface SkillsConfig {
   enabled?: boolean;
   directories?: string[];
   exclude?: string[];
-  permissions?: Record<string, 'allow' | 'ask' | 'deny'>;
+  enabledSkills?: Record<string, boolean>;
 }
 
 export interface SkillToolResult {

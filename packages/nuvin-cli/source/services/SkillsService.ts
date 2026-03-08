@@ -57,6 +57,7 @@ export class SkillsService {
   private skills: Record<string, SkillInfo> = {};
   private errors: SkillDiscoveryError[] = [];
   private config: SkillsConfig = {};
+  private enabledSkills: Record<string, boolean> = {};
   private discovered = false;
   private homeDir: string;
 
@@ -80,6 +81,7 @@ export class SkillsService {
   }
 
   setConfig(config: SkillsConfig): void {
+    this.enabledSkills = config.enabledSkills ?? {};
     this.config = config;
     this.discovered = false;
   }
@@ -192,6 +194,10 @@ export class SkillsService {
         return;
       }
 
+      if (result.data.disabled) {
+        return;
+      }
+
       if (this.config.exclude?.includes(result.data.name)) {
         return;
       }
@@ -218,6 +224,7 @@ export class SkillsService {
     if (!this.discovered) {
       await this.discover();
     }
+    if (!this.isEnabled(name)) return null;
     return this.skills[name] ?? null;
   }
 
@@ -225,7 +232,13 @@ export class SkillsService {
     if (!this.discovered) {
       await this.discover();
     }
-    return { ...this.skills };
+    const result: Record<string, SkillInfo> = {};
+    for (const [name, info] of Object.entries(this.skills)) {
+      if (this.isEnabled(name)) {
+        result[name] = info;
+      }
+    }
+    return result;
   }
 
   async loadFull(name: string): Promise<Skill | null> {
@@ -266,12 +279,12 @@ export class SkillsService {
     }
   }
 
-  getPermission(skillName: string): 'allow' | 'ask' | 'deny' {
-    return this.config.permissions?.[skillName] ?? 'allow';
+  isEnabled(name: string): boolean {
+    return this.enabledSkills[name] !== false;
   }
 
   buildToolDescription(): string {
-    const skillList = Object.values(this.skills);
+    const skillList = Object.values(this.skills).filter((s) => this.isEnabled(s.name));
 
     if (skillList.length === 0) {
       return 'Load a skill to get detailed instructions for a specific task. No skills are currently available.';
@@ -449,7 +462,7 @@ description: ${skill.description}
   }
 
   list(): SkillInfo[] {
-    return Object.values(this.skills);
+    return Object.values(this.skills).filter((s) => this.isEnabled(s.name));
   }
 
   exists(name: string): boolean {
