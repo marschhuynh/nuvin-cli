@@ -869,36 +869,7 @@ export class AgentOrchestrator {
         }
       }
 
-      // 3. Trigger PermissionRequest hooks for tools requiring approval (e.g., notifications)
-      const toolsNeedingApproval = enrichedToolCalls.filter(tc => tc.requiresApproval && tc.approvalId);
-      if (toolsNeedingApproval.length > 0 && this.hookPort?.hasHooks(HookEventTypes.PermissionRequest)) {
-        for (const tc of toolsNeedingApproval) {
-          const hookContext: HookContext = {
-            sessionId: this.sessionId,
-            conversationId: convo,
-            messageId: msgId,
-            hookEvent: HookEventTypes.PermissionRequest,
-            cwd: process.cwd(),
-            toolName: tc.function.name,
-            toolInput: typeof tc.function.arguments === 'string'
-              ? safeParseToolArguments(tc.function.arguments)
-              : tc.function.arguments as Record<string, unknown>,
-            toolUseId: tc.approvalId,
-            permissionType: 'tool_approval',
-          };
-
-          try {
-            await this.hookPort.executeHook(hookContext);
-            // Note: PermissionRequest hooks are informational (e.g., notifications)
-            // They don't block or modify the approval flow
-          } catch (hookError) {
-            // Log hook execution error but don't block the approval flow
-            console.warn(`[Orchestrator] permission_request hook error for ${tc.function.name}:`, hookError);
-          }
-        }
-      }
-
-      // 4. Emit ToolCalls event - UI can now safely call handleToolApproval
+      // 3. Emit ToolCalls event - UI can now safely call handleToolApproval
       await this.events?.emit({
         type: AgentEventTypes.ToolCalls,
         conversationId: convo,
@@ -907,7 +878,7 @@ export class AgentOrchestrator {
         usage: result.usage,
       });
 
-      // 5. Process tools - each executes when approved (or immediately if bypass)
+      // 4. Process tools - each executes when approved (or immediately if bypass)
       const { results: toolResults } = await this.processToolApproval(
         enrichedToolCalls,
         approvalPromises,

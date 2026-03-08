@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, us
 import type { ToolCall, ToolApprovalDecision } from '@nuvin/nuvin-core';
 import { eventBus } from '@/services/EventBus.js';
 import { enrichToolCallsWithLineNumbers } from '@/utils/enrichToolCalls.js';
+import { firePermissionRequestHooks } from '@/utils/firePermissionRequestHooks.js';
 import type { IOrchestratorManager } from '@/services/IOrchestratorManager';
 
 interface ToolApprovalState {
@@ -90,6 +91,10 @@ export function ToolApprovalProvider({
         }
 
         if (toolsNeedingApproval.length > 0) {
+          // Fire permission_request hooks only for tools that will actually show the approval UI.
+          // Session-approved tools have already been filtered out above.
+          await firePermissionRequestHooks(toolsNeedingApproval, orchestratorManager);
+
           setPendingApprovalTools((prev) => {
             const newTools = [...prev, ...toolsNeedingApproval];
             setPendingApprovalBatchTotal(newTools.length);

@@ -119,7 +119,7 @@ export {
 } from './tools/tool-params.js';
 export type { ToolParameterMap, ToolName, TypedToolInvocation } from './tools/tool-params.js';
 export type { ParseResult } from './tools/tool-call-parser.js';
-export { parseJSON } from './tools/tool-call-parser.js';
+export { parseJSON, safeParseToolArguments } from './tools/tool-call-parser.js';
 export type { ValidationResult, ToolValidator } from './tools/tool-validators.js';
 export {
   toolValidators,

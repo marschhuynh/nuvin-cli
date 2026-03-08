@@ -158,7 +158,7 @@ describe('Hook Integration', () => {
     expect(orchestrator.hasHooks(HookEventTypes.PreToolUse)).toBe(false);
   });
 
-  it('should trigger PermissionRequest hook when tool requires approval', async () => {
+  it('should NOT trigger PermissionRequest hook from orchestrator (moved to CLI layer)', async () => {
     // Setup hook port that only has PermissionRequest hooks
     const permissionHookPort: HookPort = {
       executeHook: vi.fn().mockResolvedValue({ continue: true, exitCode: 0 }),
@@ -196,12 +196,11 @@ describe('Hook Integration', () => {
     const toolCallsEvent = emittedEvents.find(e => e.type === AgentEventTypes.ToolCalls);
     expect(toolCallsEvent).toBeDefined();
 
-    // Verify PermissionRequest hook was called
-    expect(permissionHookPort.executeHook).toHaveBeenCalledWith(
+    // Verify PermissionRequest hook was NOT called from the orchestrator
+    // (it has been moved to the CLI layer and fires only when approval UI is shown)
+    expect(permissionHookPort.executeHook).not.toHaveBeenCalledWith(
       expect.objectContaining({
         hookEvent: HookEventTypes.PermissionRequest,
-        toolName: 'bash_tool',
-        permissionType: 'tool_approval',
       })
     );
 
