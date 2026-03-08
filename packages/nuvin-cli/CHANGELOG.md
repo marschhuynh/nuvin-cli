@@ -1,5 +1,34 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.15
+
+### Minor Changes
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add OrchestratorBuilder to encapsulate multi-phase orchestrator initialization. Break down init into session resolution, agent registry, skills/tools, delegation, LLM factory, MCP manager, system prompt, orchestrator construction, and wiring phases.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Introduce IOrchestratorManager interface to define OrchestratorManager contract. Replace getOrchestrator() with explicit handleToolApproval and handleUserQuestionResponse methods for UI consumers.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor OrchestratorManager into modular architecture. Extract session, context window, MCP tools, memory wiring, agent swap, and topic analysis into focused manager classes. Introduce OrchestratorRuntimeStore for atomic state management and IOrchestratorManager interface.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add SendPipeline to orchestrate message sending with pre/post hooks. Extract lazy session init, LLM refresh, memory injection, config application, and context window checks into pipeline stages.
+
+### Patch Changes
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update ACP server and model resolver to use IOrchestratorManager interface. Replace OrchestratorManager type with IOrchestratorManager for loose coupling.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update command registry and types to use IOrchestratorManager interface. Replace OrchestratorManager type with IOrchestratorManager in command context and registry.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update tool approval and user question contexts to use IOrchestratorManager interface. Call handleToolApproval and handleUserQuestionResponse directly on orchestratorManager instead of getOrchestrator().
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix memory command to use orchestratorManager from context instead of global import. Remove orchestratorManager import from memory command definition.
+
+- [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Increase memory extraction temperature from 0.2 to 0.4 for better topic generation
+
+- [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update footer label from "Tokens" to "Toks" for compact display
+
+- Updated dependencies [[`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38)]:
+  - @nuvin/nuvin-core@2.0.0-rc.10
+
 ## 1.37.0-rc.14
 
 ### Minor Changes
