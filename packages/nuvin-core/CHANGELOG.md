@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.11
+
+### Minor Changes
+
+- [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove getPermission method from SkillProvider interface
+
 ## 2.0.0-rc.10
 
 ### Minor Changes

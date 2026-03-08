@@ -1,5 +1,28 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.16
+
+### Minor Changes
+
+- [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove skills.permissions config, use skillsEnabled as single source of truth
+
+### Patch Changes
+
+- [`46e23b4`](https://github.com/marschhuynh/nuvin-space/commit/46e23b4973df48efd3779f14da3135cdaef318ce) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Limit agent description to 2 lines in Agent Configuration modal
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix AgentBasicForm description field: derive maxLines from modalHeight instead of hardcoded value
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix CommandForm prompt template overflow: derive maxLines from modalHeight, add flexGrow to prompt section
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove marginBottom from CommandList items and add source badge color coding (global=yellow, profile/local=cyan)
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MODAL_HEIGHT cap (30 rows) to CommandModal, matching AgentConfigurationModal
+
+- [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix disabled skills being filtered from list, getAll, and buildToolDescription
+
+- Updated dependencies [[`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9)]:
+  - @nuvin/nuvin-core@2.0.0-rc.11
+
 ## 1.37.0-rc.15
 
 ### Minor Changes
