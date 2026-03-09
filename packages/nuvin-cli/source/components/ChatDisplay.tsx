@@ -44,11 +44,9 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
     }
   }
 
-  const seenIds = new Set<string>();
+  const seenCacheKeys = new Set<string>();
 
   for (const msg of messages) {
-    seenIds.add(msg.id);
-
     if (msg.type === 'tool') {
       const toolCalls = msg.metadata?.toolCalls || [];
       const resultsByCallId = new Map<string, MessageLineType>();
@@ -62,8 +60,13 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
         }
       }
 
+      // Determine status: completed if all tool calls have results, streaming otherwise
+      const status = toolCalls.length > 0 && resultsByCallId.size === toolCalls.length ? 'completed' : 'streaming';
+      const stableId = `${msg.id}:${status}`;
+      seenCacheKeys.add(stableId);
+
       if (resultsByCallId.size > 0) {
-        const cached = cache.get(msg.id);
+        const cached = cache.get(stableId);
 
         if (cached && cached.inputRef === msg && arraysEqual(cached.resultIds, resultIds)) {
           result.push(cached.output);
@@ -78,13 +81,14 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
 
           const output: MessageLineType = {
             ...msg,
+            id: stableId,
             metadata: {
               ...msg.metadata,
               toolResultsByCallId: resultsByCallId,
               toolStates, // Add computed states
             },
           };
-          cache.set(msg.id, { inputRef: msg, resultIds, output });
+          cache.set(stableId, { inputRef: msg, resultIds, output });
           result.push(output);
         }
 
@@ -92,8 +96,8 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
           result.push(toolResult);
         }
       } else {
-        // Tool call without results yet - defer to end
-        runningToolCalls.push(msg);
+        // Tool call without results yet - defer to end with streaming id
+        runningToolCalls.push({ ...msg, id: stableId });
       }
     } else if (msg.type === 'tool_result') {
       const toolResultId = msg.metadata?.toolResult?.id;
@@ -116,7 +120,7 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
   result.push(...runningToolCalls);
 
   for (const key of cache.keys()) {
-    if (!seenIds.has(key)) {
+    if (!seenCacheKeys.has(key)) {
       cache.delete(key);
     }
   }

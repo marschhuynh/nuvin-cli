@@ -1,0 +1,152 @@
+import { describe, it, expect } from 'vitest';
+import type { MessageLine } from '../source/adapters/index.js';
+import { mergeToolCallsWithResultsCached, type MergeCache } from '../source/components/ChatDisplay.js';
+
+function makeToolMsg(id: string, callIds: string[]): MessageLine {
+  return {
+    id,
+    type: 'tool',
+    content: callIds.join(', '),
+    metadata: {
+      toolCalls: callIds.map((cid) => ({
+        id: cid,
+        type: 'function' as const,
+        function: { name: `tool_${cid}`, arguments: '{}' },
+      })),
+    },
+  };
+}
+
+function makeToolResult(id: string, callId: string, status: 'success' | 'error' = 'success'): MessageLine {
+  return {
+    id,
+    type: 'tool_result',
+    content: `result for ${callId}`,
+    metadata: {
+      toolResult: {
+        id: callId,
+        name: `tool_${callId}`,
+        status,
+        type: 'text',
+        result: `result for ${callId}`,
+      },
+      duration: 100,
+    },
+  };
+}
+
+describe('mergeToolCallsWithResultsCached - ID Postfix Status', () => {
+  it('should postfix tool id with :streaming when no results yet', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [makeToolMsg('t1', ['call-1'])];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    const toolMsg = merged.find((m) => m.type === 'tool');
+    expect(toolMsg?.id).toBe('t1:streaming');
+  });
+
+  it('should postfix tool id with :completed when all results present', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [makeToolMsg('t1', ['call-1']), makeToolResult('r1', 'call-1')];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    const toolMsg = merged.find((m) => m.type === 'tool');
+    expect(toolMsg?.id).toBe('t1:completed');
+  });
+
+  it('should postfix with :streaming when only partial results', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [
+      makeToolMsg('t1', ['call-1', 'call-2']),
+      makeToolResult('r1', 'call-1'),
+    ];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    const toolMsg = merged.find((m) => m.type === 'tool');
+    expect(toolMsg?.id).toBe('t1:streaming');
+  });
+
+  it('should postfix with :completed when all multiple results arrive', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [
+      makeToolMsg('t1', ['call-1', 'call-2']),
+      makeToolResult('r1', 'call-1'),
+      makeToolResult('r2', 'call-2'),
+    ];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    const toolMsg = merged.find((m) => m.type === 'tool');
+    expect(toolMsg?.id).toBe('t1:completed');
+  });
+
+  it('should not postfix non-tool message ids', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [
+      { id: 'u1', type: 'user', content: 'hello' },
+      { id: 'a1', type: 'assistant', content: 'hi' },
+    ];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    expect(merged[0].id).toBe('u1');
+    expect(merged[1].id).toBe('a1');
+  });
+
+  it('should use different ids between streaming and completed for same tool', () => {
+    const cache: MergeCache = new Map();
+
+    // First call: streaming (no results)
+    const streamingMessages: MessageLine[] = [makeToolMsg('t1', ['call-1'])];
+    const streaming = mergeToolCallsWithResultsCached(streamingMessages, cache);
+
+    // Second call: completed (result arrived)
+    const completedMessages: MessageLine[] = [makeToolMsg('t1', ['call-1']), makeToolResult('r1', 'call-1')];
+    const completed = mergeToolCallsWithResultsCached(completedMessages, cache);
+
+    const streamingTool = streaming.find((m) => m.type === 'tool');
+    const completedTool = completed.find((m) => m.type === 'tool');
+
+    expect(streamingTool?.id).toBe('t1:streaming');
+    expect(completedTool?.id).toBe('t1:completed');
+    expect(streamingTool?.id).not.toBe(completedTool?.id);
+  });
+
+  it('should postfix independently for multiple tool call groups', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [
+      makeToolMsg('t1', ['call-a']),
+      makeToolResult('r-a', 'call-a'),
+      { id: 'a1', type: 'assistant', content: 'middle' },
+      makeToolMsg('t2', ['call-b']),
+      // t2 has no result
+    ];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    const tools = merged.filter((m) => m.type === 'tool');
+    expect(tools[0].id).toBe('t1:completed');
+    expect(tools[1].id).toBe('t2:streaming');
+  });
+
+  it('should properly clean up cache when tool messages are removed', () => {
+    const cache: MergeCache = new Map();
+
+    // First call with tool
+    const messages1: MessageLine[] = [
+      makeToolMsg('t1', ['call-1']),
+      makeToolResult('r1', 'call-1'),
+    ];
+    mergeToolCallsWithResultsCached(messages1, cache);
+    expect(cache.size).toBe(1);
+    expect(cache.has('t1:completed')).toBe(true);
+
+    // Second call without that tool
+    const messages2: MessageLine[] = [{ id: 'u1', type: 'user', content: 'hello' }];
+    mergeToolCallsWithResultsCached(messages2, cache);
+    expect(cache.size).toBe(0);
+  });
+});
