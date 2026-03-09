@@ -27,6 +27,7 @@
     "green-squids-sing",
     "history-persistence-fix",
     "history-windowed-combobox",
+    "input-scroll-fixes",
     "lint-fixes",
     "memory-bm25-topic-store",
     "memory-cli-integration",
@@ -48,7 +49,9 @@
     "orchestrator-interface",
     "orchestrator-refactor",
     "parallel-topic-update",
+    "permission-request-hook-fix",
     "rc-to-stable-update-fix",
+    "safe-parse-tool-arguments-export",
     "send-pipeline",
     "setup-command",
     "skill-awareness-system-prompt",
@@ -56,6 +59,7 @@
     "skill-provider-interface",
     "skills-permissions-refactor",
     "statusline-footer-combobox",
+    "streaming-message-id-fix",
     "streaming-tool-output",
     "toks-label",
     "tool-approval-input-max-lines",
@@ -63,6 +67,7 @@
     "tool-call-arguments-fix",
     "update-checker-rc-fix",
     "vietnamese-ime-support",
+    "virtualized-list-height-estimation",
     "windowed-combobox"
   ]
 }

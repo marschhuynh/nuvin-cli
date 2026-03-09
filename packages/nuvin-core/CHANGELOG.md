@@ -1,5 +1,13 @@
 # @nuvin/nuvin-core
 
+## 2.0.0-rc.12
+
+### Patch Changes
+
+- [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Move `permission_request` hook firing from orchestrator to CLI layer. Hooks now fire only when approval UI is shown, not for session-approved tools.
+
+- [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Export `safeParseToolArguments` utility for external use.
+
 ## 2.0.0-rc.11
 
 ### Minor Changes
