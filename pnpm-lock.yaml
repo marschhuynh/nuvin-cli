@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  ink: npm:@nuvin/ink@6.6.4
-
 importers:
 
   .:
@@ -14,9 +11,6 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
-      ink:
-        specifier: npm:@nuvin/ink@6.6.4
-        version: '@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)'
       json-zodify:
         specifier: ^1.0.2
         version: 1.0.2(zod@4.2.1)
@@ -224,17 +218,17 @@ importers:
         specifier: ^0.6.5
         version: 0.6.5
       ink:
-        specifier: npm:@nuvin/ink@6.6.4
-        version: '@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)'
+        specifier: workspace:@nuvin/ink@*
+        version: link:../ink
       ink-big-text:
         specifier: ^2.0.0
-        version: 2.0.0(@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3))(react@19.2.3)
+        version: 2.0.0(ink@packages+ink)(react@19.2.3)
       ink-gradient:
         specifier: ^3.0.0
-        version: 3.0.0(@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3))
+        version: 3.0.0(ink@packages+ink)
       ink-spinner:
         specifier: ^5.0.0
-        version: 5.0.0(@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3))(react@19.2.3)
+        version: 5.0.0(ink@packages+ink)(react@19.2.3)
       marked:
         specifier: ^15.0.12
         version: 15.0.12
@@ -1073,19 +1067,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@nuvin/ink@6.6.4':
-    resolution: {integrity: sha512-jdxNctzDRINP4Na7C5rVCu5wn32X1a0VEMKKzNn8tRlVzeIIh6OacgU/8tsb4KZ4JbiTxIjB5Rnp7HpxRDMfjQ==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      '@types/react': '>=19.0.0'
-      react: '>=19.0.0'
-      react-devtools-core: ^6.1.2
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      react-devtools-core:
-        optional: true
 
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
@@ -5779,39 +5760,6 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)':
-    dependencies:
-      '@alcalzone/ansi-tokenize': 0.2.3
-      ansi-escapes: 7.2.0
-      ansi-styles: 6.2.3
-      auto-bind: 5.0.1
-      chalk: 5.6.2
-      cli-boxes: 3.0.0
-      cli-cursor: 4.0.0
-      cli-truncate: 5.1.1
-      code-excerpt: 4.0.0
-      es-toolkit: 1.43.0
-      indent-string: 5.0.0
-      is-in-ci: 2.0.0
-      patch-console: 2.0.0
-      react: 19.2.3
-      react-reconciler: 0.33.0(react@19.2.3)
-      signal-exit: 3.0.7
-      slice-ansi: 7.1.2
-      stack-utils: 2.0.6
-      string-width: 8.1.0
-      type-fest: 4.41.0
-      widest-line: 5.0.0
-      wrap-ansi: 9.0.2
-      ws: 8.18.3
-      yoga-layout: 3.2.1
-    optionalDependencies:
-      '@types/react': 19.2.7
-      react-devtools-core: 6.1.5
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@opentelemetry/api@1.9.0': {}
 
   '@pkgr/core@0.2.9': {}
@@ -7965,25 +7913,25 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  ink-big-text@2.0.0(@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3))(react@19.2.3):
+  ink-big-text@2.0.0(ink@packages+ink)(react@19.2.3):
     dependencies:
       cfonts: 3.3.1
-      ink: '@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)'
+      ink: link:packages/ink
       prop-types: 15.8.1
       react: 19.2.3
 
-  ink-gradient@3.0.0(@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)):
+  ink-gradient@3.0.0(ink@packages+ink):
     dependencies:
       '@types/gradient-string': 1.1.6
       gradient-string: 2.0.2
-      ink: '@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)'
+      ink: link:packages/ink
       prop-types: 15.8.1
       strip-ansi: 7.1.2
 
-  ink-spinner@5.0.0(@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3))(react@19.2.3):
+  ink-spinner@5.0.0(ink@packages+ink)(react@19.2.3):
     dependencies:
       cli-spinners: 2.9.2
-      ink: '@nuvin/ink@6.6.4(@types/react@19.2.7)(react-devtools-core@6.1.5)(react@19.2.3)'
+      ink: link:packages/ink
       react: 19.2.3
 
   ink-testing-library@3.0.0(@types/react@19.2.7):

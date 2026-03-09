@@ -355,8 +355,9 @@ function TextInput({
           const result = onTab(currentValue, currentCursorOffset, key.shift === true);
           if (result) {
             setValueRef.current(result.value, result.cursorOffset);
+            return true;
           }
-          return true;
+          return;
         }
         return;
       }

@@ -8,6 +8,12 @@ export type ParseResult = {
 export type MouseParseResult = {
   mouse: MouseEvent | null;
   consumed: boolean;
+  /** Individual mouse events when multiple non-wheel events arrive in one chunk */
+  events?: MouseEvent[];
+  /** Non-mouse data that was interleaved — must be dispatched to keyboard pipeline */
+  unconsumed?: string;
+  /** Incomplete trailing escape sequence — must be preserved as decoder remainder */
+  remainder?: string;
 };
 
 let kittyProtocolEnabled = false;
@@ -423,56 +429,99 @@ export function parseMouseEvent(data: string): MouseParseResult {
     return { mouse: null, consumed: false };
   }
 
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence for mouse events
-  const sgrRegex = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
-  let wheelUpCount = 0;
-  let wheelDownCount = 0;
-  let lastMouse: MouseEvent | null = null;
-  let lastX = 0;
-  let lastY = 0;
+  // SGR mouse parsing
+  if (hasSgrMouse) {
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequence for mouse events
+    const sgrRegex = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
+    const allMatches: Array<{ match: RegExpExecArray; event: MouseEvent }> = [];
+    let wheelUpCount = 0;
+    let wheelDownCount = 0;
+    let lastX = 0;
+    let lastY = 0;
 
-  for (const match of data.matchAll(sgrRegex)) {
-    const button = parseInt(match[1] ?? '0', 10);
-    const x = parseInt(match[2] ?? '0', 10);
-    const y = parseInt(match[3] ?? '0', 10);
-    const isRelease = match[4] === 'm';
-    lastX = x;
-    lastY = y;
+    for (const match of data.matchAll(sgrRegex)) {
+      const button = parseInt(match[1] ?? '0', 10);
+      const x = parseInt(match[2] ?? '0', 10);
+      const y = parseInt(match[3] ?? '0', 10);
+      const isRelease = match[4] === 'm';
+      lastX = x;
+      lastY = y;
 
-    if (button === 64) {
-      wheelUpCount++;
-    } else if (button === 65) {
-      wheelDownCount++;
-    } else if (button >= 32 && button < 64) {
-      lastMouse = { type: 'drag', button: button - 32, x, y };
-    } else if (isRelease) {
-      lastMouse = { type: 'release', button, x, y };
-    } else {
-      lastMouse = { type: 'click', button, x, y };
+      let event: MouseEvent;
+      if (button === 64) {
+        wheelUpCount++;
+        event = { type: 'wheel-up', button: 64, x, y, count: 1 };
+      } else if (button === 65) {
+        wheelDownCount++;
+        event = { type: 'wheel-down', button: 65, x, y, count: 1 };
+      } else if (button >= 32 && button < 64) {
+        event = { type: 'drag', button: button - 32, x, y };
+      } else if (isRelease) {
+        event = { type: 'release', button, x, y };
+      } else {
+        event = { type: 'click', button, x, y };
+      }
+
+      allMatches.push({ match: match as RegExpExecArray, event });
     }
+
+    if (allMatches.length === 0) {
+      return { mouse: null, consumed: false };
+    }
+
+    // Collect non-mouse gaps between matches
+    const unconsumedParts: string[] = [];
+    let lastEnd = 0;
+    for (const { match } of allMatches) {
+      if (match.index > lastEnd) {
+        unconsumedParts.push(data.slice(lastEnd, match.index));
+      }
+      lastEnd = match.index + match[0].length;
+    }
+
+    // Check trailing data after last match
+    let remainder: string | undefined;
+    if (lastEnd < data.length) {
+      const trailing = data.slice(lastEnd);
+      if (trailing.includes('\x1b')) {
+        remainder = trailing;
+      } else {
+        unconsumedParts.push(trailing);
+      }
+    }
+
+    const unconsumed = unconsumedParts.join('') || undefined;
+    const events = allMatches.map(m => m.event);
+
+    // Determine primary mouse event (backwards compat)
+    let mouse: MouseEvent;
+    if (wheelUpCount > 0) {
+      mouse = { type: 'wheel-up', button: 64, x: lastX, y: lastY, count: wheelUpCount };
+    } else if (wheelDownCount > 0) {
+      mouse = { type: 'wheel-down', button: 65, x: lastX, y: lastY, count: wheelDownCount };
+    } else {
+      mouse = events[events.length - 1]!;
+    }
+
+    return { mouse, consumed: true, events, unconsumed, remainder };
   }
 
-  if (wheelUpCount > 0) {
-    return { mouse: { type: 'wheel-up', button: 64, x: lastX, y: lastY, count: wheelUpCount }, consumed: true };
-  }
-  if (wheelDownCount > 0) {
-    return { mouse: { type: 'wheel-down', button: 65, x: lastX, y: lastY, count: wheelDownCount }, consumed: true };
-  }
-  if (lastMouse) {
-    return { mouse: lastMouse, consumed: true };
-  }
-
+  // X10 mouse fallback
   if (data.length >= 6 && data.startsWith('\x1b[M')) {
     const rawButton = data.charCodeAt(3) - 32;
     const x = data.charCodeAt(4) - 32;
     const y = data.charCodeAt(5) - 32;
     const button = rawButton & 3;
 
-    if (rawButton === 64) return { mouse: { type: 'wheel-up', button: 64, x, y, count: 1 }, consumed: true };
-    if (rawButton === 65) return { mouse: { type: 'wheel-down', button: 65, x, y, count: 1 }, consumed: true };
-    if (rawButton & 32) return { mouse: { type: 'drag', button, x, y }, consumed: true };
-    if (rawButton === 3) return { mouse: { type: 'release', button, x, y }, consumed: true };
-    return { mouse: { type: 'click', button, x, y }, consumed: true };
+    let event: MouseEvent;
+    if (rawButton === 64) event = { type: 'wheel-up', button: 64, x, y, count: 1 };
+    else if (rawButton === 65) event = { type: 'wheel-down', button: 65, x, y, count: 1 };
+    else if (rawButton & 32) event = { type: 'drag', button, x, y };
+    else if (rawButton === 3) event = { type: 'release', button, x, y };
+    else event = { type: 'click', button, x, y };
+
+    const remainder = data.length > 6 ? data.slice(6) : undefined;
+    return { mouse: event, consumed: true, events: [event], remainder };
   }
 
   return { mouse: null, consumed: false };

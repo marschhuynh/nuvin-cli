@@ -313,10 +313,39 @@ export const InputProvider: React.FC<Props> = ({
 
       const combinedData = decoderRef.current.getCombinedData(data);
 
-      const { mouse, consumed } = parseMouseEvent(combinedData);
+      const { mouse, consumed, events, unconsumed, remainder } = parseMouseEvent(combinedData);
       if (consumed && mouse) {
-        decoderRef.current.clear();
-        distributeMouse(mouse);
+        // Dispatch mouse events
+        if (events && events.length > 1 && !mouse.count) {
+          // Multiple non-wheel events (click/drag/release): dispatch each individually
+          for (const event of events) {
+            distributeMouse(event);
+          }
+        } else {
+          // Single event or aggregated wheel: dispatch the primary
+          distributeMouse(mouse);
+        }
+
+        // Process leftover data: unconsumed keyboard data + incomplete trailing sequences
+        const leftover = (unconsumed || '') + (remainder || '');
+        if (leftover) {
+          decoderRef.current.clear();
+          const { chunks, hasPendingEscape } = decoderRef.current.feedCombinedData(leftover);
+          for (const chunk of chunks) {
+            dispatchParsedChunk(chunk);
+          }
+          if (hasPendingEscape) {
+            escapeFlushTimerRef.current = setTimeout(() => {
+              escapeFlushTimerRef.current = null;
+              for (const chunk of decoderRef.current.flushPendingEscape()) {
+                dispatchParsedChunk(chunk);
+              }
+            }, ESC_FLUSH_DELAY_MS);
+          }
+        } else {
+          decoderRef.current.clear();
+        }
+
         return;
       }
 

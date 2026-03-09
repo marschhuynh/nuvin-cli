@@ -90,28 +90,78 @@ export function VirtualizedList<T>({
   const heightCacheRef = useRef<Map<string, number>>(new Map());
   const [heightCacheVersion, setHeightCacheVersion] = useState(0);
 
+  // Stable refs so measureVisibleItems (a stable callback) can read current values.
+  const itemsRef = useRef(items);
+  const keyExtractorRef = useRef(keyExtractor);
+  useLayoutEffect(() => {
+    itemsRef.current = items;
+    keyExtractorRef.current = keyExtractor;
+  });
+
   const [scrollY, setScrollY] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
-  const measureVisibleItems = useCallback(() => {
-    let hasChanges = false;
+  // Scroll anchor: the item key that was at the top of the viewport and how far
+  // into it scrollY pointed. Snapshotted before each measurement pass and used
+  // to recompute scrollY afterwards so the viewport stays visually stable even
+  // when items above it are measured for the first time (replacing placeholder
+  // heights with true heights, which would otherwise shift the content and cause
+  // a visible scroll jump).
+  const scrollAnchorRef = useRef<{ key: string; offset: number } | null>(null);
 
+  const measureVisibleItems = useCallback(() => {
+    // ── Phase 1: measure all currently rendered items ──────────────────────
+    const updates = new Map<string, number>();
     for (const [key, element] of itemRefsMap.current) {
       try {
         const { height } = measureElement(element);
         if (height > 0 && heightCacheRef.current.get(key) !== height) {
-          heightCacheRef.current.set(key, height);
-          hasChanges = true;
+          updates.set(key, height);
         }
       } catch {
-        // Element might not be mounted
+        // Element might not be mounted yet
       }
     }
 
-    if (hasChanges) {
-      setHeightCacheVersion((v) => v + 1);
+    if (updates.size === 0) return;
+
+    // ── Phase 2: snapshot anchor before mutating the cache ─────────────────
+    // Only anchor when the user is NOT auto-scrolling; if they are, the bottom
+    // anchor is already maintained by the shouldAutoScrollRef path.
+    const anchor = scrollAnchorRef.current;
+
+    // ── Phase 3: apply all height updates atomically ───────────────────────
+    for (const [key, height] of updates) {
+      heightCacheRef.current.set(key, height);
     }
-  }, []);
+
+    // ── Phase 4: recompute scrollY from anchor to prevent visual jump ──────
+    if (anchor && !shouldAutoScrollRef.current) {
+      // Recompute itemOffsets inline (heightCacheVersion hasn't bumped yet).
+      let anchorOffset = 0;
+      let anchorFound = false;
+      for (let i = 0; i < itemsRef.current.length; i++) {
+        const k = keyExtractorRef.current(itemsRef.current[i], i);
+        if (k === anchor.key) {
+          anchorFound = true;
+          const corrected = anchorOffset + anchor.offset;
+          setScrollY(corrected);
+          break;
+        }
+        const h = heightCacheRef.current.get(k) ?? 1;
+        anchorOffset += h;
+      }
+      // If anchor item is gone (evicted), fall back to clamping — the sync
+      // useLayoutEffect below will handle it.
+      if (!anchorFound) {
+        scrollAnchorRef.current = null;
+      }
+    }
+
+    setHeightCacheVersion((v) => v + 1);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Note: items and keyExtractor are accessed via refs (see below) so this
+  // callback never needs to be recreated.
 
   // Evict stale entries from caches when items change
   useEffect(() => {
@@ -157,8 +207,9 @@ export function VirtualizedList<T>({
     };
   }, [items, keyExtractor, heightCacheVersion]);
 
-  const needsScrollbar = showScrollbar && totalContentHeight > containerHeight;
-  const internalFocus = useFocus({ active: needsScrollbar && !manualFocus });
+  const isScrollable = totalContentHeight > containerHeight;
+  const needsScrollbar = showScrollbar && isScrollable;
+  const internalFocus = useFocus({ active: isScrollable && !manualFocus });
   const isFocused = externalFocus !== undefined ? externalFocus : internalFocus.isFocused;
 
   useEffect(() => {
@@ -217,12 +268,31 @@ export function VirtualizedList<T>({
     return { start: startIndex, end: endIndex };
   }, [items, effectiveScrollY, containerHeight, overscan, findStartIndex, itemOffsets, keyExtractor]);
 
-  // Measure visible items after render — items reference changes when content updates (e.g. streaming),
-  // which triggers remeasurement of heights for items that grew or shrank.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: items triggers remeasurement on content changes
+  // Update scroll anchor: the item at the top of the real viewport and how far
+  // into it scrollY points. Written every render so measureVisibleItems always
+  // sees the pre-measurement state when it runs in useLayoutEffect.
+  // Skip when auto-scrolling — the bottom is already anchored by shouldAutoScrollRef.
+  if (!shouldAutoScrollRef.current && items.length > 0 && containerHeight > 0) {
+    // Find the first item whose bottom edge exceeds effectiveScrollY — that's
+    // the item at the visual top of the viewport.
+    const anchorIndex = findStartIndex(effectiveScrollY);
+    if (anchorIndex >= 0 && anchorIndex < items.length) {
+      const anchorKey = keyExtractor(items[anchorIndex], anchorIndex);
+      const anchorItemTop = itemOffsets[anchorIndex] ?? 0;
+      scrollAnchorRef.current = {
+        key: anchorKey,
+        offset: effectiveScrollY - anchorItemTop,
+      };
+    }
+  }
+
+  // Measure visible items after render — fires when:
+  // - items reference changes (streaming: content of existing items grew/shrank)
+  // - visibleRange changes (scrolling: new items entered the render window and need measuring)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items and visibleRange trigger remeasurement
   useLayoutEffect(() => {
     measureVisibleItems();
-  }, [measureVisibleItems, items]);
+  }, [measureVisibleItems, items, visibleRange.start, visibleRange.end]);
 
   const scrollTo = useCallback(
     (newY: number) => {
@@ -230,7 +300,7 @@ export function VirtualizedList<T>({
       const clampedY = Math.max(0, Math.min(newY, currentMaxScrollY));
       setScrollY(clampedY);
 
-      const isAtBottom = clampedY >= currentMaxScrollY - 1;
+      const isAtBottom = clampedY >= currentMaxScrollY;
       shouldAutoScrollRef.current = isAtBottom;
     },
     [totalContentHeight, containerHeight],
@@ -240,8 +310,9 @@ export function VirtualizedList<T>({
     (delta: number) => {
       const currentMaxScrollY = Math.max(0, totalContentHeight - containerHeight);
       setScrollY((y) => {
-        const newY = Math.max(0, Math.min(y + delta, currentMaxScrollY));
-        const isAtBottom = newY >= currentMaxScrollY - 1;
+        const baseY = shouldAutoScrollRef.current ? currentMaxScrollY : y;
+        const newY = Math.max(0, Math.min(baseY + delta, currentMaxScrollY));
+        const isAtBottom = newY >= currentMaxScrollY;
         shouldAutoScrollRef.current = isAtBottom;
         return newY;
       });
@@ -252,6 +323,7 @@ export function VirtualizedList<T>({
   const handleMouseEvent = useCallback(
     (event: MouseEvent) => {
       const multiplier = event.count || 1;
+      // const multiplier = 1;
       if (event.type === 'wheel-up') {
         scrollBy(-scrollStep * multiplier);
         return true;
@@ -266,7 +338,7 @@ export function VirtualizedList<T>({
 
   const handleKeyboardEvent = useCallback(
     (input: string, _key: Key) => {
-      if (!isFocused || !needsScrollbar || !enableKeyboardScroll) {
+      if (!isFocused || !isScrollable || !enableKeyboardScroll) {
         if (isFocused && (input === 'j' || input === 'k' || input === 'g' || input === 'G')) {
           return true;
         }
@@ -297,7 +369,7 @@ export function VirtualizedList<T>({
       isFocused,
       scrollBy,
       scrollStep,
-      needsScrollbar,
+      isScrollable,
       scrollTo,
       totalContentHeight,
       containerHeight,
@@ -305,8 +377,8 @@ export function VirtualizedList<T>({
     ],
   );
 
-  useMouse(handleMouseEvent, { isActive: enableMouseScroll && needsScrollbar, priority: mousePriority });
-  useInput(handleKeyboardEvent, { isActive: needsScrollbar, priority: mousePriority });
+  useMouse(handleMouseEvent, { isActive: enableMouseScroll && isScrollable, priority: mousePriority });
+  useInput(handleKeyboardEvent, { isActive: isScrollable, priority: mousePriority });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: items.length intentionally triggers remeasurement
   useLayoutEffect(() => {

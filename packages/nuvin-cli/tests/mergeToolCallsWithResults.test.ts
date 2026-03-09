@@ -35,9 +35,14 @@ function mergeToolCallsWithResults(messages: MessageLine[]): MessageLine[] {
         }
       }
 
+      // Determine status: completed if all tool calls have results, streaming otherwise
+      const status = toolCalls.length > 0 && mergedResults.length === toolCalls.length ? 'completed' : 'streaming';
+
       // Add the tool call message with enhanced metadata including results
+      // Postfix id with status so consumers (React keys, caches) detect state changes
       result.push({
         ...msg,
+        id: `${msg.id}:${status}`,
         metadata: {
           ...msg.metadata,
           toolResultsByCallId: resultsByCallId,
@@ -625,6 +630,290 @@ describe('mergeToolCallsWithResults - Immutability', () => {
 
     // They should be different objects
     expect(merged[0]).not.toBe(toolMsg);
+  });
+});
+
+describe('mergeToolCallsWithResults - ID Postfix Status', () => {
+  it('should postfix tool message id with :completed when all results are present', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'file_read(...)',
+        metadata: {
+          toolCalls: [
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: 'file_read', arguments: '{}' },
+            },
+          ],
+        },
+      },
+      {
+        id: 'result-1',
+        type: 'tool_result',
+        content: 'file contents',
+        metadata: {
+          toolResult: {
+            id: 'call-1',
+            name: 'file_read',
+            status: 'success',
+            type: 'text',
+            result: 'file contents',
+          },
+          duration: 100,
+        },
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:completed');
+  });
+
+  it('should postfix tool message id with :streaming when no results yet', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'pending_tool',
+        metadata: {
+          toolCalls: [
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: 'pending_tool', arguments: '{}' },
+            },
+          ],
+        },
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:streaming');
+  });
+
+  it('should postfix tool message id with :streaming when only partial results', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'tool1, tool2',
+        metadata: {
+          toolCalls: [
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: 'tool1', arguments: '{}' },
+            },
+            {
+              id: 'call-2',
+              type: 'function',
+              function: { name: 'tool2', arguments: '{}' },
+            },
+          ],
+        },
+      },
+      {
+        id: 'result-1',
+        type: 'tool_result',
+        content: 'result 1',
+        metadata: {
+          toolResult: {
+            id: 'call-1',
+            name: 'tool1',
+            status: 'success',
+            type: 'text',
+            result: 'result 1',
+          },
+          duration: 50,
+        },
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:streaming');
+  });
+
+  it('should postfix tool message id with :completed when all partial results arrive', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'tool1, tool2',
+        metadata: {
+          toolCalls: [
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: 'tool1', arguments: '{}' },
+            },
+            {
+              id: 'call-2',
+              type: 'function',
+              function: { name: 'tool2', arguments: '{}' },
+            },
+          ],
+        },
+      },
+      {
+        id: 'result-1',
+        type: 'tool_result',
+        content: 'result 1',
+        metadata: {
+          toolResult: {
+            id: 'call-1',
+            name: 'tool1',
+            status: 'success',
+            type: 'text',
+            result: 'result 1',
+          },
+          duration: 50,
+        },
+      },
+      {
+        id: 'result-2',
+        type: 'tool_result',
+        content: 'result 2',
+        metadata: {
+          toolResult: {
+            id: 'call-2',
+            name: 'tool2',
+            status: 'success',
+            type: 'text',
+            result: 'result 2',
+          },
+          duration: 100,
+        },
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:completed');
+  });
+
+  it('should postfix with :streaming when tool has empty toolCalls array', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'tool',
+        metadata: {
+          toolCalls: [],
+        },
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:streaming');
+  });
+
+  it('should postfix with :streaming when tool has no metadata', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'tool',
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:streaming');
+  });
+
+  it('should not postfix non-tool message ids', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'user-1',
+        type: 'user',
+        content: 'hello',
+      },
+      {
+        id: 'assistant-1',
+        type: 'assistant',
+        content: 'hi',
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('user-1');
+    expect(merged[1].id).toBe('assistant-1');
+  });
+
+  it('should not postfix tool_result message ids', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'result-1',
+        type: 'tool_result',
+        content: 'orphaned result',
+        metadata: {
+          toolResult: {
+            id: 'orphan-1',
+            name: 'unknown_tool',
+            status: 'success',
+            type: 'text',
+            result: 'orphaned',
+          },
+          duration: 200,
+        },
+      },
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('result-1');
+  });
+
+  it('should postfix independently for multiple tool call groups', () => {
+    const messages: MessageLine[] = [
+      {
+        id: 'tool-1',
+        type: 'tool',
+        content: 'tool_a',
+        metadata: {
+          toolCalls: [
+            {
+              id: 'call-a',
+              type: 'function',
+              function: { name: 'tool_a', arguments: '{}' },
+            },
+          ],
+        },
+      },
+      {
+        id: 'result-a',
+        type: 'tool_result',
+        content: 'result a',
+        metadata: {
+          toolResult: {
+            id: 'call-a',
+            name: 'tool_a',
+            status: 'success',
+            type: 'text',
+            result: 'result a',
+          },
+          duration: 100,
+        },
+      },
+      {
+        id: 'tool-2',
+        type: 'tool',
+        content: 'tool_b',
+        metadata: {
+          toolCalls: [
+            {
+              id: 'call-b',
+              type: 'function',
+              function: { name: 'tool_b', arguments: '{}' },
+            },
+          ],
+        },
+      },
+      // tool-2 has no result yet
+    ];
+
+    const merged = mergeToolCallsWithResults(messages);
+    expect(merged[0].id).toBe('tool-1:completed');
+    expect(merged[2].id).toBe('tool-2:streaming');
   });
 });
 
