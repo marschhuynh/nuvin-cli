@@ -1,5 +1,22 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0-rc.17
+
+### Minor Changes
+
+- [`b608fd1`](https://github.com/marschhuynh/nuvin-space/commit/b608fd134aa2cca1923705451241cb89527ec619) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `estimateItemHeight` prop to VirtualizedList for custom height estimation, viewport-aware cache invalidation, and explicit width/height props support.
+
+### Patch Changes
+
+- [`7f5bbe0`](https://github.com/marschhuynh/nuvin-space/commit/7f5bbe0434e9a25ba2fcc52a142959e6f65edc3f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix TextInput tab handling, improve VirtualizedList scroll stability with anchoring, enhance mouse event parsing for multi-event sequences, and add comprehensive tests.
+
+- [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Move `permission_request` hook firing from orchestrator to CLI layer. Hooks now fire only when approval UI is shown, not for session-approved tools.
+
+- [`b608fd1`](https://github.com/marschhuynh/nuvin-space/commit/b608fd134aa2cca1923705451241cb89527ec619) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update ChatDisplay test to expect `:streaming` suffix in tool call message IDs and refresh LSP hover snapshot for improved markdown formatting.
+
+- Updated dependencies [[`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029), [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029)]:
+  - @nuvin/nuvin-core@2.0.0-rc.12
+
 ## 1.37.0-rc.16
 
 ### Minor Changes
