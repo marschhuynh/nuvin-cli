@@ -3,7 +3,6 @@ import type { ToolRenderContext } from './types.js';
 import { LAYOUT } from './types.js';
 import { getStateColor } from './computeToolState.js';
 import { getMainArg, TOOL_ICON } from './utils.js';
-import { Markdown } from '@/components/Markdown/index.js';
 
 /**
  * Default header renderer: ⚙︎ {displayName} {mainArg}
@@ -128,7 +127,7 @@ export function defaultRenderResult(ctx: ToolRenderContext): React.ReactNode {
       marginLeft={2}
       width={cols - LAYOUT.CONTENT_MARGIN}
     >
-      <Markdown maxWidth={cols - LAYOUT.MARKDOWN_MARGIN}>{resultStr}</Markdown>
+      <Text wrap="wrap">{resultStr}</Text>
     </Box>
   );
 }
