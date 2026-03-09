@@ -1,5 +1,180 @@
 # @nuvin/nuvin-cli
 
+## 1.37.0
+
+### Minor Changes
+
+- [`8e9e8a9`](https://github.com/marschhuynh/nuvin-space/commit/8e9e8a92edb03f0e914905c0c34d566027e30f0b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(acp): implement ACP server mode with full session flow
+
+  - Add ACP JSON-RPC server over stdio with initialize, session/new, session/load, session/prompt, session/cancel
+  - Implement model resolver with provider-aware model enumeration and humanized display names
+  - Add tool formatter for descriptive tool call titles and kind inference
+  - Wire slash command support in ACP mode via command registry
+  - Add E2E test script for ACP validation
+  - Add available commands update notification
+  - Filter ask_user_tool from enabled tools in ACP mode
+
+- [`104722e`](https://github.com/marschhuynh/nuvin-space/commit/104722ec277a914ac1e7ecad8c9fd85ddf233979) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(acp): add session/list endpoint and improve history handling
+
+  - Add session/list with pagination support (50 sessions per page)
+  - Support both default and cli history message keys
+  - Extract text from structured message parts
+  - Update agent capabilities to match ACP spec
+  - Use getVersion() for dynamic version reporting
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `user_invocable` flag to agent registry. Internal agents (e.g., memory extractor) are now hidden from agent lists and UI.
+
+- [`9696dd4`](https://github.com/marschhuynh/nuvin-space/commit/9696dd474994e75aec104e12786d6ef26bd1ca50) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add auto-summary continuation and improve summary prompt
+
+  - Auto-submit continuation turn after context window auto-summary
+  - Add skipAutoSummaryCheck option to prevent recursive checks
+  - Improve summary prompt for better session continuity
+  - Lower auto-summary threshold to 30% for earlier intervention
+
+- [`9ea61e9`](https://github.com/marschhuynh/nuvin-space/commit/9ea61e972bcb2d86c4d4d320c67df8a89a0d34f3) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): replace JSON store with BM25 topic-based markdown storage
+
+  - Rewrite MemoryService with frontmatter-topic-md format (one file per topic)
+  - Add BM25 retrieval engine with recency/frequency/type-weight scoring
+  - Add query-scoped memory injection per message instead of full dump
+  - Migrate legacy memories.json entries on startup
+  - Add `topic`, `title`, `keywords`, `updateMode` fields to memory_save tool
+  - Add `upsertTopicMemory` for merge/replace semantics
+  - Wire workspaceId for project-scoped memory isolation
+  - Add retrieval/storage/index config options to MemorySettings
+  - Export `MemoryEntryInput` type from nuvin-core
+
+- [`c0b2b87`](https://github.com/marschhuynh/nuvin-space/commit/c0b2b875ad78deb1794c9939e46a51919df962c1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `/memory` command with TUI modal, `MemoryService` integration, and config options for long-term memory.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `memory_extract` tool for explicit memory extraction and consolidation. Replaces background extraction with approval-required delegation to internal specialist agent.
+
+- [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `memory.model` and `memory.provider` config options for background extraction.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove v1-to-v2 migration logic and legacy JSON support. Memory system now assumes v2 topic files with statements.
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(tools): add memory_query tool for targeted memory retrieval
+
+  - Add memory_query tool with query, key, scope, topK, and minScore parameters
+  - Add per-turn query limit enforcement (maxQueriesPerTurn config)
+  - Add MemoryQueryToolResult with structured hits including statementId, score, confidence
+  - Wire memory_query handler in OrchestratorManager with turn tracking
+  - Add memory_query to baseEnabledTools and getEnabledTools logic
+  - Update system prompt to prefer memory_query for retrieval over memory_save
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): upgrade to v2 with statement-level metadata and active recall
+
+  - Add MemoryStatement type with status, confidence, evidence, and key-based deduplication
+  - Add buildCoreMemoryInjection for compact system prompt injection (semantic/procedural only)
+  - Add queryStatements for structured hits with score metadata
+  - Add migrateV1ToV2 with automatic backup creation
+  - Add access buffer with flush interval for batched access count updates
+  - Add per-statement access tracking and signature-based deduplication
+  - Add supersedes/contradicts relationships for conflict resolution
+  - Add minScore, freshnessHalfLifeDays, activeCandidateLimit config options
+  - Move project memory to ~/.nuvin/memory/workspace/<workspace_id>
+
+- [`ad1ecc2`](https://github.com/marschhuynh/nuvin-space/commit/ad1ecc213d8e43a27039328248492f09215a3508) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): add WorkspaceContextService and memory prompt builder
+
+  - Add WorkspaceContextService to resolve git-root-based workspace ID (sha256 hash)
+  - Add memory-prompt-builder with idempotent marker-based injection/stripping
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add OrchestratorBuilder to encapsulate multi-phase orchestrator initialization. Break down init into session resolution, agent registry, skills/tools, delegation, LLM factory, MCP manager, system prompt, orchestrator construction, and wiring phases.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Introduce IOrchestratorManager interface to define OrchestratorManager contract. Replace getOrchestrator() with explicit handleToolApproval and handleUserQuestionResponse methods for UI consumers.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Refactor OrchestratorManager into modular architecture. Extract session, context window, MCP tools, memory wiring, agent swap, and topic analysis into focused manager classes. Introduce OrchestratorRuntimeStore for atomic state management and IOrchestratorManager interface.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add SendPipeline to orchestrate message sending with pre/post hooks. Extract lazy session init, LLM refresh, memory injection, config application, and context window checks into pipeline stages.
+
+- [`340f343`](https://github.com/marschhuynh/nuvin-space/commit/340f34357001894a25ef93e96e73c78a8093e895) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add /setup command for computer use tool dependencies, update ToolCallViewer registry for computer tool display formatting
+
+- [`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: inject available skills into system prompt for agent awareness
+
+- [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove skills.permissions config, use skillsEnabled as single source of truth
+
+- [`84c800c`](https://github.com/marschhuynh/nuvin-space/commit/84c800c68b0bc0deef223e307e8f5953c399c902) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Statusline `|` separator for left/right alignment per row; Shift+←→ to reorder; footer segments renderable on either side.
+
+- [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add ToolOutputChunk event for real-time bash output streaming. BashTool emits throttled chunks during execution; ToolCallViewer shows rolling preview window (last 5 lines) while command runs
+
+- [`c6de844`](https://github.com/marschhuynh/nuvin-space/commit/c6de844d2777eba28eaf76bbd9a26f7486e7ae84) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add IME support for Vietnamese Telex/VNI input methods with atomic backspace+replacement handling
+
+- [`b608fd1`](https://github.com/marschhuynh/nuvin-space/commit/b608fd134aa2cca1923705451241cb89527ec619) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `estimateItemHeight` prop to VirtualizedList for custom height estimation, viewport-aware cache invalidation, and explicit width/height props support.
+
+- [`a2c48a0`](https://github.com/marschhuynh/nuvin-space/commit/a2c48a018f3291e810ba978dc021ecc9bde7b7cd) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `WindowedComboBox` with virtualized rendering, fuzzy search, and `TextInput` integration; refactor `ComboBox` input handling.
+
+### Patch Changes
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update ACP server and model resolver to use IOrchestratorManager interface. Replace OrchestratorManager type with IOrchestratorManager for loose coupling.
+
+- [`46e23b4`](https://github.com/marschhuynh/nuvin-space/commit/46e23b4973df48efd3779f14da3135cdaef318ce) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Limit agent description to 2 lines in Agent Configuration modal
+
+- [`346c26a`](https://github.com/marschhuynh/nuvin-space/commit/346c26a6b3019bb55840cc36f51c908bf61f5bc8) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add maxLines support to FormTextInput for multi-line agent description input
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix AgentBasicForm description field: derive maxLines from modalHeight instead of hardcoded value
+
+- [`dd64099`](https://github.com/marschhuynh/nuvin-space/commit/dd64099576e818850c53cbd60349f52e1eff119f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Copy ax-helper Swift source to dist during build, fix setup command to read from dist location
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix CommandForm prompt template overflow: derive maxLines from modalHeight, add flexGrow to prompt section
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove marginBottom from CommandList items and add source badge color coding (global=yellow, profile/local=cyan)
+
+- [`78b4ce3`](https://github.com/marschhuynh/nuvin-space/commit/78b4ce3873ee99d5dff53ec215b68c03a55ca567) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add MODAL_HEIGHT cap (30 rows) to CommandModal, matching AgentConfigurationModal
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update command registry and types to use IOrchestratorManager interface. Replace OrchestratorManager type with IOrchestratorManager in command context and registry.
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update tool approval and user question contexts to use IOrchestratorManager interface. Call handleToolApproval and handleUserQuestionResponse directly on orchestratorManager instead of getOrchestrator().
+
+- [`58c7987`](https://github.com/marschhuynh/nuvin-space/commit/58c79873085e6d43b13a041d6019dfb1e4b6d960) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove virtualization logic from FileDiffView, simplify to always render non-virtualized
+
+- [`d124700`](https://github.com/marschhuynh/nuvin-space/commit/d124700cf1b4296b784bab734501e56f91f5a300) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve Responses API compatibility mapping and provider wiring.
+
+- [`aab1a6a`](https://github.com/marschhuynh/nuvin-space/commit/aab1a6aebae5398407235b6615b1a2046df2a26e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix preloaded messages lost when migrating to persisted storage; add snapshot control params to ComputerUseTool
+
+- [`7d35006`](https://github.com/marschhuynh/nuvin-space/commit/7d350067d4caff60b4a040e7225ac08339a5ed67) Thanks [@marschhuynh](https://github.com/marschhuynh)! - History selection uses `WindowedComboBox` with fuzzy search; modal height adapts to terminal size.
+
+- [`7f5bbe0`](https://github.com/marschhuynh/nuvin-space/commit/7f5bbe0434e9a25ba2fcc52a142959e6f65edc3f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix TextInput tab handling, improve VirtualizedList scroll stability with anchoring, enhance mouse event parsing for multi-event sequences, and add comprehensive tests.
+
+- [#178](https://github.com/marschhuynh/nuvin-cli/pull/178) [`09fceca`](https://github.com/marschhuynh/nuvin-space/commit/09fceca0e83333278a730985c816d7396c877fc5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix all biome lint issues: remove non-null assertions, add explicit types, fix React keys, resolve dependency arrays, suppress conflicting regex rules
+
+- [`aca578d`](https://github.com/marschhuynh/nuvin-space/commit/aca578dfe2c104b8efdab29e4a0e27c6a4d341a9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix memory command to use orchestratorManager from context instead of global import. Remove orchestratorManager import from memory command definition.
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(ui): enhance memory config modal with active recall controls
+
+  - Add active recall toggle (enable/disable) in config modal
+  - Add max queries per turn selector (1/2/3)
+  - Add core memory budget selector (150/250/400 tokens)
+  - Display current recall status in modal header (recall:on/off q:N core:N)
+  - Support memory.extraction.provider/model fallback to memory.provider/model
+  - Add reset to default for all retrieval settings
+
+- [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Increase memory extraction temperature from 0.2 to 0.4 for better topic generation
+
+- [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Move delete key from list view to detail view in MemoryModal; add marginBottom to detail content.
+
+- [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - updateLineMetadata now removes keys set to undefined instead of preserving them
+
+- [`a505747`](https://github.com/marschhuynh/nuvin-space/commit/a50574735d14a662e332c5c8c921c9c1f92b8534) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Format tool call titles and add small helpers.
+  Update ToolCallViewer registry and renderers.
+  Add memory_save to enabled tools and refine orchestrator defaults.
+
+- [`9b61b2c`](https://github.com/marschhuynh/nuvin-space/commit/9b61b2c764068a69349a1483aa817bb3b4b05ff0) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Run conversation topic analysis in parallel with message sending without waiting for send completion.
+
+- [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Move `permission_request` hook firing from orchestrator to CLI layer. Hooks now fire only when approval UI is shown, not for session-approved tools.
+
+- [`3df777d`](https://github.com/marschhuynh/nuvin-space/commit/3df777d839ebca303be6c6eb1d5845042f9297ec) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): detect update when RC version transitions to stable (e.g., 1.0.0-rc.1 → 1.0.0)
+
+- [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix disabled skills being filtered from list, getAll, and buildToolDescription
+
+- [`b608fd1`](https://github.com/marschhuynh/nuvin-space/commit/b608fd134aa2cca1923705451241cb89527ec619) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update ChatDisplay test to expect `:streaming` suffix in tool call message IDs and refresh LSP hover snapshot for improved markdown formatting.
+
+- [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update footer label from "Tokens" to "Toks" for compact display
+
+- [`0681187`](https://github.com/marschhuynh/nuvin-space/commit/06811877eb259c52a154b24e57b5bfd418078e13) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Limit tool approval edit input to 3 lines with scrolling
+
+- [`03303e3`](https://github.com/marschhuynh/nuvin-space/commit/03303e35524abd956e30a4cf5369b37e831b99f0) Thanks [@marschhuynh](https://github.com/marschhuynh)! - fix(cli): prevent update when RC version is newer than latest stable (e.g., 1.37.0-rc.0 → 1.36.0)
+
+- Updated dependencies [[`c0b2b87`](https://github.com/marschhuynh/nuvin-space/commit/c0b2b875ad78deb1794c9939e46a51919df962c1), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`9696dd4`](https://github.com/marschhuynh/nuvin-space/commit/9696dd474994e75aec104e12786d6ef26bd1ca50), [`dd64099`](https://github.com/marschhuynh/nuvin-space/commit/dd64099576e818850c53cbd60349f52e1eff119f), [`340f343`](https://github.com/marschhuynh/nuvin-space/commit/340f34357001894a25ef93e96e73c78a8093e895), [`d124700`](https://github.com/marschhuynh/nuvin-space/commit/d124700cf1b4296b784bab734501e56f91f5a300), [`aab1a6a`](https://github.com/marschhuynh/nuvin-space/commit/aab1a6aebae5398407235b6615b1a2046df2a26e), [`9ea61e9`](https://github.com/marschhuynh/nuvin-space/commit/9ea61e972bcb2d86c4d4d320c67df8a89a0d34f3), [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f), [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f), [`8e9e8a9`](https://github.com/marschhuynh/nuvin-space/commit/8e9e8a92edb03f0e914905c0c34d566027e30f0b), [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029), [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029), [`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c), [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9), [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7), [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1), [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea)]:
+  - @nuvin/nuvin-core@2.0.0
+
 ## 1.37.0-rc.17
 
 ### Minor Changes

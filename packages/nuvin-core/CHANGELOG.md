@@ -1,5 +1,93 @@
 # @nuvin/nuvin-core
 
+## 2.0.0
+
+### Major Changes
+
+- [`8e9e8a9`](https://github.com/marschhuynh/nuvin-space/commit/8e9e8a92edb03f0e914905c0c34d566027e30f0b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - BREAKING: Make temperature and topP optional in CompletionParams and AgentConfig
+
+  - temperature and topP are now optional in CompletionParams (LLMPort)
+  - temperature and topP are now optional in AgentConfig
+  - BaseLLM only sends temperature/topP to API when explicitly provided
+  - AgentManager and AgentRegistry respect undefined temperature values
+  - Orchestrator passes temperature/topP only when defined
+
+### Minor Changes
+
+- [`c0b2b87`](https://github.com/marschhuynh/nuvin-space/commit/c0b2b875ad78deb1794c9939e46a51919df962c1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add long-term memory system with JSON file store, semantic ranking, and background extraction; add `memory_save` tool.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `user_invocable` flag to agent registry. Internal agents (e.g., memory extractor) are now hidden from agent lists and UI.
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `AssignAliasTool` base class for tools that delegate through `assign_task` with hidden agents.
+
+- [`340f343`](https://github.com/marschhuynh/nuvin-space/commit/340f34357001894a25ef93e96e73c78a8093e895) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add ComputerUseTool for macOS automation via AX tree, add safe tool call argument parsing with sanitization, add mixed content result type for text+image outputs
+
+- [`aab1a6a`](https://github.com/marschhuynh/nuvin-space/commit/aab1a6aebae5398407235b6615b1a2046df2a26e) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix preloaded messages lost when migrating to persisted storage; add snapshot control params to ComputerUseTool
+
+- [`9ea61e9`](https://github.com/marschhuynh/nuvin-space/commit/9ea61e972bcb2d86c4d4d320c67df8a89a0d34f3) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): replace JSON store with BM25 topic-based markdown storage
+
+  - Rewrite MemoryService with frontmatter-topic-md format (one file per topic)
+  - Add BM25 retrieval engine with recency/frequency/type-weight scoring
+  - Add query-scoped memory injection per message instead of full dump
+  - Migrate legacy memories.json entries on startup
+  - Add `topic`, `title`, `keywords`, `updateMode` fields to memory_save tool
+  - Add `upsertTopicMemory` for merge/replace semantics
+  - Wire workspaceId for project-scoped memory isolation
+  - Add retrieval/storage/index config options to MemorySettings
+  - Export `MemoryEntryInput` type from nuvin-core
+
+- [`14ab951`](https://github.com/marschhuynh/nuvin-space/commit/14ab951d68f7df0a9c489ce2506420c384a37d38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove approval requirement for `memory_extract` tool, allowing automatic execution
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `memory_extract` tool for explicit memory extraction and consolidation. Replaces background extraction with approval-required delegation to internal specialist agent.
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(tools): add memory_query tool for targeted memory retrieval
+
+  - Add memory_query tool with query, key, scope, topK, and minScore parameters
+  - Add per-turn query limit enforcement (maxQueriesPerTurn config)
+  - Add MemoryQueryToolResult with structured hits including statementId, score, confidence
+  - Wire memory_query handler in OrchestratorManager with turn tracking
+  - Add memory_query to baseEnabledTools and getEnabledTools logic
+  - Update system prompt to prefer memory_query for retrieval over memory_save
+
+- [`7c1a655`](https://github.com/marschhuynh/nuvin-space/commit/7c1a655a618b87d69a7ad9f10bf0c626c462ff2f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(memory): upgrade to v2 with statement-level metadata and active recall
+
+  - Add MemoryStatement type with status, confidence, evidence, and key-based deduplication
+  - Add buildCoreMemoryInjection for compact system prompt injection (semantic/procedural only)
+  - Add queryStatements for structured hits with score metadata
+  - Add migrateV1ToV2 with automatic backup creation
+  - Add access buffer with flush interval for batched access count updates
+  - Add per-statement access tracking and signature-based deduplication
+  - Add supersedes/contradicts relationships for conflict resolution
+  - Add minScore, freshnessHalfLifeDays, activeCandidateLimit config options
+  - Move project memory to ~/.nuvin/memory/workspace/<workspace_id>
+
+- [`93a158a`](https://github.com/marschhuynh/nuvin-space/commit/93a158a6cf8083bd4f2c7f1a8c3108ca1575470c) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat: inject available skills into system prompt for agent awareness
+
+- [`8832379`](https://github.com/marschhuynh/nuvin-space/commit/88323797c11df66c0d92b1ffba11963bc7616ae9) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove getPermission method from SkillProvider interface
+
+- [`e979198`](https://github.com/marschhuynh/nuvin-space/commit/e979198ab0a28fbe0632cf08c6acfbfef6f7f5b7) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add ToolOutputChunk event for real-time bash output streaming. BashTool emits throttled chunks during execution; ToolCallViewer shows rolling preview window (last 5 lines) while command runs
+
+- [`0453446`](https://github.com/marschhuynh/nuvin-space/commit/04534460cbe253c6b8098d6311cb0dcadd720be1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Make `memory_extract` always require approval, regardless of global tool approval setting.
+
+### Patch Changes
+
+- [`9696dd4`](https://github.com/marschhuynh/nuvin-space/commit/9696dd474994e75aec104e12786d6ef26bd1ca50) Thanks [@marschhuynh](https://github.com/marschhuynh)! - feat(cli): add auto-summary continuation and improve summary prompt
+
+  - Auto-submit continuation turn after context window auto-summary
+  - Add skipAutoSummaryCheck option to prevent recursive checks
+  - Improve summary prompt for better session continuity
+  - Lower auto-summary threshold to 30% for earlier intervention
+
+- [`dd64099`](https://github.com/marschhuynh/nuvin-space/commit/dd64099576e818850c53cbd60349f52e1eff119f) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Copy ax-helper Swift source to dist during build, fix setup command to read from dist location
+
+- [`d124700`](https://github.com/marschhuynh/nuvin-space/commit/d124700cf1b4296b784bab734501e56f91f5a300) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve Responses API compatibility mapping and provider wiring.
+
+- [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Move `permission_request` hook firing from orchestrator to CLI layer. Hooks now fire only when approval UI is shown, not for session-approved tools.
+
+- [`1ef013f`](https://github.com/marschhuynh/nuvin-space/commit/1ef013f573cf55302e282870189cd85e3e976029) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Export `safeParseToolArguments` utility for external use.
+
+- [`fe94e2f`](https://github.com/marschhuynh/nuvin-space/commit/fe94e2fbb353203b3011623c9c5cbc7aa20886ea) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix JSON.parse crash when tool call arguments is empty string.
+
 ## 2.0.0-rc.12
 
 ### Patch Changes

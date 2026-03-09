@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.36.0
+## 1.37.0
 
-Promoted 1.36.0-rc.19 to stable release.
+Promoted 1.37.0-rc.17 to stable release.
 
