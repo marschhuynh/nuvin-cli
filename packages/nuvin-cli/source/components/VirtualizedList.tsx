@@ -53,6 +53,7 @@ export type VirtualizedListProps<T> = {
   items: T[];
   renderItem: (item: T, index: number) => ReactNode;
   keyExtractor: (item: T, index: number) => string;
+  estimateItemHeight?: (item: T, index: number) => number;
   overscan?: number;
   scrollStep?: number;
   enableMouseScroll?: boolean;
@@ -70,6 +71,7 @@ export function VirtualizedList<T>({
   items,
   renderItem,
   keyExtractor,
+  estimateItemHeight,
   overscan = 10,
   scrollStep = 1,
   enableMouseScroll = true,
@@ -81,6 +83,8 @@ export function VirtualizedList<T>({
   focus: externalFocus,
   manualFocus = false,
   onFocusChange,
+  width: widthProp,
+  height: heightProp,
   ...boxProps
 }: VirtualizedListProps<T>) {
   const containerRef = useRef<BoxRef>(null);
@@ -185,6 +189,16 @@ export function VirtualizedList<T>({
     }
   }, [items, keyExtractor]);
 
+  // When the viewport width changes, all cached item heights are invalid (items may reflow)
+  const prevWidthRef = useRef(widthProp);
+  useEffect(() => {
+    if (prevWidthRef.current !== widthProp) {
+      prevWidthRef.current = widthProp;
+      heightCacheRef.current.clear();
+      setHeightCacheVersion((v) => v + 1);
+    }
+  }, [widthProp]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: heightCacheVersion is needed
   const { itemOffsets, totalContentHeight } = useMemo(() => {
     const offsets: number[] = [];
@@ -197,7 +211,7 @@ export function VirtualizedList<T>({
       if (cachedHeight !== undefined) {
         total += cachedHeight;
       } else {
-        total += 1;
+        total += estimateItemHeight ? estimateItemHeight(items[i], i) : 1;
       }
     }
 
@@ -205,7 +219,7 @@ export function VirtualizedList<T>({
       itemOffsets: offsets,
       totalContentHeight: total,
     };
-  }, [items, keyExtractor, heightCacheVersion]);
+  }, [items, keyExtractor, heightCacheVersion, estimateItemHeight]);
 
   const isScrollable = totalContentHeight > containerHeight;
   const needsScrollbar = showScrollbar && isScrollable;
@@ -380,7 +394,7 @@ export function VirtualizedList<T>({
   useMouse(handleMouseEvent, { isActive: enableMouseScroll && isScrollable, priority: mousePriority });
   useInput(handleKeyboardEvent, { isActive: isScrollable, priority: mousePriority });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length intentionally triggers remeasurement
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length and heightProp intentionally trigger remeasurement
   useLayoutEffect(() => {
     if (containerRef.current) {
       const { height } = measureElement(containerRef.current);
@@ -388,7 +402,7 @@ export function VirtualizedList<T>({
         setContainerHeight(height);
       }
     }
-  }, [items.length, containerHeight]);
+  }, [items.length, containerHeight, heightProp]);
 
   // Sync scrollY state to match effective position — useLayoutEffect to avoid flicker
   useLayoutEffect(() => {
@@ -424,7 +438,7 @@ export function VirtualizedList<T>({
   const marginTopValue = -effectiveScrollY + skippedItemsHeight;
 
   return (
-    <Box flexDirection="row" overflow="hidden" {...boxProps}>
+    <Box flexDirection="row" overflow="hidden" width={widthProp} height={heightProp} {...boxProps}>
       <Box ref={containerRef} flexDirection="column" flexGrow={1} overflow="hidden">
         <Box ref={contentRef} flexDirection="column" marginTop={marginTopValue}>
           {visibleItems.map((item, i) => {

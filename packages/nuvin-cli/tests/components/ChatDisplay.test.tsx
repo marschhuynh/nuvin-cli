@@ -133,7 +133,7 @@ describe('ChatDisplay', () => {
 
     const { lastFrame } = render(<ChatDisplay key="test" messages={[pendingToolCall]} headerKey={1} />);
 
-    expect(lastFrame()).toContain('[Message id=msg-1 content=tool_call]');
+    expect(lastFrame()).toContain('[Message id=msg-1:streaming content=tool_call]');
   });
 
   it('renders first message correctly when transitioning from sessions view', () => {

@@ -28,8 +28,9 @@ exports[`lsp - Snapshot Tests > renders successful LSP goToDefinition operation 
 
 exports[`lsp - Snapshot Tests > renders successful LSP hover operation 1`] = `
 "⚙ Language server hover src/components/Button.tsx:8:15
-  │  {"contents":{"kind":"markdown","value":"typescript\\nfunction useState<S>(initialState:
-  │  S | (() => S)): [S, Dispatch<SetStateAction<S>>]\\n\\n\\nReturns a stateful value, and a
-  │  function to update it."}}
+  │  {"contents":{"kind":"markdown","value":"\`\`\`typescript\\nfunction
+  │  useState<S>(initialState: S | (() => S)): [S,
+  │  Dispatch<SetStateAction<S>>]\\n\`\`\`\\n\\nReturns a stateful value, and a function to update
+  │   it."}}
   └─ Completed"
 `;
