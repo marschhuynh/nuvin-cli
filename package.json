@@ -30,6 +30,7 @@
     "@changesets/changelog-github": "^0.4.8",
     "@changesets/cli": "^2.29.8",
     "@types/node": "^24.10.1",
+    "@types/sinon": "^17.0.4",
     "rimraf": "^6.1.2"
   },
   "dependencies": {

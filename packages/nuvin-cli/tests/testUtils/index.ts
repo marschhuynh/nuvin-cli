@@ -23,3 +23,4 @@ export {
   setupContextMocks,
   setupContextMocksWithOverrides,
 } from './contextMocks.js';
+export { default as createStdout } from './createStdout.ts';

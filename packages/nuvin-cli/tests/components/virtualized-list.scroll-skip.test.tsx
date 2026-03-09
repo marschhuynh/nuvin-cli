@@ -19,8 +19,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { describe, expect, it } from 'vitest';
-import { render } from '../../../ink/build/index.js';
-import createStdout from '../../../ink/test/helpers/create-stdout.js';
+import { render } from 'ink';
 import { VirtualizedList } from '../../source/components/VirtualizedList.js';
 import { InputContext } from '../../source/contexts/InputContext/InputContext.js';
 import { FocusProvider } from '../../source/contexts/InputContext/FocusContext.js';
@@ -32,6 +31,7 @@ import type {
   UseInputOptions,
   UseMouseOptions,
 } from '../../source/contexts/InputContext/types.js';
+import { createStdout } from '../testUtils/index.js';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -36,6 +36,9 @@ importers:
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.4
+      '@types/sinon':
+        specifier: ^17.0.4
+        version: 17.0.4
       rimraf:
         specifier: ^6.1.2
         version: 6.1.2

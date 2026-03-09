@@ -1,8 +1,8 @@
 import React from 'react';
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render} from '../../ink/build/index.js';
-import createStdout from '../../ink/test/helpers/create-stdout.js';
+import {render} from 'ink';
 import TextInput from '../source/components/TextInput/index.js';
+import { createStdout } from './testUtils';
 
 const {mockUseInput} = vi.hoisted(() => ({
 	mockUseInput: vi.fn(),
