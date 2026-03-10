@@ -20,6 +20,7 @@ type MessageLineProps = {
   onToggleExpansion?: (id: string) => void;
   backgroundColor?: string;
   liveMessage?: boolean;
+  noBottomMargin?: boolean;
 };
 
 const BlockMessage = ({ content, backgroundColor, textColor }: { content: string; backgroundColor: string; textColor: string }) => {
@@ -37,7 +38,7 @@ const BlockMessage = ({ content, backgroundColor, textColor }: { content: string
   )
 }
 
-const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false }) => {
+const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false, noBottomMargin = false }) => {
   const { altMode } = useAltMode();
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
@@ -271,7 +272,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         width="100%"
         flexShrink={0}
         backgroundColor={backgroundColor}
-        marginBottom={1}
+        marginBottom={noBottomMargin ? 0 : 1}
         {...(liveMessage
           ? {
             borderStyle: 'single',

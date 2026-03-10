@@ -95,17 +95,11 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
 
       if (isCompleted) {
         // All tool calls done — render inline at its natural position
+        // tool_result messages are already embedded in mergedOutput's toolResultsByCallId
         result.push(mergedOutput);
-        for (const [, toolResult] of resultsByCallId) {
-          result.push(toolResult);
-        }
       } else {
         // Any running tool call — defer to end so it stays at the bottom
         runningToolCalls.push(mergedOutput);
-        // Also push the completed tool_result messages (they're hidden anyway, but kept for consistency)
-        for (const [, toolResult] of resultsByCallId) {
-          runningToolCalls.push(toolResult);
-        }
       }
     } else if (msg.type === 'tool_result') {
       const toolResultId = msg.metadata?.toolResult?.id;
@@ -218,11 +212,12 @@ const ChatDisplayComponent: React.FC<ChatDisplayProps> = ({ messages, headerKey,
     <Box flexDirection="column" flexShrink={1} overflow="hidden" width="100%">
       {staticItemsWithHeader.length > 0 && (
         <Static items={staticItemsWithHeader} style={{ width: '100%' }}>
-          {(item) => {
+          {(item, index) => {
             if (item.type === 'logo') {
               return <WelcomeLogo key={item.id} recentSessions={item.sessions} />;
             }
-            return <MessageLine key={item.id} message={item as MessageLineType} />;
+            const isLastStatic = index === staticItemsWithHeader.length - 1;
+            return <MessageLine key={item.id} message={item as MessageLineType} noBottomMargin={isLastStatic && visible.length === 0} />;
           }}
         </Static>
       )}

@@ -96,7 +96,7 @@ describe('mergeToolCallsWithResultsCached - ID Postfix Status', () => {
     expect(merged[1].id).toBe('a1');
   });
 
-  it('should use different ids between streaming and completed for same tool', () => {
+  it('should use same id between streaming and completed for same tool', () => {
     const cache: MergeCache = new Map();
 
     // First call: streaming (no results)
