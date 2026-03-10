@@ -1,5 +1,17 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.0
+
+### Minor Changes
+
+- [`3106556`](https://github.com/marschhuynh/nuvin-space/commit/310655658a7e5515ddca72680c9584a4f69b91a6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add history pagination and search to session browser. Sessions now load in pages of 20, with automatic load-more when scrolling near bottom. Search queries all sessions asynchronously with debounced input.
+
+- [`3106556`](https://github.com/marschhuynh/nuvin-space/commit/310655658a7e5515ddca72680c9584a4f69b91a6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add sticky group headers to WindowedComboBox. Group headers pin to top when scrolling through grouped items, with smooth transitions at section boundaries.
+
+### Patch Changes
+
+- [`3106556`](https://github.com/marschhuynh/nuvin-space/commit/310655658a7e5515ddca72680c9584a4f69b91a6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix VirtualizedList scrollbar rendering and height cache invalidation. Scrollbar now reserves column width consistently. Item heights recache on container width changes.
+
 ## 1.37.0
 
 ### Minor Changes
