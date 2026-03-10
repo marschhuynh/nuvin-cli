@@ -227,12 +227,14 @@ export const searchSessions = async (query: string, profile?: string): Promise<S
               ? (metadata as { topic?: string }).topic
               : undefined;
 
-          const haystack = `${topic ?? ''} ${lastMessage}`.toLowerCase();
+          const timestamp = new Date(parseInt(sessionIdStr, 10)).toLocaleString();
+          const haystack =
+            `${sessionIdStr} ${timestamp} ${topic ?? ''} ${lastMessage}`.toLowerCase();
           if (!haystack.includes(q)) continue;
 
           results.push({
             sessionId: sessionIdStr,
-            timestamp: new Date(parseInt(sessionIdStr, 10)).toLocaleString(),
+            timestamp,
             lastMessage,
             messageCount: cliMessages.length,
             topic,

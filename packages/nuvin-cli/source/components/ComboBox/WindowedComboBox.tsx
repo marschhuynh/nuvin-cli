@@ -140,6 +140,11 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
   }, [input]);
 
   const filteredItems = useMemo(() => {
+    // When onQueryChange is provided, the parent handles filtering externally
+    // (e.g. searching across all sessions on disk). Skip internal re-filtering
+    // to avoid discarding results that matched on fields not in item.label.
+    if (onQueryChange) return items;
+
     if (!searchQuery.trim()) return items;
     const query = searchQuery.toLowerCase();
 
@@ -152,7 +157,7 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
     }
 
     return items.filter((item) => item.label.toLowerCase().includes(query));
-  }, [searchQuery, items, fuzzySearch]);
+  }, [searchQuery, items, fuzzySearch, onQueryChange]);
 
   const { listItems, selectableIndices } = useMemo(() => {
     const result: ListItem[] = [];
