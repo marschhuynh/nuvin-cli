@@ -101,10 +101,18 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         // Check if any tool call is still running (no result yet)
         const hasRunningToolCall = toolCalls.some((toolCall) => !toolResultsByCallId?.has(toolCall.id));
 
+        // Sort: completed tool calls first, running ones last
+        const sortedToolCalls = hasRunningToolCall
+          ? [
+              ...toolCalls.filter((tc) => toolResultsByCallId?.has(tc.id)),
+              ...toolCalls.filter((tc) => !toolResultsByCallId?.has(tc.id)),
+            ]
+          : toolCalls;
+
         const _render = (
           <Box flexDirection="column" flexShrink={0}>
-            {toolCalls.length > 0 ? (
-              toolCalls.map((toolCall: ToolCall, callIndex: number) => {
+            {sortedToolCalls.length > 0 ? (
+              sortedToolCalls.map((toolCall: ToolCall, callIndex: number) => {
                 const isAwaitingApproval = pendingApprovalTools.some((tc) => tc.id === toolCall.id);
 
                 if (isAwaitingApproval) {

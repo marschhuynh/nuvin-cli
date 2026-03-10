@@ -60,44 +60,52 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
         }
       }
 
-      // Determine status: completed if all tool calls have results, streaming otherwise
-      const status = toolCalls.length > 0 && resultsByCallId.size === toolCalls.length ? 'completed' : 'streaming';
+      // Determine status: completed only if ALL tool calls have results
+      const isCompleted = toolCalls.length > 0 && resultsByCallId.size === toolCalls.length;
+      const status = isCompleted ? 'completed' : 'streaming';
       const stableId = `${msg.id}:${status}`;
       seenCacheKeys.add(stableId);
 
-      if (resultsByCallId.size > 0) {
-        const cached = cache.get(stableId);
+      // Build the merged output (with whatever results we have so far)
+      let mergedOutput: MessageLineType;
+      const cached = cache.get(stableId);
 
-        if (cached && cached.inputRef === msg && arraysEqual(cached.resultIds, resultIds)) {
-          result.push(cached.output);
-        } else {
-          // Compute tool states for each tool call
-          const toolStates = new Map<string, ComputedToolState>();
-          for (const toolCall of toolCalls) {
-            const toolResultMsg = resultsByCallId.get(toolCall.id);
-            const toolExecutionResult = toolResultMsg?.metadata?.toolResult;
-            toolStates.set(toolCall.id, computeToolState(toolExecutionResult));
-          }
-
-          const output: MessageLineType = {
-            ...msg,
-            id: stableId,
-            metadata: {
-              ...msg.metadata,
-              toolResultsByCallId: resultsByCallId,
-              toolStates, // Add computed states
-            },
-          };
-          cache.set(stableId, { inputRef: msg, resultIds, output });
-          result.push(output);
+      if (cached && cached.inputRef === msg && arraysEqual(cached.resultIds, resultIds)) {
+        mergedOutput = cached.output;
+      } else {
+        // Compute tool states for each tool call
+        const toolStates = new Map<string, ComputedToolState>();
+        for (const toolCall of toolCalls) {
+          const toolResultMsg = resultsByCallId.get(toolCall.id);
+          const toolExecutionResult = toolResultMsg?.metadata?.toolResult;
+          toolStates.set(toolCall.id, computeToolState(toolExecutionResult));
         }
 
+        mergedOutput = {
+          ...msg,
+          id: stableId,
+          metadata: {
+            ...msg.metadata,
+            toolResultsByCallId: resultsByCallId,
+            toolStates,
+          },
+        };
+        cache.set(stableId, { inputRef: msg, resultIds, output: mergedOutput });
+      }
+
+      if (isCompleted) {
+        // All tool calls done — render inline at its natural position
+        result.push(mergedOutput);
         for (const [, toolResult] of resultsByCallId) {
           result.push(toolResult);
         }
       } else {
-        // Tool call without results yet - defer to end with streaming id
-        runningToolCalls.push({ ...msg, id: stableId });
+        // Any running tool call — defer to end so it stays at the bottom
+        runningToolCalls.push(mergedOutput);
+        // Also push the completed tool_result messages (they're hidden anyway, but kept for consistency)
+        for (const [, toolResult] of resultsByCallId) {
+          runningToolCalls.push(toolResult);
+        }
       }
     } else if (msg.type === 'tool_result') {
       const toolResultId = msg.metadata?.toolResult?.id;

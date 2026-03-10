@@ -149,4 +149,39 @@ describe('mergeToolCallsWithResultsCached - ID Postfix Status', () => {
     mergeToolCallsWithResultsCached(messages2, cache);
     expect(cache.size).toBe(0);
   });
+
+  it('partial-result tool message goes to the bottom (after other messages)', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [
+      makeToolMsg('t1', ['call-1', 'call-2']),
+      makeToolResult('r1', 'call-1'), // only call-1 done, call-2 still running
+      { id: 'a1', type: 'assistant', content: 'later message' },
+    ];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    // The assistant message should appear before the running tool message
+    const assistantIndex = merged.findIndex((m) => m.id === 'a1');
+    const toolIndex = merged.findIndex((m) => m.type === 'tool');
+    expect(toolIndex).toBeGreaterThan(assistantIndex);
+    // And the tool message should be streaming
+    expect(merged[toolIndex].id).toBe('t1:streaming');
+  });
+
+  it('partial-result tool message includes completed results in toolResultsByCallId', () => {
+    const cache: MergeCache = new Map();
+    const messages: MessageLine[] = [
+      makeToolMsg('t1', ['call-1', 'call-2']),
+      makeToolResult('r1', 'call-1'), // call-1 done
+      // call-2 still running
+    ];
+
+    const merged = mergeToolCallsWithResultsCached(messages, cache);
+
+    const toolMsg = merged.find((m) => m.type === 'tool');
+    const resultsByCallId = toolMsg?.metadata?.toolResultsByCallId as Map<string, MessageLine> | undefined;
+    // The completed call-1 result should be available for rendering
+    expect(resultsByCallId?.has('call-1')).toBe(true);
+    expect(resultsByCallId?.has('call-2')).toBe(false);
+  });
 });
