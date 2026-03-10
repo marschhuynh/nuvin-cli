@@ -1,14 +1,19 @@
 import type React from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { eventBus } from '@/services/EventBus.js';
-import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { SessionInfo } from '@/types.js';
 import { WindowedComboBox, type ComboBoxItem } from '@/components/ComboBox/index.js';
 
 type HistorySelectionProps = {
   availableSessions: SessionInfo[];
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  isSearching: boolean;
+  searchResultCount: number | null; // null = browse mode
+  onLoadMore: () => void;
+  onQueryChange: (query: string) => void;
 };
 
 const formatRelativeTime = (timestamp: string) => {
@@ -54,6 +59,22 @@ const formatRelativeTime = (timestamp: string) => {
   });
 };
 
+const getDayGroup = (sessionId: string): string => {
+  const date = new Date(parseInt(sessionId, 10));
+  const now = new Date();
+
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
+  const startOf7DaysAgo = new Date(startOfToday.getTime() - 6 * 86400000);
+
+  if (date >= startOfToday) return 'Today';
+  if (date >= startOfYesterday) return 'Yesterday';
+  if (date >= startOf7DaysAgo) {
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  }
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+};
+
 const truncateText = (text: string | undefined, maxLength: number = 50): string => {
   if (!text) return 'No preview available';
 
@@ -71,90 +92,81 @@ const truncateText = (text: string | undefined, maxLength: number = 50): string 
   return `${result}...`;
 };
 
-const getSessionStatus = (
-  lastMessage: string | undefined,
-  messageCount: number,
-  theme: ReturnType<typeof useTheme>['theme'],
-) => {
-  if (!lastMessage) return { icon: '○', color: 'gray' };
-  if (lastMessage.includes('Successfully') || lastMessage.includes('successfully')) {
-    return { icon: '✓', color: theme.tokens.green };
-  }
-  if (lastMessage.includes('error') || lastMessage.includes('Error')) {
-    return { icon: '✗', color: 'red' };
-  }
-  if (lastMessage.includes('try again')) {
-    return { icon: '⚠', color: 'yellow' };
-  }
-  if (messageCount === 1) {
-    return { icon: '○', color: 'gray' };
-  }
-  return { icon: '●', color: 'blue' };
+const getSessionStatus = (lastMessage: string | undefined, messageCount: number) => {
+  if (!lastMessage || messageCount <= 1) return '○';
+  if (lastMessage.includes('Successfully') || lastMessage.includes('successfully')) return '✓';
+  if (lastMessage.includes('error') || lastMessage.includes('Error')) return '✗';
+  if (lastMessage.includes('try again')) return '⚠';
+  return '●';
 };
 
-const getMessageCountBadge = (count: number, theme: ReturnType<typeof useTheme>['theme']) => {
-  if (count === 1) return { text: '1 msg', color: 'gray' };
-  if (count < 10) return { text: `${count} msgs`, color: 'cyan' };
-  if (count < 50) return { text: `${count} msgs`, color: theme.tokens.green };
-  return { text: `${count} msgs`, color: 'magenta' };
-};
-
-const SessionItem: React.FC<{ item: SessionInfo; isSelected: boolean; cols: number }> = ({
-  item,
-  isSelected,
-  cols = 60,
-}) => {
+const SessionItem: React.FC<{ item: SessionInfo; isSelected: boolean }> = ({ item, isSelected }) => {
   const { theme } = useTheme();
-  const relativeTime = formatRelativeTime(item.timestamp);
-  const displayText = item.topic || item.lastMessage;
-  const preview = truncateText(displayText, cols - 5);
-  const status = getSessionStatus(item.lastMessage, item.messageCount, theme);
-  const badge = getMessageCountBadge(item.messageCount, theme);
-
-  const textColor = isSelected ? theme.history.selected : theme.history.unselected;
-  const dimmed = !isSelected;
+  const time = formatRelativeTime(item.timestamp);
+  const preview = item.topic || truncateText(item.lastMessage, 60);
+  const status = getSessionStatus(item.lastMessage, item.messageCount);
+  const color = isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || theme.colors.text;
 
   return (
-    <Box flexDirection="column" height={3} paddingX={0} paddingY={0}>
-      <Box justifyContent="space-between" height={1}>
-        <Box>
-          <Text color={status.color} bold>
-            {status.icon}
-          </Text>
-          <Text> </Text>
-          <Text color={textColor} bold={isSelected} dimColor={dimmed}>
-            {relativeTime}
-            {' - '}
-          </Text>
-          <Text color={theme.history.badge} dimColor={dimmed}>
-            {badge.text}
-          </Text>
-        </Box>
-      </Box>
-
-      <Box height={1} width={cols - 2}>
-        <Text color={textColor} dimColor={dimmed}>
-          {preview}
-        </Text>
-      </Box>
+    <Box overflow="hidden" flexShrink={0}>
+      <Text>{isSelected ? '❯ ' : '  '}</Text>
+      <Text color={theme.colors.muted}>{status} </Text>
+      <Text color={color} bold={isSelected}>
+        {time}
+        {'  '}
+      </Text>
+      <Text color={color} dimColor={!isSelected}>
+        {preview}
+      </Text>
+      <Text color={theme.colors.muted} dimColor>
+        {' '}
+        {item.messageCount}msg
+      </Text>
     </Box>
   );
 };
 
-export const HistorySelection: React.FC<HistorySelectionProps> = ({ availableSessions }) => {
-  const { cols } = useStdoutDimensions();
+const LOAD_MORE_THRESHOLD = 5;
+
+export const HistorySelection: React.FC<HistorySelectionProps> = ({
+  availableSessions,
+  hasMore,
+  isLoadingMore,
+  isSearching,
+  searchResultCount,
+  onLoadMore,
+  onQueryChange,
+}) => {
+
+  const sessionMap = useMemo(
+    () => new Map(availableSessions.map((s) => [s.sessionId, s])),
+    [availableSessions],
+  );
 
   const comboBoxItems = useMemo<ComboBoxItem[]>(
     () =>
       availableSessions.map((session) => ({
         label: session.topic || session.lastMessage || session.sessionId,
         value: session.sessionId,
+        group: getDayGroup(session.sessionId),
       })),
     [availableSessions],
   );
 
+  const handleHighlight = useCallback(
+    (_item: ComboBoxItem | null, index: number) => {
+      // Only trigger load-more in browse mode
+      if (searchResultCount !== null) return;
+      if (!hasMore || isLoadingMore) return;
+      if (index >= comboBoxItems.length - LOAD_MORE_THRESHOLD) {
+        onLoadMore();
+      }
+    },
+    [hasMore, isLoadingMore, comboBoxItems.length, onLoadMore, searchResultCount],
+  );
+
   const handleSelect = (item: ComboBoxItem) => {
-    const session = availableSessions.find((s) => s.sessionId === item.value);
+    const session = sessionMap.get(item.value);
     if (session) {
       eventBus.emit('ui:history:selected', session);
     }
@@ -165,18 +177,34 @@ export const HistorySelection: React.FC<HistorySelectionProps> = ({ availableSes
       <WindowedComboBox
         items={comboBoxItems}
         showSearchInput={true}
-        placeholder="Search sessions..."
+        placeholder="Search all sessions..."
         showItemCount={false}
-        enableRotation={true}
+        enableRotation={false}
+        showScrollIndicators={false}
         focus={true}
-        fuzzySearch={true}
+        fuzzySearch={false}
+        onHighlight={handleHighlight}
+        onQueryChange={onQueryChange}
         renderItem={(item, isSelected) => {
-          const session = availableSessions.find((s) => s.sessionId === item.value);
+          const session = sessionMap.get(item.value);
           if (!session) return null;
-          return <SessionItem cols={cols - 2} item={session} isSelected={isSelected} />;
+          return <SessionItem item={session} isSelected={isSelected} />;
         }}
         onSelect={handleSelect}
       />
+      <Box height={1} flexShrink={0}>
+        {isSearching && <Text dimColor>  Searching all sessions...</Text>}
+        {searchResultCount !== null && !isSearching && searchResultCount === 0 && (
+          <Text dimColor>  No sessions matched</Text>
+        )}
+        {searchResultCount !== null && !isSearching && searchResultCount > 0 && (
+          <Text dimColor>  {searchResultCount} sessions matched</Text>
+        )}
+        {searchResultCount === null && isLoadingMore && <Text dimColor> ↓ Loading more sessions...</Text>}
+        {searchResultCount === null && !hasMore && !isLoadingMore && availableSessions.length > 0 && (
+          <Text dimColor>  All sessions loaded ({availableSessions.length} total)</Text>
+        )}
+      </Box>
     </Box>
   );
 };

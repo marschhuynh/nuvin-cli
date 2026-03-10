@@ -413,7 +413,7 @@ const cli = meow(
   const { scanAvailableSessions, getSessionDir } = await import('./hooks/useSessionManagement.js');
   let initialSessions: Awaited<ReturnType<typeof scanAvailableSessions>> | null = null;
   try {
-    initialSessions = await scanAvailableSessions(5, normalizedProfile);
+    initialSessions = await scanAvailableSessions(5, undefined, normalizedProfile);
   } catch (_error) {
     initialSessions = [];
   }

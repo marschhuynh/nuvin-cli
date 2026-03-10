@@ -97,6 +97,8 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
   onSpace,
   onNew,
   fuzzySearch = false,
+  onQueryChange,
+  showScrollIndicators = true,
 }) => {
   const { theme } = useTheme();
   const [input, setInput] = useState('');
@@ -175,6 +177,10 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
     setSelectedIndex(0);
     setScrollOffset(0);
   }, [searchQuery]);
+
+  useEffect(() => {
+    onQueryChange?.(searchQuery);
+  }, [searchQuery, onQueryChange]);
 
   useEffect(() => {
     if (visibleCount === 0 || selectableIndices.length === 0) return;
@@ -268,6 +274,24 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
   // Find a sample item to render for measurement (always needed for re-measuring on resize)
   const sampleItem = listItems.find((li): li is Extract<ListItem, { type: 'item' }> => li.type === 'item');
 
+  // Sticky header: scan backwards from scrollOffset to find the nearest group header.
+  // Show it pinned above the list only when the viewport top is NOT already that header.
+  const hasGroups = listItems.some((li) => li.type === 'header');
+  let stickyGroup: string | null = null;
+  if (hasGroups && scrollOffset > 0) {
+    for (let i = scrollOffset - 1; i >= 0; i--) {
+      if (listItems[i]?.type === 'header') {
+        stickyGroup = (listItems[i] as Extract<ListItem, { type: 'header' }>).group;
+        break;
+      }
+    }
+    // Hide the pinned header when the first visible row is already that same header
+    const firstVisible = listItems[scrollOffset];
+    if (firstVisible?.type === 'header' && firstVisible.group === stickyGroup) {
+      stickyGroup = null;
+    }
+  }
+
   return (
     <Box flexDirection="column" flexGrow={1} overflow="hidden">
       {showSearchInput && (
@@ -301,9 +325,11 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
           )}
 
           {/* Scroll indicator — above */}
-          <Box height={1} flexShrink={0}>
-            {hasMoreAbove ? <Text dimColor> ▲ {scrollOffset} more</Text> : null}
-          </Box>
+          {showScrollIndicators && (
+            <Box height={1} flexShrink={0}>
+              {hasMoreAbove ? <Text dimColor> ▲ {scrollOffset} more</Text> : null}
+            </Box>
+          )}
 
           {/*
             itemsAreaRef: flexGrow={1} fills whatever space remains after
@@ -311,51 +337,66 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
             measureElement(itemsAreaRef) / measureElement(sampleItemRef) = visibleCount.
             No overhead subtraction needed.
           */}
+
+          {/* Sticky group header — shown when scrolled into the middle of a group */}
+          {stickyGroup && (
+            <Box flexShrink={0} backgroundColor={theme.tokens.dim}>
+              <Text color={theme.colors.muted} bold>
+                {stickyGroup}
+              </Text>
+            </Box>
+          )}
+
           <Box ref={itemsAreaRef} flexDirection="row" flexGrow={1} overflow="hidden">
             <Box flexDirection="column" flexGrow={1} overflow="hidden">
-              {visibleListItems.map((listItem, relIndex) => {
-                const absoluteIndex = scrollOffset + relIndex;
-                const isSelected =
-                  listItem.type === 'item' && selectableIndices[selectedIndex] === absoluteIndex;
-                const isFirstItem = relIndex === 0 && listItem.type === 'item';
+              {(() => {
+                let sampleRefAssigned = false;
+                return visibleListItems.map((listItem, relIndex) => {
+                  const absoluteIndex = scrollOffset + relIndex;
+                  const isSelected =
+                    listItem.type === 'item' && selectableIndices[selectedIndex] === absoluteIndex;
 
-                if (listItem.type === 'header') {
-                  return (
-                    <Box key={`header-${listItem.group}`} flexShrink={0}>
-                      <Text color={theme.colors.muted} bold>
-                        {listItem.group}
-                      </Text>
-                    </Box>
-                  );
-                }
-
-                return (
-                  <Box
-                    key={`item-${listItem.item.value}-${absoluteIndex}`}
-                    ref={isFirstItem ? sampleItemRef : undefined}
-                    flexShrink={0}
-                    overflow="hidden"
-                  >
-                    {renderItem ? (
-                      renderItem(listItem.item, isSelected)
-                    ) : (
-                      <Box overflow="hidden" flexShrink={0}>
-                        <Text>{isSelected ? '❯ ' : '  '}</Text>
-                        <Text
-                          color={
-                            isSelected
-                              ? theme.model?.selectedItem || theme.colors.accent
-                              : theme.model?.item || theme.colors.text
-                          }
-                          bold={isSelected}
-                        >
-                          {listItem.item.label}
+                  if (listItem.type === 'header') {
+                    return (
+                      <Box key={`header-${listItem.group}`} flexShrink={0} backgroundColor={theme.tokens.dim}>
+                        <Text color={theme.colors.muted} bold>
+                          {listItem.group}
                         </Text>
                       </Box>
-                    )}
-                  </Box>
-                );
-              })}
+                    );
+                  }
+
+                  const needsRef = !sampleRefAssigned;
+                  if (needsRef) sampleRefAssigned = true;
+
+                  return (
+                    <Box
+                      key={`item-${listItem.item.value}-${absoluteIndex}`}
+                      ref={needsRef ? sampleItemRef : undefined}
+                      flexShrink={0}
+                      overflow="hidden"
+                    >
+                      {renderItem ? (
+                        renderItem(listItem.item, isSelected)
+                      ) : (
+                        <Box overflow="hidden" flexShrink={0}>
+                          <Text>{isSelected ? '❯ ' : '  '}</Text>
+                          <Text
+                            color={
+                              isSelected
+                                ? theme.model?.selectedItem || theme.colors.accent
+                                : theme.model?.item || theme.colors.text
+                            }
+                            bold={isSelected}
+                          >
+                            {listItem.item.label}
+                          </Text>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                });
+              })()}
 
               {/* Hidden sample item for measurement when no items are visible yet */}
               {effectiveVisibleCount === 0 && sampleItem && (
@@ -379,11 +420,13 @@ export const WindowedComboBox: React.FC<WindowedComboBoxProps> = ({
           </Box>
 
           {/* Scroll indicator — below */}
-          <Box height={1} flexShrink={0}>
-            {hasMoreBelow ? (
-              <Text dimColor> ▼ {listItems.length - scrollOffset - effectiveVisibleCount} more</Text>
-            ) : null}
-          </Box>
+          {showScrollIndicators && (
+            <Box height={1} flexShrink={0}>
+              {hasMoreBelow ? (
+                <Text dimColor> ▼ {listItems.length - scrollOffset - effectiveVisibleCount} more</Text>
+              ) : null}
+            </Box>
+          )}
         </Box>
       )}
     </Box>

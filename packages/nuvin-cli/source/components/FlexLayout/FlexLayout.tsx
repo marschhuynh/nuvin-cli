@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useRef, useMemo, type ReactNode } from 'react';
-import { Box, type BoxRef } from 'ink';
+import { Box } from 'ink';
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import type { SessionInfo } from '@/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
@@ -8,7 +8,6 @@ import { MessageLine } from '../MessageLine.js';
 import { WelcomeLogo } from '../RecentSessions.js';
 import { mergeToolCallsWithResultsCached, type MergeCache } from '../ChatDisplay.js';
 import { VirtualizedList } from '../VirtualizedList.js';
-import { useMeasureHeight } from '@/hooks/useHeight.js';
 
 type HeaderItem = { type: 'header'; key: string };
 type MessageItem = { type: 'message'; message: MessageLineType };
@@ -33,8 +32,6 @@ export function FlexLayout({
   headerKey = 0,
 }: FlexLayoutProps): React.ReactElement {
   const { theme } = useTheme();
-  const bottomRef = useRef<BoxRef>(null);
-  const { height: bottomHeight } = useMeasureHeight(bottomRef);
   const mergeCacheRef = useRef<MergeCache>(new Map());
   const mergedMessages = useMemo(() => mergeToolCallsWithResultsCached(messages, mergeCacheRef.current), [messages]);
 
@@ -62,22 +59,19 @@ export function FlexLayout({
     return item.message.id;
   };
 
-  const listHeight = height - bottomHeight;
-
   return (
     <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.colors.background}>
-      <Box flexDirection="column" height={listHeight > 0 ? listHeight : undefined} overflow="hidden" flexGrow={1}>
-        <VirtualizedList
-          items={listItems}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          overscan={1}
-          mousePriority={10}
-          height={listHeight > 0 ? listHeight : undefined}
-        />
-      </Box>
+      <VirtualizedList
+        items={listItems}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        overscan={1}
+        mousePriority={10}
+        flexGrow={1}
+        flexShrink={1}
+      />
       {bottom && (
-        <Box ref={bottomRef} flexDirection="column" flexShrink={0}>
+        <Box flexDirection="column" flexShrink={0}>
           {bottom}
         </Box>
       )}

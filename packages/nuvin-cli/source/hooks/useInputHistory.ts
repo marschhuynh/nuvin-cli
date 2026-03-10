@@ -49,7 +49,7 @@ export const useInputHistory = ({
 
       let lastSessionMessage: string | null = null;
       try {
-        const sessions = await scanAvailableSessions(1, currentProfile);
+        const sessions = await scanAvailableSessions(1, undefined, currentProfile);
         lastSessionMessage = sessions?.[0]?.lastMessage ?? null;
       } catch {
         lastSessionMessage = null;

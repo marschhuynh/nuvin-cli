@@ -173,4 +173,55 @@ describe('VirtualizedList', () => {
     await delay();
     expect(lastFrame()).toContain('┃');
   });
+
+  it('invalidates cached item heights when the container width changes', async () => {
+    const items: Item[] = [
+      { id: 'item-1', label: 'Alpha' },
+      { id: 'item-2', label: 'Beta' },
+    ];
+
+    let containerWidth = 20;
+
+    createMeasureMock({
+      itemCount: items.length,
+      getContainerHeight: () => 3,
+      getContainerWidth: () => containerWidth,
+      getItemHeight: () => (containerWidth <= 10 ? 3 : 1),
+    });
+
+    const { lastFrame, rerender } = render(
+      <VirtualizedList
+        items={items}
+        renderItem={(item) => (
+          <Box>
+            <Text>{item.label}</Text>
+          </Box>
+        )}
+        keyExtractor={(item) => item.id}
+        width={containerWidth}
+        height={3}
+      />,
+    );
+
+    await delay();
+    expect(lastFrame()).not.toContain('┃');
+
+    containerWidth = 10;
+    rerender(
+      <VirtualizedList
+        items={items}
+        renderItem={(item) => (
+          <Box>
+            <Text>{item.label}</Text>
+          </Box>
+        )}
+        keyExtractor={(item) => item.id}
+        width={containerWidth}
+        height={3}
+      />,
+    );
+
+    await delay();
+    expect(lastFrame()).toContain('┃');
+  });
 });

@@ -1,6 +1,6 @@
 export { useOrchestrator } from './useOrchestrator.js';
 export { useGlobalKeyboard } from './useGlobalKeyboard.js';
-export { useSessionManagement, scanAvailableSessions } from './useSessionManagement.js';
+export { useSessionManagement, scanAvailableSessions, searchSessions } from './useSessionManagement.js';
 export { useNotification } from './useNotification.js';
 export { useStdoutDimensions } from './useStdoutDimensions.js';
 export { useHandleSubmit, type QueuedItem } from './useHandleSubmit.js';
@@ -8,4 +8,3 @@ export { useDeviceFlow } from './useDeviceFlow.js';
 export { useOAuth } from './useOAuth.js';
 export { useAuthStorage } from './useAuthStorage.js';
 export { useStreamingMarkdown } from './useStreamingMarkdown.js';
-export { useMeasureHeight } from './useHeight.js';

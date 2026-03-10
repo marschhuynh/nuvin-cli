@@ -59,13 +59,13 @@ const scanPromises = new Map<CacheKey, Promise<SessionData>>();
 
 const logger = getDefaultLogger();
 
-function getCacheKey(limit?: number, profile?: string): CacheKey {
-  return `${profile ?? DEFAULT_PROFILE}_${limit ?? 'all'}`;
+function getCacheKey(limit?: number, offset?: number, profile?: string): CacheKey {
+  return `${profile ?? DEFAULT_PROFILE}:scan:${limit ?? 'all'}:${offset ?? 0}`;
 }
 
 // Export standalone functions for use in commands
-export const scanAvailableSessions = async (limit?: number, profile?: string): Promise<SessionInfo[]> => {
-  const cacheKey = getCacheKey(limit, profile);
+export const scanAvailableSessions = async (limit?: number, offset?: number, profile?: string): Promise<SessionInfo[]> => {
+  const cacheKey = getCacheKey(limit, offset, profile);
 
   // Check cache
   const cached = sessionCache.get(cacheKey);
@@ -92,6 +92,11 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
       sessionDirs.sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
 
       const sessions: SessionData = [];
+      // NOTE: Offset-based pagination assumes the sessions directory doesn't change
+      // between page fetches. Since sessions are append-only and the 10s TTL is short,
+      // this is acceptable. The TTL cache prevents redundant reads within one open.
+      let skipped = 0;
+      const skip = offset ?? 0;
 
       for (const sessionIdStr of sessionDirs) {
         // Stop if we have enough sessions
@@ -108,6 +113,12 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
 
           const cliMessages = (historyData?.default ?? historyData?.cli ?? []) as Message[];
           if (cliMessages.length === 0) {
+            continue;
+          }
+
+          // Skip first `skip` qualifying sessions for offset pagination
+          if (skipped < skip) {
+            skipped++;
             continue;
           }
 
@@ -140,9 +151,10 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
             messageCount: cliMessages.length,
             topic,
           });
-        } catch (_err) {}
+        } catch (err) {
+          logger.debug(`Failed to read session ${sessionIdStr}:`, err);
+        }
       }
-
       // Update cache
       sessionCache.set(cacheKey, {
         timestamp: Date.now(),
@@ -156,6 +168,87 @@ export const scanAvailableSessions = async (limit?: number, profile?: string): P
   })();
 
   scanPromises.set(cacheKey, promise);
+  return promise;
+};
+
+const searchCache = new Map<CacheKey, { timestamp: number; data: SessionData }>();
+const searchPromises = new Map<CacheKey, Promise<SessionData>>();
+
+export const searchSessions = async (query: string, profile?: string): Promise<SessionInfo[]> => {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+
+  const cacheKey = `${profile ?? DEFAULT_PROFILE}:search:${q}`;
+
+  const cached = searchCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  const existing = searchPromises.get(cacheKey);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    try {
+      const dir = sessionsDir(profile);
+      if (!fs.existsSync(dir)) return [];
+
+      const entries = await fsp.readdir(dir, { withFileTypes: true });
+      const sessionDirs = entries
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name)
+        .sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+
+      const results: SessionData = [];
+
+      for (const sessionIdStr of sessionDirs) {
+        const historyFile = path.join(dir, sessionIdStr, 'history.cli.json');
+        try {
+          const historyData = await readJson<Record<string, unknown>>(historyFile);
+          if (!historyData) continue;
+
+          const cliMessages = (historyData?.default ?? historyData?.cli ?? []) as Message[];
+          if (cliMessages.length === 0) continue;
+
+          let lastMessage = 'No messages';
+          for (let i = cliMessages.length - 1; i >= 0; i--) {
+            const msg = cliMessages[i] as { role?: string; content?: unknown };
+            if (msg?.role === 'user') {
+              lastMessage = typeof msg.content === 'string' ? msg.content : '';
+              break;
+            }
+          }
+
+          const metadataKey = '__metadata__default';
+          const metadataArray = historyData?.[metadataKey] as unknown[];
+          const metadata = metadataArray?.[0] ?? null;
+          const topic =
+            metadata && typeof metadata === 'object' && 'topic' in metadata
+              ? (metadata as { topic?: string }).topic
+              : undefined;
+
+          const haystack = `${topic ?? ''} ${lastMessage}`.toLowerCase();
+          if (!haystack.includes(q)) continue;
+
+          results.push({
+            sessionId: sessionIdStr,
+            timestamp: new Date(parseInt(sessionIdStr, 10)).toLocaleString(),
+            lastMessage,
+            messageCount: cliMessages.length,
+            topic,
+          });
+        } catch (err) {
+          logger.debug(`Failed to read session ${sessionIdStr}:`, err);
+        }
+      }
+      searchCache.set(cacheKey, { timestamp: Date.now(), data: results });
+      return results;
+    } finally {
+      searchPromises.delete(cacheKey);
+    }
+  })();
+
+  searchPromises.set(cacheKey, promise);
   return promise;
 };
 

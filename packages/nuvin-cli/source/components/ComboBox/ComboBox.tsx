@@ -10,6 +10,8 @@ export type ComboBoxItem = {
   label: string;
   value: string;
   group?: string;
+  /** Optional text used for search/filtering. Falls back to label when not provided. */
+  searchText?: string;
 };
 
 type ListItem = { type: 'header'; group: string } | { type: 'item'; item: ComboBoxItem; originalIndex: number };
@@ -28,6 +30,8 @@ export type ComboBoxProps = {
   onHighlight?: (item: ComboBoxItem | null, index: number) => void;
   onSpace?: (item: ComboBoxItem) => void;
   onNew?: () => void;
+  onQueryChange?: (query: string) => void;
+  showScrollIndicators?: boolean;
 };
 
 export const ComboBox: React.FC<ComboBoxProps> = ({
@@ -76,7 +80,7 @@ export const ComboBox: React.FC<ComboBoxProps> = ({
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return items;
     const query = searchQuery.toLowerCase();
-    return items.filter((item) => item.label.toLowerCase().includes(query));
+    return items.filter((item) => (item.searchText ?? item.label).toLowerCase().includes(query));
   }, [searchQuery, items]);
 
   const { listItems, selectableIndices, listIndexToSelectablePosition } = useMemo(() => {

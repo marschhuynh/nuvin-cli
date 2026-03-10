@@ -12,18 +12,32 @@ function Scrollbar({
   scrollInfo,
   color = 'gray',
   trackColor = 'dim',
+  visible,
 }: {
   scrollInfo: ScrollInfo;
   color?: string;
   trackColor?: string;
+  visible: boolean;
 }) {
   const { scrollY, containerHeight, contentHeight } = scrollInfo;
 
-  if (contentHeight <= containerHeight || containerHeight <= 0) {
+  if (containerHeight <= 0) {
     return null;
   }
 
+  // Always reserve the column width; only draw thumb when scrollable
   const trackHeight = containerHeight;
+
+  if (!visible || contentHeight <= containerHeight) {
+    return (
+      <Box flexDirection="column" flexShrink={0} marginLeft={1}>
+        {Array.from({ length: trackHeight }, (_, i) => (
+          <Text key={`empty-${i}`}> </Text>
+        ))}
+      </Box>
+    );
+  }
+
   const thumbHeight = Math.max(1, Math.round((containerHeight / contentHeight) * trackHeight));
   const maxScrollY = contentHeight - containerHeight;
   const scrollRatio = maxScrollY > 0 ? scrollY / maxScrollY : 0;
@@ -303,10 +317,11 @@ export function VirtualizedList<T>({
   // Measure visible items after render — fires when:
   // - items reference changes (streaming: content of existing items grew/shrank)
   // - visibleRange changes (scrolling: new items entered the render window and need measuring)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: items and visibleRange trigger remeasurement
+  // - heightCacheVersion changes (cache invalidated by width change — items need re-measuring)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items, visibleRange, and heightCacheVersion trigger remeasurement
   useLayoutEffect(() => {
     measureVisibleItems();
-  }, [measureVisibleItems, items, visibleRange.start, visibleRange.end]);
+  }, [measureVisibleItems, items, visibleRange.start, visibleRange.end, heightCacheVersion]);
 
   const scrollTo = useCallback(
     (newY: number) => {
@@ -452,7 +467,7 @@ export function VirtualizedList<T>({
           })}
         </Box>
       </Box>
-      {needsScrollbar && <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} />}
+      {showScrollbar && <Scrollbar scrollInfo={scrollInfo} color={scrollbarColor} trackColor={scrollbarTrackColor} visible={needsScrollbar} />}
     </Box>
   );
 }
