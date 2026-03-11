@@ -5,6 +5,7 @@ exports[`ChatDisplay - file_read tool call snapshot altMode (running → done) >
   Read the config file
 
 ⚙ Read src/config.ts
+
 "
 `;
 

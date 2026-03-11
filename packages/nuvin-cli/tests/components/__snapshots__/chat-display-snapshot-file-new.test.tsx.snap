@@ -6,6 +6,7 @@ exports[`ChatDisplay - file_new tool call snapshot (running → done) > snapshot
 
 ⚙ Create src/newFile.ts
   └─ Created (1 lines, 30 bytes)
+
 "
 `;
 

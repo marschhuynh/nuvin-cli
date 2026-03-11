@@ -6,6 +6,7 @@ exports[`ChatDisplay - grep_tool tool call snapshot (running → done) > snapsho
 
 ⚙ Search TODO at src
   └─ Found 2 matches in 2 files
+
 "
 `;
 

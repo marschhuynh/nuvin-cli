@@ -6,6 +6,7 @@ exports[`ChatDisplay - glob_tool tool call snapshot (running → done) > snapsho
 
 ⚙ Find files **/*.test.ts
   └─ Found 2 files
+
 "
 `;
 

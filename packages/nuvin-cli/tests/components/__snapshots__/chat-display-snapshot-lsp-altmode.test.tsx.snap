@@ -7,6 +7,7 @@ exports[`ChatDisplay - lsp tool call snapshot altMode (running → done) > snaps
 ⚙ Language server goToDefinition src/utils.ts:10:5
   │  Definition found at src/types.ts:25:1
   └─ Completed
+
 "
 `;
 

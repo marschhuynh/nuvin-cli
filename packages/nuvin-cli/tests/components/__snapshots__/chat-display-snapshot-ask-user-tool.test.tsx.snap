@@ -8,6 +8,7 @@ exports[`ChatDisplay - ask_user_tool tool call snapshot (running → done) > sna
   │  Approach: Which approach?
   │    → Option A
   └─ Completed
+
 "
 `;
 

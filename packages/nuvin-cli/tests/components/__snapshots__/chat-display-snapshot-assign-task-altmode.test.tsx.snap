@@ -9,6 +9,7 @@ exports[`ChatDisplay - assign_task tool call snapshot altMode (running → done)
   │  task: Implement the auth module
   │  description: Build auth module
   └─ Done • 5 tools • 2.5k tokens • 15.0s
+
 "
 `;
 

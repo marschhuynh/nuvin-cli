@@ -8,6 +8,7 @@ exports[`ChatDisplay - bash_tool tool call snapshot (running → done) > snapsho
   │  All tests passed
   │  5 tests, 0 failures
   └─ Executed (exit 0)
+
 "
 `;
 

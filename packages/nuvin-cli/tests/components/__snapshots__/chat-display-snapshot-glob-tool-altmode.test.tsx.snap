@@ -6,6 +6,7 @@ exports[`ChatDisplay - glob_tool tool call snapshot altMode (running → done) >
 
 ⚙ Find files **/*.test.ts
   └─ Found 2 files
+
 "
 `;
 

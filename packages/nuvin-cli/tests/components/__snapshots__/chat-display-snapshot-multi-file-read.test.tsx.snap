@@ -8,6 +8,7 @@ exports[`ChatDisplay - 4x file_read in one message (running → partial → done
 ⚙ Read src/database.ts
 ⚙ Read src/routes.ts
 ⚙ Read src/middleware.ts
+
 "
 `;
 

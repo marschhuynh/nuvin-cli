@@ -6,6 +6,7 @@ exports[`ChatDisplay - web_fetch tool call snapshot (running → done) > snapsho
 
 ⚙ Fetch https://example.com/docs
   └─ Fetched (200, 1024 bytes)
+
 "
 `;
 
