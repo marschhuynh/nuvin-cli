@@ -2,7 +2,6 @@ import type React from 'react';
 import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { ToolCall, ToolApprovalDecision } from '@nuvin/nuvin-core';
 import { eventBus } from '@/services/EventBus.js';
-import { enrichToolCallsWithLineNumbers } from '@/utils/enrichToolCalls.js';
 import { firePermissionRequestHooks } from '@/utils/firePermissionRequestHooks.js';
 import type { IOrchestratorManager } from '@/services/IOrchestratorManager';
 
@@ -69,13 +68,12 @@ export function ToolApprovalProvider({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    const onToolCalls = async (event: { toolCalls: ToolCall[] }) => {
+    const onToolCalls = (event: { toolCalls: ToolCall[] }) => {
       try {
-        const enrichedToolCalls = await enrichToolCallsWithLineNumbers(event.toolCalls);
-
+        // Tool calls are already enriched by eventProcessor — no need to re-enrich.
         const toolsNeedingApproval: ToolCall[] = [];
 
-        for (const tool of enrichedToolCalls) {
+        for (const tool of event.toolCalls) {
           if (tool.requiresApproval && tool.approvalId) {
             if (sessionApprovedToolsRef.current.has(tool.function.name)) {
               try {
@@ -91,15 +89,17 @@ export function ToolApprovalProvider({
         }
 
         if (toolsNeedingApproval.length > 0) {
-          // Fire permission_request hooks only for tools that will actually show the approval UI.
-          // Session-approved tools have already been filtered out above.
-          await firePermissionRequestHooks(toolsNeedingApproval, orchestratorManager);
-
+          // Set pending tools synchronously so the next render hides them
+          // before the approval modal appears.
           setPendingApprovalTools((prev) => {
             const newTools = [...prev, ...toolsNeedingApproval];
             setPendingApprovalBatchTotal(newTools.length);
             return newTools;
           });
+
+          // Fire permission_request hooks asynchronously — these are informational
+          // and must not delay the pending state update.
+          void firePermissionRequestHooks(toolsNeedingApproval, orchestratorManager);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
