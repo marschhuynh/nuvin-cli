@@ -8,13 +8,6 @@ exports[`bash_tool - Snapshot Tests > renders bash command with empty output 1`]
 exports[`bash_tool - Snapshot Tests > renders bash command with long multi-line output 1`] = `
 "⚙ Run npm install
   │  ... (truncated)
-  │
-  │  [21] Processing item 21...
-  │  [22] Processing item 22...
-  │  [23] Processing item 23...
-  │  [24] Processing item 24...
-  │  [25] Processing item 25...
-  │  [26] Processing item 26...
   │  [27] Processing item 27...
   │  [28] Processing item 28...
   │  [29] Processing item 29...
@@ -29,6 +22,26 @@ exports[`bash_tool - Snapshot Tests > renders bash command with special characte
   │  🚀 Build complete
   │  Path: /usr/local/bin → ~/.local/bin
   └─ Executed (exit 0)"
+`;
+
+exports[`bash_tool - Snapshot Tests > renders streaming bash output matching result layout style 1`] = `
+"⚙ Run ls -la at /Users/user/project
+  │
+  │
+  │  total 64
+  │  drwxr-xr-x  12 user  staff   384 Jan 31 10:00 src
+  │  drwxr-xr-x   5 user  staff   160 Jan 31 10:00 tests
+  └─ Running (3 lines) ..."
+`;
+
+exports[`bash_tool - Snapshot Tests > renders streaming bash output with bordered content 1`] = `
+"⚙ Run npm test at /project
+  │
+  │
+  │  line 1
+  │  line 2
+  │  line 3
+  └─ Running (3 lines) ..."
 `;
 
 exports[`bash_tool - Snapshot Tests > renders successful bash command execution 1`] = `

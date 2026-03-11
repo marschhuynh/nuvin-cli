@@ -25,8 +25,8 @@ import { ToolCallViewer } from '@/components/ToolCallViewer/index.js';
 import { createMockToolCall, createMockToolResult, createMockToolResultMessage } from '../../helpers/toolMocks.js';
 
 describe('Tool Result Truncation', () => {
-  describe('Line limit (10 lines)', () => {
-    it('should show all lines when result has fewer than 10 lines', () => {
+  describe('Line limit (5 lines)', () => {
+    it('should show all lines when result has fewer than 5 lines', () => {
       const toolCall = createMockToolCall('bash_tool', { cmd: 'ls' });
       const result = 'line1\nline2\nline3\nline4\nline5';
       const toolResult = createMockToolResult('bash_tool', result);
@@ -42,9 +42,9 @@ describe('Tool Result Truncation', () => {
       expect(output).not.toContain('(truncated)');
     });
 
-    it('should show exactly 10 lines when result has exactly 10 lines', () => {
+    it('should show exactly 5 lines when result has exactly 5 lines', () => {
       const toolCall = createMockToolCall('bash_tool', { cmd: 'ls' });
-      const lines = Array.from({ length: 10 }, (_, i) => `line${i + 1}`);
+      const lines = Array.from({ length: 5 }, (_, i) => `line${i + 1}`);
       const result = lines.join('\n');
       const toolResult = createMockToolResult('bash_tool', result);
       const resultMessage = createMockToolResultMessage(toolResult, 100);
@@ -55,11 +55,11 @@ describe('Tool Result Truncation', () => {
 
       const output = lastFrame();
       expect(output).toContain('line1');
-      expect(output).toContain('line10');
+      expect(output).toContain('line5');
       expect(output).not.toContain('(truncated)');
     });
 
-    it('should truncate to 10 lines when result has more than 10 lines', () => {
+    it('should truncate to 5 lines when result has more than 5 lines', () => {
       const toolCall = createMockToolCall('bash_tool', { cmd: 'ls -la' });
       const lines = Array.from({ length: 20 }, (_, i) => `line${i + 1}`);
       const result = lines.join('\n');
@@ -73,13 +73,13 @@ describe('Tool Result Truncation', () => {
       const output = lastFrame();
       // Check for first line with boundary (avoid matching line11, line12, etc)
       expect(output).not.toMatch(/│\s+line1\n/);
-      expect(output).not.toMatch(/│\s+line10\n/);
-      expect(output).toContain('line11');
+      expect(output).not.toMatch(/│\s+line16\n/);
+      expect(output).toContain('line17');
       expect(output).toContain('line20');
       expect(output).toContain('(truncated)');
     });
 
-    it('should truncate at 10 lines for very long output', () => {
+    it('should truncate at 5 lines for very long output', () => {
       const toolCall = createMockToolCall('bash_tool', { cmd: 'find /' });
       const lines = Array.from({ length: 100 }, (_, i) => `/path/to/file${i + 1}.txt`);
       const result = lines.join('\n');
@@ -92,8 +92,10 @@ describe('Tool Result Truncation', () => {
 
       const output = lastFrame();
       expect(output).not.toContain('file1.txt');
-      expect(output).not.toContain('file10.txt');
-      expect(output).toContain('file91.txt');
+      expect(output).not.toContain('file96.txt');
+      expect(output).toContain('file97.txt');
+      expect(output).toContain('file98.txt');
+      expect(output).toContain('file99.txt');
       expect(output).toContain('file100.txt');
       expect(output).toContain('(truncated)');
     });
@@ -198,8 +200,10 @@ describe('Tool Result Truncation', () => {
       const output = lastFrame();
       // Check for first few lines with boundary (avoid matching line11, line12, etc)
       expect(output).not.toMatch(/│\s+line1\n/);
-      expect(output).not.toMatch(/│\s+line5\n/);
-      expect(output).toContain('line6');
+      expect(output).not.toMatch(/│\s+line11\n/);
+      expect(output).toContain('line12');
+      expect(output).toContain('line13');
+      expect(output).toContain('line14');
       expect(output).toContain('line15');
       expect(output).toContain('(truncated)');
     });
@@ -219,8 +223,10 @@ describe('Tool Result Truncation', () => {
 
       const output = lastFrame();
       expect(output).not.toContain('file1.txt');
-      expect(output).not.toContain('file10.txt');
-      expect(output).toContain('file41.txt');
+      expect(output).not.toContain('file46.txt');
+      expect(output).toContain('file47.txt');
+      expect(output).toContain('file48.txt');
+      expect(output).toContain('file49.txt');
       expect(output).toContain('file50.txt');
       expect(output).toContain('(truncated)');
     });

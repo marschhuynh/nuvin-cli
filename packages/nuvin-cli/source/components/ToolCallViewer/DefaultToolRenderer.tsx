@@ -89,8 +89,11 @@ export function defaultRenderResult(ctx: ToolRenderContext): React.ReactNode {
   let resultStr =
     typeof toolResult.result === 'string' ? toolResult.result : JSON.stringify(toolResult.result, null, 2);
 
-  // Truncate result to max 10 lines or 1000 characters
-  const MAX_LINES = 10;
+  // Trim trailing whitespace to avoid empty space before status line
+  resultStr = resultStr.trimEnd();
+
+  // Truncate result to max 5 visible lines (including truncation indicator)
+  const MAX_LINES = 5;
   const MAX_CHARS = 1000;
   let wasTruncated = false;
 
@@ -100,16 +103,16 @@ export function defaultRenderResult(ctx: ToolRenderContext): React.ReactNode {
     wasTruncated = true;
   }
 
-  // Then, check line limit - take last MAX_LINES lines
+  // Then, check line limit - take last lines, reserving 1 line for truncation indicator
   const lines = resultStr.split('\n');
   if (lines.length > MAX_LINES) {
-    resultStr = lines.slice(-MAX_LINES).join('\n');
+    resultStr = lines.slice(-(MAX_LINES - 1)).join('\n');
     wasTruncated = true;
   }
 
-  // Add truncation indicator if needed
+  // Add truncation indicator if needed (total stays within MAX_LINES)
   if (wasTruncated) {
-    resultStr = `... (truncated)\n\n${resultStr}`;
+    resultStr = `... (truncated)\n${resultStr}`;
   }
 
   const color = getStateColor(toolState, theme);

@@ -38,7 +38,7 @@ const BlockMessage = ({ content, backgroundColor, textColor }: { content: string
   )
 }
 
-const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false, noBottomMargin = false }) => {
+const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false }) => {
   const { altMode } = useAltMode();
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
