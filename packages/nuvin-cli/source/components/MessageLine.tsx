@@ -272,7 +272,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
         width="100%"
         flexShrink={0}
         backgroundColor={backgroundColor}
-        marginBottom={noBottomMargin ? 0 : 1}
+        marginBottom={1}
         {...(liveMessage
           ? {
             borderStyle: 'single',
