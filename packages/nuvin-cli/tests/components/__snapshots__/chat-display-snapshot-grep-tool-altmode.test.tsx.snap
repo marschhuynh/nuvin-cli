@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ChatDisplay - grep_tool tool call snapshot altMode (running → done) > snapshot: done state (result appended) 1`] = `
+"❯ [you]
+  Search for TODO comments in the source
+
+⚙ Search TODO at src
+  └─ Found 2 matches in 2 files
+"
+`;
+
+exports[`ChatDisplay - grep_tool tool call snapshot altMode (running → done) > snapshot: running state (no result yet) 1`] = `
+"❯ [you]
+  Search for TODO comments in the source
+
+⚙ Search TODO at src
+  └─ Running ...
+"
+`;

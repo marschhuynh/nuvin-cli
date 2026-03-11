@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ChatDisplay - glob_tool tool call snapshot (running → done) > snapshot: done state (result appended) 1`] = `
+"❯ [you]
+  Find all test files
+
+⚙ Find files **/*.test.ts
+  └─ Found 2 files
+"
+`;
+
+exports[`ChatDisplay - glob_tool tool call snapshot (running → done) > snapshot: running state (no result yet) 1`] = `
+"❯ [you]
+  Find all test files
+
+⚙ Find files **/*.test.ts
+  └─ Running ...
+"
+`;

@@ -1,0 +1,34 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ChatDisplay - 4x file_read in one message (running → partial → done) > snapshot: all done (4 of 4 results) 1`] = `
+"❯ [you]
+  Read all config files
+
+⚙ Read src/config.ts
+⚙ Read src/database.ts
+⚙ Read src/routes.ts
+⚙ Read src/middleware.ts
+"
+`;
+
+exports[`ChatDisplay - 4x file_read in one message (running → partial → done) > snapshot: all running (no results yet) 1`] = `
+"❯ [you]
+  Read all config files
+
+⚙ Reading src/config.ts
+⚙ Reading src/database.ts
+⚙ Reading src/routes.ts
+⚙ Reading src/middleware.ts
+"
+`;
+
+exports[`ChatDisplay - 4x file_read in one message (running → partial → done) > snapshot: partial (2 of 4 done) 1`] = `
+"❯ [you]
+  Read all config files
+
+⚙ Read src/config.ts
+⚙ Read src/database.ts
+⚙ Reading src/routes.ts
+⚙ Reading src/middleware.ts
+"
+`;

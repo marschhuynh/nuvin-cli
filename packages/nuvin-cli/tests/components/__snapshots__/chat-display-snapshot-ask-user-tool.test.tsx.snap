@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ChatDisplay - ask_user_tool tool call snapshot (running → done) > snapshot: done state (result appended) 1`] = `
+"❯ [you]
+  Which approach should I use?
+
+⚙ Ask user
+  │  Approach: Which approach?
+  │    → Option A
+  └─ Completed
+"
+`;
+
+exports[`ChatDisplay - ask_user_tool tool call snapshot (running → done) > snapshot: running state (no result yet) 1`] = `
+"❯ [you]
+  Which approach should I use?
+
+"
+`;

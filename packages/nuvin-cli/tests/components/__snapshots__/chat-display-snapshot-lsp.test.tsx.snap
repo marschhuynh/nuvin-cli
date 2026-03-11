@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ChatDisplay - lsp tool call snapshot (running → done) > snapshot: done state (result appended) 1`] = `
+"❯ [you]
+  Find the definition of this symbol
+
+⚙ Language server goToDefinition src/utils.ts:10:5
+  │  Definition found at src/types.ts:25:1
+  └─ Completed
+"
+`;
+
+exports[`ChatDisplay - lsp tool call snapshot (running → done) > snapshot: running state (no result yet) 1`] = `
+"❯ [you]
+  Find the definition of this symbol
+
+⚙ Language server goToDefinition src/utils.ts:10:5
+  └─ Running ...
+"
+`;
