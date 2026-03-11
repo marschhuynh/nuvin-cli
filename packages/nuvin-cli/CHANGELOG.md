@@ -1,5 +1,19 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.1
+
+### Patch Changes
+
+- [`e9f0c57`](https://github.com/marschhuynh/nuvin-space/commit/e9f0c577568cb6f37ecf7752eaa34f761c15a35b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix WindowedComboBox double-filtering bug. When using external search (onQueryChange), skip internal filtering to avoid discarding results matched on fields not in item.label.
+
+- [`fc87d14`](https://github.com/marschhuynh/nuvin-space/commit/fc87d14e7288d75a37e9e83dadd62608ec2c6a38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove bottom margin from last static message when no visible messages exist. Prevents extra spacing when chat displays only static content.
+
+- [`b3386dd`](https://github.com/marschhuynh/nuvin-space/commit/b3386dd41c97e3cb53ea78e3050dd944bc9018a5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Defer partial-result tool messages to bottom of chat view. Tool calls with some results still streaming now appear after other messages, keeping running tools visible at screen bottom. Completed tool calls render before running ones within the same message.
+
+- [`fc87d14`](https://github.com/marschhuynh/nuvin-space/commit/fc87d14e7288d75a37e9e83dadd62608ec2c6a38) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove duplicate tool_result messages from chat view. Tool results are now only rendered once embedded in their parent tool call, eliminating redundant display.
+
+- [`e9f0c57`](https://github.com/marschhuynh/nuvin-space/commit/e9f0c577568cb6f37ecf7752eaa34f761c15a35b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Include session ID and timestamp in history search. Users can now find sessions by searching their numeric ID or formatted date string.
+
 ## 1.38.0-rc.0
 
 ### Minor Changes
