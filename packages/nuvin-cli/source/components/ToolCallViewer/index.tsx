@@ -11,6 +11,7 @@ import { AutoScrollBox } from '@/components/AutoScrollBox.js';
 import { getStateColor } from './computeToolState.js';
 import { buildStreamingViewportLines } from './streamingViewport.js';
 import type { ComputedToolState, ToolRenderContext } from './types.js';
+import { LAYOUT } from './types.js';
 
 type ToolCallViewerProps = {
   toolCall: ToolCall;
@@ -107,18 +108,16 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
       {shouldRenderStatus && isRunning && toolName !== 'ask_user_tool' && (
         streamingOutput ? (
           <Box flexDirection="column" marginLeft={2}>
-            <Box flexDirection="row">
-              <Text dimColor color={color}>
-                {'└─ '}
-              </Text>
-              <Text>Running ({streamingTotalLines ?? 0} lines) ...</Text>
-              <Box marginLeft={1}>
-                <ToolTimer hasResult={false} finalDuration={finalDuration} />
-              </Box>
-            </Box>
             <Box
-              marginLeft={1}
+              borderStyle="single"
+              borderColor={color}
+              borderDimColor
+              borderBottom={false}
+              borderRight={false}
+              borderTop={false}
+              flexDirection="column"
               paddingLeft={2}
+              width={cols - LAYOUT.CONTENT_MARGIN}
             >
               <AutoScrollBox maxHeight={5} showScrollbar={false}>
                 <Box flexDirection="column">
@@ -129,6 +128,15 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
                   ))}
                 </Box>
               </AutoScrollBox>
+            </Box>
+            <Box flexDirection="row">
+              <Text dimColor color={color}>
+                {'└─ '}
+              </Text>
+              <Text>Running ({streamingTotalLines ?? 0} lines) ...</Text>
+              <Box marginLeft={1}>
+                <ToolTimer hasResult={false} finalDuration={finalDuration} />
+              </Box>
             </Box>
           </Box>
         ) : (
