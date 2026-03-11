@@ -291,6 +291,41 @@ describe('MCPToolsManager', () => {
       expect(call.enabledTools).toContain('mcp_s1_tool1');
     });
 
+    it('rebuilds CompositeToolPort with new server port on reconnect', async () => {
+      const { CompositeToolPort } = await import('@nuvin/nuvin-core');
+      const mockPort = {
+        getToolDefinitions: vi.fn().mockReturnValue([]),
+        executeToolCalls: vi.fn().mockResolvedValue([]),
+      };
+      const reconnectedServer = createMockMCPServerInfo({
+        id: 'server-1',
+        status: 'connected',
+        allowedTools: ['mcp_s1_tool1'],
+        port: mockPort as any,
+      });
+      const mockManager = createMockMCPManager({
+        reconnectServer: vi.fn().mockResolvedValue(reconnectedServer),
+        getConnectedServers: vi.fn().mockReturnValue([reconnectedServer]),
+      });
+      const baseTools = {
+        getToolDefinitions: vi.fn().mockReturnValue([]),
+        executeToolCalls: vi.fn().mockResolvedValue([]),
+      };
+      const mockOrchestrator = createMockOrchestrator({
+        getTools: vi.fn().mockReturnValue(baseTools),
+      });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
+      manager = new MCPToolsManager(deps);
+      manager.setMcpManager(mockManager as any);
+
+      await manager.reconnectMCPServer('server-1');
+
+      // setTools must be called to rebuild the composite with the new port
+      expect(mockOrchestrator.setTools).toHaveBeenCalledOnce();
+      const newTools = (mockOrchestrator.setTools as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+      expect(newTools).toBeInstanceOf(CompositeToolPort);
+    });
+
     it('reconnects but does NOT recalculate when server status is not connected', async () => {
       const failedServer = createMockMCPServerInfo({
         id: 'server-1',
@@ -358,6 +393,31 @@ describe('MCPToolsManager', () => {
       // No MCP tools since server was disconnected
       expect(call.enabledTools).toBeDefined();
       expect(call.enabledTools!.every((t: string) => !t.startsWith('mcp_'))).toBe(true);
+    });
+
+    it('rebuilds tools without disconnected server port after disconnect', async () => {
+      const mockManager = createMockMCPManager({
+        disconnectServer: vi.fn().mockResolvedValue(true),
+        getConnectedServers: vi.fn().mockReturnValue([]),
+      });
+      const baseTools = {
+        getToolDefinitions: vi.fn().mockReturnValue([]),
+        executeToolCalls: vi.fn().mockResolvedValue([]),
+      };
+      const mockOrchestrator = createMockOrchestrator({
+        getTools: vi.fn().mockReturnValue(baseTools),
+      });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
+      manager = new MCPToolsManager(deps);
+      manager.setMcpManager(mockManager as any);
+
+      await manager.disconnectMCPServer('server-1');
+
+      // setTools must be called to reset to base tools (no MCP ports remain)
+      expect(mockOrchestrator.setTools).toHaveBeenCalledOnce();
+      const newTools = (mockOrchestrator.setTools as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+      // When no MCP ports remain, should reset to the base tool port (not a composite)
+      expect(newTools).toBe(baseTools);
     });
 
     it('does NOT recalculate when disconnect fails', async () => {

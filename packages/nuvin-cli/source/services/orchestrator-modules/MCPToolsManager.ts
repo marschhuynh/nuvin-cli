@@ -1,4 +1,4 @@
-import { CompositeToolPort } from '@nuvin/nuvin-core';
+import { CompositeToolPort, type ToolPort } from '@nuvin/nuvin-core';
 import type { OrchestratorRuntime } from '../OrchestratorRuntime.js';
 import { MCPServerManager, type MCPServerInfo } from '../MCPServerManager.js';
 import { getEnabledTools } from './constants.js';
@@ -24,6 +24,7 @@ type MCPBackgroundHandlers = {
  */
 export class MCPToolsManager {
   private mcpManager: MCPServerManager | null = null;
+  private baseToolPort: ToolPort | null = null;
 
   constructor(private deps: MCPToolsManagerDeps) {}
 
@@ -44,24 +45,47 @@ export class MCPToolsManager {
   // ─── Core: recalculate enabled tools ───────────────────────────────────────
 
   /**
-   * Collects allowed tools from all connected MCP servers and prepends the
-   * base enabled tools. Updates the orchestrator config with the combined list.
+   * Rebuilds the CompositeToolPort from the base tool port + all currently
+   * connected MCP server ports, then updates both the orchestrator's tools
+   * and the enabled tools list.
    *
-   * This consolidates a pattern that was previously duplicated 4× across
-   * updateMCPAllowedTools, reconnectMCPServer, disconnectMCPServer, and
-   * initializeMCPServersInBackground.
+   * This must be called whenever the set of connected MCP servers changes
+   * (reconnect, disconnect, permission update) so the orchestrator's tool
+   * port reflects the current state.
    */
   recalculateEnabledTools(): void {
     const orchestrator = this.deps.getRuntime()?.orchestrator ?? null;
     if (!orchestrator) return;
 
     const mcpEnabledTools: string[] = [];
+    const mcpPorts: ToolPort[] = [];
 
     if (this.mcpManager) {
       const allServers = this.mcpManager.getConnectedServers();
       for (const server of allServers) {
         mcpEnabledTools.push(...server.allowedTools);
+        if (server.port) {
+          mcpPorts.push(server.port);
+        }
       }
+    }
+
+    // Rebuild the composite tool port so newly connected/disconnected
+    // server ports are reflected in the orchestrator's tool set.
+    // Lazily capture the base tool port if background init hasn't run yet.
+    if (!this.baseToolPort) {
+      const currentTools = orchestrator.getTools();
+      // Only capture if not already a CompositeToolPort (i.e., still the original base port)
+      if (!(currentTools instanceof CompositeToolPort)) {
+        this.baseToolPort = currentTools;
+      }
+    }
+
+    if (this.baseToolPort) {
+      const compositeTools = mcpPorts.length > 0
+        ? new CompositeToolPort([this.baseToolPort, ...mcpPorts])
+        : this.baseToolPort;
+      orchestrator.setTools(compositeTools);
     }
 
     const baseTools = getEnabledTools(this.deps.getMemoryConfig());
@@ -120,15 +144,21 @@ export class MCPToolsManager {
         const { mcpPorts, enabledTools: mcpEnabledTools } = await mcpManager.initializeServers();
 
         const orchestrator = this.deps.getRuntime()?.orchestrator ?? null;
-        if (mcpPorts.length > 0 && orchestrator) {
-          const currentTools = orchestrator.getTools();
-          const compositeTools = new CompositeToolPort([currentTools, ...mcpPorts]);
+        if (orchestrator) {
+          // Always capture the base tool port before any composite wrapping.
+          // This is needed for later reconnect/disconnect to rebuild the composite.
+          if (!this.baseToolPort) {
+            this.baseToolPort = orchestrator.getTools();
+          }
 
-          orchestrator.setTools(compositeTools);
+          if (mcpPorts.length > 0) {
+            const compositeTools = new CompositeToolPort([this.baseToolPort, ...mcpPorts]);
+            orchestrator.setTools(compositeTools);
 
-          const baseTools = getEnabledTools(this.deps.getMemoryConfig());
-          const updatedEnabledTools = [...baseTools, ...mcpEnabledTools];
-          orchestrator.updateConfig({ enabledTools: updatedEnabledTools });
+            const baseTools = getEnabledTools(this.deps.getMemoryConfig());
+            const updatedEnabledTools = [...baseTools, ...mcpEnabledTools];
+            orchestrator.updateConfig({ enabledTools: updatedEnabledTools });
+          }
         }
       } catch (err) {
         console.error('[MCP Init] Failed to initialize MCP servers:', err);
