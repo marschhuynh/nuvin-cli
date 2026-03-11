@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.2
+
+### Patch Changes
+
+- [`51aba8e`](https://github.com/marschhuynh/nuvin-space/commit/51aba8e0da852d5c22373c721d644ebb7c672dd1) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix MCP tool port rebuild on reconnect/disconnect. Preserve base tool port and correctly reconstruct CompositeToolPort when MCP server connections change.
+
 ## 1.38.0-rc.1
 
 ### Patch Changes
