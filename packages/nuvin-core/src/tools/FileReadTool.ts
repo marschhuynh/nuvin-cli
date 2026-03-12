@@ -116,9 +116,6 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
         await fd.close();
         let preview = buf.slice(0, bytesRead).toString('utf8');
         preview = stripUtfBom(preview);
-        // Trim to last complete line to avoid cutting mid-line
-        const lastNl = preview.lastIndexOf('\n');
-        if (lastNl > 0) preview = preview.slice(0, lastNl);
         const totalLines = preview.split(/\r?\n/).length;
 
         const result = preview
