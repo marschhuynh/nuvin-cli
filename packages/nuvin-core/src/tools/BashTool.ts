@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import * as os from 'node:os';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { ToolDefinition } from '../ports.js';
 import { ErrorReason } from '../ports.js';
 import type { FunctionTool, ToolExecutionContext, ExecResultError } from './types.js';
@@ -193,27 +194,43 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
           })
         : null;
 
-    const stdoutHandler = (chunk: Buffer) => {
-      if (truncated) return;
-      total += chunk.length;
-      if (total > maxOutputBytes) {
-        truncated = true;
-        this.killProcessGroup(child, isWindows);
-        return;
+    let spillFd: number | null = null;
+    let spillPath: string | null = null;
+
+    const ensureSpillFile = () => {
+      if (spillFd === null) {
+        spillPath = path.join(os.tmpdir(), `nuvin-bash-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.log`);
+        spillFd = fs.openSync(spillPath, 'w');
+        for (const buf of stdout) fs.writeSync(spillFd, buf);
+        for (const buf of stderr) fs.writeSync(spillFd, buf);
       }
-      stdout.push(chunk);
+    };
+
+    const stdoutHandler = (chunk: Buffer) => {
+      total += chunk.length;
+      if (!truncated && total > maxOutputBytes) {
+        truncated = true;
+        ensureSpillFile();
+      }
+      if (truncated) {
+        if (spillFd !== null) fs.writeSync(spillFd, chunk);
+      } else {
+        stdout.push(chunk);
+      }
       streamingBuffer?.push(chunk);
     };
 
     const stderrHandler = (chunk: Buffer) => {
-      if (truncated) return;
       total += chunk.length;
-      if (total > maxOutputBytes) {
+      if (!truncated && total > maxOutputBytes) {
         truncated = true;
-        this.killProcessGroup(child, isWindows);
-        return;
+        ensureSpillFile();
       }
-      stderr.push(chunk);
+      if (truncated) {
+        if (spillFd !== null) fs.writeSync(spillFd, chunk);
+      } else {
+        stderr.push(chunk);
+      }
       streamingBuffer?.push(chunk);
     };
 
@@ -226,6 +243,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
 
     const cleanup = async () => {
       await streamingBuffer?.dispose();
+      if (spillFd !== null) { try { fs.closeSync(spillFd); } catch {} spillFd = null; }
       if (timer) {
         clearTimeout(timer);
         timer = null;
@@ -280,7 +298,7 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       const errText = Buffer.concat(stderr).toString('utf8');
       const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;
 
-      const truncationReminder = truncated ? `\n\n<system-reminder>\nCommand output was truncated at ${maxOutputBytes} bytes. Use more specific commands or redirect output to a file to see the full result.\n</system-reminder>` : '';
+      const truncationReminder = truncated ? `\n\n<system-reminder>\nCommand output was truncated at ${maxOutputBytes} bytes (total: ${total} bytes). Full output saved to: ${spillPath}\nUse file_read with lineStart/lineEnd to inspect specific sections of the full output.\n</system-reminder>` : '';
 
       if (code !== 0) {
         const fullOutput = output + truncationReminder;
