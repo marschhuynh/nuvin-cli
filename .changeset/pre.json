@@ -8,6 +8,7 @@
   "changesets": [
     "cleanup-unused-prop",
     "combobox-double-filter-fix",
+    "file-read-truncation",
     "history-pagination",
     "last-static-message-margin",
     "mcp-tool-port-rebuild",

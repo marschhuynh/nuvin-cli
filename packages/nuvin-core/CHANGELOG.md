@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.1.0-rc.0
+
+### Minor Changes
+
+- [`297b4b6`](https://github.com/marschhuynh/nuvin-space/commit/297b4b6049fa0b568e40a3269e16368270978bbb) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add content truncation to `file_read` tool. Full-file reads exceeding 20KB are truncated with a `<system-reminder>` tag showing total lines and file size, guiding agents to use `lineStart`/`lineEnd` for specific sections. Line-range reads are unaffected.
+
 ## 2.0.0
 
 ### Major Changes

@@ -1,5 +1,12 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.5
+
+### Patch Changes
+
+- Updated dependencies [[`297b4b6`](https://github.com/marschhuynh/nuvin-space/commit/297b4b6049fa0b568e40a3269e16368270978bbb)]:
+  - @nuvin/nuvin-core@2.1.0-rc.0
+
 ## 1.38.0-rc.4
 
 ### Patch Changes
