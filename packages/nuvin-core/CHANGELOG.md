@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.1.0-rc.1
+
+### Patch Changes
+
+- [`572f220`](https://github.com/marschhuynh/nuvin-space/commit/572f2201d2b5e9f4e3d3db1417cf2eaef6363153) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `ToolOutputSpill` utility for tools to write large output to session-scoped files. Refactor `bash_tool` to spill truncated output to `{sessionDir}/{toolName}_{toolCallId}.log` instead of killing the process. Add `sessionDir` to `ToolExecutionContext` and orchestrator.
+
 ## 2.1.0-rc.0
 
 ### Minor Changes
