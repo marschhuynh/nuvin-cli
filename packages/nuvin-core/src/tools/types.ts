@@ -35,6 +35,7 @@ export type ToolExecutionContext = {
   conversationId?: string;
   agentId?: string;
   sessionId?: string;
+  sessionDir?: string;
   workspaceDir?: string;
   delegationDepth?: number;
   messageId?: string;

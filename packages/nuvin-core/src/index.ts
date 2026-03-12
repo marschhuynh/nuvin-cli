@@ -158,6 +158,8 @@ export type {
   ToolMetadataMap,
   ComputerUseMetadata,
 } from './tools/tool-result-metadata.js';
+export { spillToolOutput, openToolOutputSpill } from './tools/tool-output-spill.js';
+export type { SpillOptions, ToolOutputSpillHandle } from './tools/tool-output-spill.js';
 export type {
   FileReadResult,
   FileReadSuccessResult,

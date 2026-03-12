@@ -197,6 +197,7 @@ export class AgentOrchestrator {
   private memory: MemoryPort<Message>;
   private hookPort?: HookPort;
   private sessionId: string = 'default';
+  private sessionDir: string | null = null;
 
   constructor(
     private cfg: AgentConfig,
@@ -329,6 +330,20 @@ export class AgentOrchestrator {
    */
   public getSessionId(): string {
     return this.sessionId;
+  }
+
+  /**
+   * Updates the session directory path.
+   */
+  public setSessionDir(dir: string | null): void {
+    this.sessionDir = dir;
+  }
+
+  /**
+   * Gets the current session directory path.
+   */
+  public getSessionDir(): string | null {
+    return this.sessionDir;
   }
 
   /**
@@ -572,6 +587,7 @@ export class AgentOrchestrator {
         {
           conversationId,
           agentId: this.cfg.id,
+          sessionDir: this.sessionDir,
           messageId,
           eventPort: this.events,
           waitForUserQuestion: async (

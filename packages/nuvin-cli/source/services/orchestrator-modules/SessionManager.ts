@@ -178,6 +178,7 @@ export class SessionManager {
     orchestrator.setEvents(newEventAdapter);
     orchestrator.setMetrics(new SessionBoundMetricsPort(sessionId, sessionMetricsService));
     orchestrator.setSessionId(sessionId);
+    orchestrator.setSessionDir(sessionDir);
 
     // Also reinitialize sub-agent memory with persisted storage
     const toolRegistry = this.deps.getToolRegistry();
@@ -266,6 +267,7 @@ export class SessionManager {
     orchestrator.setMetrics(new SessionBoundMetricsPort(sessionId, sessionMetricsService));
     if (memPersist) {
       orchestrator.setSessionId(sessionId);
+      orchestrator.setSessionDir(sessionDir);
     }
 
     // Update cross-cutting state via runtime store
@@ -327,6 +329,7 @@ export class SessionManager {
     orchestrator.setEvents(newEventAdapter);
     orchestrator.setMetrics(new SessionBoundMetricsPort(sessionId, sessionMetricsService));
     orchestrator.setSessionId(sessionId);
+    orchestrator.setSessionDir(sessionDir);
 
     // Update cross-cutting state via runtime store
     this.deps.patchRuntime({

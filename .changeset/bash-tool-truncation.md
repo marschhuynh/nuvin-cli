@@ -2,4 +2,4 @@
 "@nuvin/nuvin-core": patch
 ---
 
-Replace inline `[truncated at N bytes]` marker in `bash_tool` output with a `<system-reminder>` tag, guiding agents to use more specific commands or redirect output to a file.
+Add `ToolOutputSpill` utility for tools to write large output to session-scoped files. Refactor `bash_tool` to spill truncated output to `{sessionDir}/{toolName}_{toolCallId}.log` instead of killing the process. Add `sessionDir` to `ToolExecutionContext` and orchestrator.
