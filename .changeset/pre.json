@@ -19,6 +19,7 @@
     "streaming-output-layout-improvement",
     "tool-approval-async-hooks",
     "tool-result-truncation-compact",
-    "virtualized-list-fixes"
+    "virtualized-list-fixes",
+    "virtualized-list-ref-cleanup"
   ]
 }
