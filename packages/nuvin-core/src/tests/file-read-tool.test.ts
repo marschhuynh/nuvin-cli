@@ -233,8 +233,10 @@ describe('FileReadTool', () => {
 
       await fs.rm(tmpDir2, { recursive: true, force: true });
 
-      expect(result.status).toBe('error');
-      expect(result.result).toContain('too large');
+      expect(result.status).toBe('success');
+      expect(result.result).toContain('<system-reminder>');
+      expect(result.result).toContain('File too large to read in full');
+      expect(result.metadata?.truncated).toBe(true);
     });
   });
 

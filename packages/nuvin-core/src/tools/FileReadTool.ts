@@ -110,7 +110,30 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
       if (!st || !st.isFile()) return err(`File not found: ${params.path}`, { path: params.path }, ErrorReason.NotFound);
 
       if (st.size > this.maxBytesHard) {
-        return err(`File too large (${st.size} bytes). Hard cap is ${this.maxBytesHard} bytes.`, { path: params.path }, ErrorReason.InvalidInput);
+        const fd = await fs.open(abs, 'r');
+        const buf = Buffer.alloc(this.maxContentBytes);
+        const { bytesRead } = await fd.read(buf, 0, this.maxContentBytes, 0);
+        await fd.close();
+        let preview = buf.slice(0, bytesRead).toString('utf8');
+        preview = stripUtfBom(preview);
+        // Trim to last complete line to avoid cutting mid-line
+        const lastNl = preview.lastIndexOf('\n');
+        if (lastNl > 0) preview = preview.slice(0, lastNl);
+        const totalLines = preview.split(/\r?\n/).length;
+
+        const result = preview
+          + `\n\n<system-reminder>\nFile too large to read in full (${formatBytes(st.size)}). Showing first ${formatBytes(this.maxContentBytes)} preview (${totalLines} lines). Use lineStart/lineEnd parameters to read specific sections.\n</system-reminder>`;
+
+        return okText(result, {
+          path: params.path,
+          created: st.birthtime.toISOString(),
+          modified: st.mtime.toISOString(),
+          size: st.size,
+          encoding: 'utf8',
+          bomStripped: false,
+          truncated: true,
+          totalLines,
+        });
       }
 
       const payload = await fs.readFile(abs);
