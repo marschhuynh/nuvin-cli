@@ -32,7 +32,7 @@ export type BashErrorResult = ExecResultError & {
 export type BashResult = BashSuccessResult | BashErrorResult;
 
 const DEFAULTS = {
-  maxOutputBytes: 1 * 1024 * 1024,
+  maxOutputBytes: 20 * 1024,
   timeoutMs: 30_000,
   stripAnsi: true,
 };
@@ -198,7 +198,6 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       total += chunk.length;
       if (total > maxOutputBytes) {
         truncated = true;
-        stdout.push(Buffer.from(`\n[truncated at ${maxOutputBytes} bytes]\n`));
         this.killProcessGroup(child, isWindows);
         return;
       }
@@ -211,7 +210,6 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       total += chunk.length;
       if (total > maxOutputBytes) {
         truncated = true;
-        stderr.push(Buffer.from(`\n[truncated at ${maxOutputBytes} bytes]\n`));
         this.killProcessGroup(child, isWindows);
         return;
       }
@@ -283,17 +281,19 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;
 
       if (code !== 0) {
-        const metadata: Record<string, unknown> = { code, signal: exitSignal, cwd };
+        const truncationReminder = truncated ? `\n\n<system-reminder>\nCommand output was truncated at ${maxOutputBytes} bytes. Use more specific commands or redirect output to a file to see the full result.\n</system-reminder>` : '';
+        const fullOutput = output + truncationReminder;
+        const metadata: Record<string, unknown> = { code, signal: exitSignal, cwd, truncated };
         if (output.toLowerCase().includes('permission denied')) {
-          return err(output, { ...metadata, errorReason: ErrorReason.PermissionDenied });
+          return err(fullOutput, { ...metadata, errorReason: ErrorReason.PermissionDenied });
         }
         if (output.toLowerCase().includes('command not found') || output.toLowerCase().includes('not found')) {
-          return err(output, { ...metadata, errorReason: ErrorReason.NotFound });
+          return err(fullOutput, { ...metadata, errorReason: ErrorReason.NotFound });
         }
-        return err(output, metadata);
+        return err(fullOutput, metadata);
       }
 
-      return okText(output, { code, signal: exitSignal, cwd, stripped: stripAnsi });
+      return okText(output + (truncated ? `\n\n<system-reminder>\nCommand output was truncated at ${maxOutputBytes} bytes. Use more specific commands or redirect output to a file to see the full result.\n</system-reminder>` : ''), { code, signal: exitSignal, cwd, stripped: stripAnsi, truncated });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
 
