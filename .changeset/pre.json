@@ -6,7 +6,7 @@
     "@nuvin/nuvin-core": "2.0.0"
   },
   "changesets": [
-    "cleanup-unused-prop",
+    "bash-tool-truncation",
     "combobox-double-filter-fix",
     "file-read-truncation",
     "history-pagination",
