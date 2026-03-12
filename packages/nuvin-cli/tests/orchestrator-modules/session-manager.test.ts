@@ -29,6 +29,7 @@ function createMockOrchestrator(overrides: Record<string, unknown> = {}) {
     setEvents: vi.fn(),
     setMetrics: vi.fn(),
     setSessionId: vi.fn(),
+    setSessionDir: vi.fn(),
     getConfig: vi.fn().mockReturnValue({ systemPrompt: 'test' }),
     getTools: vi.fn().mockReturnValue(null),
     ...overrides,

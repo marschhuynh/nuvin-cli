@@ -48,17 +48,15 @@ export function openToolOutputSpill(opts: Omit<SpillOptions, 'content'>): ToolOu
   const filePath = path.join(dir, filename);
 
   fs.mkdirSync(dir, { recursive: true });
-  const fd = fs.openSync(filePath, 'w');
+  const stream = fs.createWriteStream(filePath);
 
   return {
     path: filePath,
     write(chunk: string | Buffer) {
-      fs.writeSync(fd, typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+      stream.write(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
     },
     close() {
-      try {
-        fs.closeSync(fd);
-      } catch {}
+      stream.end();
     },
   };
 }
