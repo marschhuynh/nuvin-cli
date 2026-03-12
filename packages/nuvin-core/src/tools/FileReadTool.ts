@@ -49,12 +49,14 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
   private readonly rootDir: string;
   private readonly maxBytesDefault: number;
   private readonly maxBytesHard: number;
+  private readonly maxContentBytes: number;
   private readonly allowAbsolute: boolean;
 
   constructor(opts: FileReadToolOptions = {}) {
     this.rootDir = path.resolve(opts.rootDir ?? process.cwd());
     this.maxBytesDefault = Math.max(1, opts.maxBytesDefault ?? 256 * 1024);
     this.maxBytesHard = Math.max(this.maxBytesDefault, opts.maxBytesHard ?? 1024 * 1024);
+    this.maxContentBytes = 20_000;
     this.allowAbsolute = !!opts.allowAbsolute;
   }
 
@@ -116,7 +118,7 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
       const bomStripped = text.charCodeAt(0) === 0xfeff;
       text = stripUtfBom(text);
 
-      const metadata: FileMetadata & { lineRange?: LineRangeMetadata; encoding?: string; bomStripped?: boolean } = {
+      const metadata: FileMetadata & { lineRange?: LineRangeMetadata; encoding?: string; bomStripped?: boolean; truncated?: boolean; totalLines?: number } = {
         path: params.path,
         created: st.birthtime.toISOString(),
         modified: st.mtime.toISOString(),
@@ -148,7 +150,24 @@ export class FileReadTool implements FunctionTool<FileReadParams, ToolExecutionC
         });
       }
 
-      return okText(text, metadata);
+      // Truncate large full-file reads to keep LLM context manageable
+      const textBytes = Buffer.byteLength(text, 'utf8');
+      if (textBytes > this.maxContentBytes) {
+        const totalLines = text.split(/\r?\n/).length;
+        const truncated = truncateToByteLimit(text, this.maxContentBytes);
+        const truncatedLineCount = truncated.split(/\r?\n/).length;
+
+        const result = truncated
+          + `\n\n<system-reminder>\nFile content has been truncated. Showing first ${truncatedLineCount} of ${totalLines} lines (${formatBytes(this.maxContentBytes)} of ${formatBytes(st.size)}). Use lineStart/lineEnd parameters to read specific sections of this file.\n</system-reminder>`;
+
+        return okText(result, {
+          ...metadata,
+          truncated: true,
+          totalLines,
+        });
+      }
+
+      return okText(text, { ...metadata, truncated: false, totalLines: text.split(/\r?\n/).length });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       return err(message, { path: params.path }, ErrorReason.Unknown);
@@ -184,4 +203,31 @@ function clamp(n: number, lo: number, hi: number) {
 
 function stripUtfBom(s: string) {
   return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
+/** Truncate a string to fit within a byte limit without cutting mid-line */
+function truncateToByteLimit(text: string, maxBytes: number): string {
+  const lines = text.split(/\r?\n/);
+  let byteCount = 0;
+  let lastLineIndex = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const lineBytes = Buffer.byteLength(lines[i], 'utf8') + 1; // +1 for newline
+    if (byteCount + lineBytes > maxBytes) break;
+    byteCount += lineBytes;
+    lastLineIndex = i + 1;
+  }
+
+  // Always include at least one line
+  if (lastLineIndex === 0) lastLineIndex = 1;
+
+  return lines.slice(0, lastLineIndex).join('\n');
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} bytes`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(1)} MB`;
 }

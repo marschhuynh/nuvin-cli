@@ -252,4 +252,90 @@ describe('FileReadTool', () => {
       expect(result.status).toBe('error');
     });
   });
+
+  describe('content truncation', () => {
+    // Helper: generate content larger than 20KB threshold
+    // ~100 bytes per line × 250 lines ≈ 25KB
+    function makeLargeContent(lineCount: number) {
+      return Array.from({ length: lineCount }, (_, i) => `Line ${i + 1}: ${'x'.repeat(80)}`).join('\n');
+    }
+
+    it('should truncate full-file reads exceeding 20KB', async () => {
+      const filePath = path.join(tmpDir, 'big.txt');
+      const content = makeLargeContent(250);
+      await fs.writeFile(filePath, content);
+
+      const result = await tool.execute({ path: 'big.txt' });
+
+      expect(result.status).toBe('success');
+      expect(result.result).toContain('<system-reminder>');
+      expect(result.result).toContain('Use lineStart/lineEnd parameters to read specific sections');
+      expect(result.metadata?.truncated).toBe(true);
+      expect(result.metadata?.totalLines).toBe(250);
+    });
+
+    it('should not truncate small files', async () => {
+      const filePath = path.join(tmpDir, 'small-file.txt');
+      await fs.writeFile(filePath, 'small content');
+
+      const result = await tool.execute({ path: 'small-file.txt' });
+
+      expect(result.status).toBe('success');
+      expect(result.result).toBe('small content');
+      expect(result.metadata?.truncated).toBe(false);
+      expect(result.result).not.toContain('<system-reminder>');
+    });
+
+    it('should not truncate when lineStart/lineEnd is specified on a large file', async () => {
+      const filePath = path.join(tmpDir, 'big-range.txt');
+      await fs.writeFile(filePath, makeLargeContent(250));
+
+      const result = await tool.execute({ path: 'big-range.txt', lineStart: 1, lineEnd: 10 });
+
+      expect(result.status).toBe('success');
+      expect(result.result).not.toContain('<system-reminder>');
+    });
+
+    it('should truncate on line boundaries (not mid-line)', async () => {
+      const filePath = path.join(tmpDir, 'uniform-lines.txt');
+      // 300 lines of exactly 100 chars each → 30KB
+      const lineContent = 'A'.repeat(100);
+      const content = Array.from({ length: 300 }, () => lineContent).join('\n');
+      await fs.writeFile(filePath, content);
+
+      const result = await tool.execute({ path: 'uniform-lines.txt' });
+
+      expect(result.status).toBe('success');
+      expect(result.metadata?.truncated).toBe(true);
+      // Content before the system-reminder should only have complete lines
+      const contentBeforeReminder = result.result.split('\n\n<system-reminder>')[0];
+      const truncatedLines = contentBeforeReminder.split('\n');
+      for (const line of truncatedLines) {
+        expect(line.length).toBe(100);
+      }
+    });
+
+    it('should include total line count in truncation message', async () => {
+      const filePath = path.join(tmpDir, 'big-msg.txt');
+      await fs.writeFile(filePath, makeLargeContent(500));
+
+      const result = await tool.execute({ path: 'big-msg.txt' });
+
+      expect(result.status).toBe('success');
+      expect(result.result).toContain('500 lines');
+      expect(result.metadata?.truncated).toBe(true);
+      expect(result.metadata?.totalLines).toBe(500);
+    });
+
+    it('should not truncate a file just under 20KB', async () => {
+      const filePath = path.join(tmpDir, 'under-limit.txt');
+      await fs.writeFile(filePath, 'x'.repeat(19_000));
+
+      const result = await tool.execute({ path: 'under-limit.txt' });
+
+      expect(result.status).toBe('success');
+      expect(result.metadata?.truncated).toBe(false);
+      expect(result.result).not.toContain('<system-reminder>');
+    });
+  });
 });

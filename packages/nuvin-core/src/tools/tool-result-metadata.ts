@@ -16,6 +16,8 @@ export type FileReadMetadata = FileMetadata & {
   lineRange?: LineRangeMetadata;
   encoding?: string;
   bomStripped?: boolean;
+  truncated?: boolean;
+  totalLines?: number;
 };
 
 export type FileEditMetadata = FileMetadata & {
