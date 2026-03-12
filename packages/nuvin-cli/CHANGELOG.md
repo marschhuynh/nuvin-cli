@@ -1,5 +1,19 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.3
+
+### Patch Changes
+
+- [`2757cf7`](https://github.com/marschhuynh/nuvin-space/commit/2757cf745d6b5275994bfc59dcb2294e3d012d31) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove unused noBottomMargin prop from MessageLine component.
+
+- [`f603767`](https://github.com/marschhuynh/nuvin-space/commit/f60376770338e29f5feda2e1ac7017e54b25f923) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove `noBottomMargin` prop from MessageLine component. Always apply consistent bottom margin for simpler, more predictable spacing.
+
+- [`c5667f8`](https://github.com/marschhuynh/nuvin-space/commit/c5667f84b9fd04d4e49437379295660118da0e91) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve streaming tool output layout. Move running status below streaming viewport and add bordered container for better visual hierarchy.
+
+- [`f263aa7`](https://github.com/marschhuynh/nuvin-space/commit/f263aa76ee0900b90a35048d95eee95156f5cabc) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove redundant tool call enrichment and make permission request hooks fire asynchronously to avoid blocking pending approval state updates.
+
+- [`2757cf7`](https://github.com/marschhuynh/nuvin-space/commit/2757cf745d6b5275994bfc59dcb2294e3d012d31) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Reduce tool result truncation from 10 to 5 visible lines for more compact display.
+
 ## 1.38.0-rc.2
 
 ### Patch Changes
