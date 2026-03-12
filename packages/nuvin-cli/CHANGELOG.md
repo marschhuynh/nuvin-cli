@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.4
+
+### Patch Changes
+
+- [`059bea6`](https://github.com/marschhuynh/nuvin-space/commit/059bea6dfe778dbe2160fef8ced4d8dbc0520b88) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove unused contentRef and simplify items/keyExtractor access by using direct props instead of refs in VirtualizedList.
+
 ## 1.38.0-rc.3
 
 ### Patch Changes
