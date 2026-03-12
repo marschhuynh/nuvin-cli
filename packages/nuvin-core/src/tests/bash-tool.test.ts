@@ -134,10 +134,10 @@ describe('BashTool', () => {
       expect(result.metadata?.truncated).toBe(false);
     });
 
-    it('should include system-reminder when truncated output causes non-zero exit', async () => {
-      // Generate large output then exit non-zero — truncation overrides failure status
+    it('should include system-reminder when truncated output has non-zero exit', async () => {
+      // Truncation doesn't mask the exit code
       const result = await tool.execute({ cmd: 'python3 -c "import sys; [print(\'-\' * 100) for _ in range(300)]; sys.exit(1)"' });
-      expect(result.status).toBe('success');
+      expect(result.status).toBe('error');
       expect(result.result).toContain('<system-reminder>');
       expect(result.result).toContain('Command output was truncated');
     });

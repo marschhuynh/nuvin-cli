@@ -280,18 +280,21 @@ export class BashTool implements FunctionTool<BashParams, ToolExecutionContext, 
       const errText = Buffer.concat(stderr).toString('utf8');
       const output = stripAnsi ? stripAnsiAndControls(outText + errText) : outText + errText;
 
-      if (code !== 0 && !truncated) {
+      const truncationReminder = truncated ? `\n\n<system-reminder>\nCommand output was truncated at ${maxOutputBytes} bytes. Use more specific commands or redirect output to a file to see the full result.\n</system-reminder>` : '';
+
+      if (code !== 0) {
+        const fullOutput = output + truncationReminder;
         const metadata: Record<string, unknown> = { code, signal: exitSignal, cwd, truncated };
         if (output.toLowerCase().includes('permission denied')) {
-          return err(output, { ...metadata, errorReason: ErrorReason.PermissionDenied });
+          return err(fullOutput, { ...metadata, errorReason: ErrorReason.PermissionDenied });
         }
         if (output.toLowerCase().includes('command not found') || output.toLowerCase().includes('not found')) {
-          return err(output, { ...metadata, errorReason: ErrorReason.NotFound });
+          return err(fullOutput, { ...metadata, errorReason: ErrorReason.NotFound });
         }
-        return err(output, metadata);
+        return err(fullOutput, metadata);
       }
 
-      return okText(output + (truncated ? `\n\n<system-reminder>\nCommand output was truncated at ${maxOutputBytes} bytes. Use more specific commands or redirect output to a file to see the full result.\n</system-reminder>` : ''), { code, signal: exitSignal, cwd, stripped: stripAnsi, truncated });
+      return okText(output + truncationReminder, { code, signal: exitSignal, cwd, stripped: stripAnsi, truncated });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
 
