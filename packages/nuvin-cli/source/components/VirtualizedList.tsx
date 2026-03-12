@@ -102,19 +102,18 @@ export function VirtualizedList<T>({
   ...boxProps
 }: VirtualizedListProps<T>) {
   const containerRef = useRef<BoxRef>(null);
-  const contentRef = useRef<BoxRef>(null);
   const itemRefsMap = useRef<Map<string, DOMElement>>(new Map());
   const shouldAutoScrollRef = useRef(true);
   const heightCacheRef = useRef<Map<string, number>>(new Map());
   const [heightCacheVersion, setHeightCacheVersion] = useState(0);
 
   // Stable refs so measureVisibleItems (a stable callback) can read current values.
-  const itemsRef = useRef(items);
-  const keyExtractorRef = useRef(keyExtractor);
-  useLayoutEffect(() => {
-    itemsRef.current = items;
-    keyExtractorRef.current = keyExtractor;
-  });
+  // const itemsRef = useRef(items);
+  // const keyExtractorRef = useRef(keyExtractor);
+  // useLayoutEffect(() => {
+  //   itemsRef.current = items;
+  //   keyExtractorRef.current = keyExtractor;
+  // });
 
   const [scrollY, setScrollY] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -158,8 +157,8 @@ export function VirtualizedList<T>({
       // Recompute itemOffsets inline (heightCacheVersion hasn't bumped yet).
       let anchorOffset = 0;
       let anchorFound = false;
-      for (let i = 0; i < itemsRef.current.length; i++) {
-        const k = keyExtractorRef.current(itemsRef.current[i], i);
+      for (let i = 0; i < items.length; i++) {
+        const k = keyExtractor(items[i], i);
         if (k === anchor.key) {
           anchorFound = true;
           const corrected = anchorOffset + anchor.offset;
@@ -417,7 +416,8 @@ export function VirtualizedList<T>({
         setContainerHeight(height);
       }
     }
-  }, [items.length, containerHeight, heightProp]);
+  }, [items, containerHeight, heightProp]);
+  // });
 
   // Sync scrollY state to match effective position — useLayoutEffect to avoid flicker
   useLayoutEffect(() => {
@@ -455,7 +455,7 @@ export function VirtualizedList<T>({
   return (
     <Box flexDirection="row" overflow="hidden" width={widthProp} height={heightProp} {...boxProps}>
       <Box ref={containerRef} flexDirection="column" flexGrow={1} overflow="hidden">
-        <Box ref={contentRef} flexDirection="column" marginTop={marginTopValue}>
+        <Box flexDirection="column" marginTop={marginTopValue}>
           {visibleItems.map((item, i) => {
             const actualIndex = visibleRange.start + i;
             const key = keyExtractor(item, actualIndex);
