@@ -1,5 +1,15 @@
 # @nuvin/nuvin-core
 
+## 2.1.0-rc.2
+
+### Minor Changes
+
+- [`fe5fbc5`](https://github.com/marschhuynh/nuvin-space/commit/fe5fbc510e2ba20d8630f47071a9d17996044699) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add type definitions for lsp, skill, grep_tool, glob_tool, and ask_user_tool tools.
+
+### Patch Changes
+
+- [`fe5fbc5`](https://github.com/marschhuynh/nuvin-space/commit/fe5fbc510e2ba20d8630f47071a9d17996044699) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Disable base64 image extraction in tool results; MCP tools handle their own content formatting.
+
 ## 2.1.0-rc.1
 
 ### Patch Changes
