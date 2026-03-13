@@ -38,8 +38,30 @@ function makeItems(count: number): ComboBoxItem[] {
   }));
 }
 
-function delay(ms = 50): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Wait until the component finishes all measurement useEffect cycles.
+ * WindowedComboBox + WindowedScrollbar both have no-deps useEffects that
+ * call measureElement → setState, causing multiple re-render rounds.
+ * We poll until the frame stabilises (stays the same for `settleMs`).
+ */
+async function waitForStableFrame(
+  lastFrame: () => string | undefined,
+  { timeout = 2000, settleMs = 60 } = {},
+): Promise<void> {
+  const deadline = Date.now() + timeout;
+  let prev = lastFrame();
+  let stableSince = Date.now();
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const current = lastFrame();
+    if (current !== prev) {
+      prev = current;
+      stableSince = Date.now();
+    } else if (Date.now() - stableSince >= settleMs) {
+      return;
+    }
+  }
 }
 
 /**
@@ -91,7 +113,7 @@ describe('WindowedComboBox - Snapshot Tests', () => {
         showItemCount={false}
       />,
     );
-    await delay();
+    await waitForStableFrame(lastFrame);
 
     expect(lastFrame()).toMatchSnapshot();
   });
@@ -107,7 +129,7 @@ describe('WindowedComboBox - Snapshot Tests', () => {
         showItemCount={false}
       />,
     );
-    await delay();
+    await waitForStableFrame(lastFrame);
 
     expect(lastFrame()).toMatchSnapshot();
   });
@@ -124,7 +146,7 @@ describe('WindowedComboBox - Snapshot Tests', () => {
         showItemCount={false}
       />,
     );
-    await delay();
+    await waitForStableFrame(lastFrame);
 
     expect(lastFrame()).toMatchSnapshot();
   });
@@ -147,7 +169,7 @@ describe('WindowedComboBox - Snapshot Tests', () => {
         showItemCount={true}
       />,
     );
-    await delay();
+    await waitForStableFrame(lastFrame);
 
     expect(lastFrame()).toMatchSnapshot();
   });
@@ -177,7 +199,7 @@ describe('WindowedComboBox - Snapshot Tests', () => {
         showItemCount={false}
       />,
     );
-    await delay();
+    await waitForStableFrame(lastFrame);
 
     expect(lastFrame()).toMatchSnapshot();
   });
