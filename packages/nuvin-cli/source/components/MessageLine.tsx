@@ -190,7 +190,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
           </Box>
         );
 
-        if (hasRunningToolCall) {
+        if (hasRunningToolCall && !altMode) {
           return (
             <Box flexDirection="column" maxHeight="100%" flexShrink={0} width="100%">
               <AutoScrollBox mousePriority={100} showScrollbar maxHeight="100%">
