@@ -1,5 +1,13 @@
 # @nuvin/nuvin-core
 
+## 2.1.0-rc.4
+
+### Patch Changes
+
+- [`41d776f`](https://github.com/marschhuynh/nuvin-space/commit/41d776f6b856414a5d73d1b844138ed5096b61f2) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Bypass user approval for LSP tool by default.
+
+- [`41d776f`](https://github.com/marschhuynh/nuvin-space/commit/41d776f6b856414a5d73d1b844138ed5096b61f2) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Bypass user approval for skill tool by default.
+
 ## 2.1.0-rc.3
 
 ### Patch Changes

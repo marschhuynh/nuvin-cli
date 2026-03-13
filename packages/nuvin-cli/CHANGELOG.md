@@ -1,5 +1,16 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.10
+
+### Patch Changes
+
+- [`41d776f`](https://github.com/marschhuynh/nuvin-space/commit/41d776f6b856414a5d73d1b844138ed5096b61f2) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Skill and LSP tools now bypass user approval by default for improved efficiency.
+
+- [`fc20719`](https://github.com/marschhuynh/nuvin-space/commit/fc207197ee7b1e9f773d93bf0f4f58777f2064bd) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Replace simple delay with frame stabilization wait in WindowedComboBox snapshot tests for improved reliability.
+
+- Updated dependencies [[`41d776f`](https://github.com/marschhuynh/nuvin-space/commit/41d776f6b856414a5d73d1b844138ed5096b61f2), [`41d776f`](https://github.com/marschhuynh/nuvin-space/commit/41d776f6b856414a5d73d1b844138ed5096b61f2)]:
+  - @nuvin/nuvin-core@2.1.0-rc.4
+
 ## 2.0.0-rc.9
 
 ### Patch Changes
