@@ -361,7 +361,9 @@ export class AgentOrchestrator {
     const readOnlyTools = ['file_read', 'ls_tool', 'web_search', 'web_fetch', 'glob_tool', 'grep_tool'];
     const todoTools = ['todo_write', 'todo_read'];
     const interactiveTools = ['ask_user_tool'];
-    return readOnlyTools.includes(toolName) || todoTools.includes(toolName) || interactiveTools.includes(toolName);
+    const skillTools = ['skill'];
+    const lspTools = ['lsp'];
+    return readOnlyTools.includes(toolName) || todoTools.includes(toolName) || interactiveTools.includes(toolName) || skillTools.includes(toolName) || lspTools.includes(toolName);
   }
 
   /**

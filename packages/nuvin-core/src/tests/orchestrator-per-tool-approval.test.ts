@@ -92,6 +92,8 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
         { type: 'function', function: { name: 'bash', description: 'Run bash command', parameters: {} } },
         { type: 'function', function: { name: 'file_edit', description: 'Edit file', parameters: {} } },
         { type: 'function', function: { name: 'file_read', description: 'Read file', parameters: {} } },
+        { type: 'function', function: { name: 'skill', description: 'Load skill', parameters: {} } },
+        { type: 'function', function: { name: 'lsp', description: 'Language server protocol', parameters: {} } },
       ] as ToolDefinition[]),
       executeToolCalls: vi.fn(async (invocations: ToolInvocation[]) => {
         return invocations.map((inv) => {
@@ -253,6 +255,66 @@ describe('AgentOrchestrator - Per-Tool Approval', () => {
       expect(toolExecutions).toContain('file_read');
 
       // Check ToolCalls event - file_read should NOT require approval
+      const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
+      expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', false);
+    });
+
+    it('should execute bypass tools (skill) immediately without waiting for approval', async () => {
+      orchestrator = createOrchestrator(true);
+
+      const toolCallResponse: CompletionResult = {
+        content: '',
+        tool_calls: [
+          { id: 'tc-1', type: 'function', function: { name: 'skill', arguments: '{"name":"test-driven-development"}' } },
+        ],
+      };
+      const finalResponse: CompletionResult = {
+        content: 'Skill loaded successfully.',
+      };
+
+      let callCount = 0;
+      mockLLM.generateCompletion = vi.fn(async () => {
+        callCount++;
+        return callCount === 1 ? toolCallResponse : finalResponse;
+      });
+
+      // This should complete without needing approval
+      await orchestrator.send('load tdd skill', { stream: false });
+
+      // Tool should have executed (skill is bypass)
+      expect(toolExecutions).toContain('skill');
+
+      // Check ToolCalls event - skill should NOT require approval
+      const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
+      expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', false);
+    });
+
+    it('should execute bypass tools (lsp) immediately without waiting for approval', async () => {
+      orchestrator = createOrchestrator(true);
+
+      const toolCallResponse: CompletionResult = {
+        content: '',
+        tool_calls: [
+          { id: 'tc-1', type: 'function', function: { name: 'lsp', arguments: '{"operation":"goToDefinition","filePath":"test.ts","line":10,"character":5}' } },
+        ],
+      };
+      const finalResponse: CompletionResult = {
+        content: 'LSP result shown.',
+      };
+
+      let callCount = 0;
+      mockLLM.generateCompletion = vi.fn(async () => {
+        callCount++;
+        return callCount === 1 ? toolCallResponse : finalResponse;
+      });
+
+      // This should complete without needing approval
+      await orchestrator.send('find definition', { stream: false });
+
+      // Tool should have executed (lsp is bypass)
+      expect(toolExecutions).toContain('lsp');
+
+      // Check ToolCalls event - lsp should NOT require approval
       const toolCallsEvent = emittedEvents.find((e) => e.type === AgentEventTypes.ToolCalls);
       expect(toolCallsEvent?.toolCalls[0]).toHaveProperty('requiresApproval', false);
     });
