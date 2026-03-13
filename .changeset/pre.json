@@ -15,6 +15,7 @@
     "file-read-truncation",
     "history-pagination",
     "last-static-message-margin",
+    "lsp-tool-bypass-approval",
     "mcp-tool-port-rebuild",
     "message-action-modal-mouse",
     "message-actions-click-to-copy",
@@ -26,6 +27,8 @@
     "simplify-cache-key-generation",
     "simplify-hr-rendering",
     "simplify-user-question-prompt-layout",
+    "skill-and-lsp-tools-bypass-approval-cli",
+    "skill-tool-bypass-approval",
     "sticky-headers",
     "streaming-output-layout-improvement",
     "tool-approval-async-hooks",
@@ -33,6 +36,7 @@
     "tool-result-truncation-compact",
     "virtualized-list-fixes",
     "virtualized-list-ref-cleanup",
-    "virtualized-list-width-fix"
+    "virtualized-list-width-fix",
+    "windowed-combobox-test-reliability"
   ]
 }
