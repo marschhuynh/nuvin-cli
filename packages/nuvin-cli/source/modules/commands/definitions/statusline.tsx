@@ -28,6 +28,7 @@ const ALL_SEGMENTS: StatuslineSegment[] = [
   'gitBranch',
   'keybindings',
   'memory',
+  'rss',
 ];
 
 const SEGMENT_LABELS: Record<StatuslineSegment, string> = {
@@ -45,6 +46,7 @@ const SEGMENT_LABELS: Record<StatuslineSegment, string> = {
   gitBranch: 'Git branch',
   keybindings: 'Keybindings',
   memory: 'Memory (heap)',
+  rss: 'RSS (process total)',
 };
 
 // ---------------------------------------------------------------------------

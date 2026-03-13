@@ -44,10 +44,15 @@ const FooterComponent: React.FC<FooterProps> = ({
   const [heapMB, setHeapMB] = useState(() =>
     Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
   );
+  const [rssMB, setRssMB] = useState(() =>
+    Math.round(process.memoryUsage().rss / 1024 / 1024),
+  );
 
   useEffect(() => {
     const id = setInterval(() => {
-      setHeapMB(Math.round(process.memoryUsage().heapUsed / 1024 / 1024));
+      const mem = process.memoryUsage();
+      setHeapMB(Math.round(mem.heapUsed / 1024 / 1024));
+      setRssMB(Math.round(mem.rss / 1024 / 1024));
     }, 2000);
     return () => clearInterval(id);
   }, []);
@@ -221,6 +226,12 @@ const FooterComponent: React.FC<FooterProps> = ({
         return (
           <Text key="memory" color={theme.footer.status} dimColor>
             Mem: {heapMB}MB
+          </Text>
+        );
+      case 'rss':
+        return (
+          <Text key="rss" color={theme.footer.status} dimColor>
+            RSS: {rssMB}MB
           </Text>
         );
       default:

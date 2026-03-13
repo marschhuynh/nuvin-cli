@@ -120,7 +120,8 @@ export type StatuslineSegment =
   | 'lsp'
   | 'gitBranch'
   | 'keybindings'
-  | 'memory';
+  | 'memory'
+  | 'rss';
 
 /** A row of statusline items. '|' is a separator dividing left-aligned from right-aligned segments. */
 export type StatuslineRow = (StatuslineSegment | '|')[];
