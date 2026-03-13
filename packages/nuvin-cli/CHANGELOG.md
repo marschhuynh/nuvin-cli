@@ -1,5 +1,14 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.8
+
+### Patch Changes
+
+- [`fe5fbc5`](https://github.com/marschhuynh/nuvin-space/commit/fe5fbc510e2ba20d8630f47071a9d17996044699) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove alt-mode conditional layout for user question prompt to standardize positioning.
+
+- Updated dependencies [[`fe5fbc5`](https://github.com/marschhuynh/nuvin-space/commit/fe5fbc510e2ba20d8630f47071a9d17996044699), [`fe5fbc5`](https://github.com/marschhuynh/nuvin-space/commit/fe5fbc510e2ba20d8630f47071a9d17996044699)]:
+  - @nuvin/nuvin-core@2.1.0-rc.2
+
 ## 2.0.0-rc.7
 
 ### Major Changes

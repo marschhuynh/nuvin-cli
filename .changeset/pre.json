@@ -6,9 +6,11 @@
     "@nuvin/nuvin-core": "2.0.0"
   },
   "changesets": [
+    "add-lsp-and-skill-tool-types",
     "alt-mode-tool-call-ui-fix",
     "bash-tool-truncation",
     "combobox-double-filter-fix",
+    "disable-base64-image-extraction",
     "file-read-truncation",
     "history-pagination",
     "last-static-message-margin",
@@ -22,6 +24,7 @@
     "session-id-search",
     "simplify-cache-key-generation",
     "simplify-hr-rendering",
+    "simplify-user-question-prompt-layout",
     "sticky-headers",
     "streaming-output-layout-improvement",
     "tool-approval-async-hooks",
