@@ -132,6 +132,30 @@ export type MemoryExtractArgs = {
   minSimilarityScore?: number;
 };
 
+export type LspArgs = {
+  operation:
+    | 'goToDefinition'
+    | 'findReferences'
+    | 'hover'
+    | 'documentSymbol'
+    | 'workspaceSymbol'
+    | 'goToImplementation'
+    | 'prepareCallHierarchy'
+    | 'incomingCalls'
+    | 'outgoingCalls'
+    | 'diagnostics';
+  filePath: string;
+  line: number;
+  character: number;
+  query?: string;
+  description?: string;
+};
+
+export type SkillArgs = {
+  name: string;
+  description?: string;
+};
+
 export type ToolArguments =
   | BashToolArgs
   | FileReadArgs
@@ -147,7 +171,9 @@ export type ToolArguments =
   | AskUserArgs
   | ComputerUseArgs
   | MemoryQueryArgs
-  | MemoryExtractArgs;
+  | MemoryExtractArgs
+  | LspArgs
+  | SkillArgs;
 
 /**
  * Type guard to safely parse tool arguments
@@ -232,6 +258,23 @@ export function isMemoryExtractArgs(args: ToolArguments): args is MemoryExtractA
   return 'scope' in args || 'maxMessages' in args || 'minSimilarityScore' in args;
 }
 
+export function isLspArgs(args: ToolArguments): args is LspArgs {
+  return (
+    'operation' in args &&
+    'filePath' in args &&
+    'line' in args &&
+    'character' in args &&
+    typeof args.operation === 'string' &&
+    typeof args.filePath === 'string' &&
+    typeof args.line === 'number' &&
+    typeof args.character === 'number'
+  );
+}
+
+export function isSkillArgs(args: ToolArguments): args is SkillArgs {
+  return 'name' in args && typeof args.name === 'string';
+}
+
 export type ToolParameterMap = {
   bash_tool: BashToolArgs;
   file_read: FileReadArgs;
@@ -247,6 +290,8 @@ export type ToolParameterMap = {
   computer: ComputerUseArgs;
   memory_query: MemoryQueryArgs;
   memory_extract: MemoryExtractArgs;
+  lsp: LspArgs;
+  skill: SkillArgs;
 };
 
 export type ToolName = keyof ToolParameterMap;

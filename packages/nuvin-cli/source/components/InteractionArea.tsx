@@ -228,15 +228,9 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
         if (!hasPendingQuestion || !pendingQuestion) {
           return null;
         }
-        return altMode ? (
-          <Box position="absolute" bottom={2} zIndex={25} flexShrink={0}>
-            <UserQuestionPrompt questionData={pendingQuestion} />
-          </Box>
-        ) : (
-          <Box flexShrink={0} flexGrow={1} marginTop={1} zIndex={25}>
-            <UserQuestionPrompt questionData={pendingQuestion} />
-          </Box>
-        );
+        return <Box flexShrink={0} flexGrow={1} marginTop={1} zIndex={25}>
+          <UserQuestionPrompt questionData={pendingQuestion} />
+        </Box>
 
       case 'approval':
         if (!hasPendingApproval || !toolApprovalMode) {

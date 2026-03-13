@@ -43,7 +43,7 @@ import { SimpleContextBuilder } from './context.js';
 import { NoopEventPort } from './events.js';
 import { convertToolCallsWithErrorHandling } from './tools/tool-call-converter.js';
 import { safeParseToolArguments } from './tools/tool-call-parser.js';
-import { extractBase64Images, toMessageContentParts } from './utils/base64-image-detector.js';
+// import { extractBase64Images, toMessageContentParts } from './utils/base64-image-detector.js';
 
 type AssistantChunkEvent = Extract<AgentEvent, { type: typeof AgentEventTypes.AssistantChunk }>;
 type AssistantMessageEvent = Extract<AgentEvent, { type: typeof AgentEventTypes.AssistantMessage }>;
@@ -942,13 +942,19 @@ export class AgentOrchestrator {
           messageContent = { type: 'parts', parts: tr.result as Array<TextContentPart | ImageContentPart> };
         } else if (tr.type === 'text') {
           const text = tr.result as string;
-          const extracted = extractBase64Images(text);
-          const hasImages = extracted.some((e) => e.type === 'image');
-          if (hasImages) {
-            messageContent = { type: 'parts', parts: toMessageContentParts(extracted) };
-          } else {
-            messageContent = text;
-          }
+          // MCP tools handle their own content formatting via flattenMcpContent
+          // const isMcpTool = tr.name.startsWith('mcp_');
+          // if (!isMcpTool) {
+          //   const extracted = extractBase64Images(text);
+          //   const hasImages = extracted.some((e) => e.type === 'image');
+          //   if (hasImages) {
+          //     messageContent = { type: 'parts', parts: toMessageContentParts(extracted) };
+          //   } else {
+          //     messageContent = text;
+          //   }
+          // } else {
+          // }
+          messageContent = text;
         } else {
           messageContent = JSON.stringify(tr.result, null, 2);
         }
@@ -987,13 +993,19 @@ export class AgentOrchestrator {
           chatContent = partsToProviderContent(tr.result as Array<TextContentPart | ImageContentPart>);
         } else if (tr.type === 'text') {
           const text = tr.result as string;
-          const extracted = extractBase64Images(text);
-          const hasImages = extracted.some((e) => e.type === 'image');
-          if (hasImages) {
-            chatContent = partsToProviderContent(toMessageContentParts(extracted));
-          } else {
-            chatContent = text;
-          }
+          // MCP tools handle their own content formatting via flattenMcpContent
+          // const isMcpTool = tr.name.startsWith('mcp_');
+          // if (!isMcpTool) {
+          //   const extracted = extractBase64Images(text);
+          //   const hasImages = extracted.some((e) => e.type === 'image');
+          //   if (hasImages) {
+          //     chatContent = partsToProviderContent(toMessageContentParts(extracted));
+          //   } else {
+          //     chatContent = text;
+          //   }
+          // } else {
+          // }
+          chatContent = text;
         } else {
           chatContent = JSON.stringify(tr.result, null, 2);
         }

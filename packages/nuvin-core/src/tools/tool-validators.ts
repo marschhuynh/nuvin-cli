@@ -143,6 +143,31 @@ export const memoryExtractSchema = z.object({
   minSimilarityScore: z.number().min(0).max(10).optional(),
 });
 
+export const lspSchema = z.object({
+  operation: z.enum([
+    'goToDefinition',
+    'findReferences',
+    'hover',
+    'documentSymbol',
+    'workspaceSymbol',
+    'goToImplementation',
+    'prepareCallHierarchy',
+    'incomingCalls',
+    'outgoingCalls',
+    'diagnostics',
+  ]),
+  filePath: requiredString('filePath'),
+  line: z.number().int().min(1),
+  character: z.number().int().min(1),
+  query: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export const skillSchema = z.object({
+  name: requiredString('name'),
+  description: z.string().optional(),
+});
+
 export const toolSchemas = {
   bash_tool: bashToolSchema,
   file_read: fileReadSchema,
@@ -158,6 +183,8 @@ export const toolSchemas = {
   computer: computerToolSchema,
   memory_query: memoryQuerySchema,
   memory_extract: memoryExtractSchema,
+  lsp: lspSchema,
+  skill: skillSchema,
 } as const;
 
 export function validateToolParams<T extends ToolName>(
@@ -194,4 +221,6 @@ export const toolValidators = {
   computer: (params: Record<string, unknown>) => validateToolParams('computer', params),
   memory_query: (params: Record<string, unknown>) => validateToolParams('memory_query', params),
   memory_extract: (params: Record<string, unknown>) => validateToolParams('memory_extract', params),
+  lsp: (params: Record<string, unknown>) => validateToolParams('lsp', params),
+  skill: (params: Record<string, unknown>) => validateToolParams('skill', params),
 };

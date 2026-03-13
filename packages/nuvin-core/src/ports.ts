@@ -10,6 +10,11 @@ import type {
   WebFetchArgs,
   TodoWriteArgs,
   AssignTaskArgs,
+  GrepArgs,
+  GlobArgs,
+  LspArgs,
+  SkillArgs,
+  AskUserArgs,
 } from './tools/tool-params.js';
 import type {
   BashToolMetadata,
@@ -21,6 +26,9 @@ import type {
   WebFetchMetadata,
   TodoWriteMetadata,
   AssignTaskMetadata,
+  GrepToolMetadata,
+  GlobToolMetadata,
+  AskUserMetadata,
   ToolErrorMetadata,
 } from './tools/tool-result-metadata.js';
 
@@ -251,6 +259,11 @@ export type ToolInvocation =
   | { id: string; name: 'web_fetch'; parameters: WebFetchArgs; editInstruction?: string }
   | { id: string; name: 'todo_write'; parameters: TodoWriteArgs; editInstruction?: string }
   | { id: string; name: 'assign_task'; parameters: AssignTaskArgs; editInstruction?: string }
+  | { id: string; name: 'grep_tool'; parameters: GrepArgs; editInstruction?: string }
+  | { id: string; name: 'glob_tool'; parameters: GlobArgs; editInstruction?: string }
+  | { id: string; name: 'lsp'; parameters: LspArgs; editInstruction?: string }
+  | { id: string; name: 'skill'; parameters: SkillArgs; editInstruction?: string }
+  | { id: string; name: 'ask_user_tool'; parameters: AskUserArgs; editInstruction?: string }
   | { id: string; name: string; parameters: Record<string, unknown>; editInstruction?: string };
 
 export enum ErrorReason {
@@ -348,6 +361,59 @@ export type ToolExecutionResult =
       type: 'text';
       result: string;
       metadata: AssignTaskMetadata;
+      durationMs?: number;
+    }
+  | {
+      id: string;
+      name: 'grep_tool';
+      status: 'success';
+      type: 'text';
+      result: string;
+      metadata?: GrepToolMetadata;
+      durationMs?: number;
+    }
+  | {
+      id: string;
+      name: 'glob_tool';
+      status: 'success';
+      type: 'text';
+      result: string;
+      metadata?: GlobToolMetadata;
+      durationMs?: number;
+    }
+  | {
+      id: string;
+      name: 'lsp';
+      status: 'success';
+      type: 'text';
+      result: string;
+      metadata?: {
+        operation: string;
+        filePath: string;
+        line: number;
+        character: number;
+        resultCount?: number;
+      };
+      durationMs?: number;
+    }
+  | {
+      id: string;
+      name: 'skill';
+      status: 'success';
+      type: 'text';
+      result: string;
+      metadata?: {
+        name: string;
+      };
+      durationMs?: number;
+    }
+  | {
+      id: string;
+      name: 'ask_user_tool';
+      status: 'success';
+      type: 'text';
+      result: string;
+      metadata: AskUserMetadata;
       durationMs?: number;
     }
   | {
