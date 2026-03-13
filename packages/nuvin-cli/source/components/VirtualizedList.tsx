@@ -1,6 +1,7 @@
 import { type DOMElement, type BoxRef, Box, type BoxProps, measureElement, Text } from 'ink';
 import { useRef, useEffect, useCallback, useState, useMemo, useLayoutEffect, type ReactNode } from 'react';
 import { useMouse, useInput, useFocus, type MouseEvent, type Key } from '../contexts/InputContext/index.js';
+import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
 
 type ScrollInfo = {
   scrollY: number;
@@ -112,6 +113,7 @@ export function VirtualizedList<T>({
   const shouldAutoScrollRef = useRef(true);
   const heightCacheRef = useRef<Map<string, number>>(new Map());
   const [heightCacheVersion, setHeightCacheVersion] = useState(0);
+  const { rows, cols } = useStdoutDimensions();
 
   // Stable refs so measureVisibleItems (a stable callback) can read current values.
   // const itemsRef = useRef(items);
@@ -209,14 +211,15 @@ export function VirtualizedList<T>({
   }, [items, keyExtractor]);
 
   // When the viewport width changes, all cached item heights are invalid (items may reflow)
-  const prevWidthRef = useRef(widthProp);
+  const effectiveWidth = widthProp ?? cols;
+  const prevWidthRef = useRef(effectiveWidth);
   useEffect(() => {
-    if (prevWidthRef.current !== widthProp) {
-      prevWidthRef.current = widthProp;
+    if (prevWidthRef.current !== effectiveWidth) {
+      prevWidthRef.current = effectiveWidth;
       heightCacheRef.current.clear();
       setHeightCacheVersion((v) => v + 1);
     }
-  }, [widthProp]);
+  }, [effectiveWidth]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: heightCacheVersion is needed
   const { itemOffsets, totalContentHeight } = useMemo(() => {
@@ -460,7 +463,7 @@ export function VirtualizedList<T>({
   useMouse(handleMouseEvent, { isActive: (enableMouseScroll && isScrollable) || !!onItemClick, priority: mousePriority });
   useInput(handleKeyboardEvent, { isActive: isScrollable, priority: mousePriority });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length and heightProp intentionally trigger remeasurement
+  // biome-ignore lint/correctness/useExhaustiveDependencies: items.length, heightProp, rows, and cols intentionally trigger remeasurement
   useLayoutEffect(() => {
     if (containerRef.current) {
       const { height } = measureElement(containerRef.current);
@@ -468,8 +471,7 @@ export function VirtualizedList<T>({
         setContainerHeight(height);
       }
     }
-  }, [items, containerHeight, heightProp]);
-  // });
+  }, [items, containerHeight, heightProp, rows, cols]);
 
   // Sync scrollY state to match effective position — useLayoutEffect to avoid flicker
   useLayoutEffect(() => {

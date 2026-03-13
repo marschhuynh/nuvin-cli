@@ -242,15 +242,9 @@ export const InteractionArea = forwardRef<InputAreaHandle, InteractionAreaProps>
         if (!hasPendingApproval || !toolApprovalMode) {
           return null;
         }
-        return altMode ? (
-          <Box position="absolute" bottom={2} zIndex={20} flexShrink={0}>
+        return <Box flexShrink={0} flexGrow={1} marginTop={1} zIndex={20}>
             <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
           </Box>
-        ) : (
-          <Box flexShrink={0} flexGrow={1} marginTop={1} zIndex={20}>
-            <ToolApprovalPrompt toolCalls={pendingApprovalTools} />
-          </Box>
-        );
 
       case 'command':
         return altMode ? (

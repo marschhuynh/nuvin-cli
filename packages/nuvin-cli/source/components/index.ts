@@ -13,4 +13,3 @@ export { ToolCallViewer } from './ToolCallViewer/index.js';
 export * from './ToolApprovalPrompt/index.js';
 export * from './Gradient.js';
 export { ScrollBox, ScrollBoxProvider, useScrollBoxContext, type ScrollBoxHandle } from './ScrollBox.js';
-export { TextWrapper } from './TextWrapper.js';

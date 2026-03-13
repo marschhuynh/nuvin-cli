@@ -1,12 +1,10 @@
 import type React from 'react';
-import { useRef } from 'react';
 import { Box, Text } from 'ink';
 import { isTodoWriteArgs, parseToolArguments, type ToolCall } from '@nuvin/nuvin-core';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import { FileEditToolContent } from './ToolContentRenderer/TooFileEdit.js';
 import { FileNewToolContent } from './ToolContentRenderer/ToolFileNew.js';
 import { SkillToolContent } from './ToolContentRenderer/ToolSkill.js';
-import { TextWrapper } from '../TextWrapper.js';
 
 export type ToolRendererProps = {
   toolCall: ToolCall;
@@ -144,7 +142,6 @@ type DefaultParameterRendererProps = {
 
 const DefaultParameterRenderer: React.FC<DefaultParameterRendererProps> = ({ toolCall, config }) => {
   const args = parseToolArguments(toolCall.function.arguments) as Record<string, unknown>;
-  const containerRef = useRef(null);
 
   const parameters = config.parameters || [];
   const visibleParams = parameters.filter((p) => !p.hide && args[p.key] !== undefined);
@@ -164,8 +161,8 @@ const DefaultParameterRenderer: React.FC<DefaultParameterRendererProps> = ({ too
         const displayValue = format ? format(value) : formatValue(value);
 
         return (
-          <Box ref={containerRef} key={key} marginLeft={2}>
-            <TextWrapper containerRef={containerRef}>{`${displayLabel}: ${displayValue}`}</TextWrapper>
+          <Box key={key} marginLeft={2}>
+            <Text wrap="wrap">{`${displayLabel}: ${displayValue}`}</Text>
           </Box>
         );
       })}
@@ -176,20 +173,19 @@ const DefaultParameterRenderer: React.FC<DefaultParameterRendererProps> = ({ too
 export const ToolRenderer: React.FC<ToolRendererProps> = ({ toolCall }) => {
   const toolName = toolCall.function.name;
   const config = TOOL_REGISTRY[toolName];
-  const containerRef = useRef(null);
 
   if (!config) {
     const args = parseToolArguments(toolCall.function.arguments) as Record<string, unknown>;
 
     const allEntries = Object.entries(args).filter(([key]) => key !== 'description');
     return (
-      <Box flexDirection="column" width="100%" ref={containerRef}>
+      <Box flexDirection="column" width="100%">
         <Box>
           <Text>Parameters:</Text>
         </Box>
         {allEntries.map(([key, value]) => (
-          <Box key={key} paddingLeft={2} flexWrap="wrap">
-            <TextWrapper containerRef={containerRef} dimColor>{`${key}: ${formatValue(value)}`}</TextWrapper>
+          <Box key={key} paddingLeft={2}>
+            <Text wrap="wrap" dimColor>{`${key}: ${formatValue(value)}`}</Text>
           </Box>
         ))}
       </Box>

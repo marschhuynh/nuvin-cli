@@ -1,6 +1,5 @@
 import { Box, Text } from 'ink';
 import { useTheme } from '@/contexts/ThemeContext.js';
-import { TextWrapper } from '../TextWrapper.js';
 import type { CommandMenuItem } from './CommandMenu.js';
 import { useStdoutDimensions } from '@/hooks/useStdoutDimensions.js';
 
@@ -26,15 +25,15 @@ export const CommandMenuItemComponent = ({ isSelected = false, value: item, comm
           {`${item.value}`}
         </Text>
       </Box>
-      <Box>
-        <TextWrapper
-          width={descriptionWidth}
+      <Box width={descriptionWidth}>
+        <Text
+          wrap="wrap"
           color={isSelected ? theme.model?.selectedItem || theme.colors.accent : theme.model?.item || 'white'}
           dimColor
           bold={isSelected}
         >
           {`${item?.description}`}
-        </TextWrapper>
+        </Text>
       </Box>
     </Box>
   );

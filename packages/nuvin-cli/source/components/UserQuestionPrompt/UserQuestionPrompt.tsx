@@ -7,7 +7,6 @@ import { HelpText } from '@/components/HelpText.js';
 import { FocusProvider, useFocus, useFocusCycle } from '@/contexts/InputContext/FocusContext.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import TextInput from '@/components/TextInput/index.js';
-import { TextWrapper } from '../TextWrapper';
 import { Button } from '@/components/Button.js';
 
 const FOCUS_ID = {
@@ -556,7 +555,7 @@ function UserQuestionPromptContent({ questionData }: Props) {
     >
       <Box flexDirection="column" width="100%" paddingX={1}>
         <Box marginBottom={1}>
-          <TextWrapper>{currentQuestion.question}</TextWrapper>
+          <Text wrap="wrap">{currentQuestion.question}</Text>
         </Box>
         {optionsWithOther.map((option, idx) => {
           const isSelected = currentQuestion.multiSelect
