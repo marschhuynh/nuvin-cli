@@ -20,6 +20,24 @@ vi.mock('../source/hooks/useStdoutDimensions.ts', () => {
   };
 });
 
+vi.mock('@/contexts/ThemeContext.js', () => ({
+  useTheme: vi.fn().mockReturnValue({
+    theme: {
+      tokens: {
+        green: '#4bac78',
+        cyan: '#00d9ff',
+        red: '#c5564c',
+        yellow: '#ffc371',
+        blue: '#81a2be',
+        magenta: '#ff79c6',
+        gray: '#9b9b9b',
+        white: '#e6e6e6',
+        dim: '#303030',
+      },
+    },
+  }),
+}));
+
 describe('Markdown', () => {
   beforeEach(() => {
     vi.clearAllMocks();

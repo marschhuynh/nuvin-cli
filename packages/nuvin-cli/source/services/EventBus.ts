@@ -21,6 +21,8 @@ type EventMap = {
   'ui:keyboard:paste': undefined;
   'ui:focus:cycle': 'forward' | 'backward';
   'ui:input:toggleVimMode': undefined;
+  'ui:input:edit': { content: string };
+  'ui:input:retry': { content: string };
   'ui:history:selected': {
     sessionId: string;
     timestamp: string;

@@ -21,8 +21,8 @@ import type {
 const KITTY_KEYBOARD_ENABLE = '\x1b[>1u';
 const KITTY_KEYBOARD_DISABLE = '\x1b[<u';
 
-const MOUSE_MODE_ENABLE = '\x1b[?1000h\x1b[?1002h\x1b[?1006h';
-const MOUSE_MODE_DISABLE = '\x1b[?1006l\x1b[?1002l\x1b[?1000l';
+const MOUSE_MODE_ENABLE = '\x1b[?1000h\x1b[?1002h\x1b[?1003h\x1b[?1006h';
+const MOUSE_MODE_DISABLE = '\x1b[?1006l\x1b[?1003l\x1b[?1002l\x1b[?1000l';
 const ESC_FLUSH_DELAY_MS = 35;
 
 function supportsKittyProtocol(): boolean {

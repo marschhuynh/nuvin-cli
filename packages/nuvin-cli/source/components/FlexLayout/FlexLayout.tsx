@@ -1,11 +1,15 @@
 import type React from 'react';
-import { useRef, useMemo, type ReactNode } from 'react';
+import { useRef, useMemo, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { Box } from 'ink';
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
 import type { SessionInfo } from '@/types.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
+import { useAltMode } from '@/contexts/AltModeContext.js';
+import { useInput, useMouse } from '@/contexts/InputContext/index.js';
+import { eventBus } from '@/services/EventBus.js';
 import { MessageLine } from '../MessageLine.js';
 import { WelcomeLogo } from '../RecentSessions.js';
+import { MessageActionModal } from '../MessageActionModal.js';
 import { mergeToolCallsWithResultsCached, type MergeCache } from '../ChatDisplay.js';
 import { VirtualizedList } from '../VirtualizedList.js';
 
@@ -32,8 +36,61 @@ export function FlexLayout({
   headerKey = 0,
 }: FlexLayoutProps): React.ReactElement {
   const { theme } = useTheme();
+  const { altMode } = useAltMode();
   const mergeCacheRef = useRef<MergeCache>(new Map());
   const mergedMessages = useMemo(() => mergeToolCallsWithResultsCached(messages, mergeCacheRef.current), [messages]);
+
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+
+  const selectedMessage = useMemo(() => {
+    if (!selectedMessageId) return null;
+    return mergedMessages.find((m) => m.id === selectedMessageId) ?? null;
+  }, [selectedMessageId, mergedMessages]);
+
+  const handleItemClick = useCallback((item: ListItem, _index: number) => {
+    if (item.type === 'message') {
+      setSelectedMessageId((prev) => prev === item.message.id ? null : item.message.id);
+    }
+  }, []);
+
+  const handleEmptyClick = useCallback(() => {
+    setSelectedMessageId(null);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedMessageId(null);
+  }, []);
+
+  useInput((_input, key) => {
+    if (key.escape) {
+      setSelectedMessageId(null);
+      return true;
+    }
+  }, { isActive: selectedMessageId !== null });
+
+  // Dismiss modal on any click when it's open in alt mode
+  useMouse(
+    (event) => {
+      if (event.type === 'click' && event.button === 0) {
+        setSelectedMessageId(null);
+        return true;
+      }
+    },
+    { isActive: altMode && selectedMessageId !== null, priority: 100 },
+  );
+
+  // Clear selection when edit/retry actions fire
+  useEffect(() => {
+    const clearSelection = () => {
+      setSelectedMessageId(null);
+    };
+    eventBus.on('ui:input:edit', clearSelection);
+    eventBus.on('ui:input:retry', clearSelection);
+    return () => {
+      eventBus.off('ui:input:edit', clearSelection);
+      eventBus.off('ui:input:retry', clearSelection);
+    };
+  }, []);
 
   // Combine header and messages into a single items array
   const listItems: ListItem[] = useMemo(() => {
@@ -45,11 +102,17 @@ export function FlexLayout({
     return [header, ...messageItems];
   }, [headerKey, mergedMessages]);
 
-  const renderItem = (item: ListItem): ReactNode => {
+  const renderItem = (item: ListItem, _index: number): ReactNode => {
     if (item.type === 'header') {
       return <WelcomeLogo recentSessions={sessions ?? []} />;
     }
-    return <MessageLine key={item.message.id} message={item.message} />;
+    return (
+      <MessageLine
+        key={item.message.id}
+        message={item.message}
+        isSelected={selectedMessageId === item.message.id}
+      />
+    );
   };
 
   const keyExtractor = (item: ListItem): string => {
@@ -60,19 +123,33 @@ export function FlexLayout({
   };
 
   return (
-    <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.colors.background}>
-      <VirtualizedList
-        items={listItems}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        overscan={1}
-        mousePriority={10}
-        flexGrow={1}
-        flexShrink={1}
-      />
+    <Box flexDirection="column" width={width} height={height} paddingX={1} backgroundColor={theme.colors.background} position="relative">
+      <Box flexGrow={1} flexShrink={1}>
+        <VirtualizedList
+          items={listItems}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          overscan={1}
+          mousePriority={10}
+          flexGrow={1}
+          flexShrink={1}
+          onItemClick={handleItemClick}
+          onEmptyClick={handleEmptyClick}
+          selectedItemKey={selectedMessageId}
+        />
+      </Box>
       {bottom && (
         <Box flexDirection="column" flexShrink={0}>
           {bottom}
+        </Box>
+      )}
+      {altMode && (
+        <Box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={30}>
+          <MessageActionModal
+            visible={selectedMessageId !== null}
+            message={selectedMessage}
+            onClose={handleCloseModal}
+          />
         </Box>
       )}
     </Box>

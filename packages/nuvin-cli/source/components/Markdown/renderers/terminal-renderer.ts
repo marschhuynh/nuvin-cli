@@ -18,34 +18,39 @@ import { TABLE_CELL_SPLIT, TABLE_ROW_WRAP, createTable } from './table-renderer.
 import { formatList, fixNestedLists, indentLines, BULLET_POINT } from './list-renderer.js';
 import { reflowText, indent, hr, section } from './text-reflow.js';
 import { highlight } from './code-highlighter.js';
+import type { Theme } from '@/theme.js';
 
-const defaultOptions: InternalRendererOptions = {
-  code: chalk.yellow as StyleFunction,
-  blockquote: chalk.gray.italic as StyleFunction,
-  html: chalk.gray as StyleFunction,
-  heading: chalk.green.bold as StyleFunction,
-  firstHeading: chalk.magenta.underline.bold as StyleFunction,
-  hr: chalk.reset as StyleFunction,
-  listitem: chalk.reset as StyleFunction,
-  list: formatList,
-  table: chalk.reset as StyleFunction,
-  paragraph: chalk.reset as StyleFunction,
-  strong: chalk.bold as StyleFunction,
-  em: chalk.italic as StyleFunction,
-  codespan: chalk.yellow as StyleFunction,
-  del: chalk.dim.gray.strikethrough as StyleFunction,
-  link: chalk.blue as StyleFunction,
-  href: chalk.blue.underline as StyleFunction,
-  text: identity,
-  image: undefined,
-  unescape: true,
-  emoji: true,
-  width: 80,
-  showSectionPrefix: true,
-  reflowText: false,
-  tab: 2,
-  tableOptions: {},
-};
+export type ThemeTokens = Theme['tokens'];
+
+function buildDefaultOptions(tokens: ThemeTokens): InternalRendererOptions {
+  return {
+    code: chalk.hex(tokens.yellow) as StyleFunction,
+    blockquote: chalk.hex(tokens.gray).italic as StyleFunction,
+    html: chalk.hex(tokens.gray) as StyleFunction,
+    heading: chalk.hex(tokens.green).bold as StyleFunction,
+    firstHeading: chalk.hex(tokens.magenta).underline.bold as StyleFunction,
+    hr: chalk.reset as StyleFunction,
+    listitem: chalk.reset as StyleFunction,
+    list: formatList,
+    table: chalk.reset as StyleFunction,
+    paragraph: chalk.reset as StyleFunction,
+    strong: chalk.bold as StyleFunction,
+    em: chalk.italic as StyleFunction,
+    codespan: chalk.hex(tokens.yellow) as StyleFunction,
+    del: chalk.dim.hex(tokens.gray).strikethrough as StyleFunction,
+    link: chalk.hex(tokens.blue) as StyleFunction,
+    href: chalk.hex(tokens.blue).underline as StyleFunction,
+    text: identity,
+    image: undefined,
+    unescape: true,
+    emoji: true,
+    width: 80,
+    showSectionPrefix: true,
+    reflowText: false,
+    tab: 2,
+    tableOptions: {},
+  };
+}
 
 class Renderer {
   private o: InternalRendererOptions;
@@ -58,8 +63,8 @@ class Renderer {
   public options!: MarkedOptions;
   public parser!: MarkedParser;
 
-  constructor(options?: RendererOptions, highlightOptions?: HighlightOptions) {
-    const mergedOptions = { ...defaultOptions, ...options };
+  constructor(tokens: ThemeTokens, options?: RendererOptions, highlightOptions?: HighlightOptions) {
+    const mergedOptions = { ...buildDefaultOptions(tokens), ...options };
     this.tab = sanitizeTab(mergedOptions.tab, 4);
     this.o = mergedOptions as InternalRendererOptions;
     this.tableSettings = this.o.tableOptions;
@@ -374,8 +379,8 @@ class Renderer {
   }
 }
 
-export function terminalRenderer(options?: RendererOptions, highlightOptions?: HighlightOptions): RendererExtension {
-  const r = new Renderer(options, highlightOptions);
+export function terminalRenderer(tokens: ThemeTokens, options?: RendererOptions, highlightOptions?: HighlightOptions): RendererExtension {
+  const r = new Renderer(tokens, options, highlightOptions);
 
   const funcs: Array<keyof Renderer> = [
     'space',

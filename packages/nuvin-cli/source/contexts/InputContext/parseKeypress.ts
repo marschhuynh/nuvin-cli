@@ -454,6 +454,8 @@ export function parseMouseEvent(data: string): MouseParseResult {
       } else if (button === 65) {
         wheelDownCount++;
         event = { type: 'wheel-down', button: 65, x, y, count: 1 };
+      } else if (button === 35) {
+        event = { type: 'move', button: 0, x, y };
       } else if (button >= 32 && button < 64) {
         event = { type: 'drag', button: button - 32, x, y };
       } else if (isRelease) {

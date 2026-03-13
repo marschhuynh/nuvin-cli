@@ -1,7 +1,8 @@
 import type { ReactNode, FC } from 'react';
-import { Box, Text } from 'ink';
+import { useEffect } from 'react';
+import { Box, BoxProps, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme, UndimmedThemeProvider } from '@/contexts/ThemeContext.js';
 
 export type AppModalType = 'info' | 'error' | 'warning' | 'success' | 'default';
 
@@ -22,6 +23,8 @@ export interface AppModalProps {
   marginX?: number;
   marginY?: number;
   height?: number | string;
+  backdrop?: boolean;
+  containerProps?: BoxProps;
 }
 
 export const AppModal: FC<AppModalProps> = ({
@@ -40,9 +43,19 @@ export const AppModal: FC<AppModalProps> = ({
   marginY = 0,
   height,
   footer,
+  backdrop = false,
+  containerProps
 }) => {
-  const { theme: globalTheme } = useTheme();
+  const { originalTheme, setDimMode } = useTheme();
+  const globalTheme = originalTheme;
   const finalTitleColor = titleColor || globalTheme.modal.title;
+
+  useEffect(() => {
+    if (visible) {
+      setDimMode(true);
+      return () => setDimMode(false);
+    }
+  }, [visible, setDimMode]);
 
   useInput(
     (_input, key) => {
@@ -60,54 +73,72 @@ export const AppModal: FC<AppModalProps> = ({
 
   if (!visible) return null;
 
-  return (
-    <Box height={height} flexDirection="column" width="100%" backgroundColor={globalTheme.modal.background} flexGrow={1}>
-      <Box
-        flexWrap="wrap"
-        justifyContent="space-between"
-        backgroundColor={globalTheme.modal.titleBackground}
-        flexShrink={0}
-      >
-        {title ? (
-          <Box>
-            <Text color={finalTitleColor}>{` + `}</Text>
-            <Text color={finalTitleColor} bold>
-              {title}
-            </Text>
-          </Box>
-        ) : null}
-
-        {rightTitle ? (
-          <Box alignItems="flex-end" alignSelf="flex-end" justifyContent="flex-end" flexGrow={1}>
-            <Text color={finalTitleColor} bold>
-              {rightTitle}{' '}
-            </Text>
-          </Box>
-        ) : null}
-      </Box>
-      <Box flexDirection="column" width={'100%'} marginTop={1} flexGrow={1} overflow="hidden">
+  const modalContent = (
+    <UndimmedThemeProvider>
+      <Box height={height} flexDirection="column" width={"100%"} backgroundColor={globalTheme.modal.background} flexGrow={backdrop ? 0 : 1} {...containerProps}>
         <Box
-          flexDirection="column"
-          width={'100%'}
-          paddingX={paddingX}
-          paddingY={paddingY}
-          marginX={marginX}
-          marginY={marginY}
-          flexGrow={1}
-          overflow="hidden"
+          flexWrap="wrap"
+          justifyContent="space-between"
+          backgroundColor={globalTheme.modal.titleBackground}
+          flexShrink={0}
         >
-          {children}
+          {title ? (
+            <Box>
+              <Text color={finalTitleColor}>{` + `}</Text>
+              <Text color={finalTitleColor} bold>
+                {title}
+              </Text>
+            </Box>
+          ) : null}
+
+          {rightTitle ? (
+            <Box alignItems="flex-end" alignSelf="flex-end" justifyContent="flex-end" flexGrow={1}>
+              <Text color={finalTitleColor} bold>
+                {rightTitle}{' '}
+              </Text>
+            </Box>
+          ) : null}
         </Box>
+        <Box flexDirection="column" width={'100%'} marginTop={backdrop ? 0 : 1} flexGrow={1} overflow="hidden">
+          <Box
+            flexDirection="column"
+            width={'100%'}
+            paddingX={paddingX}
+            paddingY={paddingY}
+            marginX={marginX}
+            marginY={marginY}
+            flexGrow={1}
+            overflow="hidden"
+          >
+            {children}
+          </Box>
+        </Box>
+        {footer ? (
+          <Box flexShrink={0} backgroundColor={globalTheme.modal.footerBackground} zIndex={20}>
+            {footer}
+          </Box>
+        ) : (
+          <Box flexShrink={0} zIndex={20} height={1} backgroundColor={globalTheme.modal.footerBackground}></Box>
+        )}
       </Box>
-      {footer ? (
-        <Box flexShrink={0} backgroundColor={globalTheme.modal.footerBackground} zIndex={20}>
-          {footer}
-        </Box>
-      ) : (
-        <Box flexShrink={0} zIndex={20} height={1} backgroundColor={globalTheme.modal.footerBackground}></Box>
-      )}
-    </Box>
+    </UndimmedThemeProvider>
   );
+
+  if (backdrop) {
+    return (
+      <Box
+        flexDirection="column"
+        width="100%"
+        height="100%"
+        alignItems="center"
+        justifyContent="center"
+      >
+        {modalContent}
+      </Box>
+    );
+  }
+
+  return modalContent;
 };
 
 export default AppModal;

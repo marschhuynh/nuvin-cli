@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   resolveAndApplyThemeRuntime,
   type Theme,
@@ -6,10 +6,33 @@ import {
   type ThemeRuntime,
 } from '@/theme.js';
 
+const DIM_COLOR = '#222222';
+
+function dimValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value === 'transparent' ? value : DIM_COLOR;
+  }
+  if (value && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      result[k] = dimValue(v);
+    }
+    return result;
+  }
+  return value;
+}
+
+function buildDimTheme(source: Theme): Theme {
+  return dimValue(source) as Theme;
+}
+
 type ThemeContextValue = {
   theme: Theme;
+  originalTheme: Theme;
   getColor: (path: string) => string;
   runtime: ThemeRuntime;
+  dimMode: boolean;
+  setDimMode: (dim: boolean) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -32,7 +55,9 @@ export function ThemeProvider({ children, options }: ThemeProviderProps) {
     [options?.backgrounds, options?.colorLevel, options?.env, options?.mode, options?.stdout],
   );
 
-  const activeTheme = runtime.theme;
+  const [dimMode, setDimMode] = useState(false);
+
+  const activeTheme = dimMode ? buildDimTheme(runtime.theme) : runtime.theme;
 
   const getColor = useCallback((path: string): string => {
     const parts = path.split('.');
@@ -52,13 +77,25 @@ export function ThemeProvider({ children, options }: ThemeProviderProps) {
   const contextValue = useMemo<ThemeContextValue>(
     () => ({
       theme: activeTheme,
+      originalTheme: runtime.theme,
       getColor,
       runtime,
+      dimMode,
+      setDimMode,
     }),
-    [activeTheme, getColor, runtime],
+    [activeTheme, getColor, runtime, dimMode],
   );
 
   return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
+}
+
+export function UndimmedThemeProvider({ children }: { children: ReactNode }) {
+  const parent = useTheme();
+  const value = useMemo<ThemeContextValue>(
+    () => ({ ...parent, theme: parent.originalTheme }),
+    [parent],
+  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

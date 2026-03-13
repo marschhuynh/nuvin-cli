@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useCallback } from 'react';
 import { Box, Text } from 'ink';
 import type { ToolCall, ToolExecutionResult } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters';
@@ -11,6 +12,10 @@ import { AutoScrollBox } from './AutoScrollBox.js';
 import { SubAgentActivity } from './ToolCallViewer/ToolResultView';
 import { computeToolState } from './ToolCallViewer/computeToolState.js';
 import { Markdown } from './Markdown';
+import { MessageActionBar, type MessageAction } from './MessageActionBar.js';
+import { extractMessageContent } from '../utils/extractMessageContent.js';
+import { copyTextToClipboard } from '../utils/copyText.js';
+import { eventBus } from '../services/EventBus.js';
 
 type MessageLineProps = {
   key: string;
@@ -38,12 +43,24 @@ const BlockMessage = ({ content, backgroundColor, textColor }: { content: string
   )
 }
 
-const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false }) => {
+const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundColor, liveMessage = false, isSelected = false }) => {
   const { altMode } = useAltMode();
   const { theme } = useTheme();
   const isStreaming = message.metadata?.isStreaming === true;
   const streamingContent = message.content;
   const { pendingApprovalTools } = useToolApproval();
+
+  const handleAction = useCallback(async (action: MessageAction): Promise<boolean> => {
+    if (action === 'copy') {
+      const content = extractMessageContent(message);
+      return await copyTextToClipboard(content);
+    } else if (action === 'edit') {
+      eventBus.emit('ui:input:edit', { content: message.content });
+    } else if (action === 'retry') {
+      eventBus.emit('ui:input:retry', { content: '' });
+    }
+    return true;
+  }, [message]);
 
   const renderMessage = () => {
     switch (message.type) {
@@ -271,6 +288,8 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
       <Box
         width="100%"
         flexShrink={0}
+        flexDirection="column"
+        position="relative"
         backgroundColor={backgroundColor}
         marginBottom={1}
         {...(liveMessage
@@ -284,6 +303,11 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
           : {})}
       >
         {content}
+        {isSelected && !altMode && (
+          <Box position="absolute" top={0} right={0}>
+            <MessageActionBar messageType={message.type} onAction={handleAction} />
+          </Box>
+        )}
       </Box>
     );
   }

@@ -1,9 +1,10 @@
 import { marked } from 'marked';
-import { terminalRenderer } from '@/components/Markdown/renderers/terminal-renderer.js';
+import { terminalRenderer, type ThemeTokens } from '@/components/Markdown/renderers/terminal-renderer.js';
 
 type RendererConfig = {
   width: number;
   reflowText?: boolean;
+  tokens: ThemeTokens;
 };
 
 class MarkdownProvider {
@@ -26,7 +27,8 @@ class MarkdownProvider {
     if (
       !this.currentConfig ||
       this.currentConfig.width !== config.width ||
-      this.currentConfig.reflowText !== config.reflowText
+      this.currentConfig.reflowText !== config.reflowText ||
+      this.currentConfig.tokens !== config.tokens
     ) {
       this.configureRenderer(config);
       this.currentConfig = { ...config };
@@ -37,6 +39,7 @@ class MarkdownProvider {
 
   private configureRenderer(config: RendererConfig): void {
     const renderer = terminalRenderer(
+      config.tokens,
       {
         reflowText: config.reflowText ?? true,
         width: config.width,

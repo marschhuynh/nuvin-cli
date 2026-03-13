@@ -4,6 +4,7 @@ import { Text } from 'ink';
 import { markdownProvider } from '@/providers/MarkdownProvider.js';
 import { markdownCache } from '@/utils/markdownCache.js';
 import { useStdoutDimensions } from '@/hooks/index.js';
+import { useTheme } from '@/contexts/ThemeContext.js';
 
 type MarkdownProps = {
   children: string;
@@ -21,13 +22,15 @@ export const Markdown: React.FC<MarkdownProps> = ({
   maxWidth,
 }) => {
   const { cols } = useStdoutDimensions();
+  const { theme } = useTheme();
 
   const rendererConfig = useMemo(
     () => ({
       width: maxWidth ?? cols - 8,
       reflowText,
+      tokens: theme.tokens,
     }),
-    [cols, reflowText, maxWidth],
+    [cols, reflowText, maxWidth, theme.tokens],
   );
 
   const configHash = useMemo(() => JSON.stringify(rendererConfig), [rendererConfig]);

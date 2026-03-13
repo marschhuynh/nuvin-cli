@@ -335,6 +335,18 @@ export default function App({
     handleSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
 
+  // Keep a stable ref to messages so event handlers can access the latest value
+  // without needing to re-register on every message update
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  const busyRef = useRef(busy);
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
+
   const onViewRefresh = useCallback(() => {
     setHeaderKey((prev) => prev + 1);
   }, []);
@@ -371,11 +383,25 @@ export default function App({
       }
     };
 
+    const onEditMessage = (payload: { content: string }) => {
+      inputAreaRef.current?.setValue(payload.content);
+    };
+
+    const onRetryMessage = async () => {
+      if (busyRef.current) return;
+      const lastUserMessage = [...messagesRef.current].reverse().find((m) => m.type === 'user');
+      if (lastUserMessage) {
+        await handleSubmitRef.current(lastUserMessage.content);
+      }
+    };
+
     eventBus.on('command:sudo:toggle', onSudoToggle);
     eventBus.on('ui:header:refresh', onViewRefresh);
     eventBus.on('ui:input:toggleVimMode', onVimModeToggle);
     eventBus.on('custom-command:execute', onCustomCommandExecute);
     eventBus.on('ui:exit:start', onExitStart);
+    eventBus.on('ui:input:edit', onEditMessage);
+    eventBus.on('ui:input:retry', onRetryMessage);
 
     return () => {
       eventBus.off('command:sudo:toggle', onSudoToggle);
@@ -383,6 +409,8 @@ export default function App({
       eventBus.off('ui:input:toggleVimMode', onVimModeToggle);
       eventBus.off('custom-command:execute', onCustomCommandExecute);
       eventBus.off('ui:exit:start', onExitStart);
+      eventBus.off('ui:input:edit', onEditMessage);
+      eventBus.off('ui:input:retry', onRetryMessage);
     };
   }, [onViewRefresh, setToolApprovalMode]);
 

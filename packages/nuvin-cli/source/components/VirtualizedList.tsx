@@ -79,6 +79,9 @@ export type VirtualizedListProps<T> = {
   focus?: boolean;
   manualFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  onItemClick?: (item: T, index: number) => void;
+  onEmptyClick?: () => void;
+  selectedItemKey?: string | null;
 } & Omit<BoxProps, 'ref' | 'overflow' | 'children'>;
 
 export function VirtualizedList<T>({
@@ -97,6 +100,9 @@ export function VirtualizedList<T>({
   focus: externalFocus,
   manualFocus = false,
   onFocusChange,
+  onItemClick,
+  onEmptyClick,
+  selectedItemKey,
   width: widthProp,
   height: heightProp,
   ...boxProps
@@ -348,20 +354,66 @@ export function VirtualizedList<T>({
     [totalContentHeight, containerHeight],
   );
 
+  const findItemAtPosition = useCallback(
+    (contentY: number): number => {
+      if (items.length === 0 || contentY < 0) return -1;
+      let low = 0;
+      let high = itemOffsets.length - 1;
+      while (low < high) {
+        const mid = Math.floor((low + high) / 2);
+        if (itemOffsets[mid] <= contentY) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+      const index = itemOffsets[low] <= contentY ? low : low - 1;
+      if (index < 0 || index >= items.length) return -1;
+      const itemTop = itemOffsets[index] ?? 0;
+      const key = keyExtractor(items[index], index);
+      const itemHeight = heightCacheRef.current.get(key) ?? (estimateItemHeight ? estimateItemHeight(items[index], index) : 1);
+      return contentY < itemTop + itemHeight ? index : -1;
+    },
+    [items, itemOffsets, keyExtractor, estimateItemHeight],
+  );
+
   const handleMouseEvent = useCallback(
     (event: MouseEvent) => {
-      const multiplier = event.count || 1;
-      // const multiplier = 1;
-      if (event.type === 'wheel-up') {
+      if (event.type === 'click' && event.button === 0 && onItemClick) {
+        const containerBounds = containerRef.current?.getBounds();
+        if (containerBounds) {
+          // Bounds check: ignore clicks outside the container
+          if (
+            event.x < containerBounds.x ||
+            event.x >= containerBounds.x + containerBounds.width ||
+            event.y < containerBounds.y ||
+            event.y >= containerBounds.y + containerBounds.height
+          ) {
+            return;
+          }
+          const contentY = effectiveScrollY + (event.y - containerBounds.y);
+          const index = findItemAtPosition(contentY);
+          if (index >= 0) {
+            onItemClick(items[index], index);
+            return true;
+          }
+          // Click inside container but no item hit
+          onEmptyClick?.();
+          return true;
+        }
+      }
+      if (event.type === 'wheel-up' && enableMouseScroll) {
+        const multiplier = event.count || 1;
         scrollBy(-scrollStep * multiplier);
         return true;
       }
-      if (event.type === 'wheel-down') {
+      if (event.type === 'wheel-down' && enableMouseScroll) {
+        const multiplier = event.count || 1;
         scrollBy(scrollStep * multiplier);
         return true;
       }
     },
-    [scrollBy, scrollStep],
+    [onItemClick, onEmptyClick, items, findItemAtPosition, effectiveScrollY, enableMouseScroll, scrollBy, scrollStep],
   );
 
   const handleKeyboardEvent = useCallback(
@@ -405,7 +457,7 @@ export function VirtualizedList<T>({
     ],
   );
 
-  useMouse(handleMouseEvent, { isActive: enableMouseScroll && isScrollable, priority: mousePriority });
+  useMouse(handleMouseEvent, { isActive: (enableMouseScroll && isScrollable) || !!onItemClick, priority: mousePriority });
   useInput(handleKeyboardEvent, { isActive: isScrollable, priority: mousePriority });
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: items.length and heightProp intentionally trigger remeasurement
