@@ -231,7 +231,7 @@ const FooterComponent: React.FC<FooterProps> = ({
       case 'rss':
         return (
           <Text key="rss" color={theme.footer.status} dimColor>
-            RSS: {rssMB}MB
+            Real Mem: {rssMB}MB
           </Text>
         );
       default:
