@@ -1,5 +1,19 @@
 # @nuvin/nuvin-cli
 
+## 1.38.0-rc.6
+
+### Minor Changes
+
+- [`cb000a0`](https://github.com/marschhuynh/nuvin-space/commit/cb000a0f3d3633d7b28874d79f75f35fc2e19f4a) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `MessageActionModal` component with full mouse support. Click action items to execute, click backdrop to dismiss. Integrate with `FlexLayout` and `VirtualizedList` for hit-testing message selection. Add mouse event handling to `InputContext` with priority-based handler ordering. Enhance `AppModal` with backdrop click detection and improved focus management.
+
+- [`cb000a0`](https://github.com/marschhuynh/nuvin-space/commit/cb000a0f3d3633d7b28874d79f75f35fc2e19f4a) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add click-to-copy with contextual message actions in alt mode. Left-click any message to show action bar with Copy (all messages), Edit (user messages), and Retry (assistant/tool messages). Add `copyTextToClipboard` utility for cross-platform text copying. Add `extractMessageContent` utility to extract plain text from any message type including tool calls. Add `MessageActionBar` component for inline action display.
+
+### Patch Changes
+
+- [`74df128`](https://github.com/marschhuynh/nuvin-space/commit/74df1280f6bdac1231ae698a5580b9ee8e8c4396) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Hide running tool call UI in alt mode to prevent layout conflicts with message action bar.
+
+- [`74df128`](https://github.com/marschhuynh/nuvin-space/commit/74df1280f6bdac1231ae698a5580b9ee8e8c4396) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Simplify tool call cache key generation by removing status-based suffix.
+
 ## 1.38.0-rc.5
 
 ### Patch Changes
