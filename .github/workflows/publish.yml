@@ -50,10 +50,19 @@ jobs:
             echo "⏭️  No changeset files found"
           fi
 
-  publish:
+  ci:
     needs: [check-changesets]
     if: |
       always() &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true'))
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: [check-changesets, ci]
+    if: |
+      always() &&
+      needs.ci.result == 'success' &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true'))
     runs-on: ubuntu-latest
@@ -84,17 +93,6 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup GitHub CLI
-        run: |
-          if ! command -v gh &> /dev/null; then
-            echo "Installing GitHub CLI..."
-            type -p curl >/dev/null || (sudo apt-get update && sudo apt-get install -y curl)
-            curl -fsSL https://cli.github.com/packages/script/install.sh | sudo bash
-          fi
-
-      - name: Update npm
-        run: npm install -g npm@latest
-
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
@@ -105,9 +103,6 @@ jobs:
 
       - name: Build
         run: make build
-
-      - name: Run tests
-        run: pnpm test
 
       # Determine mode
       - name: Determine release mode
