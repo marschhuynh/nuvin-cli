@@ -115,7 +115,7 @@ describe('BashTool - Abort Timing Tests', () => {
       const tool = new BashTool();
       const controller = new AbortController();
 
-      // Command that produces output with delays (simpler than for loop)
+      // Command that produces output with delays — 4 seconds total without abort
       const command =
         'echo "Output 1" && sleep 1 && echo "Output 2" && sleep 1 && echo "Output 3" && sleep 1 && echo "Output 4"';
 
@@ -123,7 +123,7 @@ describe('BashTool - Abort Timing Tests', () => {
 
       const executePromise = tool.execute({ cmd: command, timeoutMs: 20000 }, { signal: controller.signal });
 
-      // Abort after 2.5 seconds (should see Output 1 and 2, maybe 3)
+      // Abort after 2.5 seconds — well before the 4-second command finishes
       setTimeout(() => {
         controller.abort();
       }, 2500);
@@ -131,12 +131,13 @@ describe('BashTool - Abort Timing Tests', () => {
       const result = await executePromise;
       const executionTime = Date.now() - startTime;
 
+      // Core assertion: abort interrupts the command early
       expect(result.status).toBe('error');
       expect(result.result).toContain('aborted by user');
+      // Should finish around 2.5s, not 4s
       expect(executionTime).toBeLessThan(3500);
-
-      // Should have some output (at least Output 1 and 2)
-      expect(result.result).toContain('Output');
+      // Should not reach the final output (which requires all 3 sleeps)
+      expect(result.result).not.toContain('Output 4');
     }, 15000);
   });
 

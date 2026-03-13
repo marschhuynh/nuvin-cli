@@ -120,7 +120,8 @@ describe('BashTool', () => {
     it('should truncate large stdout with system-reminder and spill file', async () => {
       // Generate ~30KB: 300 lines × 100 chars, well above 20KB limit
       // Process should complete naturally, not be killed
-      const result = await tool.execute({ cmd: 'python3 -c "print(\'x\' * 100 + \'\\n\', end=\'\') ; [print(\'-\' * 100) for _ in range(300)]"' });
+      const line = 'x'.repeat(100);
+      const result = await tool.execute({ cmd: `yes '${line}' | head -300` });
       expect(result.result).toContain('<system-reminder>');
       expect(result.result).toContain('Command output was truncated');
       expect(result.result).toContain('Full output saved to:');
@@ -137,7 +138,7 @@ describe('BashTool', () => {
 
     it('should include system-reminder when truncated output has non-zero exit', async () => {
       // Truncation doesn't mask the exit code
-      const result = await tool.execute({ cmd: 'python3 -c "import sys; [print(\'-\' * 100) for _ in range(300)]; sys.exit(1)"' });
+      const result = await tool.execute({ cmd: `yes '${'-'.repeat(100)}' | head -300; exit 1` });
       expect(result.status).toBe('error');
       expect(result.result).toContain('<system-reminder>');
       expect(result.result).toContain('Command output was truncated');
