@@ -1,5 +1,19 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.7
+
+### Major Changes
+
+- [`3bdf80f`](https://github.com/marschhuynh/nuvin-space/commit/3bdf80f663e6961cf1fc13e94b5086ae13588946) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove TextWrapper component in favor of native Ink Text wrap prop. Replace all usages with Text wrap="wrap" for simpler, more reliable text wrapping. Update CommandMenuItem, ToolApprovalPrompt, and UserQuestionPrompt components.
+
+### Patch Changes
+
+- [`2bbbc66`](https://github.com/marschhuynh/nuvin-space/commit/2bbbc66422022a3a18e676f033d1582ca47e5a76) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Simplify horizontal rule rendering by removing reflow condition and standardizing hr() function signature.
+
+- [`3bdf80f`](https://github.com/marschhuynh/nuvin-space/commit/3bdf80f663e6961cf1fc13e94b5086ae13588946) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Simplify tool approval prompt layout by removing alt mode conditional positioning. Always use consistent flex layout to prevent layout shifts.
+
+- [`3bdf80f`](https://github.com/marschhuynh/nuvin-space/commit/3bdf80f663e6961cf1fc13e94b5086ae13588946) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix VirtualizedList to use stdout dimensions for width calculation when no explicit width prop provided. Prevents stale height cache when terminal resizes.
+
 ## 1.38.0-rc.6
 
 ### Minor Changes

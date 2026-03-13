@@ -18,13 +18,17 @@
     "partial-tool-result-ordering",
     "remove-duplicate-tool-results",
     "remove-nobottommargin-prop",
+    "remove-textwrapper-component",
     "session-id-search",
     "simplify-cache-key-generation",
+    "simplify-hr-rendering",
     "sticky-headers",
     "streaming-output-layout-improvement",
     "tool-approval-async-hooks",
+    "tool-approval-layout-fix",
     "tool-result-truncation-compact",
     "virtualized-list-fixes",
-    "virtualized-list-ref-cleanup"
+    "virtualized-list-ref-cleanup",
+    "virtualized-list-width-fix"
   ]
 }
