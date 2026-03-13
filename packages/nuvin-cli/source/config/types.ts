@@ -119,7 +119,8 @@ export type StatuslineSegment =
   | 'cost'
   | 'lsp'
   | 'gitBranch'
-  | 'keybindings';
+  | 'keybindings'
+  | 'memory';
 
 /** A row of statusline items. '|' is a separator dividing left-aligned from right-aligned segments. */
 export type StatuslineRow = (StatuslineSegment | '|')[];
