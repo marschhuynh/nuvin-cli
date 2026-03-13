@@ -41,6 +41,16 @@ const FooterComponent: React.FC<FooterProps> = ({
   const { get, getCurrentProfile } = useConfig();
   const [gitBranch, setGitBranch] = useState<string | null>(null);
   const [lspServers, setLspServers] = useState<Map<string, LspServerStatus>>(new Map());
+  const [heapMB, setHeapMB] = useState(() =>
+    Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+  );
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeapMB(Math.round(process.memoryUsage().heapUsed / 1024 / 1024));
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!workingDirectory) return;
@@ -205,6 +215,12 @@ const FooterComponent: React.FC<FooterProps> = ({
           <Text key="keybindings" dimColor>
             <Text color={theme.colors.accent}>/</Text> command{' · '}
             <Text color={theme.colors.accent}>ESC×2</Text> stop
+          </Text>
+        );
+      case 'memory':
+        return (
+          <Text key="memory" color={theme.footer.status} dimColor>
+            Mem: {heapMB}MB
           </Text>
         );
       default:
