@@ -104,11 +104,11 @@ describe('mergeToolCallsWithResultsCached — ID stability across streaming→co
     expect(completedMsg).toBeDefined();
     const completedId = completedMsg.id;
 
-    // BUG: IDs differ — "msg-tool:streaming" vs "msg-tool:completed"
-    // This causes VirtualizedList to lose its height cache for the item.
-    expect(completedId).not.toBe(streamingId);
-    expect(streamingId).toBe('msg-tool:streaming');
-    expect(completedId).toBe('msg-tool:completed');
+    // FIX: IDs are now stable — "msg-tool" in both states
+    // This prevents VirtualizedList from losing its height cache for the item.
+    expect(completedId).toBe(streamingId);
+    expect(streamingId).toBe('msg-tool');
+    expect(completedId).toBe('msg-tool');
   });
 
   it('all 10 tool calls have results in the completed merged message', () => {
