@@ -118,9 +118,8 @@ export function indent(indentStr: string, text: string): string {
   return indentStr + text.split('\n').join(`\n${indentStr}`);
 }
 
-export function hr(inputHrStr: string, length: number | boolean): string {
-  const actualLength = typeof length === 'number' ? length : process.stdout.columns || 80;
-  return new Array(actualLength).join(inputHrStr);
+export function hr(inputHrStr: string, length: number): string {
+  return new Array(length).join(inputHrStr);
 }
 
 export function section(text: string): string {
