@@ -62,8 +62,8 @@ export function mergeToolCallsWithResultsCached(messages: MessageLineType[], cac
 
       // Determine status: completed only if ALL tool calls have results
       const isCompleted = toolCalls.length > 0 && resultsByCallId.size === toolCalls.length;
-      const status = isCompleted ? 'completed' : 'streaming';
-      const stableId = `${msg.id}:${status}`;
+      // const stableId = `${msg.id}:${status}`;
+      const stableId = `${msg.id}`;
       seenCacheKeys.add(stableId);
 
       // Build the merged output (with whatever results we have so far)
