@@ -8,6 +8,7 @@
   "changesets": [
     "add-lsp-and-skill-tool-types",
     "alt-mode-tool-call-ui-fix",
+    "bash-tool-test-improvements",
     "bash-tool-truncation",
     "combobox-double-filter-fix",
     "disable-base64-image-extraction",

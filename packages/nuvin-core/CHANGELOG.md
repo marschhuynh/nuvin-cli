@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.1.0-rc.3
+
+### Patch Changes
+
+- [`1d2ebdb`](https://github.com/marschhuynh/nuvin-space/commit/1d2ebdbf1180e7cd51ee65f5b5d545a5c1cf93ec) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve bash-tool abort timing test assertions and replace Python commands with portable shell equivalents.
+
 ## 2.1.0-rc.2
 
 ### Minor Changes
