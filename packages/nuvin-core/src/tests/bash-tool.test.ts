@@ -138,7 +138,7 @@ describe('BashTool', () => {
 
     it('should include system-reminder when truncated output has non-zero exit', async () => {
       // Truncation doesn't mask the exit code
-      const result = await tool.execute({ cmd: `yes '${'-'.repeat(100)}' | head -300; exit 1` });
+      const result = await tool.execute({ cmd: `yes '${'x'.repeat(100)}' | head -300; exit 1` });
       expect(result.status).toBe('error');
       expect(result.result).toContain('<system-reminder>');
       expect(result.result).toContain('Command output was truncated');
