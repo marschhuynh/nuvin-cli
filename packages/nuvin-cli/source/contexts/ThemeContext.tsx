@@ -57,7 +57,10 @@ export function ThemeProvider({ children, options }: ThemeProviderProps) {
 
   const [dimMode, setDimMode] = useState(false);
 
-  const activeTheme = dimMode ? buildDimTheme(runtime.theme) : runtime.theme;
+  const activeTheme = useMemo(
+    () => dimMode ? buildDimTheme(runtime.theme) : runtime.theme,
+    [dimMode, runtime.theme],
+  );
 
   const getColor = useCallback((path: string): string => {
     const parts = path.split('.');

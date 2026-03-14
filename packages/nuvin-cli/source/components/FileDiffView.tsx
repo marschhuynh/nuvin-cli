@@ -134,31 +134,34 @@ function similarityRatio(str1: string, str2: string): number {
   const longer = str1.length > str2.length ? str1 : str2;
   if (longer.length === 0) return 1.0;
 
+  // Fast early-exit: if lengths differ by >50%, similarity is guaranteed < 0.5
+  const shorter = str1.length <= str2.length ? str1 : str2;
+  if (shorter.length / longer.length < 0.5) return 0.0;
+
   const editDistance = levenshteinDistance(str1, str2);
   return (longer.length - editDistance) / longer.length;
 }
 
+// O(n) space Levenshtein using rolling array instead of full O(m×n) matrix
 function levenshteinDistance(str1: string, str2: string): number {
   const m = str1.length;
   const n = str2.length;
-  const dp: number[][] = Array(m + 1)
-    .fill(0)
-    .map(() => Array(n + 1).fill(0));
-
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  let curr = new Array<number>(n + 1);
 
   for (let i = 1; i <= m; i++) {
+    curr[0] = i;
     for (let j = 1; j <= n; j++) {
       if (str1[i - 1] === str2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1];
+        curr[j] = prev[j - 1];
       } else {
-        dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1;
+        curr[j] = Math.min(prev[j], curr[j - 1], prev[j - 1]) + 1;
       }
     }
+    [prev, curr] = [curr, prev];
   }
 
-  return dp[m][n];
+  return prev[n];
 }
 
 // Build diff from LCS table with inline diff support
@@ -217,6 +220,8 @@ function buildDiffFromLCS(
       next?.type === 'add' &&
       curr.oldLineNum &&
       next.newLineNum &&
+      curr.content.length < 500 &&
+      next.content.length < 500 &&
       similarityRatio(curr.content, next.content) > 0.5
     ) {
       // Merge into a modify line with inline diff
@@ -249,14 +254,22 @@ type DiffLineViewProps = {
   line: DiffLine;
   theme: Theme;
   lineNumWidth?: number;
+  contentWidth: number;
 };
 
-function DiffLineViewInner({ line, theme, lineNumWidth = 3 }: DiffLineViewProps) {
-  const { cols } = useStdoutDimensions();
+function DiffLineViewInner({ line, theme, lineNumWidth = 3, contentWidth }: DiffLineViewProps) {
   const lineNum = line.oldLineNum || line.newLineNum || 0;
   const lineNumStr = `${String(lineNum).padStart(lineNumWidth, ' ')}│ `;
 
-  if (line.type === 'modify' && line.segments) {
+  // Truncate extremely long lines to avoid Ink flexWrap performance cliff.
+  // Lines longer than ~30 terminal rows of content get truncated with an indicator.
+  const maxChars = contentWidth * 30;
+  const truncatedContent = line.content.length > maxChars
+    ? line.content.slice(0, maxChars)
+    : line.content;
+  const isTruncated = line.content.length > maxChars;
+
+  if (line.type === 'modify' && line.segments && !isTruncated) {
     const prefix = line.oldLineNum ? '-' : '+';
     const isRemoveLine = !!line.oldLineNum;
     const prefixColor = isRemoveLine ? theme.diff.prefix.remove : theme.diff.prefix.add;
@@ -270,7 +283,7 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3 }: DiffLineViewProps)
           </Text>
           <Text color={prefixColor}>{prefix}</Text>
         </Box>
-        <Box flexDirection="row" flexWrap="wrap" width={cols - lineNumStr.length - 5}>
+        <Box flexDirection="row" flexWrap="wrap" width={contentWidth}>
           {line.segments.map((segment, segIdx) => {
             const isHighlighted =
               (isRemoveLine && segment.type === 'remove') || (!isRemoveLine && segment.type === 'add');
@@ -303,7 +316,7 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3 }: DiffLineViewProps)
   const bgColor =
     line.type === 'add' ? theme.diff.background.add : line.type === 'remove' ? theme.diff.background.remove : undefined;
   const fgColor = line.type === 'add' || line.type === 'remove' ? theme.diff.text : theme.diff.contextText;
-  const content = line.content.replace(/\t/g, '  ');
+  const content = (isTruncated ? truncatedContent + '…' : line.content).replace(/\t/g, '  ');
 
   return (
     <Box>
@@ -313,7 +326,7 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3 }: DiffLineViewProps)
         </Text>
         <Text color={prefixColor}>{prefix}</Text>
       </Box>
-      <Box flexWrap="wrap" width={cols - lineNumStr.length - 5}>
+      <Box flexWrap="wrap" width={contentWidth}>
         <Text backgroundColor={bgColor} color={fgColor}>
           {content}
         </Text>
@@ -321,6 +334,8 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3 }: DiffLineViewProps)
     </Box>
   );
 }
+
+export const FileDiffView = React.memo(FileDiffViewInner);
 
 export const DiffLineView = React.memo(DiffLineViewInner);
 
@@ -331,15 +346,23 @@ type FileDiffViewProps = {
   lineNumbers?: LineNumbers;
 };
 
-export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }: FileDiffViewProps) {
+function FileDiffViewInner({ blocks, filePath, showPath = false, lineNumbers }: FileDiffViewProps) {
   const { theme } = useTheme();
+  const { cols } = useStdoutDimensions();
+
+  // Content-based key so inline-array callers (e.g. blocks={[{...}]}) don't break memoization
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const blocksKey = blocks.map((b) => `${b.search}\0${b.replace}`).join('\x01');
 
   // Memoize all diff calculations
   const blockData = useMemo(() => {
     return blocks.map((b, idx) => {
       const diff = createSimpleDiff(b.search, b.replace, lineNumbers);
       const hasChanges = diff.some((d) => d.type !== 'context');
-      const maxLineNum = Math.max(...diff.map((line) => Math.max(line.oldLineNum || 0, line.newLineNum || 0)));
+      const maxLineNum = diff.reduce(
+        (max, line) => Math.max(max, line.oldLineNum ?? 0, line.newLineNum ?? 0),
+        0,
+      );
       const lineNumWidth = String(maxLineNum).length;
 
       return {
@@ -350,13 +373,17 @@ export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }
         totalBlocks: blocks.length,
       };
     });
-  }, [blocks, lineNumbers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- blocksKey is a content-based proxy for blocks
+  }, [blocksKey, lineNumbers]);
 
   // Calculate max lineNumWidth across all blocks for consistency
   const globalLineNumWidth = useMemo(() => {
     if (blockData.length === 0) return 3;
     return Math.max(...blockData.map((b) => b.lineNumWidth));
   }, [blockData]);
+
+  // lineNumStr is `padStart(lineNumWidth) + '│ '` = lineNumWidth + 2 chars, plus the prefix char = +1
+  const contentWidth = cols - globalLineNumWidth - 2 - 5;
 
   return (
     <Box flexDirection="column">
@@ -377,7 +404,7 @@ export function FileDiffView({ blocks, filePath, showPath = false, lineNumbers }
             <Box flexDirection="column">
               {block.diff.map((line, ldx) => {
                 const lineKey = `line-${block.blockIndex}-${ldx}-${line.type}-${line.oldLineNum || ''}-${line.newLineNum || ''}`;
-                return <DiffLineView key={lineKey} line={line} theme={theme} lineNumWidth={globalLineNumWidth} />;
+                return <DiffLineView key={lineKey} line={line} theme={theme} lineNumWidth={globalLineNumWidth} contentWidth={contentWidth} />;
               })}
             </Box>
           ) : (

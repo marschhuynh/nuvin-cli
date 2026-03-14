@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { useCallback } from 'react';
 import { Box, Text } from 'ink';
 import type { ToolCall, ToolExecutionResult } from '@nuvin/nuvin-core';
@@ -313,4 +313,4 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
   }
 };
 
-export const MessageLine = MessageLineComponent;
+export const MessageLine = React.memo(MessageLineComponent);

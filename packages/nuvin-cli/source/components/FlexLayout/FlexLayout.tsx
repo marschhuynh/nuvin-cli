@@ -102,7 +102,7 @@ export function FlexLayout({
     return [header, ...messageItems];
   }, [headerKey, mergedMessages]);
 
-  const renderItem = (item: ListItem, _index: number): ReactNode => {
+  const renderItem = useCallback((item: ListItem, _index: number): ReactNode => {
     if (item.type === 'header') {
       return <WelcomeLogo recentSessions={sessions ?? []} />;
     }
@@ -113,7 +113,7 @@ export function FlexLayout({
         isSelected={selectedMessageId === item.message.id}
       />
     );
-  };
+  }, [selectedMessageId, sessions]);
 
   const keyExtractor = (item: ListItem): string => {
     if (item.type === 'header') {

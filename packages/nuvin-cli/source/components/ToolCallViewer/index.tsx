@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { Box, Text } from 'ink';
 import { type ToolCall, type ToolExecutionResult, parseToolArguments } from '@nuvin/nuvin-core';
 import type { MessageLine as MessageLineType } from '@/adapters/index.js';
@@ -22,7 +22,7 @@ type ToolCallViewerProps = {
   streamingTotalLines?: number;
 };
 
-export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
+const ToolCallViewerInner: React.FC<ToolCallViewerProps> = ({
   toolCall,
   toolResult,
   toolState,
@@ -184,3 +184,5 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
     </Box>
   );
 };
+
+export const ToolCallViewer = React.memo(ToolCallViewerInner);

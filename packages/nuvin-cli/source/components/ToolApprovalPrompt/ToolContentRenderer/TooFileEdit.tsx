@@ -30,6 +30,10 @@ export function FileEditToolContent({ call }: { call: ToolCall }) {
   const { theme } = useTheme();
   const args = useMemo(() => parseArgs(call), [call]);
   const lineNumbers = (call as EnrichedToolCall).metadata?.lineNumbers as LineNumbers | undefined;
+  const blocks = useMemo(
+    () => (args ? [{ search: args.old_text, replace: args.new_text }] : []),
+    [args?.old_text, args?.new_text],
+  );
 
   if (!args)
     return (
@@ -40,7 +44,7 @@ export function FileEditToolContent({ call }: { call: ToolCall }) {
 
   return (
     <FileDiffView
-      blocks={[{ search: args.old_text, replace: args.new_text }]}
+      blocks={blocks}
       filePath={args.file_path}
       lineNumbers={lineNumbers}
     />
