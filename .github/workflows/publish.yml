@@ -184,6 +184,7 @@ jobs:
       contents: write
       pull-requests: write
       actions: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -265,7 +266,7 @@ jobs:
           createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: false
 
       - name: Push RC Tags
         if: steps.mode.outputs.value == 'rc' && steps.changesets_rc.outputs.published == 'true'
@@ -353,7 +354,7 @@ jobs:
         id: publish_stable
         run: pnpm run release:stable
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: false
 
       - name: Commit stable version changes
         if: steps.mode.outputs.value == 'stable' && steps.publish_stable.outcome == 'success'
