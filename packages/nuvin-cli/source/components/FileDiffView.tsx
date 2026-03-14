@@ -306,16 +306,22 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3, contentWidth }: Diff
     );
   }
 
-  const prefix = line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' ';
+  const isModifyLine = line.type === 'modify';
+  const isRemoveSide = isModifyLine ? !!line.oldLineNum : false;
+  const prefix = line.type === 'add' || (isModifyLine && !isRemoveSide) ? '+'
+    : line.type === 'remove' || (isModifyLine && isRemoveSide) ? '-'
+    : ' ';
   const prefixColor =
-    line.type === 'add'
+    line.type === 'add' || (isModifyLine && !isRemoveSide)
       ? theme.diff.prefix.add
-      : line.type === 'remove'
+      : line.type === 'remove' || (isModifyLine && isRemoveSide)
         ? theme.diff.prefix.remove
         : theme.diff.prefix.context;
   const bgColor =
-    line.type === 'add' ? theme.diff.background.add : line.type === 'remove' ? theme.diff.background.remove : undefined;
-  const fgColor = line.type === 'add' || line.type === 'remove' ? theme.diff.text : theme.diff.contextText;
+    line.type === 'add' || (isModifyLine && !isRemoveSide) ? theme.diff.background.add
+    : line.type === 'remove' || (isModifyLine && isRemoveSide) ? theme.diff.background.remove
+    : undefined;
+  const fgColor = line.type === 'context' && !isModifyLine ? theme.diff.contextText : theme.diff.text;
   const content = (isTruncated ? `${truncatedContent}…` : line.content).replace(/\t/g, '  ');
 
   return (
@@ -351,11 +357,15 @@ function FileDiffViewInner({ blocks, filePath, showPath = false, lineNumbers }: 
   const { cols } = useStdoutDimensions();
 
   // Content-based key so inline-array callers (e.g. blocks={[{...}]}) don't break memoization
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const blocksKey = blocks.map((b) => `${b.search}\0${b.replace}`).join('\x01');
+  const blocksKey = JSON.stringify(blocks.map((b) => [b.search, b.replace]));
+
+  // Stable key for lineNumbers to avoid recomputing when object identity changes but values don't
+  const lineNumbersKey = lineNumbers
+    ? `${lineNumbers.oldStartLine}:${lineNumbers.oldEndLine}:${lineNumbers.newStartLine}:${lineNumbers.newEndLine}`
+    : '';
 
   // Memoize all diff calculations
-  // biome-ignore lint/correctness/useExhaustiveDependencies: blocksKey is a content-based proxy for blocks
+  // biome-ignore lint/correctness/useExhaustiveDependencies: blocksKey/lineNumbersKey are content-based proxies
   const blockData = useMemo(
     () => {
       return blocks.map((b, idx) => {
@@ -365,7 +375,7 @@ function FileDiffViewInner({ blocks, filePath, showPath = false, lineNumbers }: 
           (max, line) => Math.max(max, line.oldLineNum ?? 0, line.newLineNum ?? 0),
           0,
         );
-        const lineNumWidth = String(maxLineNum).length;
+        const lineNumWidth = Math.max(String(maxLineNum).length, 3);
 
         return {
           diff,
@@ -377,7 +387,7 @@ function FileDiffViewInner({ blocks, filePath, showPath = false, lineNumbers }: 
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [blocksKey, lineNumbers, blocks.length],
+    [blocksKey, lineNumbersKey, blocks.length],
   );
 
   // Calculate max lineNumWidth across all blocks for consistency
@@ -387,7 +397,7 @@ function FileDiffViewInner({ blocks, filePath, showPath = false, lineNumbers }: 
   }, [blockData]);
 
   // lineNumStr is `padStart(lineNumWidth) + '│ '` = lineNumWidth + 2 chars, plus the prefix char = +1
-  const contentWidth = cols - globalLineNumWidth - 2 - 5;
+  const contentWidth = Math.max(cols - globalLineNumWidth - 2 - 5, 10);
 
   return (
     <Box flexDirection="column">

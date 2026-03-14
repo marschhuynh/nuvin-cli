@@ -17,6 +17,8 @@ type HeaderItem = { type: 'header'; key: string };
 type MessageItem = { type: 'message'; message: MessageLineType };
 type ListItem = HeaderItem | MessageItem;
 
+const EMPTY_SESSIONS: SessionInfo[] = [];
+
 export type FlexLayoutProps = {
   width: number;
   height: number;
@@ -104,7 +106,7 @@ export function FlexLayout({
 
   const renderItem = useCallback((item: ListItem, _index: number): ReactNode => {
     if (item.type === 'header') {
-      return <WelcomeLogo recentSessions={sessions ?? []} />;
+      return <WelcomeLogo recentSessions={sessions ?? EMPTY_SESSIONS} />;
     }
     return (
       <MessageLine

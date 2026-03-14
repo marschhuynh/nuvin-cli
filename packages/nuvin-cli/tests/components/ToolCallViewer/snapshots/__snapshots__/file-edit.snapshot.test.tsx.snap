@@ -2,24 +2,24 @@
 
 exports[`file_edit - Snapshot Tests > renders file edit with no bytes metadata 1`] = `
 "⚙ Edit README.md
-  │  1│- # Old Title
-  │  1│+ # New Title
+  │    1│- # Old Title
+  │    1│+ # New Title
   └─ Edited"
 `;
 
 exports[`file_edit - Snapshot Tests > renders multi-line file edit 1`] = `
 "⚙ Edit src/utils.ts
-  │  1│  function foo() {
-  │  2│-   console.log("old");
-  │  2│+   console.log("new");
-  │  3│+   console.log("added");
-  │  3│  }
+  │    1│  function foo() {
+  │    2│-   console.log("old");
+  │    2│+   console.log("new");
+  │    3│+   console.log("added");
+  │    3│  }
   └─ Edited (65 bytes)"
 `;
 
 exports[`file_edit - Snapshot Tests > renders successful file edit with diff view 1`] = `
 "⚙ Edit src/config.ts
-  │  5│- const value = "hello";
-  │  5│+ const value = "world";
+  │    5│- const value = "hello";
+  │    5│+ const value = "world";
   └─ Edited (22 bytes)"
 `;
