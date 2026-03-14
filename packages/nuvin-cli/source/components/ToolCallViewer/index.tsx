@@ -122,6 +122,7 @@ export const ToolCallViewer: React.FC<ToolCallViewerProps> = ({
               <AutoScrollBox maxHeight={5} showScrollbar={false}>
                 <Box flexDirection="column">
                   {streamingViewportLines.map((line, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: static viewport lines don't reorder
                     <Text key={i} dimColor wrap="truncate">
                       {line}
                     </Text>

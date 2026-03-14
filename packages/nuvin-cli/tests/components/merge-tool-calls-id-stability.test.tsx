@@ -76,8 +76,9 @@ describe('mergeToolCallsWithResultsCached — position and results across stream
     expect(completed.map((m) => m.type)).toEqual(['user', 'tool', 'assistant']);
 
     // Results are present on the completed message
-    const toolMsg = completed.find((m) => m.type === 'tool')!;
-    const resultsByCallId = toolMsg.metadata?.toolResultsByCallId as Map<string, MessageLineType>;
+    const toolMsg = completed.find((m) => m.type === 'tool');
+    expect(toolMsg).toBeDefined();
+    const resultsByCallId = toolMsg?.metadata?.toolResultsByCallId as Map<string, MessageLineType>;
     expect(resultsByCallId.size).toBe(10);
   });
 });
@@ -91,18 +92,18 @@ describe('mergeToolCallsWithResultsCached — ID stability across streaming→co
       [userMessage, toolMessage, ...allResults.slice(0, 4)],
       cache,
     );
-    const streamingMsg = partial.find((m) => m.type === 'tool')!;
+    const streamingMsg = partial.find((m) => m.type === 'tool');
     expect(streamingMsg).toBeDefined();
-    const streamingId = streamingMsg.id;
+    const streamingId = streamingMsg?.id;
 
     // All 10 done → completed
     const complete = mergeToolCallsWithResultsCached(
       [userMessage, toolMessage, ...allResults],
       cache,
     );
-    const completedMsg = complete.find((m) => m.type === 'tool')!;
+    const completedMsg = complete.find((m) => m.type === 'tool');
     expect(completedMsg).toBeDefined();
-    const completedId = completedMsg.id;
+    const completedId = completedMsg?.id;
 
     // FIX: IDs are now stable — "msg-tool" in both states
     // This prevents VirtualizedList from losing its height cache for the item.
@@ -118,8 +119,9 @@ describe('mergeToolCallsWithResultsCached — ID stability across streaming→co
       [userMessage, toolMessage, ...allResults],
       cache,
     );
-    const toolMsg = complete.find((m) => m.type === 'tool')!;
-    const resultsByCallId = toolMsg.metadata?.toolResultsByCallId as Map<string, MessageLineType>;
+    const toolMsg = complete.find((m) => m.type === 'tool');
+    expect(toolMsg).toBeDefined();
+    const resultsByCallId = toolMsg?.metadata?.toolResultsByCallId as Map<string, MessageLineType>;
 
     expect(resultsByCallId.size).toBe(10);
     for (let i = 1; i <= 10; i++) {

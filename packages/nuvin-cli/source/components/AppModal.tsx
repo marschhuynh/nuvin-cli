@@ -1,6 +1,6 @@
 import type { ReactNode, FC } from 'react';
 import { useEffect } from 'react';
-import { Box, BoxProps, Text } from 'ink';
+import { Box, type BoxProps, Text } from 'ink';
 import { useInput } from '@/contexts/InputContext/index.js';
 import { useTheme, UndimmedThemeProvider } from '@/contexts/ThemeContext.js';
 

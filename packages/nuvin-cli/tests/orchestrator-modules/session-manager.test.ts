@@ -44,14 +44,13 @@ function createMockToolRegistry(overrides: Record<string, unknown> = {}) {
 }
 
 function createMockRuntime(
-  orchestrator: AgentOrchestrator | null,
+  orchestrator: AgentOrchestrator,
   overrides: Partial<OrchestratorRuntime> = {},
-): OrchestratorRuntime | null {
-  if (!orchestrator) return null;
+): OrchestratorRuntime {
   return {
     orchestrator,
     memory: new InMemoryMemory<Message>(),
-    conversationStore: null as any,
+    conversationStore: null as unknown as ConversationStore,
     toolRegistry: createMockToolRegistry(),
     sessionId: null,
     sessionDir: null,
@@ -63,7 +62,7 @@ function createMockRuntime(
 function createMockDeps(overrides: Partial<SessionManagerDeps> = {}): SessionManagerDeps {
   const context = new ConversationContext();
   const mockOrchestrator = createMockOrchestrator();
-  const mockRuntime = createMockRuntime(mockOrchestrator)!;
+  const mockRuntime = createMockRuntime(mockOrchestrator);
 
   const patchRuntimeFn = vi.fn((updates: Partial<OrchestratorRuntime>) => {
     Object.assign(mockRuntime, updates);
@@ -232,17 +231,17 @@ describe('SessionManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       const mockToolRegistry = createMockToolRegistry();
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => ({
-        ...createMockRuntime(mockOrchestrator)!,
+        ...createMockRuntime(mockOrchestrator),
         ...updates,
       }));
 
       // Provide an in-memory memory with some preloaded messages
       const initialMemory = new InMemoryMemory<Message>();
       const context = new ConversationContext();
-      const conversationId = context.getActiveConversationId();
+      const _conversationId = context.getActiveConversationId();
 
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(mockOrchestrator)!,
+        getRuntime: () => createMockRuntime(mockOrchestrator),
         patchRuntime: patchRuntimeSpy,
         getHandlers: () => createMockHandlers(),
         getToolRegistry: () => mockToolRegistry,
@@ -296,11 +295,11 @@ describe('SessionManager', () => {
       let capturedMemory: MemoryPort<Message> | null = null;
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
         if (updates.memory) capturedMemory = updates.memory;
-        return { ...createMockRuntime(mockOrchestrator)!, ...updates };
+        return { ...createMockRuntime(mockOrchestrator), ...updates };
       });
 
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(mockOrchestrator)!,
+        getRuntime: () => createMockRuntime(mockOrchestrator),
         patchRuntime: patchRuntimeSpy,
         getHandlers: () => createMockHandlers(),
         getConversationContext: () => context,
@@ -311,9 +310,9 @@ describe('SessionManager', () => {
 
       // The new memory should have the preloaded messages restored
       expect(capturedMemory).not.toBeNull();
-      const messages = await capturedMemory!.get(conversationId);
+      const messages = await capturedMemory?.get(conversationId);
       expect(messages).toHaveLength(1);
-      expect(messages[0]!.id).toBe('preloaded-1');
+      expect(messages[0]?.id).toBe('preloaded-1');
     });
   });
 
@@ -388,12 +387,12 @@ describe('SessionManager', () => {
     it('creates new session with memPersist=true', async () => {
       const mockOrchestrator = createMockOrchestrator();
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => ({
-        ...createMockRuntime(mockOrchestrator)!,
+        ...createMockRuntime(mockOrchestrator),
         ...updates,
       }));
 
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(mockOrchestrator)!,
+        getRuntime: () => createMockRuntime(mockOrchestrator),
         patchRuntime: patchRuntimeSpy,
       });
       manager = new SessionManager(deps);
@@ -420,7 +419,7 @@ describe('SessionManager', () => {
 
     it('creates new session with memPersist=false', async () => {
       const mockOrchestrator = createMockOrchestrator();
-      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator)! });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new SessionManager(deps);
 
       const result = await manager.createNewConversation({ memPersist: false });
@@ -434,7 +433,7 @@ describe('SessionManager', () => {
 
     it('defaults memPersist from instance state', async () => {
       const mockOrchestrator = createMockOrchestrator();
-      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator)! });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new SessionManager(deps);
       manager.setMemPersist(true);
 
@@ -447,12 +446,12 @@ describe('SessionManager', () => {
     it('calls patchRuntime with memory and conversationStore', async () => {
       const mockOrchestrator = createMockOrchestrator();
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => ({
-        ...createMockRuntime(mockOrchestrator)!,
+        ...createMockRuntime(mockOrchestrator),
         ...updates,
       }));
 
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(mockOrchestrator)!,
+        getRuntime: () => createMockRuntime(mockOrchestrator),
         patchRuntime: patchRuntimeSpy,
       });
       manager = new SessionManager(deps);
@@ -493,12 +492,12 @@ describe('SessionManager', () => {
     it('switches to existing session', async () => {
       const mockOrchestrator = createMockOrchestrator();
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => ({
-        ...createMockRuntime(mockOrchestrator)!,
+        ...createMockRuntime(mockOrchestrator),
         ...updates,
       }));
 
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(mockOrchestrator)!,
+        getRuntime: () => createMockRuntime(mockOrchestrator),
         patchRuntime: patchRuntimeSpy,
       });
       manager = new SessionManager(deps);
@@ -678,7 +677,7 @@ describe('SessionManager', () => {
 
     it('reflects updated state after createNewConversation', async () => {
       const mockOrchestrator = createMockOrchestrator();
-      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator)! });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new SessionManager(deps);
 
       const result = await manager.createNewConversation({ memPersist: true });
@@ -731,7 +730,7 @@ describe('SessionManager', () => {
     it('resets all session state to defaults', async () => {
       // First set up some state
       const mockOrchestrator = createMockOrchestrator();
-      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator)! });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new SessionManager(deps);
 
       await manager.createNewConversation({ memPersist: true });

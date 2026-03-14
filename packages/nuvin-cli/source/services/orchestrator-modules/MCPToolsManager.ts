@@ -1,6 +1,6 @@
 import { CompositeToolPort, type ToolPort } from '@nuvin/nuvin-core';
 import type { OrchestratorRuntime } from '../OrchestratorRuntime.js';
-import { MCPServerManager, type MCPServerInfo } from '../MCPServerManager.js';
+import type { MCPServerManager, MCPServerInfo } from '../MCPServerManager.js';
 import { getEnabledTools } from './constants.js';
 import type { MemorySettings } from '@/config/types.js';
 

@@ -14,7 +14,7 @@ import {
   type Message,
   type AgentAwareToolPort,
   type AgentConfig,
-  ConversationContext,
+  type ConversationContext,
 } from '@nuvin/nuvin-core';
 
 import type { OrchestratorRuntime } from '../OrchestratorRuntime.js';

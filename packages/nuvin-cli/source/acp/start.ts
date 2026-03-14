@@ -23,8 +23,8 @@ const isJsonRpcResponse = (
   return (
     message.id !== undefined &&
     typeof message.method !== 'string' &&
-    (Object.prototype.hasOwnProperty.call(message, 'result') ||
-      Object.prototype.hasOwnProperty.call(message, 'error'))
+    ('result' in message ||
+      'error' in message)
   );
 };
 

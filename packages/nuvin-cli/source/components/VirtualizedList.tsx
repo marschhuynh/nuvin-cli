@@ -33,6 +33,7 @@ function Scrollbar({
     return (
       <Box flexDirection="column" flexShrink={0} marginLeft={1}>
         {Array.from({ length: trackHeight }, (_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static spacer elements
           <Text key={`empty-${i}`}> </Text>
         ))}
       </Box>
@@ -184,7 +185,7 @@ export function VirtualizedList<T>({
     }
 
     setHeightCacheVersion((v) => v + 1);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [items, keyExtractor]);
   // Note: items and keyExtractor are accessed via refs (see below) so this
   // callback never needs to be recreated.
 

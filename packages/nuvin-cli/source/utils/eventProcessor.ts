@@ -196,7 +196,7 @@ export function processAgentEvent(
       }
 
       if (hasToolCallMapping && callbacks.streamingEnabled) {
-        const toolCallMessageId = state.toolCallToMessageMap.get(tool.id)!;
+        const toolCallMessageId = state.toolCallToMessageMap.get(tool.id) ?? '';
         const outputKey = `streamingOutput_${tool.id}` as `streamingOutput_${string}`;
         const totalLinesKey = `streamingTotalLines_${tool.id}` as `streamingTotalLines_${string}`;
         callbacks.updateLineMetadata?.(toolCallMessageId, {

@@ -495,29 +495,29 @@ export class MemoryService {
   private toStatement(raw: unknown, defaults: { now: string; key?: string }): MemoryStatement | null {
     if (!raw || typeof raw !== 'object') return null;
     const data = raw as Record<string, unknown>;
-    const content = typeof data['content'] === 'string' ? normalizeMemoryLine(data['content']) : '';
+    const content = typeof data.content === 'string' ? normalizeMemoryLine(data.content) : '';
     if (!content) return null;
 
     return {
-      id: typeof data['id'] === 'string' ? data['id'] : `stmt_${randomUUID()}`,
+      id: typeof data.id === 'string' ? data.id : `stmt_${randomUUID()}`,
       content,
-      signature: typeof data['signature'] === 'string' ? data['signature'] : buildSignature(content),
-      key: typeof data['key'] === 'string' ? data['key'] : defaults.key,
-      status: parseStatus(data['status']),
-      supersedes: Array.isArray(data['supersedes'])
-        ? data['supersedes'].filter((value): value is string => typeof value === 'string')
+      signature: typeof data.signature === 'string' ? data.signature : buildSignature(content),
+      key: typeof data.key === 'string' ? data.key : defaults.key,
+      status: parseStatus(data.status),
+      supersedes: Array.isArray(data.supersedes)
+        ? data.supersedes.filter((value): value is string => typeof value === 'string')
         : undefined,
-      contradicts: Array.isArray(data['contradicts'])
-        ? data['contradicts'].filter((value): value is string => typeof value === 'string')
+      contradicts: Array.isArray(data.contradicts)
+        ? data.contradicts.filter((value): value is string => typeof value === 'string')
         : undefined,
-      confidence: clampConfidence(typeof data['confidence'] === 'number' ? data['confidence'] : undefined),
-      evidence: Array.isArray(data['evidence'])
-        ? data['evidence'].filter((value): value is string => typeof value === 'string')
+      confidence: clampConfidence(typeof data.confidence === 'number' ? data.confidence : undefined),
+      evidence: Array.isArray(data.evidence)
+        ? data.evidence.filter((value): value is string => typeof value === 'string')
         : undefined,
-      createdAt: typeof data['createdAt'] === 'string' ? data['createdAt'] : defaults.now,
-      updatedAt: typeof data['updatedAt'] === 'string' ? data['updatedAt'] : defaults.now,
-      accessCount: typeof data['accessCount'] === 'number' ? data['accessCount'] : 0,
-      lastAccessedAt: typeof data['lastAccessedAt'] === 'string' ? data['lastAccessedAt'] : defaults.now,
+      createdAt: typeof data.createdAt === 'string' ? data.createdAt : defaults.now,
+      updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : defaults.now,
+      accessCount: typeof data.accessCount === 'number' ? data.accessCount : 0,
+      lastAccessedAt: typeof data.lastAccessedAt === 'string' ? data.lastAccessedAt : defaults.now,
     };
   }
 
@@ -529,18 +529,18 @@ export class MemoryService {
 
       const frontmatter = parseYaml(parsed.frontmatter) as Record<string, unknown>;
       const now = nowIso();
-      const topic = String(frontmatter['topic'] ?? '').trim() || path.basename(filePath, '.md');
-      const scope = (frontmatter['scope'] as MemoryScope) ?? 'global';
-      const source = (frontmatter['source'] as MemorySource) ?? 'explicit';
-      const version = Number(frontmatter['version'] ?? 1);
+      const topic = String(frontmatter.topic ?? '').trim() || path.basename(filePath, '.md');
+      const scope = (frontmatter.scope as MemoryScope) ?? 'global';
+      const source = (frontmatter.source as MemorySource) ?? 'explicit';
+      const version = Number(frontmatter.version ?? 1);
 
-      const maybeKeywords = Array.isArray(frontmatter['keywords']) ? frontmatter['keywords'] : [];
-      const maybeTags = Array.isArray(frontmatter['tags']) ? frontmatter['tags'] : [];
-      const statementSeedKey = typeof frontmatter['key'] === 'string' ? frontmatter['key'] : undefined;
+      const maybeKeywords = Array.isArray(frontmatter.keywords) ? frontmatter.keywords : [];
+      const maybeTags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
+      const statementSeedKey = typeof frontmatter.key === 'string' ? frontmatter.key : undefined;
 
       let statements: MemoryStatement[] = [];
-      if (Array.isArray(frontmatter['statements'])) {
-        for (const rawStatement of frontmatter['statements']) {
+      if (Array.isArray(frontmatter.statements)) {
+        for (const rawStatement of frontmatter.statements) {
           const parsedStatement = this.toStatement(rawStatement, { now, key: statementSeedKey });
           if (parsedStatement) {
             statements.push(parsedStatement);
@@ -553,21 +553,21 @@ export class MemoryService {
       }
 
       const entry: MemoryEntry = {
-        id: String(frontmatter['id'] ?? `mem_topic_${randomUUID()}`),
+        id: String(frontmatter.id ?? `mem_topic_${randomUUID()}`),
         topic,
-        title: typeof frontmatter['title'] === 'string' ? frontmatter['title'] : undefined,
+        title: typeof frontmatter.title === 'string' ? frontmatter.title : undefined,
         content: parsed.body,
         version: Number.isFinite(version) ? version : 1,
         statements,
-        type: (frontmatter['type'] as MemoryType) ?? 'semantic',
+        type: (frontmatter.type as MemoryType) ?? 'semantic',
         scope,
         tags: maybeTags.filter((value): value is string => typeof value === 'string'),
         keywords: maybeKeywords.filter((value): value is string => typeof value === 'string'),
-        workspaceId: typeof frontmatter['workspaceId'] === 'string' ? frontmatter['workspaceId'] : undefined,
-        createdAt: String(frontmatter['createdAt'] ?? now),
-        updatedAt: String(frontmatter['updatedAt'] ?? now),
-        accessCount: Number(frontmatter['accessCount'] ?? 0),
-        lastAccessedAt: String(frontmatter['lastAccessedAt'] ?? now),
+        workspaceId: typeof frontmatter.workspaceId === 'string' ? frontmatter.workspaceId : undefined,
+        createdAt: String(frontmatter.createdAt ?? now),
+        updatedAt: String(frontmatter.updatedAt ?? now),
+        accessCount: Number(frontmatter.accessCount ?? 0),
+        lastAccessedAt: String(frontmatter.lastAccessedAt ?? now),
         source,
       };
 

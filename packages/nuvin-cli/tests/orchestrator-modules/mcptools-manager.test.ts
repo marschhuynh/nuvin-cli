@@ -3,8 +3,8 @@ import {
   MCPToolsManager,
   type MCPToolsManagerDeps,
 } from '../../source/services/orchestrator-modules/MCPToolsManager.js';
-import type { AgentOrchestrator, AgentConfig } from '@nuvin/nuvin-core';
-import type { MCPServerInfo } from '../../source/services/MCPServerManager.js';
+import type { AgentOrchestrator, AgentConfig, MCPToolPort } from '@nuvin/nuvin-core';
+import type { MCPServerInfo, MCPServerManager } from '../../source/services/MCPServerManager.js';
 import type { MemorySettings } from '../../source/config/types.js';
 import type { OrchestratorRuntime } from '../../source/services/OrchestratorRuntime.js';
 
@@ -26,9 +26,9 @@ function createMockRuntime(orchestrator: AgentOrchestrator | null): Orchestrator
   if (!orchestrator) return null;
   return {
     orchestrator,
-    memory: null as any,
-    conversationStore: null as any,
-    toolRegistry: null as any,
+    memory: null as unknown as OrchestratorRuntime['memory'],
+    conversationStore: null as unknown as OrchestratorRuntime['conversationStore'],
+    toolRegistry: null as unknown as OrchestratorRuntime['toolRegistry'],
     sessionId: null,
     sessionDir: null,
     activeAgentId: 'main',
@@ -102,13 +102,13 @@ describe('MCPToolsManager', () => {
   describe('setMcpManager / getMcpManager', () => {
     it('sets and gets the mcpManager', () => {
       const mockManager = createMockMCPManager();
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
       expect(manager.getMcpManager()).toBe(mockManager);
     });
 
     it('can set mcpManager to null', () => {
       const mockManager = createMockMCPManager();
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
       manager.setMcpManager(null);
       expect(manager.getMcpManager()).toBeNull();
     });
@@ -126,7 +126,7 @@ describe('MCPToolsManager', () => {
       const mockManager = createMockMCPManager({
         getAllServers: vi.fn().mockReturnValue(servers),
       });
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = manager.getMCPServers();
       expect(result).toEqual(servers);
@@ -145,10 +145,10 @@ describe('MCPToolsManager', () => {
       manager.recalculateEnabledTools();
 
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledOnce();
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
       expect(call.enabledTools).toBeDefined();
       // Should have base tools but no MCP tools
-      expect(call.enabledTools!.some((t: string) => t === 'bash_tool')).toBe(true);
+      expect(call.enabledTools?.some((t: string) => t === 'bash_tool')).toBe(true);
     });
 
     it('combines base tools with MCP allowed tools from connected servers', () => {
@@ -167,13 +167,13 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       manager.recalculateEnabledTools();
 
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledOnce();
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
-      const tools = call.enabledTools!;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
+      const tools = call.enabledTools ?? [];
 
       // Should contain base tools
       expect(tools).toContain('bash_tool');
@@ -204,8 +204,8 @@ describe('MCPToolsManager', () => {
 
       manager.recalculateEnabledTools();
 
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
-      const tools = call.enabledTools!;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
+      const tools = call.enabledTools ?? [];
       expect(tools).not.toContain('memory_save');
       expect(tools).not.toContain('memory_query');
       expect(tools).not.toContain('memory_extract');
@@ -228,7 +228,7 @@ describe('MCPToolsManager', () => {
       const mockManager = createMockMCPManager();
       deps = createMockDeps({ getRuntime: () => null });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       await manager.updateMCPAllowedTools({ server1: { tool1: true } });
       expect(mockManager.updateAllowedToolsConfig).not.toHaveBeenCalled();
@@ -245,7 +245,7 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const config = { 'server-a': { mcp_a_tool1: true, mcp_a_tool2: false } };
       await manager.updateMCPAllowedTools(config);
@@ -253,7 +253,7 @@ describe('MCPToolsManager', () => {
       expect(mockManager.updateAllowedToolsConfig).toHaveBeenCalledWith(config);
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledOnce();
 
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
       expect(call.enabledTools).toContain('mcp_a_tool1');
     });
   });
@@ -279,7 +279,7 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = await manager.reconnectMCPServer('server-1');
 
@@ -287,7 +287,7 @@ describe('MCPToolsManager', () => {
       expect(mockManager.reconnectServer).toHaveBeenCalledWith('server-1');
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledOnce();
 
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
       expect(call.enabledTools).toContain('mcp_s1_tool1');
     });
 
@@ -301,7 +301,7 @@ describe('MCPToolsManager', () => {
         id: 'server-1',
         status: 'connected',
         allowedTools: ['mcp_s1_tool1'],
-        port: mockPort as any,
+        port: mockPort as unknown as MCPToolPort,
       });
       const mockManager = createMockMCPManager({
         reconnectServer: vi.fn().mockResolvedValue(reconnectedServer),
@@ -316,13 +316,13 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       await manager.reconnectMCPServer('server-1');
 
       // setTools must be called to rebuild the composite with the new port
       expect(mockOrchestrator.setTools).toHaveBeenCalledOnce();
-      const newTools = (mockOrchestrator.setTools as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+      const newTools = (mockOrchestrator.setTools as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
       expect(newTools).toBeInstanceOf(CompositeToolPort);
     });
 
@@ -338,7 +338,7 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = await manager.reconnectMCPServer('server-1');
 
@@ -356,7 +356,7 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps({ getRuntime: () => null });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = await manager.reconnectMCPServer('server-1');
 
@@ -381,7 +381,7 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = await manager.disconnectMCPServer('server-1');
 
@@ -389,10 +389,10 @@ describe('MCPToolsManager', () => {
       expect(mockManager.disconnectServer).toHaveBeenCalledWith('server-1');
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledOnce();
 
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
       // No MCP tools since server was disconnected
       expect(call.enabledTools).toBeDefined();
-      expect(call.enabledTools!.every((t: string) => !t.startsWith('mcp_'))).toBe(true);
+      expect(call.enabledTools?.every((t: string) => !t.startsWith('mcp_'))).toBe(true);
     });
 
     it('rebuilds tools without disconnected server port after disconnect', async () => {
@@ -409,13 +409,13 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       await manager.disconnectMCPServer('server-1');
 
       // setTools must be called to reset to base tools (no MCP ports remain)
       expect(mockOrchestrator.setTools).toHaveBeenCalledOnce();
-      const newTools = (mockOrchestrator.setTools as ReturnType<typeof vi.fn>).mock.calls[0]![0];
+      const newTools = (mockOrchestrator.setTools as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
       // When no MCP ports remain, should reset to the base tool port (not a composite)
       expect(newTools).toBe(baseTools);
     });
@@ -427,7 +427,7 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = await manager.disconnectMCPServer('server-1');
 
@@ -442,7 +442,7 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps({ getRuntime: () => null });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const result = await manager.disconnectMCPServer('server-1');
 
@@ -465,7 +465,7 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const handlers = { handleError: vi.fn() };
       manager.initializeMCPServersInBackground(handlers);
@@ -501,7 +501,7 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const handlers = { handleError: vi.fn() };
       manager.initializeMCPServersInBackground(handlers);
@@ -516,7 +516,7 @@ describe('MCPToolsManager', () => {
 
       // Should have updated enabled tools
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledOnce();
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
       expect(call.enabledTools).toContain('mcp_test_tool');
       expect(call.enabledTools).toContain('bash_tool');
     });
@@ -540,7 +540,7 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps({ getRuntime: () => createMockRuntime(orchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const handlers = { handleError: vi.fn() };
       manager.initializeMCPServersInBackground(handlers);
@@ -562,7 +562,7 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps();
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const handlers = { handleError: vi.fn() };
       manager.initializeMCPServersInBackground(handlers);
@@ -582,7 +582,7 @@ describe('MCPToolsManager', () => {
       });
       deps = createMockDeps();
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       const handlers = { handleError: vi.fn() };
       manager.initializeMCPServersInBackground(handlers);
@@ -607,7 +607,7 @@ describe('MCPToolsManager', () => {
 
     it('calls disconnectAllServers on mcpManager', async () => {
       const mockManager = createMockMCPManager();
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       await manager.cleanup();
 
@@ -616,8 +616,8 @@ describe('MCPToolsManager', () => {
 
     it('handles missing disconnectAllServers gracefully', async () => {
       const mockManager = createMockMCPManager();
-      delete (mockManager as any).disconnectAllServers;
-      manager.setMcpManager(mockManager as any);
+      delete (mockManager as unknown as Record<string, unknown>).disconnectAllServers;
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       // Should not throw (uses optional chaining)
       await manager.cleanup();
@@ -642,12 +642,12 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       manager.recalculateEnabledTools();
 
-      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
-      const tools = call.enabledTools!;
+      const call = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
+      const tools = call.enabledTools ?? [];
 
       // Base tools come first
       const bashIndex = tools.indexOf('bash_tool');
@@ -671,15 +671,15 @@ describe('MCPToolsManager', () => {
       const mockOrchestrator = createMockOrchestrator();
       deps = createMockDeps({ getRuntime: () => createMockRuntime(mockOrchestrator) });
       manager = new MCPToolsManager(deps);
-      manager.setMcpManager(mockManager as any);
+      manager.setMcpManager(mockManager as unknown as MCPServerManager);
 
       manager.recalculateEnabledTools();
       manager.recalculateEnabledTools();
 
       expect(mockOrchestrator.updateConfig).toHaveBeenCalledTimes(2);
 
-      const call1 = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Partial<AgentConfig>;
-      const call2 = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[1]![0] as Partial<AgentConfig>;
+      const call1 = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as Partial<AgentConfig>;
+      const call2 = (mockOrchestrator.updateConfig as ReturnType<typeof vi.fn>).mock.calls[1]?.[0] as Partial<AgentConfig>;
       expect(call1.enabledTools).toEqual(call2.enabledTools);
     });
   });

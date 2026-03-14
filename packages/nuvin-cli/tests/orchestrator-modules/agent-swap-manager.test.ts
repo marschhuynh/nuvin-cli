@@ -4,7 +4,7 @@ import {
   type AgentSwapManagerDeps,
 } from '../../source/services/orchestrator-modules/AgentSwapManager.js';
 import { InMemoryMemory, ConversationContext } from '@nuvin/nuvin-core';
-import type { Message, MemoryPort, AgentOrchestrator, ToolPort, AgentAwareToolPort, LLMPort } from '@nuvin/nuvin-core';
+import type { Message, MemoryPort, AgentOrchestrator, ToolPort, AgentAwareToolPort, LLMPort, ConversationStore, ToolRegistry } from '@nuvin/nuvin-core';
 import type { UIHandlers } from '../../source/services/orchestrator-modules/types.js';
 import type { OrchestratorRuntime } from '../../source/services/OrchestratorRuntime.js';
 
@@ -69,8 +69,8 @@ function createMockHandlers(): UIHandlers {
   };
 }
 
-function createMockAgentRegistry(agents: Record<string, any> = {}) {
-  const defaultAgents: Record<string, any> = {
+function createMockAgentRegistry(agents: Record<string, unknown> = {}) {
+  const defaultAgents: Record<string, unknown> = {
     'nuvin': {
       name: 'nuvin',
       description: 'Main nuvin agent',
@@ -96,8 +96,8 @@ function createMockAgentRegistry(agents: Record<string, any> = {}) {
   };
 }
 
-function createMockOrchestrator(overrides: Record<string, any> = {}) {
-  const agentRegistry = createMockAgentRegistry(overrides.agents);
+function createMockOrchestrator(overrides: Record<string, unknown> = {}) {
+  const agentRegistry = createMockAgentRegistry(overrides.agents as Record<string, unknown> | undefined);
   const tools = {
     execute: vi.fn(),
     list: vi.fn().mockReturnValue([]),
@@ -134,15 +134,14 @@ function createMockLLM(): LLMPort {
 }
 
 function createMockRuntime(
-  orchestrator: AgentOrchestrator | null,
+  orchestrator: AgentOrchestrator,
   overrides: Partial<OrchestratorRuntime> = {},
-): OrchestratorRuntime | null {
-  if (!orchestrator) return null;
+): OrchestratorRuntime {
   return {
     orchestrator,
     memory: new InMemoryMemory<Message>(),
-    conversationStore: null as any,
-    toolRegistry: null as any,
+    conversationStore: null as unknown as ConversationStore,
+    toolRegistry: null as unknown as ToolRegistry,
     sessionId: null,
     sessionDir: null,
     activeAgentId: 'main',
@@ -153,7 +152,7 @@ function createMockRuntime(
 function createMockDeps(overrides: Partial<AgentSwapManagerDeps> = {}): AgentSwapManagerDeps {
   const context = new ConversationContext();
   const mockOrchestrator = createMockOrchestrator();
-  const mockRuntime = createMockRuntime(mockOrchestrator)!;
+  const mockRuntime = createMockRuntime(mockOrchestrator);
 
   const patchRuntimeFn = vi.fn((updates: Partial<OrchestratorRuntime>) => {
     Object.assign(mockRuntime, updates);
@@ -283,7 +282,7 @@ describe('AgentSwapManager', () => {
         list: vi.fn().mockReturnValue([]),
       });
 
-      deps = createMockDeps({ getRuntime: () => createMockRuntime(orchestrator)! });
+      deps = createMockDeps({ getRuntime: () => createMockRuntime(orchestrator) });
       manager = new AgentSwapManager(deps);
 
       await expect(manager.swapToAgent('code-reviewer')).rejects.toThrow(
@@ -326,7 +325,7 @@ describe('AgentSwapManager', () => {
 
     it('stores previous orchestrator', async () => {
       const orchestrator = createMockOrchestrator();
-      const runtime = createMockRuntime(orchestrator)!;
+      const runtime = createMockRuntime(orchestrator);
       deps = createMockDeps({ getRuntime: () => runtime });
       manager = new AgentSwapManager(deps);
 
@@ -349,12 +348,12 @@ describe('AgentSwapManager', () => {
       let capturedMemory: MemoryPort<Message> | null = null;
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
         if (updates.memory) capturedMemory = updates.memory;
-        return { ...createMockRuntime(createMockOrchestrator())!, ...updates };
+        return { ...createMockRuntime(createMockOrchestrator()), ...updates };
       });
 
       const orchestrator = createMockOrchestrator();
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(orchestrator, { memory: originalMemory })!,
+        getRuntime: () => createMockRuntime(orchestrator, { memory: originalMemory }),
         patchRuntime: patchRuntimeSpy,
         getConversationContext: () => context,
       });
@@ -363,22 +362,22 @@ describe('AgentSwapManager', () => {
       await manager.swapToAgent('code-reviewer');
 
       expect(capturedMemory).not.toBeNull();
-      const copiedMessages = await capturedMemory!.get(conversationId);
+      const copiedMessages = await capturedMemory?.get(conversationId);
       expect(copiedMessages).toHaveLength(2);
-      expect(copiedMessages[0]!.id).toBe('msg-1');
-      expect(copiedMessages[1]!.id).toBe('msg-2');
+      expect(copiedMessages[0]?.id).toBe('msg-1');
+      expect(copiedMessages[1]?.id).toBe('msg-2');
     });
 
     it('works with empty conversation history', async () => {
       const emptyMemory = new InMemoryMemory<Message>();
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => ({
-        ...createMockRuntime(createMockOrchestrator())!,
+        ...createMockRuntime(createMockOrchestrator()),
         ...updates,
       }));
 
       const orchestrator = createMockOrchestrator();
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(orchestrator, { memory: emptyMemory })!,
+        getRuntime: () => createMockRuntime(orchestrator, { memory: emptyMemory }),
         patchRuntime: patchRuntimeSpy,
       });
       manager = new AgentSwapManager(deps);
@@ -393,7 +392,7 @@ describe('AgentSwapManager', () => {
 
       const orchestrator = createMockOrchestrator();
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(orchestrator, { sessionDir: '/tmp/test-session' })!,
+        getRuntime: () => createMockRuntime(orchestrator, { sessionDir: '/tmp/test-session' }),
         createMemory: createMemorySpy,
       });
       manager = new AgentSwapManager(deps);
@@ -452,7 +451,7 @@ describe('AgentSwapManager', () => {
       const orchestrator = createMockOrchestrator();
 
       deps = createMockDeps({
-        getRuntime: () => createMockRuntime(orchestrator, { sessionDir: '/tmp/test-session' })!,
+        getRuntime: () => createMockRuntime(orchestrator, { sessionDir: '/tmp/test-session' }),
         createEventAdapter: createEventAdapterSpy,
       });
       manager = new AgentSwapManager(deps);
@@ -557,7 +556,7 @@ describe('AgentSwapManager', () => {
       let lastCapturedMemory: MemoryPort<Message> | null = null;
       const orchestrator = createMockOrchestrator();
       const runtime: OrchestratorRuntime = {
-        ...createMockRuntime(orchestrator, { memory: originalMemory })!,
+        ...createMockRuntime(orchestrator, { memory: originalMemory }),
       };
 
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
@@ -592,7 +591,7 @@ describe('AgentSwapManager', () => {
       await manager.swapToMain();
 
       expect(lastCapturedMemory).not.toBeNull();
-      const copiedMessages = await lastCapturedMemory!.get(conversationId);
+      const copiedMessages = await lastCapturedMemory?.get(conversationId);
       expect(copiedMessages.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -621,7 +620,7 @@ describe('AgentSwapManager', () => {
 
     it('builds main config with correct properties', async () => {
       const orchestrator = createMockOrchestrator();
-      const runtime = createMockRuntime(orchestrator)!;
+      const runtime = createMockRuntime(orchestrator);
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
         Object.assign(runtime, updates);
         return runtime;
@@ -652,7 +651,7 @@ describe('AgentSwapManager', () => {
     it('uses createMemory when sessionDir is set', async () => {
       const createMemorySpy = vi.fn().mockReturnValue(new InMemoryMemory<Message>());
       const orchestrator = createMockOrchestrator();
-      const runtime = createMockRuntime(orchestrator, { sessionDir: '/tmp/test-session' })!;
+      const runtime = createMockRuntime(orchestrator, { sessionDir: '/tmp/test-session' });
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
         Object.assign(runtime, updates);
         return runtime;
@@ -706,7 +705,7 @@ describe('AgentSwapManager', () => {
 
     it('handles null memory gracefully in swapToAgent', async () => {
       const orchestrator = createMockOrchestrator();
-      const runtime = createMockRuntime(orchestrator, { memory: null as any })!;
+      const runtime = createMockRuntime(orchestrator, { memory: null as unknown as MemoryPort<Message> });
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
         Object.assign(runtime, updates);
         return runtime;
@@ -724,7 +723,7 @@ describe('AgentSwapManager', () => {
 
     it('handles null memory gracefully in swapToMain', async () => {
       const orchestrator = createMockOrchestrator();
-      const runtime = createMockRuntime(orchestrator, { memory: null as any })!;
+      const runtime = createMockRuntime(orchestrator, { memory: null as unknown as MemoryPort<Message> });
       const patchRuntimeSpy = vi.fn((updates: Partial<OrchestratorRuntime>) => {
         Object.assign(runtime, updates);
         return runtime;
