@@ -70,8 +70,8 @@ describe('parseMouseEvent', () => {
       const result = parseMouseEvent(data);
       expect(result.consumed).toBe(true);
       expect(result.events).toHaveLength(2);
-      expect(result.events![0]).toEqual({ type: 'click', button: 0, x: 10, y: 20 });
-      expect(result.events![1]).toEqual({ type: 'release', button: 0, x: 10, y: 20 });
+      expect(result.events?.[0]).toEqual({ type: 'click', button: 0, x: 10, y: 20 });
+      expect(result.events?.[1]).toEqual({ type: 'release', button: 0, x: 10, y: 20 });
     });
 
     it('returns all events for drag sequence', () => {
@@ -79,10 +79,10 @@ describe('parseMouseEvent', () => {
       const result = parseMouseEvent(data);
       expect(result.consumed).toBe(true);
       expect(result.events).toHaveLength(4);
-      expect(result.events![0]!.type).toBe('click');
-      expect(result.events![1]!.type).toBe('drag');
-      expect(result.events![2]!.type).toBe('drag');
-      expect(result.events![3]!.type).toBe('release');
+      expect(result.events[0]?.type).toBe('click');
+      expect(result.events[1]?.type).toBe('drag');
+      expect(result.events[2]?.type).toBe('drag');
+      expect(result.events[3]?.type).toBe('release');
     });
   });
 

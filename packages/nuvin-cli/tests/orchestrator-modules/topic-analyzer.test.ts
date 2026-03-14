@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TopicAnalyzer, type TopicAnalyzerDeps } from '../../source/services/orchestrator-modules/TopicAnalyzer.js';
 import { InMemoryMemory, ConversationContext } from '@nuvin/nuvin-core';
-import type { Message, LLMPort, ConversationStore } from '@nuvin/nuvin-core';
+import type { Message, LLMPort, ConversationStore, AgentOrchestrator, ToolRegistry } from '@nuvin/nuvin-core';
 import type { OrchestratorRuntime } from '../../source/services/OrchestratorRuntime.js';
 
 function createMockRuntime(overrides: Partial<OrchestratorRuntime> = {}): OrchestratorRuntime {
   return {
-    orchestrator: null as any,
+    orchestrator: null as unknown as AgentOrchestrator,
     memory: new InMemoryMemory<Message>(),
     conversationStore: {
       updateTopic: vi.fn().mockResolvedValue(undefined),
@@ -16,7 +16,7 @@ function createMockRuntime(overrides: Partial<OrchestratorRuntime> = {}): Orches
       listConversations: vi.fn().mockResolvedValue([]),
       recordRequestMetrics: vi.fn().mockResolvedValue(undefined),
     } as unknown as ConversationStore,
-    toolRegistry: null as any,
+    toolRegistry: null as unknown as ToolRegistry,
     sessionId: null,
     sessionDir: null,
     activeAgentId: 'main',
@@ -225,7 +225,7 @@ describe('TopicAnalyzer', () => {
       // updateTopic should not be called yet because waitFor hasn't resolved
       expect(mockStore.updateTopic).not.toHaveBeenCalled();
 
-      resolveWaitFor!();
+      resolveWaitFor?.();
       const topic = await topicPromise;
 
       expect(topic).toBe('Mock Topic');

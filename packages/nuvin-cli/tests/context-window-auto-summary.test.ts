@@ -2,19 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { OrchestratorManager } from '../source/services/OrchestratorManager.js';
 import { sessionMetricsService } from '../source/services/SessionMetricsService.js';
 import { InMemoryMemory } from '@nuvin/nuvin-core';
-import type { Message, MemoryPort } from '@nuvin/nuvin-core';
+import type { Message, MemoryPort, AgentOrchestrator, ConversationStore, ToolRegistry } from '@nuvin/nuvin-core';
 import { eventBus } from '../source/services/EventBus.js';
 import { modelLimitsCache } from '../source/services/ModelLimitsCache.js';
-import { OrchestratorRuntimeStore, type OrchestratorRuntime } from '../source/services/OrchestratorRuntime.js';
+import type { OrchestratorRuntimeStore, OrchestratorRuntime } from '../source/services/OrchestratorRuntime.js';
 
 const TEST_SESSION_ID = 'test-session';
-
-interface MockOrchestrator {
-  getLLM: ReturnType<typeof vi.fn>;
-  setMemory: ReturnType<typeof vi.fn>;
-  setEvents: ReturnType<typeof vi.fn>;
-  setMetrics: ReturnType<typeof vi.fn>;
-}
 
 interface TestableOrchestratorManager {
   runtimeStore: OrchestratorRuntimeStore;
@@ -54,10 +47,10 @@ function setRuntime(
     testableManager.runtimeStore.set({ ...current, ...overrides });
   } else {
     testableManager.runtimeStore.set({
-      orchestrator: null as any,
-      memory: null as any,
-      conversationStore: null as any,
-      toolRegistry: null as any,
+      orchestrator: null as unknown as AgentOrchestrator,
+      memory: null as unknown as MemoryPort<Message>,
+      conversationStore: null as unknown as ConversationStore,
+      toolRegistry: null as unknown as ToolRegistry,
       sessionId: TEST_SESSION_ID,
       sessionDir: null,
       activeAgentId: 'main',
@@ -111,7 +104,7 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 45200,
@@ -145,7 +138,7 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 88000,
@@ -194,11 +187,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -265,11 +258,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -325,12 +318,12 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     const mockUpdateMetadata = vi.fn().mockResolvedValue(undefined);
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: mockUpdateMetadata,
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -387,11 +380,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -448,11 +441,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -495,7 +488,7 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     const summarizeSpy = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.contextWindowManager.summarize = summarizeSpy;
@@ -530,7 +523,7 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     sessionMetricsService.recordLLMCall(TEST_SESSION_ID, {
       prompt_tokens: 45200,
@@ -572,11 +565,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('This is a test summary');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -638,11 +631,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -704,11 +697,11 @@ describe('Context Window Auto-Summary', () => {
       setMemory: vi.fn(),
       setEvents: vi.fn(),
       setMetrics: vi.fn(),
-    } as any });
+    } as unknown as AgentOrchestrator });
 
     setRuntime(testableManager, { conversationStore: {
       updateMetadata: vi.fn().mockResolvedValue(undefined),
-    } as any });
+    } as unknown as ConversationStore });
 
     testableManager.contextWindowManager.summarize = vi.fn().mockResolvedValue('Summary of conversation');
     testableManager.createNewConversation = vi.fn().mockResolvedValue({
@@ -776,13 +769,13 @@ describe('Context Window Auto-Summary', () => {
         updateConfig,
         send: orchestratorSend,
         getLLM: vi.fn().mockReturnValue(undefined),
-      } as any,
+      } as unknown as AgentOrchestrator,
       memory: new InMemoryMemory<Message>(),
       conversationStore: {
         updateMetadata: vi.fn().mockResolvedValue(undefined),
         recordRequestMetrics: vi.fn().mockResolvedValue(undefined),
-      } as any,
-      toolRegistry: null as any,
+      } as unknown as ConversationStore,
+      toolRegistry: null as unknown as ToolRegistry,
       sessionId: TEST_SESSION_ID,
       sessionDir: null,
       activeAgentId: 'main',

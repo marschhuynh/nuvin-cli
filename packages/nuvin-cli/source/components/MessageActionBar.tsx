@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import { useInput } from '../contexts/InputContext/index.js';
 import { useTheme } from '../contexts/ThemeContext.js';

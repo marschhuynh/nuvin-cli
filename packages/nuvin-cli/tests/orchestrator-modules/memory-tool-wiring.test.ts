@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ConversationContext, type ConversationStore } from '@nuvin/nuvin-core';
+import type { AgentOrchestrator, MemoryPort, Message, ToolRegistry } from '@nuvin/nuvin-core';
 import type { ConfigManager } from '../../source/config/manager.js';
 import type { MemorySettings } from '../../source/config/types.js';
 import type { OrchestratorRuntime } from '../../source/services/OrchestratorRuntime.js';
+import type { MemoryService } from '../../source/services/MemoryService.js';
 
 // ─── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -69,10 +71,10 @@ function createMockDeps(overrides: Partial<MemoryToolWiringDeps> = {}): MemoryTo
 function createMockRuntimeWithStore(store: ConversationStore | null): OrchestratorRuntime | null {
   if (!store) return null;
   return {
-    orchestrator: null as any,
-    memory: null as any,
+    orchestrator: null as unknown as AgentOrchestrator,
+    memory: null as unknown as MemoryPort<Message>,
     conversationStore: store,
-    toolRegistry: null as any,
+    toolRegistry: null as unknown as ToolRegistry,
     sessionId: null,
     sessionDir: null,
     activeAgentId: 'main',
@@ -243,7 +245,7 @@ describe('MemoryToolWiring', () => {
       profileWiring.initializeMemoryService();
 
       expect(MockMemoryService).toHaveBeenCalled();
-      const callArgs = MockMemoryService.mock.calls[0]![0] as {
+      const callArgs = MockMemoryService.mock.calls[0]?.[0] as {
         globalDir: string;
         projectDir: string;
       };
@@ -256,7 +258,7 @@ describe('MemoryToolWiring', () => {
       wiring.initializeMemoryService();
 
       expect(MockMemoryService).toHaveBeenCalled();
-      const callArgs = MockMemoryService.mock.calls[0]![0] as {
+      const callArgs = MockMemoryService.mock.calls[0]?.[0] as {
         globalDir: string;
       };
       expect(callArgs.globalDir).not.toContain('-default');
@@ -376,7 +378,7 @@ describe('MemoryToolWiring', () => {
         // Don't call initializeMemoryService — memoryService is null
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
         ) => Promise<string>;
         const result = await handler({ content: 'test', type: 'semantic' });
@@ -388,7 +390,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
         ) => Promise<string>;
         const result = await handler({
@@ -405,7 +407,7 @@ describe('MemoryToolWiring', () => {
           updateMode: 'replace',
         });
 
-        const service = wiring.getMemoryService()!;
+        const service = wiring.getMemoryService() as MemoryService;
         expect(service.upsertTopicMemory).toHaveBeenCalledWith(
           expect.objectContaining({
             content: 'Use tabs',
@@ -427,12 +429,12 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
         ) => Promise<string>;
         await handler({ content: 'test', type: 'semantic' });
 
-        const service = wiring.getMemoryService()!;
+        const service = wiring.getMemoryService() as MemoryService;
         expect(service.upsertTopicMemory).toHaveBeenCalledWith(
           expect.objectContaining({
             scope: 'project',
@@ -446,12 +448,12 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
         ) => Promise<string>;
         await handler({ content: 'test', type: 'semantic', scope: 'global' });
 
-        const service = wiring.getMemoryService()!;
+        const service = wiring.getMemoryService() as MemoryService;
         expect(service.upsertTopicMemory).toHaveBeenCalledWith(
           expect.objectContaining({
             scope: 'global',
@@ -468,7 +470,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryQueryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryQueryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -493,7 +495,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         limitWiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryQueryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryQueryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -512,7 +514,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryQueryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryQueryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -523,7 +525,7 @@ describe('MemoryToolWiring', () => {
         )) as { scope: string };
         expect(result.scope).toBe('both');
 
-        const service = wiring.getMemoryService()!;
+        const service = wiring.getMemoryService() as MemoryService;
         expect(service.queryStatements).toHaveBeenCalledWith(
           expect.objectContaining({
             scopes: ['global', 'project'],
@@ -536,13 +538,13 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryQueryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryQueryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
         await handler({ query: 'test' }, { messageId: 'msg-1' });
 
-        const service = wiring.getMemoryService()!;
+        const service = wiring.getMemoryService() as MemoryService;
         expect(service.queryStatements).toHaveBeenCalledWith(
           expect.objectContaining({
             workspaceId: 'ws_mock123',
@@ -555,7 +557,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const handler = registry.setMemoryQueryHandler.mock.calls[0]![0] as (
+        const handler = registry.setMemoryQueryHandler.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -583,7 +585,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         wiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -611,7 +613,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         disabledWiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -629,7 +631,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         emptyWiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -650,7 +652,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         systemOnlyWiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;
@@ -672,7 +674,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         convWiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<{ task: string; description: string }>;
@@ -701,7 +703,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         convWiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<{ task: string }>;
@@ -725,7 +727,7 @@ describe('MemoryToolWiring', () => {
         onWiring.initializeMemoryService();
         const onRegistry = createMockToolRegistry();
         onWiring.wireHandlers(onRegistry as never);
-        const onBuilder = onRegistry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const onBuilder = onRegistry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
         ) => Promise<{ task: string }>;
         const onResult = await onBuilder({});
@@ -746,7 +748,7 @@ describe('MemoryToolWiring', () => {
         offWiring.initializeMemoryService();
         const offRegistry = createMockToolRegistry();
         offWiring.wireHandlers(offRegistry as never);
-        const offBuilder = offRegistry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const offBuilder = offRegistry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
         ) => Promise<{ task: string }>;
         const offResult = await offBuilder({});
@@ -769,7 +771,7 @@ describe('MemoryToolWiring', () => {
         const registry = createMockToolRegistry();
         ctxWiring.wireHandlers(registry as never);
 
-        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]![0] as (
+        const builder = registry.setMemoryExtractionTaskBuilder.mock.calls[0]?.[0] as (
           input: Record<string, unknown>,
           context?: Record<string, unknown>,
         ) => Promise<unknown>;

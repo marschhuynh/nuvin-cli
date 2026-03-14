@@ -8,7 +8,7 @@ import {
   type Message,
   type ConversationMetadata,
   type ToolRegistry,
-  ConversationContext,
+  type ConversationContext,
 } from '@nuvin/nuvin-core';
 import type { OrchestratorRuntime } from '../OrchestratorRuntime.js';
 import { UIEventAdapter } from '@/adapters/index.js';

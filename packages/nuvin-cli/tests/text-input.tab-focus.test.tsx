@@ -18,7 +18,7 @@ function getRegisteredHandler() {
 		throw new Error('Expected useInput to register a handler');
 	}
 
-	return latestCall[0] as (input: string, key: Record<string, boolean>) => boolean | void;
+	return latestCall[0] as (input: string, key: Record<string, boolean>) => boolean | undefined;
 }
 
 function createTabKey(overrides: Partial<Record<string, boolean>> = {}) {

@@ -15,7 +15,7 @@ import {
   type ToolApprovalDecision,
 } from '@nuvin/nuvin-core';
 import type { ProviderKey } from '@/config/providers.js';
-import { MCPServerManager, type MCPServerInfo } from './MCPServerManager.js';
+import type { MCPServerManager, MCPServerInfo } from './MCPServerManager.js';
 import { ConfigManager } from '@/config/manager.js';
 import { getProviderAuth } from '@/config/utils.js';
 import { LLMFactory } from './LLMFactory.js';

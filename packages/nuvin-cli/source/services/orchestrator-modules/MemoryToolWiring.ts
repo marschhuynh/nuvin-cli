@@ -1,13 +1,13 @@
 import * as path from 'node:path';
 import * as os from 'node:os';
 
-import {
+import type {
   ToolRegistry,
   ConversationContext,
-  type MemoryScope,
+  MemoryScope,
 } from '@nuvin/nuvin-core';
 import type { OrchestratorRuntime } from '../OrchestratorRuntime.js';
-import { ConfigManager } from '@/config/manager.js';
+import type { ConfigManager } from '@/config/manager.js';
 import type { MemorySettings } from '@/config/types.js';
 import { MemoryService } from '../MemoryService.js';
 import { getWorkspaceContext, type WorkspaceContext } from '../WorkspaceContextService.js';

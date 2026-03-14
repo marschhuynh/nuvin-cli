@@ -12,7 +12,7 @@ export function messageContentToText(content: Message['content']): string {
 
 export function messagesToText(messages: Message[], opts?: { rolesFilter?: string[] }): string {
   const filtered = opts?.rolesFilter
-    ? messages.filter((m) => opts.rolesFilter!.includes(m.role))
+    ? messages.filter((m) => opts.rolesFilter?.includes(m.role))
     : messages;
   return filtered
     .map((msg) => {

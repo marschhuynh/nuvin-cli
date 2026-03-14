@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { messageContentToText, messagesToText, SessionBoundMetricsPort } from '../../source/services/orchestrator-modules/utils.js';
-import type { Message } from '@nuvin/nuvin-core';
+import type { Message, MessageContent } from '@nuvin/nuvin-core';
+import type { sessionMetricsService } from '../../source/services/SessionMetricsService.js';
 
 describe('orchestrator-modules/utils', () => {
   describe('messageContentToText', () => {
@@ -30,7 +31,7 @@ describe('orchestrator-modules/utils', () => {
           { type: 'text' as const, text: 'world' },
         ],
       };
-      expect(messageContentToText(content as any)).toBe('Hello world');
+      expect(messageContentToText(content as unknown as MessageContent)).toBe('Hello world');
     });
   });
 
@@ -89,7 +90,7 @@ describe('orchestrator-modules/utils', () => {
         getSnapshot: vi.fn().mockReturnValue({}),
       };
 
-      const port = new SessionBoundMetricsPort('test-session', mockService as any);
+      const port = new SessionBoundMetricsPort('test-session', mockService as unknown as typeof sessionMetricsService);
       port.recordLLMCall({ prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 });
 
       expect(mockService.recordLLMCall).toHaveBeenCalledWith('test-session', {
@@ -109,7 +110,7 @@ describe('orchestrator-modules/utils', () => {
         getSnapshot: vi.fn().mockReturnValue({}),
       };
 
-      const port = new SessionBoundMetricsPort('test-session', mockService as any);
+      const port = new SessionBoundMetricsPort('test-session', mockService as unknown as typeof sessionMetricsService);
       port.recordToolCall();
 
       expect(mockService.recordToolCall).toHaveBeenCalledWith('test-session');
@@ -126,7 +127,7 @@ describe('orchestrator-modules/utils', () => {
         getSnapshot: vi.fn().mockReturnValue(snapshot),
       };
 
-      const port = new SessionBoundMetricsPort('test-session', mockService as any);
+      const port = new SessionBoundMetricsPort('test-session', mockService as unknown as typeof sessionMetricsService);
       expect(port.getSnapshot()).toBe(snapshot);
       expect(mockService.getSnapshot).toHaveBeenCalledWith('test-session');
     });

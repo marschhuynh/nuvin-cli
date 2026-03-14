@@ -502,7 +502,7 @@ export function parseMouseEvent(data: string): MouseParseResult {
     } else if (wheelDownCount > 0) {
       mouse = { type: 'wheel-down', button: 65, x: lastX, y: lastY, count: wheelDownCount };
     } else {
-      mouse = events[events.length - 1]!;
+      mouse = events[events.length - 1] ?? events[0];
     }
 
     return { mouse, consumed: true, events, unconsumed, remainder };

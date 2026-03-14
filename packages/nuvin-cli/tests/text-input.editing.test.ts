@@ -130,8 +130,9 @@ describe('IME sequence handling', () => {
     const chunks = splitInputChunks('\x7f\u0103');
     expect(chunks).toHaveLength(1);
 
-    const chunk = chunks[0]!;
-    const { input, key } = parseKeypress(chunk);
+    const chunk = chunks[0];
+    expect(chunk).toBeDefined();
+    const { input, key } = parseKeypress(chunk ?? '');
 
     // Should NOT be parsed as backspace
     expect(key.backspace).toBe(false);
@@ -153,7 +154,7 @@ describe('IME sequence handling', () => {
   it('handles multi-backspace IME replacement', () => {
     // Simulate: "ao" → IME replaces both chars with "ô"
     const initialValue = 'ao';
-    const input = '\x7f\x7f\u00f4';
+    const _input = '\x7f\x7f\u00f4';
     const backspaceCount = 2;
     const replacement = '\u00f4';
     const cursorOffset = 2;

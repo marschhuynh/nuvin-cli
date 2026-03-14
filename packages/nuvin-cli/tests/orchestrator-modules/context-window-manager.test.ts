@@ -4,7 +4,7 @@ import {
   type ContextWindowManagerDeps,
 } from '../../source/services/orchestrator-modules/ContextWindowManager.js';
 import { InMemoryMemory, ConversationContext } from '@nuvin/nuvin-core';
-import type { Message, MemoryPort, ConversationStore, AgentOrchestrator } from '@nuvin/nuvin-core';
+import type { Message, MemoryPort, ConversationStore, AgentOrchestrator, ToolRegistry, MessageContent, MessageContentPart } from '@nuvin/nuvin-core';
 import type { OrchestratorRuntime } from '../../source/services/OrchestratorRuntime.js';
 import { sessionMetricsService } from '../../source/services/SessionMetricsService.js';
 import { modelLimitsCache } from '../../source/services/ModelLimitsCache.js';
@@ -55,7 +55,7 @@ function createMockRuntimeForCWM(overrides: Partial<OrchestratorRuntime> = {}): 
     orchestrator: createMockOrchestrator(),
     memory: new InMemoryMemory<Message>(),
     conversationStore: createMockConversationStore(),
-    toolRegistry: null as any,
+    toolRegistry: null as unknown as ToolRegistry,
     sessionId: TEST_SESSION_ID,
     sessionDir: '/tmp/test-session',
     activeAgentId: 'main',
@@ -456,7 +456,7 @@ describe('ContextWindowManager', () => {
 
   describe('summarizeAndCreateNewSession', () => {
     it('should throw when memory is null', async () => {
-      deps = createMockDeps({ getRuntime: () => createMockRuntimeForCWM({ memory: null as any }) });
+      deps = createMockDeps({ getRuntime: () => createMockRuntimeForCWM({ memory: null as unknown as MemoryPort<Message> }) });
       manager = new ContextWindowManager(deps);
 
       await expect(manager.summarizeAndCreateNewSession()).rejects.toThrow(
@@ -629,7 +629,7 @@ describe('ContextWindowManager', () => {
         getRuntime: () => mutableRuntime,
         createNewConversation: vi.fn().mockImplementation(async () => {
           // Simulate that after creating new conversation, runtime.memory returns newMemory
-          (mutableRuntime as any).memory = newMemory;
+          (mutableRuntime as unknown as { memory: MemoryPort<Message> }).memory = newMemory;
           return {
             sessionId: 'new-session-id',
             sessionDir: '/tmp/new-session',
@@ -645,8 +645,8 @@ describe('ContextWindowManager', () => {
       // It calls deps.getRuntime()?.memory after createNewConversation, so it uses the new memory
       const messages = await newMemory.get('default');
       expect(messages.length).toBe(1);
-      expect(messages[0]!.role).toBe('user');
-      expect(messages[0]!.content).toContain('Previous conversation summary');
+      expect(messages[0]?.role).toBe('user');
+      expect(messages[0]?.content).toContain('Previous conversation summary');
     });
   });
 
@@ -654,7 +654,7 @@ describe('ContextWindowManager', () => {
 
   describe('compressAndCreateNewSession', () => {
     it('should throw when memory is null', async () => {
-      deps = createMockDeps({ getRuntime: () => createMockRuntimeForCWM({ memory: null as any }) });
+      deps = createMockDeps({ getRuntime: () => createMockRuntimeForCWM({ memory: null as unknown as MemoryPort<Message> }) });
       manager = new ContextWindowManager(deps);
 
       await expect(
@@ -812,7 +812,7 @@ describe('ContextWindowManager', () => {
     });
 
     it('should throw when memory is null', async () => {
-      deps = createMockDeps({ getRuntime: () => createMockRuntimeForCWM({ memory: null as any }) });
+      deps = createMockDeps({ getRuntime: () => createMockRuntimeForCWM({ memory: null as unknown as MemoryPort<Message> }) });
       manager = new ContextWindowManager(deps);
 
       await expect(manager.summarize()).rejects.toThrow('Memory not initialized');
@@ -852,10 +852,10 @@ describe('ContextWindowManager', () => {
           content: {
             parts: [
               { type: 'text', text: 'Part 1' },
-              { type: 'image_url', image_url: { url: 'http://example.com' } } as any,
+              { type: 'image_url', image_url: { url: 'http://example.com' } } as unknown as MessageContentPart,
               { type: 'text', text: 'Part 2' },
             ],
-          } as any,
+          } as unknown as MessageContent,
           timestamp: '2024-01-01',
         },
       ]);
