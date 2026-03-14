@@ -91,8 +91,7 @@ export function ToolApprovalProvider({
         if (toolsNeedingApproval.length > 0) {
           // Set pending tools synchronously so the next render hides them
           // before the approval modal appears.
-          // Replace (not append to) the pending list — any previously-pending
-          // tools that weren't handled are stale from a cancelled/interrupted turn.
+          // Deduplicate: only add tools not already in the pending list.
           setPendingApprovalTools((prev) => {
             const existingIds = new Set(prev.map((tc) => tc.id));
             const genuinelyNew = toolsNeedingApproval.filter((tc) => !existingIds.has(tc.id));

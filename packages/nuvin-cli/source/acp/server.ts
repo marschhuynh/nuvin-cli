@@ -247,8 +247,7 @@ export class AcpServer {
 
   async handleSessionNew(params: AcpSessionNewParams) {
     await this.ensureOrchestrator();
-    this.streamingMessageIds.clear();
-    this.toolCallTitles.clear();    this.applyAcpToolRestrictions();
+    this.applyAcpToolRestrictions();
     this.streamingMessageIds.clear();
     this.toolCallTitles.clear();
 
@@ -288,6 +287,8 @@ export class AcpServer {
     }
 
     await this.ensureOrchestrator();
+    this.streamingMessageIds.clear();
+    this.toolCallTitles.clear();
 
     this.resolveCwd(params.cwd);
 

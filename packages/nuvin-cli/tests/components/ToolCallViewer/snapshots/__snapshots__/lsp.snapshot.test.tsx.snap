@@ -31,6 +31,6 @@ exports[`lsp - Snapshot Tests > renders successful LSP hover operation 1`] = `
   │  {"contents":{"kind":"markdown","value":"\`\`\`typescript\\nfunction
   │  useState<S>(initialState: S | (() => S)): [S,
   │  Dispatch<SetStateAction<S>>]\\n\`\`\`\\n\\nReturns a stateful value, and a function to update
-  │   it."}}
+  │  it."}}
   └─ Completed"
 `;
