@@ -185,6 +185,7 @@ export class AcpServer {
   private nextClientRequestId = 1;
   private pendingPermissionRequests = new Map<string, PermissionRequestState>();
   private deferredSessionUpdates: SessionUpdate[] = [];
+  private readonly boundHandleAgentEvent = (event: AgentEvent) => this.handleAgentEvent(event);
 
   constructor(
     private deps: {
@@ -200,7 +201,11 @@ export class AcpServer {
       deps.orchestratorManager,
       this.configManager
     );
-    this.eventBus.on("agent:event", (event) => this.handleAgentEvent(event));
+    this.eventBus.on("agent:event", this.boundHandleAgentEvent);
+  }
+
+  dispose(): void {
+    this.eventBus.off("agent:event", this.boundHandleAgentEvent);
   }
 
   async handleInitialize(
@@ -242,7 +247,10 @@ export class AcpServer {
 
   async handleSessionNew(params: AcpSessionNewParams) {
     await this.ensureOrchestrator();
-    this.applyAcpToolRestrictions();
+    this.streamingMessageIds.clear();
+    this.toolCallTitles.clear();    this.applyAcpToolRestrictions();
+    this.streamingMessageIds.clear();
+    this.toolCallTitles.clear();
 
     this.resolveCwd(params.cwd);
 

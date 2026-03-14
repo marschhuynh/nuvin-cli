@@ -88,7 +88,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
                 </Text>
               </Box>
               <AutoScrollBox maxHeight={'100%'} marginX={2} width={'100%'}>
-                <Markdown reflowText enableCache>
+                <Markdown enableCache>
                   {streamingContent}
                 </Markdown>
               </AutoScrollBox>
@@ -104,7 +104,7 @@ const MessageLineComponent: React.FC<MessageLineProps> = ({ message, backgroundC
               </Text>
             </Box>
             <Box marginX={2}>
-              <Markdown reflowText enableCache>
+              <Markdown enableCache>
                 {streamingContent}
               </Markdown>
             </Box>

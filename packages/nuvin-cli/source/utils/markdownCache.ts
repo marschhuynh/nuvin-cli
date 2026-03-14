@@ -41,7 +41,12 @@ class MarkdownCache {
   }
 
   private generateKey(content: string, configHash: string): string {
-    return `${configHash}:${content.length}:${content.slice(0, 100)}`;
+    let hash = 5381;
+    for (let i = 0; i < content.length; i++) {
+      hash = ((hash << 5) + hash) ^ content.charCodeAt(i);
+      hash = hash >>> 0;
+    }
+    return `${configHash}:${content.length}:${hash}`;
   }
 
   clear(): void {

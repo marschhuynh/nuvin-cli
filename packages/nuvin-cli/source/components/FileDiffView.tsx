@@ -341,7 +341,21 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3, contentWidth }: Diff
   );
 }
 
-export const FileDiffView = React.memo(FileDiffViewInner);
+export const FileDiffView = React.memo(FileDiffViewInner, (prev, next) => {
+  if (prev.filePath !== next.filePath || prev.showPath !== next.showPath) return false;
+  if (prev.lineNumbers !== next.lineNumbers) {
+    // Compare by value since lineNumbers is a new object on each render
+    const a = prev.lineNumbers;
+    const b = next.lineNumbers;
+    if (!a || !b) return false;
+    if (a.oldStartLine !== b.oldStartLine || a.oldEndLine !== b.oldEndLine ||
+        a.newStartLine !== b.newStartLine || a.newEndLine !== b.newEndLine) return false;
+  }
+  if (prev.blocks.length !== next.blocks.length) return false;
+  return prev.blocks.every((b, i) =>
+    b.search === next.blocks[i].search && b.replace === next.blocks[i].replace,
+  );
+});
 
 export const DiffLineView = React.memo(DiffLineViewInner);
 
