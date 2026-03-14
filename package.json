@@ -20,7 +20,7 @@
     "version-packages": "changeset version && pnpm -w install --no-frozen-lockfile",
     "release": "changeset publish",
     "version:pre": "changeset version && pnpm -w install --no-frozen-lockfile",
-    "release:pre": "changeset publish",
+    "release:pre": "pnpm build && changeset publish",
     "version:promote": "changeset pre exit && changeset version && pnpm -w install --no-frozen-lockfile",
     "release:stable": "changeset publish",
     "changelog": "node scripts/changelog.js"

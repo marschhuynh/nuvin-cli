@@ -50,19 +50,131 @@ jobs:
             echo "⏭️  No changeset files found"
           fi
 
-  ci:
+  build:
     needs: [check-changesets]
     if: |
       always() &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true'))
-    uses: ./.github/workflows/ci.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+      - run: make build
+
+      - uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/*/build
+            packages/*/dist
+          key: build-${{ github.sha }}
+
+  lint:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/*/build
+            packages/*/dist
+          key: build-${{ github.sha }}
+
+      - run: pnpm lint
+
+  test-cli:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/*/build
+            packages/*/dist
+          key: build-${{ github.sha }}
+
+      - run: pnpm --filter nuvin-cli test
+
+  test-core:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/*/build
+            packages/*/dist
+          key: build-${{ github.sha }}
+
+      - run: pnpm --filter nuvin-core test
 
   publish:
-    needs: [check-changesets, ci]
+    needs: [check-changesets, lint, test-cli, test-core]
     if: |
       always() &&
-      needs.ci.result == 'success' &&
+      needs.lint.result == 'success' &&
+      needs.test-cli.result == 'success' &&
+      needs.test-core.result == 'success' &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true'))
     runs-on: ubuntu-latest
@@ -98,11 +210,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: make build
+      - name: Restore build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/*/build
+            packages/*/dist
+          key: build-${{ github.sha }}
 
       # Determine mode
       - name: Determine release mode
