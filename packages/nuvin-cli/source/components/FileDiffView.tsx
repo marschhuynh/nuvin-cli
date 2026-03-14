@@ -316,7 +316,7 @@ function DiffLineViewInner({ line, theme, lineNumWidth = 3, contentWidth }: Diff
   const bgColor =
     line.type === 'add' ? theme.diff.background.add : line.type === 'remove' ? theme.diff.background.remove : undefined;
   const fgColor = line.type === 'add' || line.type === 'remove' ? theme.diff.text : theme.diff.contextText;
-  const content = (isTruncated ? truncatedContent + '…' : line.content).replace(/\t/g, '  ');
+  const content = (isTruncated ? `${truncatedContent}…` : line.content).replace(/\t/g, '  ');
 
   return (
     <Box>
@@ -355,26 +355,30 @@ function FileDiffViewInner({ blocks, filePath, showPath = false, lineNumbers }: 
   const blocksKey = blocks.map((b) => `${b.search}\0${b.replace}`).join('\x01');
 
   // Memoize all diff calculations
-  const blockData = useMemo(() => {
-    return blocks.map((b, idx) => {
-      const diff = createSimpleDiff(b.search, b.replace, lineNumbers);
-      const hasChanges = diff.some((d) => d.type !== 'context');
-      const maxLineNum = diff.reduce(
-        (max, line) => Math.max(max, line.oldLineNum ?? 0, line.newLineNum ?? 0),
-        0,
-      );
-      const lineNumWidth = String(maxLineNum).length;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: blocksKey is a content-based proxy for blocks
+  const blockData = useMemo(
+    () => {
+      return blocks.map((b, idx) => {
+        const diff = createSimpleDiff(b.search, b.replace, lineNumbers);
+        const hasChanges = diff.some((d) => d.type !== 'context');
+        const maxLineNum = diff.reduce(
+          (max, line) => Math.max(max, line.oldLineNum ?? 0, line.newLineNum ?? 0),
+          0,
+        );
+        const lineNumWidth = String(maxLineNum).length;
 
-      return {
-        diff,
-        hasChanges,
-        lineNumWidth,
-        blockIndex: idx,
-        totalBlocks: blocks.length,
-      };
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- blocksKey is a content-based proxy for blocks
-  }, [blocksKey, lineNumbers]);
+        return {
+          diff,
+          hasChanges,
+          lineNumWidth,
+          blockIndex: idx,
+          totalBlocks: blocks.length,
+        };
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [blocksKey, lineNumbers, blocks.length],
+  );
 
   // Calculate max lineNumWidth across all blocks for consistency
   const globalLineNumWidth = useMemo(() => {

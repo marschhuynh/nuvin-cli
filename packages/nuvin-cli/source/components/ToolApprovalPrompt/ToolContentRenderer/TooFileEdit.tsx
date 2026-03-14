@@ -32,7 +32,7 @@ export function FileEditToolContent({ call }: { call: ToolCall }) {
   const lineNumbers = (call as EnrichedToolCall).metadata?.lineNumbers as LineNumbers | undefined;
   const blocks = useMemo(
     () => (args ? [{ search: args.old_text, replace: args.new_text }] : []),
-    [args?.old_text, args?.new_text],
+    [args],
   );
 
   if (!args)
