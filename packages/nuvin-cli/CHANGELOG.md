@@ -1,5 +1,20 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.11
+
+### Patch Changes
+
+- [`a98d0d9`](https://github.com/marschhuynh/nuvin-space/commit/a98d0d97efe5925200fb549789fc556706e2c038) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Split CI into parallel lint and test jobs with shared build cache and concurrency control.
+
+- [#206](https://github.com/marschhuynh/nuvin-cli/pull/206) [`0a242a8`](https://github.com/marschhuynh/nuvin-space/commit/0a242a8b16b78170fb7bd855d4f1b5205f4fa545) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix lint issues: convert value type imports to type-only imports, add biome ignore comments for array index keys, replace non-null assertions with nullish coalescing, and fix React hooks dependency arrays.
+
+- [`a98d0d9`](https://github.com/marschhuynh/nuvin-space/commit/a98d0d97efe5925200fb549789fc556706e2c038) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Run core and cli tests concurrently with `--workspace-concurrency=Infinity`.
+
+- [`a98d0d9`](https://github.com/marschhuynh/nuvin-space/commit/a98d0d97efe5925200fb549789fc556706e2c038) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add CI gate before publish and remove redundant setup steps from publish workflow.
+
+- Updated dependencies [[`a98d0d9`](https://github.com/marschhuynh/nuvin-space/commit/a98d0d97efe5925200fb549789fc556706e2c038), [`a98d0d9`](https://github.com/marschhuynh/nuvin-space/commit/a98d0d97efe5925200fb549789fc556706e2c038), [`a98d0d9`](https://github.com/marschhuynh/nuvin-space/commit/a98d0d97efe5925200fb549789fc556706e2c038)]:
+  - @nuvin/nuvin-core@2.1.0-rc.5
+
 ## 2.0.0-rc.10
 
 ### Patch Changes
