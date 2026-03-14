@@ -1,5 +1,15 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.12
+
+### Patch Changes
+
+- [`3828c71`](https://github.com/marschhuynh/nuvin-space/commit/3828c718b76ff3d011d8ac782f12822f9e4d2bfa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Optimize FileDiffView: O(n) Levenshtein with early-exit, truncate extremely long lines, add content-based memoization keys, and compute content width dynamically.
+
+- [`3828c71`](https://github.com/marschhuynh/nuvin-space/commit/3828c718b76ff3d011d8ac782f12822f9e4d2bfa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add React.memo to MessageLine, ToolCallViewer, and FileDiffView components to prevent unnecessary re-renders.
+
+- [`3828c71`](https://github.com/marschhuynh/nuvin-space/commit/3828c718b76ff3d011d8ac782f12822f9e4d2bfa) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Wrap FlexLayout renderItem in useCallback and ThemeContext activeTheme in useMemo to optimize render performance.
+
 ## 2.0.0-rc.11
 
 ### Patch Changes
