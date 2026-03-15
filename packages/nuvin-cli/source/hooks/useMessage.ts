@@ -61,6 +61,11 @@ const useMessages = () => {
     });
   }, []);
 
+  const deleteMessages = useCallback((idsToDelete: string[]) => {
+    const idSet = new Set(idsToDelete);
+    setMessages((prev) => prev.filter((msg) => !idSet.has(msg.id)));
+  }, []);
+
   const handleError = useCallback(
     (message: string) => {
       appendLine({
@@ -74,7 +79,7 @@ const useMessages = () => {
     [appendLine],
   );
 
-  return { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, handleError };
+  return { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, deleteMessages, handleError };
 };
 
 export default useMessages;
