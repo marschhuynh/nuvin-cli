@@ -1,5 +1,31 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.13
+
+### Patch Changes
+
+- [`6c8722f`](https://github.com/marschhuynh/nuvin-space/commit/6c8722fc513b915b03ce200611e6afb192ceb2c5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix AcpServer event handler memory leak by binding handler and adding dispose method. Clear streaming state on new session to prevent stale data.
+
+- [`50eca72`](https://github.com/marschhuynh/nuvin-space/commit/50eca72b4988cdf1ec7b3f8e5d928e4325c83b17) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix ACP server session state management by clearing streaming state at the start of handleSessionNew instead of after applyAcpToolRestrictions
+
+- [`6c8722f`](https://github.com/marschhuynh/nuvin-space/commit/6c8722fc513b915b03ce200611e6afb192ceb2c5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Optimize FileDiffView with custom memo comparison to prevent unnecessary re-renders when filePath, showPath, lineNumbers, or diff blocks remain unchanged.
+
+- [`9d697b4`](https://github.com/marschhuynh/nuvin-space/commit/9d697b4d7a8535ff43959f5a7907dfe318996a82) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Improve FileDiffView rendering: add modify line type support, fix line number padding, stabilize memoization keys, and add minimum content width guard.
+
+- [`6c8722f`](https://github.com/marschhuynh/nuvin-space/commit/6c8722fc513b915b03ce200611e6afb192ceb2c5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix assistant message text wrapping by removing reflowText. The markdown reflow at cols-8 conflicted with actual container width cols-4, causing orphan lines and suboptimal wrapping. Ink's native Text wrap now handles all wrapping correctly.
+
+- [`9d697b4`](https://github.com/marschhuynh/nuvin-space/commit/9d697b4d7a8535ff43959f5a7907dfe318996a82) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix FlexLayout WelcomeLogo undefined sessions prop by providing empty array default.
+
+- [`50eca72`](https://github.com/marschhuynh/nuvin-space/commit/50eca72b4988cdf1ec7b3f8e5d928e4325c83b17) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Bump @nuvin/ink to version 6.6.7
+
+- [`50eca72`](https://github.com/marschhuynh/nuvin-space/commit/50eca72b4988cdf1ec7b3f8e5d928e4325c83b17) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update LSP test snapshot for whitespace normalization
+
+- [`6c8722f`](https://github.com/marschhuynh/nuvin-space/commit/6c8722fc513b915b03ce200611e6afb192ceb2c5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix markdown cache key collision by using DJB2 hash instead of content slice. Different content with same length and prefix now generates unique cache keys.
+
+- [`50eca72`](https://github.com/marschhuynh/nuvin-space/commit/50eca72b4988cdf1ec7b3f8e5d928e4325c83b17) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Update tool approval deduplication comment for clarity
+
+- [`6c8722f`](https://github.com/marschhuynh/nuvin-space/commit/6c8722fc513b915b03ce200611e6afb192ceb2c5) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Fix pending approval tools accumulation by deduplicating tools with same ID. Prevents stale tools from cancelled/interrupted turns from persisting.
+
 ## 2.0.0-rc.12
 
 ### Patch Changes
