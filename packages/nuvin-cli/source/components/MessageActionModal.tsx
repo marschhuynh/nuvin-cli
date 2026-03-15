@@ -5,8 +5,9 @@ import { useInput, useMouse } from '@/contexts/InputContext/index.js';
 import { useTheme } from '@/contexts/ThemeContext.js';
 import type { MessageLine } from '@/adapters/index.js';
 import { AppModal } from './AppModal.js';
-import type { MessageAction } from './MessageActionBar.js';
 import { extractMessageContent } from '../utils/extractMessageContent.js';
+
+type MessageAction = 'copy' | 'edit' | 'retry';
 import { copyTextToClipboard } from '../utils/copyText.js';
 import { eventBus } from '../services/EventBus.js';
 
