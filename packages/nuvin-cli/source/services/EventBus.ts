@@ -23,6 +23,7 @@ type EventMap = {
   'ui:input:toggleVimMode': undefined;
   'ui:input:edit': { content: string };
   'ui:input:retry': { content: string };
+  'ui:message:delete': { messageId: string };
   'ui:history:selected': {
     sessionId: string;
     timestamp: string;

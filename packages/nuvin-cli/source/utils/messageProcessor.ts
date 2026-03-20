@@ -145,6 +145,7 @@ export function renderToolCall(tc: ToolCall): string {
  * This is the shared logic that both UI event adapter and session loading use
  */
 export function processMessageToUILines(msg: {
+  id: string; // Message ID for traceability
   role: 'user' | 'assistant' | 'tool';
   content?: string | null | { type: 'parts'; parts: unknown[] };
   timestamp?: string;
@@ -185,6 +186,7 @@ export function processMessageToUILines(msg: {
         type: 'user',
         content: textContent,
         metadata: {
+          messageId: msg.id,
           timestamp: msg.timestamp || new Date().toISOString(),
           isStreaming: false,
         },
@@ -200,6 +202,7 @@ export function processMessageToUILines(msg: {
         type: 'assistant',
         content: textContent,
         metadata: {
+          messageId: msg.id,
           timestamp: msg.timestamp || new Date().toISOString(),
           isStreaming: false,
         },
@@ -213,6 +216,7 @@ export function processMessageToUILines(msg: {
         type: 'tool',
         content: `${msg.tool_calls.map(renderToolCall).join(', ')}`,
         metadata: {
+          messageId: msg.id, // Same as content - tool calls are part of assistant message
           toolCallCount: msg.tool_calls.length,
           timestamp: msg.timestamp || new Date().toISOString(),
           toolCalls: msg.tool_calls,
@@ -268,6 +272,7 @@ export function processMessageToUILines(msg: {
           ? `${toolResult.name}: ${statusIcon} ${toolResult.status}${durationText}`
           : `error: ${flattenError(toolResult).slice(0, 1000)}`,
       metadata: {
+        messageId: msg.id,
         toolName: toolResult.name,
         status: toolResult.status,
         duration: toolResult.durationMs,

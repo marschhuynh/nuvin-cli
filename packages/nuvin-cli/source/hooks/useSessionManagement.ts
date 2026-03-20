@@ -10,6 +10,62 @@ import type { SessionInfo } from '@/types.js';
 import { ConfigManager } from '@/config/manager.js';
 import { DEFAULT_PROFILE } from '@/config/profile-types.js';
 
+/**
+ * MESSAGE TRACING
+ *
+ * This module provides utilities for tracing MessageLines back to their original Messages.
+ *
+ * Every MessageLine includes a metadata.messageId field that references the original Message.id.
+ * This enables bidirectional tracing between UI display (MessageLines) and storage (Messages).
+ *
+ * Usage Examples:
+ *
+ * 1. Find the Message for a specific line:
+ *    ```typescript
+ *    const line = lines.find(l => l.id === lineId);
+ *    const message = findMessageForLine(line, messages);
+ *    ```
+ *
+ * 2. Find the Message by line ID (convenience):
+ *    ```typescript
+ *    const message = findMessageByLineId(lineId, lines, messages);
+ *    ```
+ *
+ * 3. Delete a message from UI:
+ *    ```typescript
+ *    const line = lines.find(l => l.id === lineId);
+ *    if (line?.metadata.messageId) {
+ *      const messageIndex = messages.findIndex(m => m.id === line.metadata.messageId);
+ *      if (messageIndex >= 0) {
+ *        messages.splice(messageIndex, 1);
+ *        await memory.set(conversationId, messages);
+ *      }
+ *    }
+ *    ```
+ *
+ * 4. Show message metadata:
+ *    ```typescript
+ *    const line = lines.find(l => l.id === lineId);
+ *    const message = findMessageForLine(line, messages);
+ *    if (message) {
+ *      console.log({
+ *        messageId: message.id,
+ *        role: message.role,
+ *        timestamp: message.timestamp,
+ *        usage: message.usage,
+ *      });
+ *    }
+ *    ```
+ *
+ * Tracing works for:
+ * - New messages (via eventProcessor.ts)
+ * - Resumed sessions (via loadHistoryFromFile → processMessageToUILines)
+ * - All message types (user, assistant, tool)
+ *
+ * @see packages/nuvin-cli/source/utils/messageProcessor.ts - processMessageToUILines
+ * @see packages/nuvin-cli/source/utils/eventProcessor.ts - processAgentEvent
+ */
+
 function sessionsDir(profile?: string): string {
   const configManager = ConfigManager.getInstance();
   const profileManager = configManager.getProfileManager();
@@ -309,6 +365,60 @@ export const loadSessionHistory = async (selectedSessionId: string, profile?: st
   const historyFile = path.join(dir, selectedSessionId, 'history.cli.json');
   return loadHistoryFromFile(historyFile);
 };
+
+/**
+ * Finds the Message corresponding to a MessageLine using the messageId field.
+ * Provides O(1) lookup by direct ID match.
+ *
+ * @param line - The MessageLine to trace
+ * @param messages - Array of Messages to search
+ * @returns The corresponding Message, or undefined if not found
+ *
+ * @example
+ * ```typescript
+ * const line = lines.find(l => l.id === targetLineId);
+ * const message = findMessageForLine(line, messages);
+ * if (message) {
+ *   console.log('Found message:', message.id, message.role);
+ * }
+ * ```
+ */
+export function findMessageForLine(
+  line: { metadata?: { messageId?: string } } | undefined,
+  messages: Array<{ id: string }>
+): { id: string } | undefined {
+  if (!line?.metadata?.messageId) {
+    return undefined;
+  }
+  const messageId = line.metadata.messageId;
+  return messages.find(m => m.id === messageId);
+}
+
+/**
+ * Finds the Message corresponding to a MessageLine by line ID.
+ * Convenience function that combines line lookup and message tracing.
+ *
+ * @param lineId - The ID of the MessageLine
+ * @param lines - Array of MessageLines to search
+ * @param messages - Array of Messages to search
+ * @returns The corresponding Message, or undefined if not found
+ *
+ * @example
+ * ```typescript
+ * const message = findMessageByLineId(targetLineId, lines, messages);
+ * if (message) {
+ *   console.log('Found message:', message.id);
+ * }
+ * ```
+ */
+export function findMessageByLineId(
+  lineId: string,
+  lines: Array<{ id: string; metadata?: { messageId?: string } }>,
+  messages: Array<{ id: string }>
+): { id: string } | undefined {
+  const line = lines.find(l => l.id === lineId);
+  return findMessageForLine(line, messages);
+}
 
 export const getSessionDir = (sessionId: string, profile?: string): string => {
   return path.join(sessionsDir(profile), sessionId);

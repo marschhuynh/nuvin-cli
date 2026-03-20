@@ -28,6 +28,7 @@ export type MessageMetadata = {
 };
 
 export type LineMetadata = {
+  messageId?: string; // Reference to original Message.id
   timestamp?: string;
   toolName?: string;
   status?: 'success' | 'error';

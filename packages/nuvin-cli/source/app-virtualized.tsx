@@ -53,7 +53,7 @@ export default function App({
 }: Props) {
   const { theme } = useTheme();
   const { cols, rows } = useStdoutDimensions();
-  const { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, handleError } = useMessages();
+  const { messages, clearMessages, setLines, appendLine, updateLine, updateLineMetadata, deleteMessages, handleError } = useMessages();
   const [busy, setBusy] = useState(false);
   const [metrics, setMetrics] = useState<MetricsSnapshot>(createEmptySnapshot());
   const currentSessionIdRef = useRef<string | null>(null);
@@ -395,6 +395,43 @@ export default function App({
       }
     };
 
+    const findMessagesToDelete = (messageId: string): string[] => {
+      const msgs = messagesRef.current;
+      const target = msgs.find((m) => m.id === messageId);
+      if (!target) return [messageId];
+
+      const ids = [messageId];
+
+      if (target.type === 'tool') {
+        const toolCallIds = new Set(
+          (target.metadata?.toolCalls ?? []).map((tc: { id: string }) => tc.id),
+        );
+        for (const msg of msgs) {
+          if (msg.type === 'tool_result' && toolCallIds.has(msg.metadata?.toolResult?.id ?? '')) {
+            ids.push(msg.id);
+          }
+        }
+      }
+
+      return ids;
+    };
+
+    const onDeleteMessage = (payload: { messageId: string }) => {
+      const idsToDelete = findMessagesToDelete(payload.messageId);
+
+      // Update UI state immediately
+      deleteMessages(idsToDelete);
+
+      // Update persistence (fire-and-forget; errors are non-fatal)
+      const store = orchestratorManager.getConversationStore();
+      const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
+      if (store && conversationId) {
+        void store.deleteMessages(conversationId, idsToDelete).catch((err) => {
+          console.error('[delete] Failed to delete from persistence:', err);
+        });
+      }
+    };
+
     eventBus.on('command:sudo:toggle', onSudoToggle);
     eventBus.on('ui:header:refresh', onViewRefresh);
     eventBus.on('ui:input:toggleVimMode', onVimModeToggle);
@@ -402,6 +439,7 @@ export default function App({
     eventBus.on('ui:exit:start', onExitStart);
     eventBus.on('ui:input:edit', onEditMessage);
     eventBus.on('ui:input:retry', onRetryMessage);
+    eventBus.on('ui:message:delete', onDeleteMessage);
 
     return () => {
       eventBus.off('command:sudo:toggle', onSudoToggle);
@@ -411,6 +449,7 @@ export default function App({
       eventBus.off('ui:exit:start', onExitStart);
       eventBus.off('ui:input:edit', onEditMessage);
       eventBus.off('ui:input:retry', onRetryMessage);
+      eventBus.off('ui:message:delete', onDeleteMessage);
     };
   }, [onViewRefresh, setToolApprovalMode]);
 
@@ -542,6 +581,7 @@ export default function App({
         messages={messages}
         sessions={initialSessions}
         headerKey={headerKey}
+        busy={busy}
       />
     </ErrorBoundary>
   );

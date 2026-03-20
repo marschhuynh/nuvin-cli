@@ -27,6 +27,7 @@ export type FlexLayoutProps = {
   messages?: MessageLineType[];
   sessions?: SessionInfo[] | null;
   headerKey?: number;
+  busy?: boolean;
 };
 
 export function FlexLayout({
@@ -36,6 +37,7 @@ export function FlexLayout({
   messages = [],
   sessions,
   headerKey = 0,
+  busy = false,
 }: FlexLayoutProps): React.ReactElement {
   const { theme } = useTheme();
   const { altMode } = useAltMode();
@@ -151,6 +153,7 @@ export function FlexLayout({
             visible={selectedMessageId !== null}
             message={selectedMessage}
             onClose={handleCloseModal}
+            busy={busy}
           />
         </Box>
       )}

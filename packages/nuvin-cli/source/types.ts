@@ -5,6 +5,7 @@ export type MessageLine = {
   type: 'user' | 'assistant' | 'tool' | 'tool_result' | 'system' | 'error' | 'info' | 'thinking';
   content: string;
   metadata?: {
+    messageId?: string; // Reference to original Message.id
     timestamp?: string;
     toolName?: string;
     status?: 'success' | 'error';

@@ -64,15 +64,21 @@ export function processAgentEvent(
 ): EventProcessorState | Promise<EventProcessorState> {
   switch (event.type) {
     case AgentEventTypes.MessageStarted: {
+      const messageId = event.messageId;  // Extract messageId from event
+
       if ('userContent' in event && callbacks.renderUserMessages && event.userContent) {
         callbacks.appendLine({
           id: crypto.randomUUID(),
           type: 'user',
           content: `${event.userContent}`,
-          metadata: { timestamp: now() },
+          metadata: {
+            messageId,  // Pass messageId from event
+            timestamp: now()
+          },
           color: theme.tokens.cyan,
         });
       }
+
       return {
         toolCallCount: 0,
         recentToolCalls: state.recentToolCalls,
@@ -81,7 +87,7 @@ export function processAgentEvent(
         reasoningMessageId: null,
         reasoningContent: '',
         subAgents: state.subAgents,
-        lastToolCallMessageId: state.lastToolCallMessageId,
+        lastToolCallMessageId: messageId,  // Track messageId for tool calls
         agentToMessageMap: state.agentToMessageMap,
         toolCallToMessageMap: state.toolCallToMessageMap,
       };
@@ -89,15 +95,16 @@ export function processAgentEvent(
 
     case AgentEventTypes.ToolCalls: {
       return (async () => {
-        const messageId = crypto.randomUUID();
+        const lineId = crypto.randomUUID();
         const enrichedToolCalls = await enrichToolCallsWithLineNumbers(event.toolCalls);
 
         if (enrichedToolCalls.length > 0) {
           callbacks.appendLine({
-            id: messageId,
+            id: lineId,
             type: 'tool',
             content: `${enrichedToolCalls.map(renderToolCall).join(', ')}`,
             metadata: {
+              messageId: state.lastToolCallMessageId ?? undefined,  // Use parent assistant messageId
               toolCallCount: enrichedToolCalls.length,
               timestamp: now(),
               toolCalls: enrichedToolCalls,
@@ -115,7 +122,7 @@ export function processAgentEvent(
         const newToolCallToMessageMap = new Map(state.toolCallToMessageMap);
         for (const call of enrichedToolCalls) {
           newToolCalls.set(call.id, call);
-          newToolCallToMessageMap.set(call.id, messageId); // Map tool call ID to message ID
+          newToolCallToMessageMap.set(call.id, lineId);
         }
 
         return {
@@ -124,7 +131,7 @@ export function processAgentEvent(
           recentToolCalls: newToolCalls,
           streamingMessageId: null,
           streamingContent: '',
-          lastToolCallMessageId: messageId,
+          lastToolCallMessageId: state.lastToolCallMessageId,  // Keep tracking
           toolCallToMessageMap: newToolCallToMessageMap,
         };
       })();
@@ -177,6 +184,7 @@ export function processAgentEvent(
         type: 'tool_result',
         content,
         metadata: {
+          messageId: tool.id,  // Use tool message ID
           toolName: tool.name,
           status: tool.status,
           duration: tool.durationMs,
@@ -276,20 +284,25 @@ export function processAgentEvent(
       }
 
       const chunk = event.delta || '';
+      const messageId = event.messageId;  // Extract from event
 
       // First chunk: create a new assistant message
       if (!state.streamingMessageId) {
-        const messageId = crypto.randomUUID();
+        const lineId = crypto.randomUUID();
         callbacks.appendLine({
-          id: messageId,
+          id: lineId,
           type: 'assistant',
           content: chunk,
-          metadata: { timestamp: now(), isStreaming: true },
+          metadata: {
+            messageId,  // Pass messageId from event
+            timestamp: now(),
+            isStreaming: true
+          },
         });
 
         return {
           ...state,
-          streamingMessageId: messageId,
+          streamingMessageId: lineId,
           streamingContent: chunk,
         };
       }
@@ -309,13 +322,18 @@ export function processAgentEvent(
         return state;
       }
 
+      const messageId = event.messageId;  // Extract from event
+
       if (state.reasoningMessageId) {
         callbacks.updateLineMetadata?.(state.reasoningMessageId, { isStreaming: false });
       }
 
       if (callbacks.streamingEnabled && state.streamingMessageId) {
         callbacks.updateLine?.(state.streamingMessageId, event.content);
-        callbacks.updateLineMetadata?.(state.streamingMessageId, { isStreaming: false });
+        callbacks.updateLineMetadata?.(state.streamingMessageId, {
+          messageId,  // Ensure messageId is set
+          isStreaming: false
+        });
         return {
           ...state,
           streamingContent: event.content,
@@ -328,7 +346,11 @@ export function processAgentEvent(
         id: crypto.randomUUID(),
         type: 'assistant',
         content: event.content,
-        metadata: { timestamp: now(), isStreaming: false },
+        metadata: {
+          messageId,  // Pass messageId from event
+          timestamp: now(),
+          isStreaming: false
+        },
       });
 
       return {

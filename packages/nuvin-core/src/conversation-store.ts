@@ -77,6 +77,23 @@ export class ConversationStore {
     await this.metadataMemory.set(conversationId, updatedMetadata);
   }
 
+  async deleteMessages(conversationId: string, messageIds: string[]): Promise<void> {
+    if (messageIds.length === 0) return;
+
+    const conversation = await this.getConversation(conversationId);
+    const idSet = new Set(messageIds);
+    const filteredMessages = conversation.messages.filter((msg) => !idSet.has(msg.id));
+
+    await this.memory.set(conversationId, filteredMessages);
+
+    const updatedMetadata: ConversationMetadata = {
+      ...conversation.metadata,
+      messageCount: filteredMessages.length,
+      updatedAt: new Date().toISOString(),
+    };
+    await this.metadataMemory.set(conversationId, updatedMetadata);
+  }
+
   async updateMetadata(conversationId: string, updates: Partial<ConversationMetadata>): Promise<void> {
     const metadata = await this.metadataMemory.get(conversationId);
     const updatedMetadata: ConversationMetadata = {
