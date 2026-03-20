@@ -140,7 +140,7 @@ describe('eventProcessor', () => {
       };
       state = processAgentEvent(assistantMessage, state, callbacks);
 
-      expect(updateLineMetadataSpy).toHaveBeenCalledWith(reasoningMsgId, { isStreaming: false });
+      expect(updateLineMetadataSpy).toHaveBeenCalledWith(reasoningMsgId, { messageId: 'msg-1', isStreaming: false });
       expect(state.reasoningMessageId).toBeNull();
     });
 

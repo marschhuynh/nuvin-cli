@@ -28,6 +28,7 @@ import type { ProviderKey } from './const.js';
 import useMessages from './hooks/useMessage.js';
 import { useConfig } from './contexts/ConfigContext.js';
 import { orchestratorManager } from './services/OrchestratorManager.js';
+import { findMessagesToDelete } from './utils/findMessagesToDelete.js';
 import type { SessionInfo } from './types.js';
 import { createEmptySnapshot } from '@nuvin/nuvin-core';
 import { OrchestratorStatus } from './types/orchestrator.js';
@@ -395,38 +396,28 @@ export default function App({
       }
     };
 
-    const findMessagesToDelete = (messageId: string): string[] => {
-      const msgs = messagesRef.current;
-      const target = msgs.find((m) => m.id === messageId);
-      if (!target) return [messageId];
-
-      const ids = [messageId];
-
-      if (target.type === 'tool') {
-        const toolCallIds = new Set(
-          (target.metadata?.toolCalls ?? []).map((tc: { id: string }) => tc.id),
-        );
-        for (const msg of msgs) {
-          if (msg.type === 'tool_result' && toolCallIds.has(msg.metadata?.toolResult?.id ?? '')) {
-            ids.push(msg.id);
-          }
-        }
-      }
-
-      return ids;
-    };
-
     const onDeleteMessage = (payload: { messageId: string }) => {
-      const idsToDelete = findMessagesToDelete(payload.messageId);
+      const msgs = messagesRef.current;
+      const idsToDelete = findMessagesToDelete(msgs, payload.messageId);
 
-      // Update UI state immediately
+      // Collect stored Message IDs BEFORE removing lines from UI
+      const store = orchestratorManager.getConversationStore();
+      const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
+      const messageIdsToDelete = [...new Set(
+        idsToDelete
+          .map((lineId) => {
+            const line = messagesRef.current.find((m) => m.id === lineId);
+            return line?.metadata?.messageId;
+          })
+          .filter((id): id is string => id !== undefined),
+      )];
+
+      // Update UI state
       deleteMessages(idsToDelete);
 
       // Update persistence (fire-and-forget; errors are non-fatal)
-      const store = orchestratorManager.getConversationStore();
-      const conversationId = orchestratorManager.getConversationContext().getActiveConversationId();
-      if (store && conversationId) {
-        void store.deleteMessages(conversationId, idsToDelete).catch((err) => {
+      if (store && conversationId && messageIdsToDelete.length > 0) {
+        void store.deleteMessages(conversationId, messageIdsToDelete).catch((err) => {
           console.error('[delete] Failed to delete from persistence:', err);
         });
       }
@@ -451,7 +442,7 @@ export default function App({
       eventBus.off('ui:input:retry', onRetryMessage);
       eventBus.off('ui:message:delete', onDeleteMessage);
     };
-  }, [onViewRefresh, setToolApprovalMode]);
+  }, [onViewRefresh, setToolApprovalMode, deleteMessages]);
 
   useEffect(() => {
     if (previousVimModeRef.current === null) {

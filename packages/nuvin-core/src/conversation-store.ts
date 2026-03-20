@@ -78,9 +78,12 @@ export class ConversationStore {
   }
 
   async deleteMessages(conversationId: string, messageIds: string[]): Promise<void> {
-    if (messageIds.length === 0) return;
+    if (messageIds.length === 0) {
+      return;
+    }
 
     const conversation = await this.getConversation(conversationId);
+
     const idSet = new Set(messageIds);
     const filteredMessages = conversation.messages.filter((msg) => !idSet.has(msg.id));
 

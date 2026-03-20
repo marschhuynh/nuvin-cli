@@ -202,6 +202,7 @@ export type SendMessageOptions = {
   stream?: boolean;
   signal?: AbortSignal;
   skipAutoSummaryCheck?: boolean;
+  userMessageId?: string;
 };
 
 export type UserAttachment = ImageContentPart & {
@@ -601,6 +602,7 @@ export type AgentEvent =
       type: typeof AgentEventTypes.MessageStarted;
       conversationId: string;
       messageId: string;
+      userMessageId?: string;
       userContent: string;
       enhanced: string[];
       toolNames: string[];

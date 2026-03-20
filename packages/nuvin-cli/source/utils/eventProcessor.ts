@@ -72,7 +72,7 @@ export function processAgentEvent(
           type: 'user',
           content: `${event.userContent}`,
           metadata: {
-            messageId,  // Pass messageId from event
+            messageId: event.userMessageId ?? messageId,  // Use userMessageId when available
             timestamp: now()
           },
           color: theme.tokens.cyan,
@@ -98,13 +98,22 @@ export function processAgentEvent(
         const lineId = crypto.randomUUID();
         const enrichedToolCalls = await enrichToolCallsWithLineNumbers(event.toolCalls);
 
+        // The reasoning/thinking line was created during streaming with a preliminary
+        // messageId. Now that ToolCalls arrived, we know the actual stored Message ID
+        // (toolLoopMsgId). Update the thinking line so it groups correctly on delete.
+        if (state.reasoningMessageId) {
+          callbacks.updateLineMetadata?.(state.reasoningMessageId, {
+            messageId: event.messageId,
+          });
+        }
+
         if (enrichedToolCalls.length > 0) {
           callbacks.appendLine({
             id: lineId,
             type: 'tool',
             content: `${enrichedToolCalls.map(renderToolCall).join(', ')}`,
             metadata: {
-              messageId: state.lastToolCallMessageId ?? undefined,  // Use parent assistant messageId
+              messageId: event.messageId,  // Use the stored Message ID from the event
               toolCallCount: enrichedToolCalls.length,
               timestamp: now(),
               toolCalls: enrichedToolCalls,
@@ -131,7 +140,9 @@ export function processAgentEvent(
           recentToolCalls: newToolCalls,
           streamingMessageId: null,
           streamingContent: '',
-          lastToolCallMessageId: state.lastToolCallMessageId,  // Keep tracking
+          reasoningMessageId: null,
+          reasoningContent: '',
+          lastToolCallMessageId: event.messageId,  // Track the current stored Message ID
           toolCallToMessageMap: newToolCallToMessageMap,
         };
       })();
@@ -157,7 +168,7 @@ export function processAgentEvent(
       // Use metadata to determine tool execution state
       const isAborted = errorReason === ErrorReason.Aborted;
       const isDenied = errorReason === ErrorReason.Denied;
-      const isTimeout = errorReason === ErrorReason.Timeout;
+      const isTimeout = ErrorReason.Timeout;
       const isWarning = isAborted || isDenied || isTimeout || errorReason === ErrorReason.RateLimit;
 
       const statusIcon = tool.status === 'success' ? '[+]' : isWarning ? '[⊗]' : '[!]';
@@ -184,7 +195,7 @@ export function processAgentEvent(
         type: 'tool_result',
         content,
         metadata: {
-          messageId: tool.id,  // Use tool message ID
+          messageId: event.messageId,  // Use the actual Message ID from the event
           toolName: tool.name,
           status: tool.status,
           duration: tool.durationMs,
@@ -253,18 +264,18 @@ export function processAgentEvent(
       const chunk = event.delta || '';
 
       if (!state.reasoningMessageId) {
-        const messageId = crypto.randomUUID();
+        const lineId = crypto.randomUUID();
         callbacks.appendLine({
-          id: messageId,
+          id: lineId,
           type: 'thinking',
           content: chunk,
-          metadata: { timestamp: now(), isStreaming: true },
+          metadata: { messageId: event.messageId, timestamp: now(), isStreaming: true },
           color: theme.tokens.yellow,
         });
 
         return {
           ...state,
-          reasoningMessageId: messageId,
+          reasoningMessageId: lineId,
           reasoningContent: chunk,
         };
       }
@@ -325,7 +336,12 @@ export function processAgentEvent(
       const messageId = event.messageId;  // Extract from event
 
       if (state.reasoningMessageId) {
-        callbacks.updateLineMetadata?.(state.reasoningMessageId, { isStreaming: false });
+        // Update thinking line's messageId to match the stored Message ID,
+        // then mark streaming complete
+        callbacks.updateLineMetadata?.(state.reasoningMessageId, {
+          messageId,
+          isStreaming: false,
+        });
       }
 
       if (callbacks.streamingEnabled && state.streamingMessageId) {
@@ -363,11 +379,10 @@ export function processAgentEvent(
       if (state.reasoningMessageId) {
         callbacks.updateLineMetadata?.(state.reasoningMessageId, { isStreaming: false });
       }
-      return {
-        ...state,
-        reasoningMessageId: null,
-        reasoningContent: '',
-      };
+      // Don't clear reasoningMessageId here — ToolCalls and AssistantMessage
+      // handlers need it to update the thinking line's messageId to the correct
+      // stored Message ID before clearing it.
+      return state;
     }
 
     case AgentEventTypes.Done: {

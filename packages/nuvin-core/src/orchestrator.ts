@@ -417,6 +417,17 @@ export class AgentOrchestrator {
     const executeToolWithApproval = async (toolCall: ToolCall): Promise<ToolExecutionResult> => {
       let result: ToolExecutionResult;
 
+      // Helper: emit ToolResult with result.id as messageId
+      // (result.id = toolCall.id = stored tool Message ID)
+      const emitToolResult = async (r: ToolExecutionResult) => {
+        await this.events?.emit({
+          type: AgentEventTypes.ToolResult,
+          conversationId,
+          messageId: r.id,
+          result: r,
+        });
+      };
+
       // If needs approval, wait for the pre-created approval promise
       if (toolCall.requiresApproval && toolCall.approvalId) {
         const approvalEntry = approvalPromises.get(toolCall.approvalId);
@@ -439,13 +450,7 @@ export class AgentOrchestrator {
             durationMs: 0,
           };
 
-          await this.events?.emit({
-            type: AgentEventTypes.ToolResult,
-            conversationId,
-            messageId,
-            result,
-          });
-
+          await emitToolResult(result);
           return result;
         }
 
@@ -461,13 +466,7 @@ export class AgentOrchestrator {
             durationMs: 0,
           };
 
-          await this.events?.emit({
-            type: AgentEventTypes.ToolResult,
-            conversationId,
-            messageId,
-            result,
-          });
-
+          await emitToolResult(result);
           return result;
         }
 
@@ -483,13 +482,7 @@ export class AgentOrchestrator {
             durationMs: 0,
           };
 
-          await this.events?.emit({
-            type: AgentEventTypes.ToolResult,
-            conversationId,
-            messageId,
-            result,
-          });
-
+          await emitToolResult(result);
           return result;
         }
 
@@ -529,13 +522,7 @@ export class AgentOrchestrator {
               durationMs: hookResult.durationMs ?? 0,
             };
 
-            await this.events?.emit({
-              type: AgentEventTypes.ToolResult,
-              conversationId,
-              messageId,
-              result,
-            });
-
+            await emitToolResult(result);
             return result;
           }
 
@@ -574,13 +561,7 @@ export class AgentOrchestrator {
           durationMs: 0,
         };
 
-        await this.events?.emit({
-          type: AgentEventTypes.ToolResult,
-          conversationId,
-          messageId,
-          result,
-        });
-
+        await emitToolResult(result);
         return result;
       }
 
@@ -627,12 +608,7 @@ export class AgentOrchestrator {
       };
 
       // Emit result immediately when this tool completes
-      await this.events?.emit({
-        type: AgentEventTypes.ToolResult,
-        conversationId,
-        messageId,
-        result,
-      });
+      await emitToolResult(result);
 
       return result;
     };
@@ -692,7 +668,8 @@ export class AgentOrchestrator {
 
     userDisplay = resolveDisplayText(normalized.text, attachments, normalized.displayText);
     const userTimestamp = this.clock.iso();
-    userMessages = [{ id: this.ids.uuid(), role: 'user', content: userContent, timestamp: userTimestamp }];
+    const userMsgId = opts.userMessageId ?? this.ids.uuid();
+    userMessages = [{ id: userMsgId, role: 'user', content: userContent, timestamp: userTimestamp }];
 
     await this.memory.append(convo, userMessages);
 
@@ -705,6 +682,7 @@ export class AgentOrchestrator {
       type: AgentEventTypes.MessageStarted,
       conversationId: convo,
       messageId: msgId,
+      userMessageId: userMsgId,
       userContent: userDisplay,
       enhanced,
       toolNames,
@@ -832,12 +810,17 @@ export class AgentOrchestrator {
     }
 
     while (result.tool_calls?.length) {
+      // Generate a stable ID for this tool-loop assistant message.
+      // Used for both storage (Message.id) and events (messageId) so the UI
+      // can trace MessageLines back to stored Messages for delete/audit.
+      const toolLoopMsgId = this.ids.uuid();
+
       // Emit the assistant message along with the tool call
       if (result.content?.trim()) {
         const messageEvent: AssistantMessageEvent = {
           type: AgentEventTypes.AssistantMessage,
           conversationId: convo,
-          messageId: msgId,
+          messageId: toolLoopMsgId,
           content: result.content,
           ...(result.usage && { usage: result.usage }),
         };
@@ -891,7 +874,7 @@ export class AgentOrchestrator {
       await this.events?.emit({
         type: AgentEventTypes.ToolCalls,
         conversationId: convo,
-        messageId: msgId,
+        messageId: toolLoopMsgId,
         toolCalls: enrichedToolCalls,
         usage: result.usage,
       });
@@ -923,7 +906,7 @@ export class AgentOrchestrator {
 
       // Build assistant message with enriched tool calls
       const assistantMsg: Message = {
-        id: this.ids.uuid(),
+        id: toolLoopMsgId,
         role: 'assistant',
         content: result.content ?? null,
         timestamp: this.clock.iso(),

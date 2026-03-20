@@ -104,7 +104,10 @@ describe('✅ FIXED: Last message showing correctly with streaming', () => {
 
       // Always update to trigger markdown re-render even when content matches
       expect(callbacks.updateLine).toHaveBeenCalledWith(expect.any(String), 'Hello World');
-      expect(callbacks.updateLineMetadata).toHaveBeenCalledWith(expect.any(String), { isStreaming: false });
+      expect(callbacks.updateLineMetadata).toHaveBeenCalledWith(expect.any(String), {
+        messageId: 'msg-match',  // Ensure messageId is set
+        isStreaming: false
+      });
       expect(callbacks.appendLine).not.toHaveBeenCalled();
     });
 
