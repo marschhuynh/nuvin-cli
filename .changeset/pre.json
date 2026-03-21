@@ -36,6 +36,7 @@
     "publish-workflow-ci-gate",
     "react-memo-optimization",
     "remove-duplicate-tool-results",
+    "remove-inline-message-action-bar",
     "remove-nobottommargin-prop",
     "remove-textwrapper-component",
     "session-id-search",
