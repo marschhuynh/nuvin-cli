@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.14
+
+### Patch Changes
+
+- [`82ca144`](https://github.com/marschhuynh/nuvin-space/commit/82ca144c31015ba94f312882b024cc3501fc758b) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Remove `MessageActionBar` component and inline message actions. Consolidate all message actions (copy, edit, retry) into `MessageActionModal` for consistent interaction pattern.
+
 ## 2.0.0-rc.13
 
 ### Patch Changes
