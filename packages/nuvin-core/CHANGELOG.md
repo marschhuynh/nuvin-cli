@@ -1,5 +1,11 @@
 # @nuvin/nuvin-core
 
+## 2.1.0-rc.6
+
+### Minor Changes
+
+- [`d39dd98`](https://github.com/marschhuynh/nuvin-space/commit/d39dd984529aa92524d277fec5155ce672df4f7a) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Add `buildTokenLimit` hook in `BaseLLM` and override in `GithubLLM` to use `max_completion_tokens` for models that require it (o-series, gpt-5+).
+
 ## 2.1.0-rc.5
 
 ### Patch Changes
