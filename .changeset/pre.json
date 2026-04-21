@@ -25,6 +25,7 @@
     "ink-dependency-update",
     "last-static-message-margin",
     "lint-fixes",
+    "llm-max-completion-tokens",
     "lsp-test-snapshot-update",
     "lsp-tool-bypass-approval",
     "markdown-cache-hash-fix",
