@@ -50,6 +50,14 @@ export class GithubLLM extends BaseLLM implements LLMPort {
   private readonly opts: GithubOptions;
   private modelEndpointCache: Map<string, string[]> = new Map();
 
+  // Models like gpt-5+ require 'max_completion_tokens' instead of 'max_tokens'
+  protected override buildTokenLimit(model: string, value: number): { max_tokens?: number; max_completion_tokens?: number } {
+    if (/^(o\d|gpt-[5-9])/.test(model)) {
+      return { max_completion_tokens: value };
+    }
+    return { max_tokens: value };
+  }
+
   constructor(opts: GithubOptions = {}) {
     super(opts.apiUrl ?? 'https://api.individual.githubcopilot.com', { retry: opts.retry });
     this.opts = opts;

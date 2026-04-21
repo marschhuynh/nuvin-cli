@@ -69,7 +69,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
@@ -99,7 +99,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - uses: actions/cache/restore@v4
         with:
@@ -127,7 +127,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - uses: actions/cache/restore@v4
         with:
@@ -155,7 +155,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - uses: actions/cache/restore@v4
         with:
@@ -201,12 +201,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@latest
 
       - name: Configure Git
         run: |

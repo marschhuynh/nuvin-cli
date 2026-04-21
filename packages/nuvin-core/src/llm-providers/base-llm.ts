@@ -27,6 +27,7 @@ export class LLMError extends Error {
 
 type CompletionBody = Omit<CompletionParams, 'maxTokens' | 'topP' | 'temperature'> & {
   max_tokens?: number;
+  max_completion_tokens?: number;
   top_p?: number;
   temperature?: number;
   stream: boolean;
@@ -130,6 +131,11 @@ export abstract class BaseLLM implements LLMPort {
     this.apiUrl = apiUrl;
     this.enablePromptCaching = options?.enablePromptCaching ?? false;
     this.retryConfig = options?.retry;
+  }
+
+  // Subclasses can override to use 'max_completion_tokens' for models that require it
+  protected buildTokenLimit(_model: string, value: number): { max_tokens?: number; max_completion_tokens?: number } {
+    return { max_tokens: value };
   }
 
   // Implemented by provider to inject auth, headers, refresh, etc.
@@ -257,7 +263,7 @@ export abstract class BaseLLM implements LLMPort {
       model: enhancedParams.model,
       messages: enhancedParams.messages,
       stream: false,
-      max_tokens: enhancedParams.maxTokens ?? 64000,
+      ...this.buildTokenLimit(enhancedParams.model, enhancedParams.maxTokens ?? 64000),
       ...(enhancedParams.temperature !== undefined && { temperature: enhancedParams.temperature }),
       ...(enhancedParams.topP !== undefined && { top_p: enhancedParams.topP }),
       ...(enhancedParams.reasoning && { reasoning: enhancedParams.reasoning }),
@@ -298,7 +304,7 @@ export abstract class BaseLLM implements LLMPort {
       model: enhancedParams.model,
       messages: enhancedParams.messages,
       stream: true,
-      max_tokens: enhancedParams.maxTokens ?? 64000,
+      ...this.buildTokenLimit(enhancedParams.model, enhancedParams.maxTokens ?? 64000),
       ...(enhancedParams.temperature !== undefined && { temperature: enhancedParams.temperature }),
       ...(enhancedParams.topP !== undefined && { top_p: enhancedParams.topP }),
       ...(enhancedParams.reasoning && { reasoning: enhancedParams.reasoning }),
