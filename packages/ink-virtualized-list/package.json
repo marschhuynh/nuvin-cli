@@ -1,0 +1,41 @@
+{
+  "name": "@nuvin/ink-virtualized-list",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared virtualized list primitive for @nuvin/ink",
+  "exports": {
+    "types": "./build/index.d.ts",
+    "default": "./build/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf build"
+  },
+  "files": [
+    "build"
+  ],
+  "dependencies": {
+    "@nuvin/ink": "workspace:*",
+    "@nuvin/ink-input": "workspace:*"
+  },
+  "devDependencies": {
+    "@sindresorhus/tsconfig": "^7.0.0",
+    "@types/react": "^19.1.5",
+    "react": "^19.1.0",
+    "string-width": "^8.2.0",
+    "typescript": "^6.0.2"
+  },
+  "peerDependencies": {
+    "@types/react": ">=19.0.0",
+    "react": ">=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    }
+  }
+}

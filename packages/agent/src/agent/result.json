@@ -1,0 +1,1285 @@
+[
+  {
+    "type": "user_message",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "review the codebase"
+        }
+      ]
+    }
+  },
+  {
+    "type": "model_request",
+    "request": {
+      "model": "claude-sonnet-4-20250514",
+      "maxTokens": 16384,
+      "system": [
+        {
+          "type": "text",
+          "text": ""
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "review the codebase"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "Bash",
+          "description": "Executes a shell command",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "string"
+              }
+            },
+            "required": ["command"]
+          }
+        }
+      ],
+      "metadata": {
+        "sessionId": "session-1776597915139-ff868b43",
+        "turnId": "turn-1"
+      }
+    }
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": "The"
+    },
+    "text": "The"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " user"
+    },
+    "text": " user"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " wants"
+    },
+    "text": " wants"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " me"
+    },
+    "text": " me"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " to"
+    },
+    "text": " to"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " review"
+    },
+    "text": " review"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " a"
+    },
+    "text": " a"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " code"
+    },
+    "text": " code"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": "base"
+    },
+    "text": "base"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": "."
+    },
+    "text": "."
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " Let"
+    },
+    "text": " Let"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " me"
+    },
+    "text": " me"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " first"
+    },
+    "text": " first"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " explore"
+    },
+    "text": " explore"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " the"
+    },
+    "text": " the"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " directory"
+    },
+    "text": " directory"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " structure"
+    },
+    "text": " structure"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " to"
+    },
+    "text": " to"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " understand"
+    },
+    "text": " understand"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " what"
+    },
+    "text": " what"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " we"
+    },
+    "text": " we"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": "'re"
+    },
+    "text": "'re"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " working"
+    },
+    "text": " working"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": " with"
+    },
+    "text": " with"
+  },
+  {
+    "type": "reasoning_chunk",
+    "messageId": "turn-1:assistant:1:reasoning",
+    "chunk": {
+      "type": "anthropic_thinking_delta",
+      "index": 0,
+      "thinking": "."
+    },
+    "text": "."
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": "I"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": "'ll"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " start"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " by"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " exploring"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " the"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " code"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": "base"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " structure"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " to"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " understand"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " what"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " we"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": "'re"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " working"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": " with"
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "text": "."
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "toolUse": {
+        "id": "call_c33f799f26f748efb0957ac4",
+        "name": "Bash",
+        "inputDelta": "{\"command\":\"find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100\"}"
+      }
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:1",
+    "chunk": {
+      "type": "content_delta",
+      "toolUse": {
+        "id": "call_41a163ec6c3d428ab1dafe80",
+        "name": "Bash",
+        "inputDelta": "{\"command\":\"ls -la\"}"
+      }
+    }
+  },
+  {
+    "type": "model_response",
+    "response": {
+      "id": "msg_20260419184758398b3c7e1eb54808",
+      "content": [
+        {
+          "type": "anthropic_thinking",
+          "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+          "signature": "0939f25af7204a1f9073906b"
+        },
+        {
+          "type": "text",
+          "text": "I'll start by exploring the codebase structure to understand what we're working with."
+        },
+        {
+          "type": "tool_use",
+          "id": "call_c33f799f26f748efb0957ac4",
+          "name": "Bash",
+          "input": {
+            "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "call_41a163ec6c3d428ab1dafe80",
+          "name": "Bash",
+          "input": {
+            "command": "ls -la"
+          }
+        }
+      ],
+      "stopReason": "tool_use",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 125
+      },
+      "providerState": {
+        "anthropicAssistantContent": [
+          {
+            "type": "thinking",
+            "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+            "signature": "0939f25af7204a1f9073906b"
+          },
+          {
+            "type": "text",
+            "text": "I'll start by exploring the codebase structure to understand what we're working with."
+          },
+          {
+            "type": "tool_use",
+            "id": "call_c33f799f26f748efb0957ac4",
+            "name": "Bash",
+            "input": {
+              "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+            }
+          },
+          {
+            "type": "tool_use",
+            "id": "call_41a163ec6c3d428ab1dafe80",
+            "name": "Bash",
+            "input": {
+              "command": "ls -la"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "reasoning_message",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "anthropic_thinking",
+          "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+          "signature": "0939f25af7204a1f9073906b"
+        }
+      ],
+      "id": "turn-1:assistant:1:reasoning"
+    }
+  },
+  {
+    "type": "assistant_message",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "anthropic_thinking",
+          "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+          "signature": "0939f25af7204a1f9073906b"
+        },
+        {
+          "type": "text",
+          "text": "I'll start by exploring the codebase structure to understand what we're working with."
+        },
+        {
+          "type": "tool_use",
+          "id": "call_c33f799f26f748efb0957ac4",
+          "name": "Bash",
+          "input": {
+            "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "call_41a163ec6c3d428ab1dafe80",
+          "name": "Bash",
+          "input": {
+            "command": "ls -la"
+          }
+        }
+      ],
+      "providerState": {
+        "anthropicAssistantContent": [
+          {
+            "type": "thinking",
+            "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+            "signature": "0939f25af7204a1f9073906b"
+          },
+          {
+            "type": "text",
+            "text": "I'll start by exploring the codebase structure to understand what we're working with."
+          },
+          {
+            "type": "tool_use",
+            "id": "call_c33f799f26f748efb0957ac4",
+            "name": "Bash",
+            "input": {
+              "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+            }
+          },
+          {
+            "type": "tool_use",
+            "id": "call_41a163ec6c3d428ab1dafe80",
+            "name": "Bash",
+            "input": {
+              "command": "ls -la"
+            }
+          }
+        ]
+      },
+      "id": "turn-1:assistant:1"
+    }
+  },
+  {
+    "type": "tool_call",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_c33f799f26f748efb0957ac4",
+      "name": "Bash",
+      "input": {
+        "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+      }
+    }
+  },
+  {
+    "type": "tool_call",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_41a163ec6c3d428ab1dafe80",
+      "name": "Bash",
+      "input": {
+        "command": "ls -la"
+      }
+    }
+  },
+  {
+    "type": "tool_started",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_c33f799f26f748efb0957ac4",
+      "name": "Bash",
+      "input": {
+        "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+      }
+    }
+  },
+  {
+    "type": "tool_started",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_41a163ec6c3d428ab1dafe80",
+      "name": "Bash",
+      "input": {
+        "command": "ls -la"
+      }
+    }
+  },
+  {
+    "type": "tool_output_chunk",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_c33f799f26f748efb0957ac4",
+      "name": "Bash",
+      "input": {
+        "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+      }
+    },
+    "chunk": {
+      "output": "src/agent/agent.ts\n",
+      "structured": {
+        "value": "src/agent/agent.ts\n"
+      }
+    }
+  },
+  {
+    "type": "tool_output_chunk",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_41a163ec6c3d428ab1dafe80",
+      "name": "Bash",
+      "input": {
+        "command": "ls -la"
+      }
+    },
+    "chunk": {
+      "output": "package.json\n",
+      "structured": {
+        "value": "package.json\n"
+      }
+    }
+  },
+  {
+    "type": "tool_output_chunk",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_c33f799f26f748efb0957ac4",
+      "name": "Bash",
+      "input": {
+        "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+      }
+    },
+    "chunk": {
+      "output": "src/models/anthropic-model.ts\n",
+      "structured": {
+        "value": "src/models/anthropic-model.ts\n"
+      }
+    }
+  },
+  {
+    "type": "tool_output_chunk",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_41a163ec6c3d428ab1dafe80",
+      "name": "Bash",
+      "input": {
+        "command": "ls -la"
+      }
+    },
+    "chunk": {
+      "output": "src\n",
+      "structured": {
+        "value": "src\n"
+      }
+    }
+  },
+  {
+    "type": "tool_completed",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_c33f799f26f748efb0957ac4",
+      "name": "Bash",
+      "input": {
+        "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+      }
+    },
+    "result": {
+      "callId": "call_c33f799f26f748efb0957ac4",
+      "toolName": "Bash",
+      "status": "ok",
+      "output": "src/agent/agent.ts\nsrc/models/anthropic-model.ts\n",
+      "structured": {
+        "chunks": [
+          {
+            "value": "src/agent/agent.ts\n"
+          },
+          {
+            "value": "src/models/anthropic-model.ts\n"
+          }
+        ]
+      },
+      "chunks": [
+        {
+          "output": "src/agent/agent.ts\n",
+          "structured": {
+            "value": "src/agent/agent.ts\n"
+          }
+        },
+        {
+          "output": "src/models/anthropic-model.ts\n",
+          "structured": {
+            "value": "src/models/anthropic-model.ts\n"
+          }
+        }
+      ],
+      "meta": {
+        "transforms": []
+      }
+    }
+  },
+  {
+    "type": "tool_completed",
+    "toolCall": {
+      "type": "tool_use",
+      "id": "call_41a163ec6c3d428ab1dafe80",
+      "name": "Bash",
+      "input": {
+        "command": "ls -la"
+      }
+    },
+    "result": {
+      "callId": "call_41a163ec6c3d428ab1dafe80",
+      "toolName": "Bash",
+      "status": "ok",
+      "output": "package.json\nsrc\n",
+      "structured": {
+        "chunks": [
+          {
+            "value": "package.json\n"
+          },
+          {
+            "value": "src\n"
+          }
+        ]
+      },
+      "chunks": [
+        {
+          "output": "package.json\n",
+          "structured": {
+            "value": "package.json\n"
+          }
+        },
+        {
+          "output": "src\n",
+          "structured": {
+            "value": "src\n"
+          }
+        }
+      ],
+      "meta": {
+        "transforms": []
+      }
+    }
+  },
+  {
+    "type": "tool_result",
+    "result": {
+      "callId": "call_c33f799f26f748efb0957ac4",
+      "toolName": "Bash",
+      "status": "ok",
+      "output": "src/agent/agent.ts\nsrc/models/anthropic-model.ts\n",
+      "structured": {
+        "chunks": [
+          {
+            "value": "src/agent/agent.ts\n"
+          },
+          {
+            "value": "src/models/anthropic-model.ts\n"
+          }
+        ]
+      },
+      "chunks": [
+        {
+          "output": "src/agent/agent.ts\n",
+          "structured": {
+            "value": "src/agent/agent.ts\n"
+          }
+        },
+        {
+          "output": "src/models/anthropic-model.ts\n",
+          "structured": {
+            "value": "src/models/anthropic-model.ts\n"
+          }
+        }
+      ],
+      "meta": {
+        "transforms": []
+      }
+    }
+  },
+  {
+    "type": "tool_result",
+    "result": {
+      "callId": "call_41a163ec6c3d428ab1dafe80",
+      "toolName": "Bash",
+      "status": "ok",
+      "output": "package.json\nsrc\n",
+      "structured": {
+        "chunks": [
+          {
+            "value": "package.json\n"
+          },
+          {
+            "value": "src\n"
+          }
+        ]
+      },
+      "chunks": [
+        {
+          "output": "package.json\n",
+          "structured": {
+            "value": "package.json\n"
+          }
+        },
+        {
+          "output": "src\n",
+          "structured": {
+            "value": "src\n"
+          }
+        }
+      ],
+      "meta": {
+        "transforms": []
+      }
+    }
+  },
+  {
+    "type": "tool_result_message",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "call_c33f799f26f748efb0957ac4",
+          "content": "src/agent/agent.ts\nsrc/models/anthropic-model.ts\n",
+          "is_error": false
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "call_41a163ec6c3d428ab1dafe80",
+          "content": "package.json\nsrc\n",
+          "is_error": false
+        }
+      ]
+    }
+  },
+  {
+    "type": "model_request",
+    "request": {
+      "model": "claude-sonnet-4-20250514",
+      "maxTokens": 16384,
+      "system": [
+        {
+          "type": "text",
+          "text": ""
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "review the codebase"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "anthropic_thinking",
+              "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+              "signature": "0939f25af7204a1f9073906b"
+            },
+            {
+              "type": "text",
+              "text": "I'll start by exploring the codebase structure to understand what we're working with."
+            },
+            {
+              "type": "tool_use",
+              "id": "call_c33f799f26f748efb0957ac4",
+              "name": "Bash",
+              "input": {
+                "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "call_41a163ec6c3d428ab1dafe80",
+              "name": "Bash",
+              "input": {
+                "command": "ls -la"
+              }
+            }
+          ],
+          "providerState": {
+            "anthropicAssistantContent": [
+              {
+                "type": "thinking",
+                "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+                "signature": "0939f25af7204a1f9073906b"
+              },
+              {
+                "type": "text",
+                "text": "I'll start by exploring the codebase structure to understand what we're working with."
+              },
+              {
+                "type": "tool_use",
+                "id": "call_c33f799f26f748efb0957ac4",
+                "name": "Bash",
+                "input": {
+                  "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+                }
+              },
+              {
+                "type": "tool_use",
+                "id": "call_41a163ec6c3d428ab1dafe80",
+                "name": "Bash",
+                "input": {
+                  "command": "ls -la"
+                }
+              }
+            ]
+          },
+          "id": "turn-1:assistant:1"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "call_c33f799f26f748efb0957ac4",
+              "content": "src/agent/agent.ts\nsrc/models/anthropic-model.ts\n",
+              "is_error": false
+            },
+            {
+              "type": "tool_result",
+              "tool_use_id": "call_41a163ec6c3d428ab1dafe80",
+              "content": "package.json\nsrc\n",
+              "is_error": false
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "Bash",
+          "description": "Executes a shell command",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "string"
+              }
+            },
+            "required": ["command"]
+          }
+        }
+      ],
+      "metadata": {
+        "sessionId": "session-1776597915139-ff868b43",
+        "turnId": "turn-1"
+      }
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:2",
+    "chunk": {
+      "type": "content_delta",
+      "text": "I found "
+    }
+  },
+  {
+    "type": "assistant_chunk",
+    "messageId": "turn-1:assistant:2",
+    "chunk": {
+      "type": "content_delta",
+      "text": "the key project files."
+    }
+  },
+  {
+    "type": "model_response",
+    "response": {
+      "id": "msg_follow_up_review",
+      "content": [
+        {
+          "type": "text",
+          "text": "I found the key project files."
+        }
+      ],
+      "stopReason": "end_turn",
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 2
+      }
+    }
+  },
+  {
+    "type": "assistant_message",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I found the key project files."
+        }
+      ],
+      "id": "turn-1:assistant:2"
+    }
+  },
+  {
+    "type": "final_message",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I found the key project files."
+        }
+      ],
+      "id": "turn-1:assistant:2"
+    }
+  },
+  {
+    "type": "turn_complete",
+    "state": {
+      "sessionId": "session-1776597915139-ff868b43",
+      "turnId": "turn-1",
+      "system": [
+        {
+          "type": "text",
+          "text": ""
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "review the codebase"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "anthropic_thinking",
+              "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+              "signature": "0939f25af7204a1f9073906b"
+            },
+            {
+              "type": "text",
+              "text": "I'll start by exploring the codebase structure to understand what we're working with."
+            },
+            {
+              "type": "tool_use",
+              "id": "call_c33f799f26f748efb0957ac4",
+              "name": "Bash",
+              "input": {
+                "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "call_41a163ec6c3d428ab1dafe80",
+              "name": "Bash",
+              "input": {
+                "command": "ls -la"
+              }
+            }
+          ],
+          "providerState": {
+            "anthropicAssistantContent": [
+              {
+                "type": "thinking",
+                "thinking": "The user wants me to review a codebase. Let me first explore the directory structure to understand what we're working with.",
+                "signature": "0939f25af7204a1f9073906b"
+              },
+              {
+                "type": "text",
+                "text": "I'll start by exploring the codebase structure to understand what we're working with."
+              },
+              {
+                "type": "tool_use",
+                "id": "call_c33f799f26f748efb0957ac4",
+                "name": "Bash",
+                "input": {
+                  "command": "find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/__pycache__/*' -not -path '*.pyc' | head -100"
+                }
+              },
+              {
+                "type": "tool_use",
+                "id": "call_41a163ec6c3d428ab1dafe80",
+                "name": "Bash",
+                "input": {
+                  "command": "ls -la"
+                }
+              }
+            ]
+          },
+          "id": "turn-1:assistant:1"
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "call_c33f799f26f748efb0957ac4",
+              "content": "src/agent/agent.ts\nsrc/models/anthropic-model.ts\n",
+              "is_error": false
+            },
+            {
+              "type": "tool_result",
+              "tool_use_id": "call_41a163ec6c3d428ab1dafe80",
+              "content": "package.json\nsrc\n",
+              "is_error": false
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I found the key project files."
+            }
+          ],
+          "id": "turn-1:assistant:2"
+        }
+      ],
+      "lastResponse": {
+        "id": "msg_follow_up_review",
+        "content": [
+          {
+            "type": "text",
+            "text": "I found the key project files."
+          }
+        ],
+        "stopReason": "end_turn",
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 2
+        }
+      },
+      "toolResults": [
+        {
+          "callId": "call_c33f799f26f748efb0957ac4",
+          "toolName": "Bash",
+          "status": "ok",
+          "output": "src/agent/agent.ts\nsrc/models/anthropic-model.ts\n",
+          "structured": {
+            "chunks": [
+              {
+                "value": "src/agent/agent.ts\n"
+              },
+              {
+                "value": "src/models/anthropic-model.ts\n"
+              }
+            ]
+          },
+          "chunks": [
+            {
+              "output": "src/agent/agent.ts\n",
+              "structured": {
+                "value": "src/agent/agent.ts\n"
+              }
+            },
+            {
+              "output": "src/models/anthropic-model.ts\n",
+              "structured": {
+                "value": "src/models/anthropic-model.ts\n"
+              }
+            }
+          ],
+          "meta": {
+            "transforms": []
+          }
+        },
+        {
+          "callId": "call_41a163ec6c3d428ab1dafe80",
+          "toolName": "Bash",
+          "status": "ok",
+          "output": "package.json\nsrc\n",
+          "structured": {
+            "chunks": [
+              {
+                "value": "package.json\n"
+              },
+              {
+                "value": "src\n"
+              }
+            ]
+          },
+          "chunks": [
+            {
+              "output": "package.json\n",
+              "structured": {
+                "value": "package.json\n"
+              }
+            },
+            {
+              "output": "src\n",
+              "structured": {
+                "value": "src\n"
+              }
+            }
+          ],
+          "meta": {
+            "transforms": []
+          }
+        }
+      ],
+      "finalMessage": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I found the key project files."
+          }
+        ],
+        "id": "turn-1:assistant:2"
+      }
+    }
+  }
+]

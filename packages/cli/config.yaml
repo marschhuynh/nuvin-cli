@@ -1,0 +1,17 @@
+database:
+  host: localhost
+  port: 5432
+  name: myapp_db
+  
+server:
+  port: 9000
+  timeout: 60
+  debug: true
+  ssl_enabled: true
+  
+features:
+  - login
+  - signup
+  - profile
+  - dashboard
+  - api_integration
