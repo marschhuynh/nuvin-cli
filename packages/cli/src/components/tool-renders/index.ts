@@ -17,7 +17,7 @@ const TOOL_RENDERERS: Record<string, ToolRenderer> = {
   Glob: GlobToolRender,
   Grep: GrepToolRender,
   Ls: LsToolRender,
-  AssignTask: AssignTaskToolRender
+  AssignTask: AssignTaskToolRender,
 };
 
 export function getToolRenderer(toolName: string): ToolRenderer {

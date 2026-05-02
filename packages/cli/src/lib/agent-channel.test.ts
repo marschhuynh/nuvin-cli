@@ -1,4 +1,4 @@
-import type { AgentEvent, ToolUseBlock } from "@nuvin/agent-core/shared";
+import type { AgentEvent, ToolUseBlock } from "@nuvin/nuvin-core/shared";
 import { describe, expect, it, vi } from "vitest";
 
 import { AgentChannel, type AgentEventPayload, type ToolCallRequest } from "./agent-channel.js";

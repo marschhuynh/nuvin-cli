@@ -1,8 +1,5 @@
 import { Box, Text, useWindowSize } from "@nuvin/ink";
-import {
-  VirtualizedList,
-  type VirtualizedListRef,
-} from "@nuvin/ink-virtualized-list";
+import { VirtualizedList, type VirtualizedListRef } from "@nuvin/ink-virtualized-list";
 import { useEffect, useMemo, useRef } from "react";
 import { ChildMessagesProvider } from "#src/components/ChildMessagesContext.js";
 import { MessageRow } from "#src/components/MessageRow.js";

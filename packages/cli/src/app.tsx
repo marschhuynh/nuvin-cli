@@ -1,12 +1,12 @@
-import type { Agent } from "@nuvin/agent-core/agent";
+import { Box, useApp, useWindowSize } from "@nuvin/ink";
+import { InputSetup, useInput } from "@nuvin/ink-input";
+import type { Agent } from "@nuvin/nuvin-core/agent";
 import {
   type AgentEvent,
   isAbortError,
   type ToolRuntimeDispatchDecision,
   type ToolUseBlock,
-} from "@nuvin/agent-core/shared";
-import { Box, useApp, useWindowSize } from "@nuvin/ink";
-import { InputSetup, useInput } from "@nuvin/ink-input";
+} from "@nuvin/nuvin-core/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Composer } from "#src/components/Composer.js";

@@ -1,5 +1,5 @@
 /**
- * Centralized theme configuration for the @nuvin/cli surface.
+ * Centralized theme configuration for the @nuvin/nuvin-cli surface.
  *
  * Inspired by nuvin-space-public's theme runtime: detects the terminal's
  * light/dark preference + color depth and resolves a structured `Theme`

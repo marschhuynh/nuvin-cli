@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue, ToolUseBlock } from "@nuvin/agent-core/shared";
+import type { JsonObject, JsonValue, ToolUseBlock } from "@nuvin/nuvin-core/shared";
 
 /**
  * Plain-text renderer registry for tool args displayed in the approval prompt.

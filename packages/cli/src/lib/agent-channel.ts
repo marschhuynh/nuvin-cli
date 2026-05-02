@@ -4,7 +4,7 @@ import type {
   AgentEvent,
   ToolRuntimeDispatchDecision,
   ToolUseBlock,
-} from "@nuvin/agent-core/shared";
+} from "@nuvin/nuvin-core/shared";
 
 /**
  * Optional context describing the delegated child agent that produced the

@@ -1,7 +1,7 @@
-import type { JsonObject, JsonValue } from "@nuvin/agent-core/shared";
 import { Box, type BoxRef, Text } from "@nuvin/ink";
 import { Button, Clickable, useInput } from "@nuvin/ink-input";
 import TextInput from "@nuvin/ink-text-input";
+import type { JsonObject, JsonValue } from "@nuvin/nuvin-core/shared";
 import React, { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { Modal } from "#src/components/Modal.js";
@@ -107,7 +107,6 @@ export function ApprovalPrompt({
 }: ApprovalPromptProps) {
   const theme = useFullTheme();
   const [focus, setFocus] = useState<FocusTarget>("yes");
-  const [hoveredChoiceId, setHoveredChoiceId] = useState<FocusTarget | null>(null);
   const [comment, setComment] = useState("");
   const argsRef = useRef<BoxRef | null>(null);
   const argsLines = useMemo(
@@ -267,7 +266,6 @@ export function ApprovalPrompt({
               customArgsContent
             ) : argsLines.length > 0 ? (
               argsLines.map((line, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: fixed display-only array
                 <Text key={`${index}-${line}`} backgroundColor={surface} color={theme.text.default}>
                   {line.length > 0 ? line : " "}
                 </Text>
@@ -284,7 +282,6 @@ export function ApprovalPrompt({
       <Box backgroundColor={surface} paddingX={1} paddingTop={1}>
         {CHOICES.map((choice) => {
           const isFocused = focus === choice.id;
-          const isHovered = hoveredChoiceId === choice.id;
           const choiceColor = theme.tokens[choice.colorKey];
           return (
             <Button
@@ -294,7 +291,6 @@ export function ApprovalPrompt({
               surface={surface}
               focused={isFocused}
               onClick={() => submit(choice.decision)}
-              onHover={(h) => setHoveredChoiceId(h ? choice.id : null)}
               isMouseActive={approval !== null}
               marginRight={2}
             >

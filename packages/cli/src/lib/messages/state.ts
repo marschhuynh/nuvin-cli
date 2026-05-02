@@ -1,11 +1,11 @@
-import { getReasoningTextFromMessage, getTextFromMessage } from "@nuvin/agent-core/formats";
+import { getReasoningTextFromMessage, getTextFromMessage } from "@nuvin/nuvin-core/formats";
 import type {
   AgentEvent,
   JsonObject,
   JsonValue,
   ToolResult,
   ToolUseBlock,
-} from "@nuvin/agent-core/shared";
+} from "@nuvin/nuvin-core/shared";
 
 export type ToolMessageStatus = "approved" | "error" | "ok" | "pending" | "rejected" | "running";
 

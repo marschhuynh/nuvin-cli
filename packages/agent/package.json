@@ -1,8 +1,19 @@
 {
-  "name": "@nuvin/agent-core",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@nuvin/nuvin-core",
+  "version": "2.1.0-rc.6",
+  "private": false,
+  "description": "Core agent, model, format, and tool primitives for Nuvin",
+  "license": "Apache-2.0",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "imports": {
     "#/*": "./src/*"
   },

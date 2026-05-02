@@ -1,16 +1,3 @@
-import { Agent } from "@nuvin/agent-core/agent";
-import type { AgentEvent, AgentOptions, ToolUseBlock } from "@nuvin/agent-core/shared";
-import {
-  createBashTool,
-  createDelegationTools,
-  createFileEditTool,
-  createFileNewTool,
-  createFileReadTool,
-  createGlobTool,
-  createGrepTool,
-  createLsTool,
-  type DelegatedAgentDefinition,
-} from "@nuvin/agent-core/tools";
 import {
   type AgentDefinitionReference,
   ConfigManager,
@@ -22,6 +9,19 @@ import {
   resolveConfigDirName,
 } from "@nuvin/config";
 import { render } from "@nuvin/ink";
+import { Agent } from "@nuvin/nuvin-core/agent";
+import type { AgentEvent, AgentOptions, ToolUseBlock } from "@nuvin/nuvin-core/shared";
+import {
+  createBashTool,
+  createDelegationTools,
+  createFileEditTool,
+  createFileNewTool,
+  createFileReadTool,
+  createGlobTool,
+  createGrepTool,
+  createLsTool,
+  type DelegatedAgentDefinition,
+} from "@nuvin/nuvin-core/tools";
 import { AgentChannel } from "#src/lib/agent-channel.js";
 import { createChatModelFromConfig } from "#src/lib/chat/model.js";
 import type { ThemeRuntimeOptions } from "#src/lib/theme/runtime.js";
@@ -153,7 +153,7 @@ Be concise, explain what you are doing, and prefer direct implementation steps.`
     systemPrompt: coordinatorSystemPrompt,
     chatModel,
     tools: [
-      // ...delegationTools,
+      ...delegationTools,
       createFileRead(),
       createLs(),
       createGlob(),

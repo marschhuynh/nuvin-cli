@@ -1,4 +1,4 @@
-import type { AgentEvent } from "@nuvin/agent-core/shared";
+import type { AgentEvent } from "@nuvin/nuvin-core/shared";
 import { describe, expect, it } from "vitest";
 
 import {

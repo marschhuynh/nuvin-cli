@@ -1,5 +1,5 @@
-import type { JsonObject, JsonValue } from "@nuvin/agent-core/shared";
 import { Box } from "@nuvin/ink";
+import type { JsonObject, JsonValue } from "@nuvin/nuvin-core/shared";
 
 import { FileDiffView, type LineNumbers } from "./FileDiffView.js";
 import { isFileEditDiffInput } from "./FileEditApprovalContent.js";

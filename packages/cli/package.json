@@ -1,10 +1,22 @@
 {
-  "name": "@nuvin/cli",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@nuvin/nuvin-cli",
+  "version": "2.0.0-rc.14",
+  "private": false,
+  "description": "Interactive AI coding assistant CLI powered by Nuvin core",
+  "license": "Apache-2.0",
   "type": "module",
   "bin": {
+    "nuvin": "./dist/index.js",
     "nuvin-cli": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "imports": {
     "#src/*": "./src/*"
@@ -14,18 +26,15 @@
     "clean": "rm -rf dist",
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
+    "lint": "biome check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "run:prod": "node dist/index.js",
     "prepack": "rm -rf dist && pnpm run build"
   },
   "dependencies": {
-    "@nuvin/agent-core": "workspace:*",
-    "@nuvin/config": "workspace:*",
-    "@nuvin/ink": "workspace:*",
-    "@nuvin/ink-input": "workspace:*",
-    "@nuvin/ink-text-input": "workspace:*",
-    "@nuvin/ink-virtualized-list": "workspace:*",
+    "@nuvin/ink": "workspace:^",
+    "@nuvin/nuvin-core": "workspace:^",
     "ansi-escapes": "^7.2.0",
     "chalk": "^5.6.2",
     "cli-highlight": "^2.1.11",
@@ -40,6 +49,10 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@nuvin/config": "workspace:*",
+    "@nuvin/ink-input": "workspace:*",
+    "@nuvin/ink-text-input": "workspace:*",
+    "@nuvin/ink-virtualized-list": "workspace:*",
     "@types/node": "^22.0.0",
     "@types/react": "^19.1.0",
     "javascript-obfuscator": "^4.2.0",

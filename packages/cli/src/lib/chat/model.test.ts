@@ -1,4 +1,4 @@
-import { ChatModel } from "@nuvin/agent-core/models";
+import { ChatModel } from "@nuvin/nuvin-core/models";
 import { describe, expect, it, vi } from "vitest";
 
 import { createChatModelFromConfig, createChatModelFromEnv } from "#src/lib/chat/model.js";

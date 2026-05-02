@@ -9,6 +9,13 @@ export default defineConfig({
   minify: true,
   target: "node18",
   outDir: "dist",
+  external: ["@nuvin/nuvin-core", "@nuvin/ink"],
+  noExternal: [
+    "@nuvin/config",
+    "@nuvin/ink-input",
+    "@nuvin/ink-text-input",
+    "@nuvin/ink-virtualized-list",
+  ],
   esbuildOptions(options) {
     options.define = {
       ...options.define,

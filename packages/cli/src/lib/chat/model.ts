@@ -1,8 +1,8 @@
-import type { ChatModelAuthScheme, ChatModelSurface } from "@nuvin/agent-core/models";
-import { ChatModel } from "@nuvin/agent-core/models";
-import type { ReasoningConfig } from "@nuvin/agent-core/shared";
 import type { CLIConfig } from "@nuvin/config";
 import { loadEnvConfig, mergeConfigs, pickActiveAuth, resolveProviderToken } from "@nuvin/config";
+import type { ChatModelAuthScheme, ChatModelSurface } from "@nuvin/nuvin-core/models";
+import { ChatModel } from "@nuvin/nuvin-core/models";
+import type { ReasoningConfig } from "@nuvin/nuvin-core/shared";
 
 type CreateChatModelOptions = {
   reasoning?: ReasoningConfig;

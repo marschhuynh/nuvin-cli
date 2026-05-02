@@ -138,7 +138,7 @@ jobs:
             packages/*/dist
           key: build-${{ github.sha }}
 
-      - run: pnpm --filter nuvin-cli test
+      - run: pnpm --filter @nuvin/nuvin-cli test
 
   test-core:
     needs: build
@@ -166,15 +166,44 @@ jobs:
             packages/*/dist
           key: build-${{ github.sha }}
 
-      - run: pnpm --filter nuvin-core test
+      - run: pnpm --filter @nuvin/nuvin-core test
+
+  release-smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            packages/*/node_modules
+            packages/*/build
+            packages/*/dist
+          key: build-${{ github.sha }}
+
+      - run: pnpm release:smoke
 
   publish:
-    needs: [check-changesets, lint, test-cli, test-core]
+    needs: [check-changesets, lint, test-cli, test-core, release-smoke]
     if: |
       always() &&
       needs.lint.result == 'success' &&
       needs.test-cli.result == 'success' &&
       needs.test-core.result == 'success' &&
+      needs.release-smoke.result == 'success' &&
       (github.event_name == 'workflow_dispatch' ||
        (github.event_name == 'push' && needs.check-changesets.outputs.has_changesets == 'true'))
     runs-on: ubuntu-latest

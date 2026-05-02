@@ -1,5 +1,5 @@
-import type { JsonObject, JsonValue, ToolUseBlock } from "@nuvin/agent-core/shared";
 import { Box, Text } from "@nuvin/ink";
+import type { JsonObject, JsonValue, ToolUseBlock } from "@nuvin/nuvin-core/shared";
 import { useMemo } from "react";
 
 import { useTheme } from "#src/lib/theme/store.js";

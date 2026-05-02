@@ -1,4 +1,4 @@
-import type { ToolRuntimeDispatchDecision, ToolUseBlock } from "@nuvin/agent-core/shared";
+import type { ToolRuntimeDispatchDecision, ToolUseBlock } from "@nuvin/nuvin-core/shared";
 
 /**
  * Decision the user makes on a pending tool approval.

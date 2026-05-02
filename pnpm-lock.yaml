@@ -76,24 +76,12 @@ importers:
 
   packages/cli:
     dependencies:
-      '@nuvin/agent-core':
-        specifier: workspace:*
-        version: link:../agent
-      '@nuvin/config':
-        specifier: workspace:*
-        version: link:../config
       '@nuvin/ink':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../ink
-      '@nuvin/ink-input':
-        specifier: workspace:*
-        version: link:../ink-input
-      '@nuvin/ink-text-input':
-        specifier: workspace:*
-        version: link:../ink-text-input
-      '@nuvin/ink-virtualized-list':
-        specifier: workspace:*
-        version: link:../ink-virtualized-list
+      '@nuvin/nuvin-core':
+        specifier: workspace:^
+        version: link:../agent
       ansi-escapes:
         specifier: ^7.2.0
         version: 7.3.0
@@ -131,6 +119,18 @@ importers:
         specifier: ^5.0.0
         version: 5.0.12(@types/react@19.2.14)(react@19.2.5)
     devDependencies:
+      '@nuvin/config':
+        specifier: workspace:*
+        version: link:../config
+      '@nuvin/ink-input':
+        specifier: workspace:*
+        version: link:../ink-input
+      '@nuvin/ink-text-input':
+        specifier: workspace:*
+        version: link:../ink-text-input
+      '@nuvin/ink-virtualized-list':
+        specifier: workspace:*
+        version: link:../ink-virtualized-list
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.17

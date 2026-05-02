@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from "@nuvin/agent-core/shared";
+import type { JsonObject, JsonValue } from "@nuvin/nuvin-core/shared";
 
 export function jsonObject(value: JsonValue | undefined): JsonObject | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value : undefined;

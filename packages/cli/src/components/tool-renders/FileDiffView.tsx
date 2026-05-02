@@ -1,5 +1,5 @@
-import type { JsonObject } from "@nuvin/agent-core/shared";
 import { Box, Text, useWindowSize } from "@nuvin/ink";
+import type { JsonObject } from "@nuvin/nuvin-core/shared";
 import React from "react";
 
 import type { Theme } from "#src/lib/theme/runtime.js";
@@ -601,7 +601,6 @@ function DiffLineViewInner({ contentWidth, line, lineNumWidth, theme }: DiffLine
       <Text color={model.separatorColor}>{model.separatorText}</Text>
       {model.bodySegments.map((segment, index) => (
         <Text
-          // biome-ignore lint/suspicious/noArrayIndexKey: segment order is derived from immutable diff text for a single render.
           key={`${index}-${segment.text}-${segment.color}-${segment.background ?? ""}`}
           backgroundColor={segment.background}
           color={segment.color}

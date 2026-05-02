@@ -1,4 +1,4 @@
-# @nuvin/cli
+# @nuvin/nuvin-cli
 
 A full-featured terminal UI (TUI) coding assistant built with **React** and **Ink**. It provides an interactive, streaming chat interface in your terminal that connects to LLM providers (Anthropic, OpenAI-compatible) and gives the assistant a suite of workspace tools — file reading/writing, search, shell execution, and more — with a human-in-the-loop approval system for safety-critical operations.
 
@@ -224,7 +224,7 @@ Delegated agents run with their own tool set and publish events back through the
 
 | Package | Purpose |
 |---------|---------|
-| `@nuvin/agent-core` | Agent runtime, tool definitions, chat model abstractions |
+| `@nuvin/nuvin-core` | Agent runtime, tool definitions, chat model abstractions |
 | `@nuvin/config` | Configuration management, profiles, env loading |
 | `@nuvin/ink` | React-based terminal rendering (fork of Ink) |
 | `@nuvin/ink-input` | Keyboard input handling |
