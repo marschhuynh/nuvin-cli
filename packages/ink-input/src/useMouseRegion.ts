@@ -26,10 +26,7 @@ and only fires the handler when the event falls within the component's bounds.
 Uses BoxRef.getBounds() to compute absolute position at event time,
 so it stays accurate across scrolls and re-renders.
 */
-export const useMouseRegion = (
-  handler: RegionMouseHandler,
-  options: UseMouseRegionOptions,
-) => {
+export const useMouseRegion = (handler: RegionMouseHandler, options: UseMouseRegionOptions) => {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
 

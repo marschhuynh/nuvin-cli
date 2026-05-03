@@ -4,7 +4,7 @@ const changelogFunctions = {
   getDependencyReleaseLine: async (changesets, dependenciesUpdated, options) => {
     if (!options.repo) {
       throw new Error(
-        'Please provide a repo to this changelog generator like this:\n"changelog": ["./changelog-config.js", { "repo": "org/repo" }]'
+        'Please provide a repo to this changelog generator like this:\n"changelog": ["./changelog-config.js", { "repo": "org/repo" }]',
       );
     }
 
@@ -20,20 +20,20 @@ const changelogFunctions = {
             const shortHash = cs.commit.slice(0, 7);
             return `[\`${shortHash}\`](https://github.com/${options.repo}/commit/${cs.commit})`;
           }
-        })
+        }),
       )
     )
       .filter((_) => _)
       .join(", ")}]:`;
     const updatedDepenenciesList = dependenciesUpdated.map(
-      (dependency) => `  - ${dependency.name}@${dependency.newVersion}`
+      (dependency) => `  - ${dependency.name}@${dependency.newVersion}`,
     );
     return [changesetLink, ...updatedDepenenciesList].join("\n");
   },
   getReleaseLine: async (changeset, type, options) => {
     if (!options || !options.repo) {
       throw new Error(
-        'Please provide a repo to this changelog generator like this:\n"changelog": ["./changelog-config.js", { "repo": "org/repo" }]'
+        'Please provide a repo to this changelog generator like this:\n"changelog": ["./changelog-config.js", { "repo": "org/repo" }]',
       );
     }
 
@@ -55,9 +55,7 @@ const changelogFunctions = {
         return "";
       })
       .trim();
-    const [firstLine, ...futureLines] = replacedChangelog
-      .split("\n")
-      .map((l) => l.trimRight());
+    const [firstLine, ...futureLines] = replacedChangelog.split("\n").map((l) => l.trimRight());
     const links = await (async () => {
       if (prFromSummary !== undefined) {
         let { links } = await getInfoFromPullRequest({
@@ -96,10 +94,7 @@ const changelogFunctions = {
     })();
     const users = usersFromSummary.length
       ? usersFromSummary
-          .map(
-            (userFromSummary) =>
-              `[@${userFromSummary}](https://github.com/${userFromSummary})`
-          )
+          .map((userFromSummary) => `[@${userFromSummary}](https://github.com/${userFromSummary})`)
           .join(", ")
       : links.user;
     const prefix = [

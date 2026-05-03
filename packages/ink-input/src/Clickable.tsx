@@ -43,20 +43,8 @@ type ClickableComponent = React.ForwardRefExoticComponent<
   React.PropsWithChildren<ClickableProps> & React.RefAttributes<BoxRef>
 >;
 
-const Clickable: ClickableComponent = forwardRef<
-  BoxRef,
-  React.PropsWithChildren<ClickableProps>
->(
-  (
-    {
-      children,
-      onClick,
-      onHover,
-      isMouseActive = true,
-      ...boxProps
-    },
-    ref,
-  ) => {
+const Clickable: ClickableComponent = forwardRef<BoxRef, React.PropsWithChildren<ClickableProps>>(
+  ({ children, onClick, onHover, isMouseActive = true, ...boxProps }, ref) => {
     const boxRef = useRef<BoxRef | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -73,18 +61,15 @@ const Clickable: ClickableComponent = forwardRef<
       [ref],
     );
 
-    const hitTest = useCallback(
-      (event: MouseEvent): boolean => {
-        const el = boxRef.current;
-        if (!el) return false;
-        const bounds = el.getBounds();
-        if (bounds.width <= 0 || bounds.height <= 0) return false;
-        const relX = event.x - bounds.x - 1;
-        const relY = event.y - bounds.y - 1;
-        return relX >= 0 && relX < bounds.width && relY >= 0 && relY < bounds.height;
-      },
-      [],
-    );
+    const hitTest = useCallback((event: MouseEvent): boolean => {
+      const el = boxRef.current;
+      if (!el) return false;
+      const bounds = el.getBounds();
+      if (bounds.width <= 0 || bounds.height <= 0) return false;
+      const relX = event.x - bounds.x - 1;
+      const relY = event.y - bounds.y - 1;
+      return relX >= 0 && relX < bounds.width && relY >= 0 && relY < bounds.height;
+    }, []);
 
     useMouse(
       (event) => {

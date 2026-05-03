@@ -22,7 +22,11 @@ export { useFocus, useFocusCycle } from "./useFocus.js";
 export { useInput } from "./useInput.js";
 export { useMouse } from "./useMouse.js";
 export { useMouseRegion } from "./useMouseRegion.js";
-export type { RegionMouseEvent, RegionMouseHandler, UseMouseRegionOptions } from "./useMouseRegion.js";
+export type {
+  RegionMouseEvent,
+  RegionMouseHandler,
+  UseMouseRegionOptions,
+} from "./useMouseRegion.js";
 export { default as Clickable } from "./Clickable.js";
 export type { ClickableProps, ClickEvent } from "./Clickable.js";
 export { default as Button } from "./Button.js";

@@ -28,10 +28,7 @@ Renders in three variants:
 
 Filled and outlined invert on hover. Text variant shows `› label` when active.
 */
-const Button = forwardRef<
-  import("@nuvin/ink").BoxRef,
-  React.PropsWithChildren<ButtonProps>
->(
+const Button = forwardRef<import("@nuvin/ink").BoxRef, React.PropsWithChildren<ButtonProps>>(
   (
     {
       children,
@@ -82,19 +79,39 @@ const Button = forwardRef<
           isMouseActive={isMouseActive}
           {...boxProps}
         >
-          <Text bold={active} color={hovered ? surface : color} backgroundColor={hovered ? color : undefined}>
+          <Text
+            bold={active}
+            color={hovered ? surface : color}
+            backgroundColor={hovered ? color : undefined}
+          >
             {"["}
           </Text>
-          <Text bold={active} color={hovered ? surface : color} backgroundColor={hovered ? color : undefined}>
+          <Text
+            bold={active}
+            color={hovered ? surface : color}
+            backgroundColor={hovered ? color : undefined}
+          >
             {" "}
           </Text>
-          <Text bold color={hovered ? surface : color} backgroundColor={hovered ? color : undefined}>
+          <Text
+            bold
+            color={hovered ? surface : color}
+            backgroundColor={hovered ? color : undefined}
+          >
             {children}
           </Text>
-          <Text bold={active} color={hovered ? surface : color} backgroundColor={hovered ? color : undefined}>
+          <Text
+            bold={active}
+            color={hovered ? surface : color}
+            backgroundColor={hovered ? color : undefined}
+          >
             {" "}
           </Text>
-          <Text bold={active} color={hovered ? surface : color} backgroundColor={hovered ? color : undefined}>
+          <Text
+            bold={active}
+            color={hovered ? surface : color}
+            backgroundColor={hovered ? color : undefined}
+          >
             {"]"}
           </Text>
         </Clickable>
@@ -110,13 +127,21 @@ const Button = forwardRef<
         isMouseActive={isMouseActive}
         {...boxProps}
       >
-        <Text bold={active} color={hovered ? color : surface} backgroundColor={hovered ? surface : color}>
+        <Text
+          bold={active}
+          color={hovered ? color : surface}
+          backgroundColor={hovered ? surface : color}
+        >
           {" "}
         </Text>
         <Text bold color={hovered ? color : surface} backgroundColor={hovered ? surface : color}>
           {children}
         </Text>
-        <Text bold={active} color={hovered ? color : surface} backgroundColor={hovered ? surface : color}>
+        <Text
+          bold={active}
+          color={hovered ? color : surface}
+          backgroundColor={hovered ? surface : color}
+        >
           {" "}
         </Text>
       </Clickable>

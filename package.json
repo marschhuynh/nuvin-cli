@@ -12,7 +12,7 @@
     "clean": "pnpm --filter @nuvin/nuvin-cli... clean",
     "dev": "pnpm --filter @nuvin/nuvin-cli dev",
     "lint": "pnpm --filter @nuvin/nuvin-cli lint",
-    "format": "pnpm --filter @nuvin/* format",
+    "format": "biome format --write .",
     "test": "pnpm --filter @nuvin/nuvin-core --filter @nuvin/nuvin-cli --workspace-concurrency=Infinity --no-sort test",
     "test:watch": "pnpm --filter @nuvin/nuvin-core test:watch",
     "prepare": "husky install",

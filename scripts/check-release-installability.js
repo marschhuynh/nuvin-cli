@@ -33,8 +33,12 @@ function fail(message) {
 
 function packPackage(packageName) {
   const before = new Set(readdirSync(packDir));
-  run("pnpm", ["--filter", packageName, "pack", "--pack-destination", packDir], { stdio: "ignore" });
-  const created = readdirSync(packDir).filter((entry) => !before.has(entry) && entry.endsWith(".tgz"));
+  run("pnpm", ["--filter", packageName, "pack", "--pack-destination", packDir], {
+    stdio: "ignore",
+  });
+  const created = readdirSync(packDir).filter(
+    (entry) => !before.has(entry) && entry.endsWith(".tgz"),
+  );
   if (created.length !== 1) {
     fail(`could not determine packed tarball for ${packageName}`);
   }
@@ -61,8 +65,10 @@ const coreManifest = extractJson(coreTarball, "package.json");
 
 if (cliManifest.private) fail("@nuvin/nuvin-cli is still private");
 if (coreManifest.private) fail("@nuvin/nuvin-core is still private");
-if (cliManifest.publishConfig?.access !== "public") fail("@nuvin/nuvin-cli publishConfig.access is not public");
-if (coreManifest.publishConfig?.access !== "public") fail("@nuvin/nuvin-core publishConfig.access is not public");
+if (cliManifest.publishConfig?.access !== "public")
+  fail("@nuvin/nuvin-cli publishConfig.access is not public");
+if (coreManifest.publishConfig?.access !== "public")
+  fail("@nuvin/nuvin-core publishConfig.access is not public");
 if (!cliManifest.bin?.nuvin) fail("@nuvin/nuvin-cli does not expose the nuvin binary");
 
 const runtimeDependencyGroups = [
@@ -106,7 +112,9 @@ if (!existsSync(installedNuvinDir)) {
   fail("clean install did not create node_modules/@nuvin");
 }
 
-const installedNuvinPackages = readdirSync(installedNuvinDir).filter((entry) => !entry.startsWith("."));
+const installedNuvinPackages = readdirSync(installedNuvinDir).filter(
+  (entry) => !entry.startsWith("."),
+);
 for (const packageName of installedNuvinPackages) {
   if (!allowedInstalledNuvinPackages.has(packageName)) {
     fail(`clean install included unexpected @nuvin/${packageName}`);
@@ -120,5 +128,11 @@ for (const packageName of allowedInstalledNuvinPackages) {
 }
 
 console.log("release installability check passed");
-console.log(`CLI runtime @nuvin deps: ${Object.keys(cliManifest.dependencies ?? {}).filter((name) => name.startsWith("@nuvin/")).join(", ")}`);
-console.log(`Clean install @nuvin packages: ${installedNuvinPackages.map((name) => `@nuvin/${name}`).join(", ")}`);
+console.log(
+  `CLI runtime @nuvin deps: ${Object.keys(cliManifest.dependencies ?? {})
+    .filter((name) => name.startsWith("@nuvin/"))
+    .join(", ")}`,
+);
+console.log(
+  `Clean install @nuvin packages: ${installedNuvinPackages.map((name) => `@nuvin/${name}`).join(", ")}`,
+);
