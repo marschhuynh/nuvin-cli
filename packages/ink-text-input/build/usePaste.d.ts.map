@@ -1,0 +1,1 @@
+{"version":3,"file":"usePaste.d.ts","sourceRoot":"","sources":["../src/usePaste.ts"],"names":[],"mappings":"AAKA,MAAM,MAAM,cAAc,GAAG;IAC3B,YAAY,EAAE,CAAC,KAAK,EAAE,MAAM,KAAK;QAC/B,cAAc,EAAE,MAAM,GAAG,IAAI,CAAC;QAC9B,iBAAiB,EAAE,OAAO,CAAC;QAC3B,YAAY,EAAE,OAAO,CAAC;KACvB,CAAC;CACH,CAAC;AAEF,wBAAgB,QAAQ,IAAI,cAAc,CA0CzC"}

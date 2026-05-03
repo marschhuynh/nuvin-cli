@@ -4,12 +4,12 @@
   "description": "Nuvin monorepo workspace",
   "private": true,
   "scripts": {
-    "run:dev": "pnpm --filter @nuvin/nuvin-cli run:dev",
+    "run:dev": "pnpm --filter @nuvin/nuvin-cli dev",
     "run:prod": "pnpm --filter @nuvin/nuvin-cli run:prod",
-    "build": "pnpm --filter @nuvin/nuvin-core build && pnpm --filter @nuvin/nuvin-cli build",
+    "build": "pnpm --filter @nuvin/nuvin-cli... build",
     "build:core": "pnpm --filter @nuvin/nuvin-core build",
     "build:cli": "pnpm --filter @nuvin/nuvin-cli build",
-    "clean": "pnpm --filter @nuvin/nuvin-core clean && pnpm --filter @nuvin/nuvin-cli clean",
+    "clean": "pnpm --filter @nuvin/nuvin-cli... clean",
     "dev": "pnpm --filter @nuvin/nuvin-cli dev",
     "lint": "pnpm --filter @nuvin/nuvin-cli lint",
     "format": "pnpm --filter @nuvin/* format",
@@ -23,6 +23,7 @@
     "release:pre": "pnpm build && changeset publish",
     "version:promote": "changeset pre exit && changeset version && pnpm -w install --no-frozen-lockfile",
     "release:stable": "changeset publish",
+    "release:smoke": "node scripts/check-release-installability.js",
     "changelog": "node scripts/changelog.js"
   },
   "devDependencies": {
@@ -35,19 +36,19 @@
   },
   "dependencies": {
     "husky": "^9.1.7",
-    "ink": "npm:@nuvin/ink@6.6.7",
+    "ink": "npm:@nuvin/ink@7.0.1-alpha",
     "json-zodify": "^1.0.2",
     "zod": "^4.2.1"
   },
   "pnpm": {
     "overrides": {
-      "ink": "npm:@nuvin/ink@6.6.7"
+      "ink": "npm:@nuvin/ink@7.0.1-alpha"
     }
   },
   "overrides": {
-    "ink": "npm:@nuvin/ink@6.6.7"
+    "ink": "npm:@nuvin/ink@7.0.1-alpha"
   },
   "resolutions": {
-    "ink": "npm:@nuvin/ink@6.6.7"
+    "ink": "npm:@nuvin/ink@7.0.1-alpha"
   }
 }

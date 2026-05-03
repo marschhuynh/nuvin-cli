@@ -1,0 +1,41 @@
+{
+  "name": "@nuvin/ink-text-input",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TextInput primitive for @nuvin/ink",
+  "exports": {
+    "types": "./build/index.d.ts",
+    "default": "./build/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf build"
+  },
+  "files": [
+    "build"
+  ],
+  "dependencies": {
+    "@nuvin/ink": "7.0.1-alpha",
+    "@nuvin/ink-input": "workspace:*",
+    "react": "^19.1.0",
+    "type-fest": "^4.27.0"
+  },
+  "devDependencies": {
+    "@sindresorhus/tsconfig": "^7.0.0",
+    "@types/react": "^19.1.5",
+    "typescript": "^6.0.2"
+  },
+  "peerDependencies": {
+    "@types/react": ">=19.0.0",
+    "react": ">=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    }
+  }
+}

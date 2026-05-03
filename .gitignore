@@ -6,3 +6,6 @@ dist
 .releaserc.json.backup
 prebuilds
 .sandbox
+.nuvin-dev
+.nuvin
+packages/ink/

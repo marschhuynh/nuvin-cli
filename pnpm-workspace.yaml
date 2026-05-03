@@ -1,7 +1,2 @@
 packages:
-  - packages/*
-
-onlyBuiltDependencies:
-  - esbuild
-  - javascript-obfuscator
-  - node-pty
+  - 'packages/*'
