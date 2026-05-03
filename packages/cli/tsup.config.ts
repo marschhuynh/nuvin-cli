@@ -10,6 +10,9 @@ export default defineConfig({
   target: "node18",
   outDir: "dist",
   external: ["@nuvin/nuvin-core", "@nuvin/ink"],
+  banner: {
+    js: "import { createRequire as __nuvinCreateRequire } from 'module'; const require = __nuvinCreateRequire(import.meta.url);",
+  },
   noExternal: [
     "@nuvin/config",
     "@nuvin/ink-input",
