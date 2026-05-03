@@ -3,7 +3,11 @@
   "tag": "rc",
   "initialVersions": {
     "@nuvin/nuvin-cli": "1.37.0",
-    "@nuvin/nuvin-core": "2.0.0"
+    "@nuvin/nuvin-core": "2.0.0",
+    "@nuvin/config": "0.0.0",
+    "@nuvin/ink-input": "0.0.0",
+    "@nuvin/ink-text-input": "0.0.0",
+    "@nuvin/ink-virtualized-list": "0.0.0"
   },
   "changesets": [
     "acp-server-cleanup",
@@ -13,6 +17,7 @@
     "bash-tool-test-improvements",
     "bash-tool-truncation",
     "ci-parallel-jobs",
+    "cli-rename-major-release",
     "combobox-double-filter-fix",
     "disable-base64-image-extraction",
     "file-read-truncation",
