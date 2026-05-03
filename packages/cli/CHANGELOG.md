@@ -1,5 +1,11 @@
 # @nuvin/nuvin-cli
 
+## 2.0.0-rc.17
+
+### Patch Changes
+
+- [`112d125`](https://github.com/marschhuynh/nuvin-space/commit/112d125fe6d2b01c087f9de69bb047b1e91b55a6) Thanks [@marschhuynh](https://github.com/marschhuynh)! - Define a real `require` at the top of the bundled ESM CLI via `module.createRequire(import.meta.url)` so bundled CommonJS dependencies can resolve `require("process")` and other Node builtins instead of hitting the esbuild "Dynamic require of X is not supported" runtime shim.
+
 ## 2.0.0-rc.16
 
 ### Patch Changes
