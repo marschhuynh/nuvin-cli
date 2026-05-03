@@ -1,6 +1,6 @@
 {
   "name": "@nuvin/nuvin-core",
-  "version": "2.1.0-rc.6",
+  "version": "2.1.0-rc.7",
   "private": false,
   "description": "Core agent, model, format, and tool primitives for Nuvin",
   "license": "Apache-2.0",
