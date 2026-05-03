@@ -19,7 +19,7 @@
     "build"
   ],
   "dependencies": {
-    "@nuvin/ink": "workspace:*",
+    "@nuvin/ink": "7.0.1-alpha",
     "react": "^19.1.0",
     "zustand": "^5.0.0"
   },

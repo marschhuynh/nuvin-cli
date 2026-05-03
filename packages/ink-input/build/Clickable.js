@@ -2,24 +2,6 @@ import { jsx as _jsx } from "react/jsx-runtime";
 import { Box } from "@nuvin/ink";
 import { forwardRef, useCallback, useRef, useState } from "react";
 import { useMouse } from "./useMouse.js";
-/**
-A drop-in replacement for `<Box>` with mouse click and hover support.
-
-Renders a standard `<Box>` and subscribes to mouse events via `useMouse`.
-Uses `BoxRef.getBounds()` for accurate hit testing against the rendered area.
-
-@example
-```tsx
-<Clickable
-  onClick={() => handleSubmit()}
-  onHover={(h) => setHighlighted(h)}
-  paddingX={1}
-  backgroundColor={highlighted ? "green" : "black"}
->
-  <Text>Submit</Text>
-</Clickable>
-```
-*/
 const Clickable = forwardRef(({ children, onClick, onHover, isMouseActive = true, ...boxProps }, ref) => {
     const boxRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);

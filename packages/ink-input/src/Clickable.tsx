@@ -39,7 +39,14 @@ Uses `BoxRef.getBounds()` for accurate hit testing against the rendered area.
 </Clickable>
 ```
 */
-const Clickable = forwardRef<BoxRef, React.PropsWithChildren<ClickableProps>>(
+type ClickableComponent = React.ForwardRefExoticComponent<
+  React.PropsWithChildren<ClickableProps> & React.RefAttributes<BoxRef>
+>;
+
+const Clickable: ClickableComponent = forwardRef<
+  BoxRef,
+  React.PropsWithChildren<ClickableProps>
+>(
   (
     {
       children,

@@ -19,7 +19,7 @@
     "build"
   ],
   "dependencies": {
-    "@nuvin/ink": "workspace:*",
+    "@nuvin/ink": "7.0.1-alpha",
     "@nuvin/ink-input": "workspace:*"
   },
   "devDependencies": {

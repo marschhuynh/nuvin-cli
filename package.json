@@ -36,19 +36,19 @@
   },
   "dependencies": {
     "husky": "^9.1.7",
-    "ink": "npm:@nuvin/ink@6.6.7",
+    "ink": "npm:@nuvin/ink@7.0.1-alpha",
     "json-zodify": "^1.0.2",
     "zod": "^4.2.1"
   },
   "pnpm": {
     "overrides": {
-      "ink": "npm:@nuvin/ink@6.6.7"
+      "ink": "npm:@nuvin/ink@7.0.1-alpha"
     }
   },
   "overrides": {
-    "ink": "npm:@nuvin/ink@6.6.7"
+    "ink": "npm:@nuvin/ink@7.0.1-alpha"
   },
   "resolutions": {
-    "ink": "npm:@nuvin/ink@6.6.7"
+    "ink": "npm:@nuvin/ink@7.0.1-alpha"
   }
 }

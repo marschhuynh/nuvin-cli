@@ -19,7 +19,7 @@
     "build"
   ],
   "dependencies": {
-    "@nuvin/ink": "workspace:*",
+    "@nuvin/ink": "7.0.1-alpha",
     "@nuvin/ink-input": "workspace:*",
     "react": "^19.1.0",
     "type-fest": "^4.27.0"
