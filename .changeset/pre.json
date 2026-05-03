@@ -18,6 +18,7 @@
     "bash-tool-truncation",
     "ci-parallel-jobs",
     "cli-core-export-fix",
+    "cli-fix-dynamic-require-process",
     "cli-rename-major-release",
     "combobox-double-filter-fix",
     "core-republish-exports",
