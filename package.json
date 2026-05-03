@@ -23,7 +23,6 @@
     "release:pre": "pnpm build && changeset publish",
     "version:promote": "changeset pre exit && changeset version && pnpm -w install --no-frozen-lockfile",
     "release:stable": "changeset publish",
-    "release:smoke": "node scripts/check-release-installability.js",
     "changelog": "node scripts/changelog.js"
   },
   "devDependencies": {
