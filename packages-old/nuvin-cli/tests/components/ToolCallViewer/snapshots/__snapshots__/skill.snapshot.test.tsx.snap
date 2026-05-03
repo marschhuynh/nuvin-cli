@@ -1,7 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`skill - Snapshot Tests > renders successful skill load with content 1`] = `"⚙ Using skill test-driven-development"`;
-
-exports[`skill - Snapshot Tests > renders successful skill load with detailed instructions 1`] = `"⚙ Using skill systematic-debugging"`;
-
-exports[`skill - Snapshot Tests > renders successful skill load with short content 1`] = `"⚙ Using skill quick-skill"`;
